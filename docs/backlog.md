@@ -6,12 +6,21 @@ Tickets werden in diesem Dokument gepflegt, bis ein GitHub-Repository existiert.
 
 Neue Codex-Instanzen sollen vor der Umsetzung `docs/project-briefing.md` und `docs/codex-workflow.md` lesen.
 
+Produktive Aenderungen muessen vor Abschluss durch eine Reviewer-Instanz freigegeben werden. Siehe `docs/review-workflow.md`.
+
 Statuswerte:
 
 - `todo`: noch offen
 - `doing`: in Arbeit
 - `done`: erledigt
 - `blocked`: blockiert
+
+Review-Status:
+
+- `Review: pending`: Umsetzung fertig, Review offen
+- `Review: approved`: Reviewer hat freigegeben
+- `Review: changes_requested`: Anpassung durch Implementer noetig
+- `Review: blocked`: Review kann nicht abgeschlossen werden
 
 Prioritaeten:
 
