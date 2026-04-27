@@ -151,6 +151,20 @@ Ziel:
 
 Erkennungsregeln muessen anhand echter Sparkassen-Beispieldaten gebaut werden.
 
+Konkreter Nachweis im anonymisierten Sample:
+
+- `docs/samples/sparkasse-umsatz-anonymized.csv` enthaelt eine Bargeldabhebung mit:
+  - `Buchungstext = BARGELDAUSZAHLUNG`
+  - `Verwendungszweck = GA NR 12345678 AUTOMAT STADT`
+  - `Betrag = -50,00`
+
+Klassifikation dieser Zeile im MVP:
+
+- `transaction_type = transfer`
+- Quelle: Sparkasse-Konto (`Auftragskonto`)
+- Ziel: Bargeld-Konto (`Bargeld`)
+- Keine Kategorie/Sonderbudget-Zuordnung (weil keine Ausgabe, sondern Kontoumbuchung)
+
 Moegliche Suchbegriffe in `Buchungstext` oder `Verwendungszweck`:
 
 - Geldautomat
@@ -164,8 +178,6 @@ Zusatzregeln:
 - Bei erkannter Bargeldabhebung als `transfer` modellieren (`Sparkasse -> Bargeld`).
 - Keine Kategorie/Sonderbudget-Zuordnung am Importpunkt setzen.
 - Falls Regeln nicht eindeutig treffen: Buchung im Import als "Transfer-Kandidat" markieren statt hart zuzuordnen.
-
-Diese Liste ist nur eine Vermutung und muss mit echten Exporten geprueft werden.
 
 ## Bankanbindung spaeter
 
