@@ -56,8 +56,8 @@ Notizen:
 
 ### FIN-002 Datenmodell entwerfen und Migrationen anlegen
 
-Status: `doing`
-Review: `pending`
+Status: `done`
+Review: `approved`
 Prioritaet: `P0`
 
 Ziel: Die wichtigsten fachlichen Objekte werden in SQLite abgebildet.
