@@ -8,6 +8,8 @@ Neue Codex-Instanzen sollen vor der Umsetzung `docs/project-briefing.md` und `do
 
 Produktive Aenderungen muessen vor Abschluss durch eine Reviewer-Instanz freigegeben werden. Siehe `docs/review-workflow.md`.
 
+Parallel laufende Tickets muessen getrennte Write-Scopes haben. Siehe `docs/parallel-development.md`.
+
 Statuswerte:
 
 - `todo`: noch offen
@@ -54,7 +56,8 @@ Notizen:
 
 ### FIN-002 Datenmodell entwerfen und Migrationen anlegen
 
-Status: `todo`
+Status: `doing`
+Review: `pending`
 Prioritaet: `P0`
 
 Ziel: Die wichtigsten fachlichen Objekte werden in SQLite abgebildet.
@@ -73,6 +76,7 @@ Notizen:
 - Sonderbudgets sind direkte Ausgaben, keine reinen Sparziele.
 - Fixkosten werden geplant, aber nicht ueber N26 importiert.
 - Siehe `docs/domain-model.md`.
+- Umsetzung liegt in `src/db/schema.ts` (Migrationsbasis + FIN-002 Schema), `src/db/client.ts` und DB-Tests.
 
 ### FIN-003 Erste App-Navigation und Layout bauen
 

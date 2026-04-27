@@ -152,3 +152,45 @@ Folgeaktion:
 
 - Bei zukuenftigen Tickets Review-Status im Backlog oder in der Ticketnotiz festhalten.
 
+## 2026-04-27 - Parallelentwicklung ueber Ticket-Branches und Write-Scopes
+
+Quelle/Ticket: Prozessentscheidung
+
+Erkenntnis/Entscheidung:
+
+- Mehrere Agents sollen parallel nicht im gleichen ungetrennten Arbeitsbaum entwickeln.
+- Pro Ticket soll ein eigener Branch und idealerweise ein eigener Git-Worktree verwendet werden.
+- Jedes Ticket braucht einen klaren Write-Scope.
+- Reviewer pruefen nur den Diff des Tickets gegen seine Basis und gleichen ihn gegen den Write-Scope ab.
+
+Auswirkung:
+
+- Ueberschneidungen werden frueh sichtbar.
+- Reviewer bewerten nur Aenderungen, die zum Ticket gehoeren.
+- Aenderungen ausserhalb des Write-Scopes fuehren ohne Begruendung zu `CHANGES_REQUESTED`.
+
+Folgeaktion:
+
+- Bei neuen Tickets Write-Scope und Branch/Worktree im Handoff an den Reviewer angeben.
+
+## 2026-04-27 - FIN-002 Schema- und Betragskonvention festgelegt
+
+Quelle/Ticket: `FIN-002`
+
+Erkenntnis/Entscheidung:
+
+- Die Datenbank wird migrationsbasiert aufgebaut (`schema_migrations` + `app_meta`).
+- Kernobjekte sind als Tabellen angelegt: Konten, Kategorien, Monatsbudgets, Sonderbudgets, Fixkosten, Importlaeufe, Transaktionen und importierte Transaktionsmetadaten.
+- `expense` muss genau eine Zuordnung zu Kategorie oder Sonderbudget haben.
+- `transfer` darf keine Kategorie/Sonderbudget haben und braucht ein Zielkonto.
+- Betragskonvention: `amount_cents` wird als signed Integer gespeichert.
+
+Auswirkung:
+
+- FIN-002-Akzeptanzkriterien sind technisch abbildbar und in SQL-Constraints abgesichert.
+- Import-Deduplizierung ist vorbereitet ueber `import_fingerprint` und `dedupe_fingerprint`.
+
+Folgeaktion:
+
+- Reviewer-Pruefung fuer FIN-002 durchfuehren.
+- Danach `FIN-003` starten.

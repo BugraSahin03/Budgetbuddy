@@ -19,9 +19,10 @@ Neue Instanzen sollen zuerst dieses Dokument lesen. Danach je nach Aufgabe:
 3. `docs/domain-model.md` fuer Fachmodell und Datenregeln
 4. `docs/import-and-bank-notes.md` fuer Sparkassen-Import und Bankthemen
 5. `docs/decision-log.md` fuer neue Erkenntnisse und kleinere Entscheidungen
-6. `docs/review-workflow.md` fuer Reviewer-Gate und Freigabeprozess
-7. `docs/adr/` fuer grundlegende Architekturentscheidungen
-8. `docs/prompts.md` fuer kopierbare Prompts an weitere Codex-Instanzen
+6. `docs/parallel-development.md` fuer Branches, Worktrees und Write-Scopes
+7. `docs/review-workflow.md` fuer Reviewer-Gate und Freigabeprozess
+8. `docs/adr/` fuer grundlegende Architekturentscheidungen
+9. `docs/prompts.md` fuer kopierbare Prompts an weitere Codex-Instanzen
 
 Neue Erkenntnisse oder Entscheidungen muessen dokumentiert werden. Kleine oder laufende Erkenntnisse gehoeren in `docs/decision-log.md`; grundlegende Projektentscheidungen zusaetzlich als ADR nach `docs/adr/`.
 

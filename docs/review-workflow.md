@@ -12,6 +12,8 @@ Der Reviewer ist die letzte Qualitaetsinstanz. Er prueft, ob eine Implementer-In
 
 - bearbeitet ein Ticket
 - setzt den Ticketstatus auf `doing`
+- arbeitet auf einem eigenen Ticket-Branch/Worktree, wenn parallel entwickelt wird
+- haelt den vereinbarten Write-Scope ein
 - implementiert die Aenderung
 - prueft Akzeptanzkriterien
 - dokumentiert Erkenntnisse und Entscheidungen
@@ -40,6 +42,7 @@ Der Reviewer prueft:
 
 - Erfuellt die Aenderung das Ticket und die Akzeptanzkriterien?
 - Wurde nur der noetige Scope geaendert?
+- Entspricht der Diff dem vereinbarten Write-Scope aus `docs/parallel-development.md`?
 - Stimmen die Aenderungen mit `docs/project-briefing.md`, `docs/domain-model.md` und ADRs ueberein?
 - Wurden neue Erkenntnisse in `docs/decision-log.md` dokumentiert?
 - Wurde bei grundlegenden Entscheidungen eine ADR angelegt?
@@ -48,6 +51,21 @@ Der Reviewer prueft:
 - Gibt es offensichtliche Bugs, Datenverlust-Risiken oder falsche Finanzlogik?
 - Ist die UI ruhig, klar, desktop-first und passend fuer eine Finanz-App?
 - Werden Transfers, Kategorien und Sonderbudgets korrekt getrennt?
+
+## Diff-Grenze
+
+Der Reviewer reviewed nur den Diff des Tickets gegen seine Basis.
+
+Pflicht:
+
+```bash
+git diff --name-only <base>...HEAD
+git diff <base>...HEAD
+```
+
+Wenn der Diff Dateien ausserhalb des vereinbarten Write-Scopes enthaelt und keine Begruendung vorliegt, soll der Reviewer `CHANGES_REQUESTED` geben.
+
+Der Reviewer soll keine fremden oder bereits integrierten Aenderungen bewerten, die nicht Teil des Ticket-Diffs sind.
 
 ## Feedback-Format
 
@@ -99,4 +117,3 @@ Empfohlener Ablauf:
 4. Bei `APPROVED`: Ticket auf `done` setzen.
 5. Bei `CHANGES_REQUESTED`: Ticket bleibt `doing`, Feedback geht an Implementer.
 6. Bei `BLOCKED`: Ticket auf `blocked` oder Blocker im Ticket dokumentieren.
-

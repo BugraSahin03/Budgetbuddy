@@ -28,7 +28,10 @@ Bearbeite danach Ticket `FIN-XXX` aus `docs/backlog.md`.
 
 Arbeitsregeln:
 - Setze das Ticket im Backlog auf `doing`, bevor du beginnst.
-- Aendere nur Dateien, die fuer dieses Ticket noetig sind.
+- Lies `docs/parallel-development.md`.
+- Arbeite auf einem eigenen Ticket-Branch oder Worktree, wenn parallel entwickelt wird.
+- Klaere und beachte den Write-Scope fuer dieses Ticket.
+- Aendere nur Dateien im Write-Scope.
 - Respektiere die Entscheidungen in `docs/adr/`.
 - Wenn du fachliches Wissen oder eine Entscheidung ergaenzt, dokumentiere sie in der passenden Datei.
 - Neue Erkenntnisse oder kleinere Entscheidungen gehoeren in `docs/decision-log.md`.
@@ -38,6 +41,13 @@ Arbeitsregeln:
 - Setze das Ticket nur nach Reviewer-Entscheidung `APPROVED` auf `done`.
 
 Gib mir am Ende eine kurze Zusammenfassung der geaenderten Dateien, der erledigten Akzeptanzkriterien und eventuell offener Punkte.
+
+Ergaenze fuer den Reviewer ausserdem:
+- Branch
+- Base Commit/Base Branch
+- Write-Scope
+- geaenderte Dateien
+- ausgefuehrte Checks
 ```
 
 ## Nur Analyse, keine Umsetzung
@@ -49,6 +59,7 @@ Analysiere danach Ticket `FIN-XXX`, aber nimm keine Code-Aenderungen vor.
 
 Ich moechte von dir:
 - welche Dateien wahrscheinlich betroffen sind
+- welchen Write-Scope du empfehlen wuerdest
 - welche fachlichen Regeln relevant sind
 - welche technischen Entscheidungen zu beachten sind
 - welche Risiken oder offenen Fragen du siehst
@@ -114,6 +125,7 @@ Bitte lies zuerst:
 - `docs/project-briefing.md`
 - `docs/backlog.md`
 - `docs/codex-workflow.md`
+- `docs/parallel-development.md`
 - `docs/review-workflow.md`
 - je nach betroffenem Bereich `docs/domain-model.md`, `docs/import-and-bank-notes.md` und `docs/adr/`
 
@@ -121,12 +133,15 @@ Reviewe danach die Aenderungen zu Ticket `FIN-XXX`.
 
 Dein Auftrag:
 - Pruefe, ob das Ticket und seine Akzeptanzkriterien erfuellt sind.
+- Pruefe mit `git diff --name-only <base>...HEAD`, welche Dateien wirklich Teil dieses Tickets sind.
+- Pruefe, ob alle geaenderten Dateien im vereinbarten Write-Scope liegen.
 - Pruefe, ob die Aenderungen zum Projektziel und zu den fachlichen Regeln passen.
 - Pruefe, ob Kategorien, Sonderbudgets, Fixkosten, Bargeld und Transfers korrekt behandelt werden.
 - Pruefe, ob neue Erkenntnisse in `docs/decision-log.md` und grundlegende Entscheidungen als ADR dokumentiert wurden.
 - Pruefe, ob sensible Finanzdaten, Bankdaten oder Zugangsdaten vermieden wurden.
 - Pruefe, ob Build, Tests oder Linting ausgefuehrt wurden, sofern sinnvoll.
 - Suche gezielt nach Bugs, Datenverlust-Risiken, falscher Finanzlogik, Scope Creep und fehlender Dokumentation.
+- Reviewe nur den Ticket-Diff. Bewerte keine fremden, nicht zum Ticket gehoerenden Aenderungen.
 
 Wichtig:
 - Implementiere selbst keine grossen Korrekturen.
@@ -144,6 +159,8 @@ Findings:
 
 Geprueft:
 - Ticket-Akzeptanzkriterien
+- Ticket-Diff gegen Base
+- Write-Scope
 - relevante Projektregeln
 - Tests/Build/Linting, falls vorhanden
 

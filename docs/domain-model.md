@@ -46,25 +46,27 @@ Moegliche Typen:
 - `expense`: echte Ausgabe
 - `income`: Einnahme
 - `transfer`: Umbuchung, z. B. Sparkasse zu Bargeld
-- `refund`: Rueckerstattung, falls spaeter sinnvoll
+- `refund`: Rueckerstattung
 
 Regel:
 
 - `expense` muss genau eine feste Kategorie oder genau ein Sonderbudget haben.
-- `transfer` darf keine Ausgabe-Kategorie haben.
-- `income` kann optional klassifiziert werden, muss aber keine Ausgabenkategorie haben.
+- `transfer` darf keine Ausgabe-Kategorie haben und muss ein Zielkonto haben.
+- `income` und `refund` haben keine Ausgabenkategorie.
 
 ### Feste Kategorie
 
 Eine feste Kategorie ist dauerhaft verfuegbar und kommt jeden Monat wieder.
 
-Beispiele:
+Startliste fuer den MVP:
 
 - Einkauf
-- Freizeit
 - Tanken
+- Freizeit
 - Fitness
-- Medikamente
+- Parkhaus
+- Kleidung
+- Oeffis
 
 Feste Kategorien koennen deaktiviert statt geloescht werden, damit historische Transaktionen gueltig bleiben.
 
@@ -158,12 +160,18 @@ Summe aller Ausgaben eines Monats, die einer festen Kategorie zugeordnet sind.
 
 `Monatsbudget - Kategorie-Ist`
 
-Da Ausgaben als negative Betraege importiert werden koennen, sollte intern eine klare Konvention gelten:
+### Betragskonvention (festgelegt)
 
-- Betragsfeld speichert echte Vorzeichen aus Sicht des Kontos oder
-- Betrag wird positiv gespeichert und Typ gibt Richtung an
+Intern speichern wir `amount_cents` als signed Integer in Cent.
 
-Diese Entscheidung muss vor der Datenbank-Implementierung getroffen und dokumentiert werden.
+Regeln:
+
+- `expense`: negativ
+- `income`: positiv
+- `refund`: positiv
+- `transfer`: Betrag aus Sicht des Quellkontos, daher typischerweise negativ
+
+Damit bleiben Importdaten und manuelle Buchungen konsistent und ohne Rundungsprobleme vergleichbar.
 
 ### Sonderbudget-Ist
 
@@ -179,14 +187,6 @@ Summe aller echten Ausgaben im Monat, ohne Transfers.
 
 Bargeldabhebungen sind Transfers und zaehlen nicht als Ausgabe. Die spaeteren manuellen Barzahlungen zaehlen als Ausgabe.
 
-### Gesparter Betrag
-
-Noch offen. Wahrscheinliche erste Berechnung:
-
-`Einnahmen - echte Ausgaben - geplante Fixkosten`
-
-Die genaue Logik sollte in einem Ticket finalisiert werden, weil die bisherige Excel-Logik Gehaelter, Fixkosten, geplante Ausgaben und positive Sonderbuchungen kombiniert.
-
 ## Datenqualitaetsregeln
 
 - Jede Ausgabe muss zugeordnet sein.
@@ -196,17 +196,21 @@ Die genaue Logik sollte in einem Ticket finalisiert werden, weil die bisherige E
 - Importierte Transaktionen brauchen eine stabile Duplikatkennung.
 - Manuelle Transaktionen brauchen keine Importkennung.
 
-## Erste Tabellenidee
+## Tabellenbasis in FIN-002
 
-Noch nicht final, aber als Orientierung:
+Umgesetzt als erste migrationsbasierte Grundlage:
 
 - `accounts`
-- `transactions`
 - `categories`
 - `monthly_category_budgets`
 - `special_budgets`
 - `fixed_costs`
 - `import_runs`
+- `transactions`
 - `imported_transactions`
-- `categorization_rules`
+- `schema_migrations`
+- `app_meta`
 
+Fuer spaetere Tickets vorgesehen:
+
+- `categorization_rules`

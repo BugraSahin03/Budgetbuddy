@@ -11,8 +11,9 @@ Vor jeder Arbeit lesen:
 3. fuer fachliche Arbeit: `docs/domain-model.md`
 4. fuer Importarbeit: `docs/import-and-bank-notes.md`
 5. fuer laufende Erkenntnisse: `docs/decision-log.md`
-6. fuer Review-Gates: `docs/review-workflow.md`
-7. fuer Architekturentscheidungen: `docs/adr/`
+6. fuer parallele Entwicklung: `docs/parallel-development.md`
+7. fuer Review-Gates: `docs/review-workflow.md`
+8. fuer Architekturentscheidungen: `docs/adr/`
 
 ## Ticket-Arbeit
 
@@ -21,18 +22,24 @@ Tickets stehen in `docs/backlog.md`.
 Wenn eine Instanz an einem Ticket arbeitet:
 
 1. Ticketstatus von `todo` auf `doing` setzen.
-2. Nur die fuer das Ticket noetigen Dateien anfassen.
-3. Bei neuen Entscheidungen ein ADR oder eine Notiz im passenden Dokument ergaenzen.
-4. Nach Umsetzung Akzeptanzkriterien pruefen.
-5. Ticketstatus auf `done` setzen oder Blocker dokumentieren.
+2. Branch/Worktree und Write-Scope klaeren.
+3. Nur Dateien im Write-Scope anfassen.
+4. Bei neuen Entscheidungen ein ADR oder eine Notiz im passenden Dokument ergaenzen.
+5. Nach Umsetzung Akzeptanzkriterien pruefen.
+6. Aenderungen an Reviewer uebergeben.
+7. Ticket erst nach `APPROVED` auf `done` setzen.
 
 Wenn parallel gearbeitet wird, sollte jede Instanz ein anderes Ticket uebernehmen.
+
+Parallel laufende Tickets muessen getrennte Write-Scopes haben. Wenn zwei Tickets dieselben Dateien aendern muessen, sollten sie nacheinander oder in bewusst koordinierter Reihenfolge umgesetzt werden.
 
 ## Goldene Quelle
 
 Alle produktiven Datei- und Codeaenderungen werden in `/Volumes/Intenso/Dev/Budgetbuddy` vorgenommen.
 
 Andere Codex-Arbeitsordner koennen als Scratch/Analyse dienen, sind aber nicht die massgebliche Projektquelle.
+
+Fuer parallele Implementierung ist pro Ticket ein eigener Branch und idealerweise ein eigener Git-Worktree vorgesehen. Details stehen in `docs/parallel-development.md`.
 
 ## Review-Gate
 
@@ -60,6 +67,7 @@ Geeignete Orte:
 - Fachregeln und Datenmodell: `docs/domain-model.md`
 - Import/Bank: `docs/import-and-bank-notes.md`
 - Laufende Erkenntnisse und kleinere Entscheidungen: `docs/decision-log.md`
+- Parallele Entwicklung und Worktree-Regeln: `docs/parallel-development.md`
 - Review-Prozess: `docs/review-workflow.md`
 - Tickets/Status: `docs/backlog.md`
 - Architekturentscheidungen: `docs/adr/`

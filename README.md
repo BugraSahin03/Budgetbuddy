@@ -55,3 +55,22 @@ Die Basisinitialisierung erfolgt in:
 
 - `src/db/client.ts`
 - `src/db/schema.ts`
+
+## Projekt-Dokumentation
+
+- [Projekt-Briefing fuer Codex-Instanzen](docs/project-briefing.md)
+- [Produktplan](docs/product-plan.md)
+- [Fachliches Datenmodell](docs/domain-model.md)
+- [Import- und Banknotizen](docs/import-and-bank-notes.md)
+- [Decision Log und Erkenntnisse](docs/decision-log.md)
+- [Backlog / Tickets](docs/backlog.md)
+- [Arbeitsweise fuer parallele Codex-Instanzen](docs/codex-workflow.md)
+- [Parallel Development Workflow](docs/parallel-development.md)
+- [Review-Workflow](docs/review-workflow.md)
+- [Prompt-Vorlagen fuer Codex-Instanzen](docs/prompts.md)
+- [ADR 0001: Tech Stack](docs/adr/0001-tech-stack.md)
+- [ADR 0002: Kategorien, Sonderbudgets und Bargeld trennen](docs/adr/0002-domain-separation.md)
+
+## Einstieg fuer neue Codex-Instanzen
+
+Neue Instanzen sollten zuerst `docs/project-briefing.md` lesen. Danach je nach Aufgabe `docs/backlog.md`, `docs/codex-workflow.md`, `docs/parallel-development.md`, `docs/domain-model.md`, `docs/import-and-bank-notes.md`, `docs/review-workflow.md` und `docs/decision-log.md`.
