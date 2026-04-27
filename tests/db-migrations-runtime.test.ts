@@ -217,4 +217,65 @@ describe("database migrations runtime behavior", () => {
       `,
     ).run(account.id);
   });
+
+  it("adds icon metadata column for categories", () => {
+    const columns = db
+      .prepare("PRAGMA table_info(categories)")
+      .all() as Array<{ name: string }>;
+
+    expect(columns.some((column) => column.name === "icon_name")).toBe(true);
+  });
+
+  it("keeps historical references when a category is deactivated", () => {
+    const account = db
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as AccountRow;
+    const category = db
+      .prepare("SELECT id FROM categories WHERE name = 'Freizeit'")
+      .get() as CategoryRow;
+
+    db.prepare(
+      `
+        INSERT INTO monthly_category_budgets (
+          month_key,
+          category_id,
+          budget_amount_cents
+        )
+        VALUES ('2026-04', ?, 18000)
+      `,
+    ).run(category.id);
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id,
+          transaction_type,
+          booking_date,
+          amount_cents,
+          description,
+          source_type,
+          category_id
+        )
+        VALUES (?, 'expense', '2026-04-15', -1500, 'Kino', 'manual', ?)
+      `,
+    ).run(account.id, category.id);
+
+    db.prepare("UPDATE categories SET is_active = 0 WHERE id = ?").run(category.id);
+
+    const deactivated = db
+      .prepare("SELECT is_active FROM categories WHERE id = ?")
+      .get(category.id) as { is_active: number };
+    const transactionCount = db
+      .prepare("SELECT COUNT(*) AS count FROM transactions WHERE category_id = ?")
+      .get(category.id) as { count: number };
+    const budgetCount = db
+      .prepare(
+        "SELECT COUNT(*) AS count FROM monthly_category_budgets WHERE category_id = ?",
+      )
+      .get(category.id) as { count: number };
+
+    expect(deactivated.is_active).toBe(0);
+    expect(transactionCount.count).toBe(1);
+    expect(budgetCount.count).toBe(1);
+  });
 });

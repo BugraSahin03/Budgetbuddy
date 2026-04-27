@@ -5,11 +5,14 @@ import { getLatestSchemaVersion, migrations } from "@/src/db/schema";
 describe("schema migrations", () => {
   it("contains migration for FIN-002", () => {
     expect(migrations.length).toBeGreaterThan(0);
-    expect(migrations[0]?.id).toBe("0001_fin_002");
+    expect(migrations.some((migration) => migration.id === "0001_fin_002")).toBe(
+      true,
+    );
   });
 
   it("creates required core tables", () => {
-    const sql = migrations[0]?.sql ?? "";
+    const sql = migrations.find((migration) => migration.id === "0001_fin_002")
+      ?.sql ?? "";
 
     expect(sql).toContain("CREATE TABLE IF NOT EXISTS accounts");
     expect(sql).toContain("CREATE TABLE IF NOT EXISTS categories");
@@ -21,7 +24,8 @@ describe("schema migrations", () => {
   });
 
   it("enforces expense assignment and transaction type checks", () => {
-    const sql = migrations[0]?.sql ?? "";
+    const sql = migrations.find((migration) => migration.id === "0001_fin_002")
+      ?.sql ?? "";
 
     expect(sql).toContain("transaction_type IN ('expense', 'income', 'transfer', 'refund')");
     expect(sql).toContain("transaction_type = 'expense' AND amount_cents < 0");
@@ -32,14 +36,22 @@ describe("schema migrations", () => {
   });
 
   it("prepares import dedupe structures", () => {
-    const sql = migrations[0]?.sql ?? "";
+    const sql = migrations.find((migration) => migration.id === "0001_fin_002")
+      ?.sql ?? "";
 
     expect(sql).toContain("CREATE TABLE IF NOT EXISTS imported_transactions");
     expect(sql).toContain("dedupe_fingerprint TEXT NOT NULL UNIQUE");
     expect(sql).toContain("idx_transactions_import_fingerprint_unique");
   });
 
+  it("contains migration for optional category icon metadata", () => {
+    const sql = migrations.find((migration) => migration.id === "0002_fin_004")
+      ?.sql;
+
+    expect(sql).toContain("ALTER TABLE categories ADD COLUMN icon_name TEXT;");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0001_fin_002");
+    expect(getLatestSchemaVersion()).toBe("0002_fin_004");
   });
 });

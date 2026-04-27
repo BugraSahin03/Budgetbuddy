@@ -195,11 +195,20 @@ VALUES
   ('Oeffis', 1);
 `;
 
+const fin004MigrationSql = `
+ALTER TABLE categories ADD COLUMN icon_name TEXT;
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
     name: "FIN-002 initial budgeting domain schema",
     sql: fin002MigrationSql,
+  },
+  {
+    id: "0002_fin_004",
+    name: "FIN-004 optional category icon metadata",
+    sql: fin004MigrationSql,
   },
 ];
 
