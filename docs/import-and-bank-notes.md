@@ -18,6 +18,10 @@ Aktueller Referenzexport (CSV):
 
 - `/Users/Bugra/Downloads/20260426-22879003-umsatz.CSV`
 
+Anonymisierte Projekt-Referenz:
+
+- `docs/samples/sparkasse-umsatz-anonymized.csv`
+
 Formatmerkmale (Stand 2026-04-26):
 
 - Trennzeichen: `;`
@@ -46,6 +50,41 @@ Sichtbare Feldnamen:
 - Betrag
 - Waehrung
 - Info
+
+## Feldmapping fuer FIN-010
+
+Die CSV ist semikolon-separiert und komplett quoted. Beim Einlesen sollen die Felder 1:1 nach Headername adressiert werden.
+
+Empfohlenes internes Mapping (MVP):
+
+- `Auftragskonto` -> `account_iban`
+- `Buchungstag` -> `booking_date` (normalisiert nach `YYYY-MM-DD`)
+- `Valutadatum` -> `value_date` (normalisiert nach `YYYY-MM-DD`)
+- `Buchungstext` -> `booking_text`
+- `Verwendungszweck` -> `purpose`
+- `Beguenstigter/Zahlungspflichtiger` -> `counterparty_name`
+- `Kontonummer/IBAN` -> `counterparty_iban`
+- `BIC (SWIFT-Code)` -> `counterparty_bic`
+- `Betrag` -> `amount_cents` (Dezimal-Komma -> Integer-Cent, Vorzeichen beibehalten)
+- `Waehrung` -> `currency_code`
+- `Info` -> `booking_info`
+- `Kundenreferenz (End-to-End)` -> `end_to_end_reference`
+- `Mandatsreferenz` -> `mandate_reference`
+- `Glaeubiger ID` -> `creditor_id`
+
+Extraktion fuer Ticket-Akzeptanz:
+
+- Buchungstag: aus `Buchungstag`
+- Betrag: aus `Betrag`
+- Beschreibung: aus `Buchungstext` + optional `Verwendungszweck`
+- Gegenpartei: aus `Beguenstigter/Zahlungspflichtiger`
+- Info: aus `Info`
+
+Datumsnormalisierung:
+
+- Eingabeformat: `TT.MM.JJ`
+- Ausgabeformat intern: `YYYY-MM-DD`
+- Beispiel: `24.04.26` -> `2026-04-24`
 
 Erste beobachtete Buchungsarten:
 
@@ -89,6 +128,19 @@ Moegliche Bestandteile einer stabilen Duplikatkennung:
 
 Wenn keine eindeutige Bank-ID vorhanden ist, sollte ein Hash aus mehreren Feldern gebildet werden.
 
+Empfohlener Fingerprint fuer Sparkassen-CSV:
+
+- `Auftragskonto`
+- `Buchungstag`
+- `Valutadatum`
+- `Betrag`
+- `Beguenstigter/Zahlungspflichtiger`
+- `Verwendungszweck`
+- `Kundenreferenz (End-to-End)` (falls vorhanden)
+- `Mandatsreferenz` (falls vorhanden)
+
+Praktisch: Die normalisierten Werte mit `|` joinen und als SHA-256 hashen.
+
 ## Bargeldabhebungen
 
 Ziel:
@@ -99,13 +151,19 @@ Ziel:
 
 Erkennungsregeln muessen anhand echter Sparkassen-Beispieldaten gebaut werden.
 
-Moegliche Suchbegriffe:
+Moegliche Suchbegriffe in `Buchungstext` oder `Verwendungszweck`:
 
 - Geldautomat
 - Bargeldauszahlung
 - GA NR
 - ATM
 - Kartenauszahlung
+
+Zusatzregeln:
+
+- Bei erkannter Bargeldabhebung als `transfer` modellieren (`Sparkasse -> Bargeld`).
+- Keine Kategorie/Sonderbudget-Zuordnung am Importpunkt setzen.
+- Falls Regeln nicht eindeutig treffen: Buchung im Import als "Transfer-Kandidat" markieren statt hart zuzuordnen.
 
 Diese Liste ist nur eine Vermutung und muss mit echten Exporten geprueft werden.
 

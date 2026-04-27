@@ -194,3 +194,25 @@ Folgeaktion:
 
 - Reviewer-Pruefung fuer FIN-002 durchfuehren.
 - Danach `FIN-003` starten.
+
+## 2026-04-27 - FIN-010 Sparkassen-CSV-Feldmapping konkretisiert
+
+Quelle/Ticket: `FIN-010`
+
+Erkenntnis/Entscheidung:
+
+- Das Sparkassen-CSV-Format ist fuer den MVP konkret genug spezifiziert (Delimiter, Datums-/Betragsformat, relevante Header).
+- Ein anonymisiertes Referenzsample liegt in `docs/samples/sparkasse-umsatz-anonymized.csv`.
+- Die Extraktion fuer Buchungstag, Betrag, Beschreibung, Gegenpartei und Info ist als Mapping dokumentiert.
+- Deduplizierung wird ueber einen Fingerprint aus Kernfeldern vorbereitet.
+- Bargeldabhebungen werden regelbasiert als `transfer` (`Sparkasse -> Bargeld`) behandelt.
+
+Auswirkung:
+
+- `FIN-011` kann auf einem konkreten Importmapping aufbauen.
+- Risiken durch uneinheitliche CSV-Interpretation sind reduziert.
+
+Folgeaktion:
+
+- Reviewer-Pruefung fuer FIN-010.
+- Danach Umsetzung von `FIN-011` auf Basis des dokumentierten Feldmappings.

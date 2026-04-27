@@ -194,7 +194,7 @@ Notizen:
 
 ### FIN-010 Sparkassen-CSV-Import analysieren
 
-Status: `todo`
+Status: `doing`
 Prioritaet: `P0`
 
 Ziel: Das echte Sparkassen-CSV-Exportformat wird verstanden.
@@ -210,6 +210,8 @@ Akzeptanzkriterien:
 Notizen:
 
 - Startformat fuer den MVP ist Sparkassen-CSV (wie bereitgestellt am 2026-04-26).
+- Anonymisierte Referenzdatei liegt in `docs/samples/sparkasse-umsatz-anonymized.csv`.
+- Analyse und Mappingdoku sind aktualisiert; Ticket wartet auf Reviewer-Freigabe.
 
 ### FIN-011 Import-Workflow bauen
 
