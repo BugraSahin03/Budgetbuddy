@@ -80,7 +80,7 @@ Notizen:
 
 ### FIN-003 Erste App-Navigation und Layout bauen
 
-Status: `todo`
+Status: `doing`
 Prioritaet: `P0`
 
 Ziel: Die App bekommt eine klare Grundnavigation.
@@ -93,11 +93,15 @@ Akzeptanzkriterien:
 - Keine Marketing-Landingpage als erste Ansicht
 - Warn- und Statuszustaende sind visuell vorgesehen
 
+Notizen:
+
+- Umsetzung liegt in Review-PR `#4` (Branch `codex/fin-003-clean`).
+
 ## MVP 1: Manuelle Nutzung
 
 ### FIN-004 Kategorien verwalten
 
-Status: `todo`
+Status: `doing`
 Prioritaet: `P0`
 
 Ziel: Feste Kategorien koennen gepflegt werden.
@@ -108,6 +112,10 @@ Akzeptanzkriterien:
 - Kategorie hat Name, Farbe/Icon optional und Standardstatus
 - Kategorien koennen in Monatsbudgets verwendet werden
 - Deaktivierte Kategorien bleiben fuer historische Transaktionen erhalten
+
+Notizen:
+
+- Umsetzung liegt in Review-PR `#5` (Branch `codex/fin-004-clean`, gestapelt auf `#4`).
 
 ### FIN-005 Monatsbudgets fuer feste Kategorien pflegen
 
