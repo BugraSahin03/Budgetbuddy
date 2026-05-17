@@ -69,6 +69,16 @@ body:
     validations:
       required: true
   - type: textarea
+    id: read_scope
+    attributes:
+      label: Read-Scope
+      description: Welche Dateien/Ordner duerfen fuer Kontext gelesen werden?
+      placeholder: |
+        - docs/**
+        - src/**
+    validations:
+      required: true
+  - type: textarea
     id: non_goals
     attributes:
       label: Nicht-Ziele
@@ -76,6 +86,16 @@ body:
       placeholder: |
         - Kein Refactor ausserhalb des Tickets
         - Keine Datenmodell-Aenderung
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Abhaengigkeiten
+      description: Welche Issues, Entscheidungen oder Freigaben muessen vorher erledigt sein?
+      placeholder: |
+        - Keine
+        - Blockiert durch #123
     validations:
       required: true
   - type: textarea

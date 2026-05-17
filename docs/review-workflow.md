@@ -12,7 +12,7 @@ Der Reviewer ist die letzte Qualitaetsinstanz. Er prueft, ob eine Implementer-In
 
 - bearbeitet ein GitHub Issue
 - setzt den Issue-Status auf `status:doing`
-- arbeitet auf einem eigenen Ticket-Branch/Worktree, wenn parallel entwickelt wird
+- arbeitet immer auf einem eigenen Ticket-Branch und eigenen Worktree
 - haelt den vereinbarten Write-Scope ein
 - implementiert die Aenderung
 - prueft Akzeptanzkriterien
@@ -54,16 +54,18 @@ Der Reviewer prueft:
 
 ## Diff-Grenze
 
-Der Reviewer reviewed nur den Diff des Tickets gegen seine Basis.
+Der Reviewer reviewed standardmaessig nur den PR-Diff des Tickets gegen `main`.
 
 Pflicht:
 
 ```bash
-git diff --name-only <base>...HEAD
-git diff <base>...HEAD
+git diff --name-only main...HEAD
+git diff main...HEAD
 ```
 
 Wenn der Diff Dateien ausserhalb des vereinbarten Write-Scopes enthaelt und keine Begruendung vorliegt, soll der Reviewer `CHANGES_REQUESTED` geben.
+
+Gestapelte Branches sind nur ein begruendeter Ausnahmefall. Dann muss die abweichende Base im Issue und PR dokumentiert sein und vom Reviewer explizit beruecksichtigt werden.
 
 Der Reviewer soll keine fremden oder bereits integrierten Aenderungen bewerten, die nicht Teil des Ticket-Diffs sind.
 
@@ -111,9 +113,11 @@ Rest-Risiko:
 
 Empfohlener Ablauf:
 
-1. Implementer setzt Issue auf `status:doing`.
-2. Nach Umsetzung setzt Implementer auf `status:review` und erstellt/aktualisiert den PR.
-3. Reviewer prueft.
-4. Bei `APPROVED`: Merge, dann Issue auf `status:done` setzen und schliessen.
-5. Bei `CHANGES_REQUESTED`: Issue bleibt offen und geht zurueck an Implementer.
-6. Bei `BLOCKED`: Issue auf `status:blocked` oder Blocker im Issue dokumentieren.
+1. Implementer legt Branch und Worktree an.
+2. Implementer setzt Issue auf `status:doing`.
+3. Nach Umsetzung setzt Implementer auf `status:review` und erstellt/aktualisiert den PR gegen `main`.
+4. Reviewer prueft.
+5. Bei `APPROVED`: Merge nach `main`, dann Issue auf `status:done` setzen und schliessen.
+6. Implementer loescht danach Worktree sowie lokalen und Remote-Branch.
+7. Bei `CHANGES_REQUESTED`: Issue bleibt offen und geht zurueck an Implementer.
+8. Bei `BLOCKED`: Issue auf `status:blocked` oder Blocker im Issue dokumentieren.

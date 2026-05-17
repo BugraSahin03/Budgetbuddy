@@ -21,25 +21,23 @@ Tickets werden in GitHub Issues gepflegt.
 
 Wenn eine Instanz an einem Ticket arbeitet:
 
-1. Issue auf `status:doing` setzen.
-2. Branch/Worktree und Write-Scope klaeren.
-3. Nur Dateien im Write-Scope anfassen.
-4. Bei neuen Entscheidungen ein ADR oder eine Notiz im passenden Dokument ergaenzen.
-5. Nach Umsetzung Akzeptanzkriterien pruefen.
-6. PR mit `Closes #<issue>` erstellen und Aenderungen an Reviewer uebergeben.
-7. Ticket erst nach `APPROVED` und Merge als `status:done` markieren und schliessen.
+1. Im GitHub Issue FIN-Referenz, Write-Scope, Read-Scope, Nicht-Ziele und Abhaengigkeiten klaeren.
+2. Von aktuellem `main` einen eigenen Ticket-Branch und eigenen Worktree anlegen.
+3. Erst danach das Issue auf `status:doing` setzen.
+4. Nur Dateien im Write-Scope anfassen.
+5. Bei neuen Entscheidungen ein ADR oder eine Notiz im passenden Dokument ergaenzen.
+6. Nach Umsetzung Akzeptanzkriterien pruefen.
+7. PR gegen `main` mit `Closes #<issue>` erstellen und Aenderungen an Reviewer uebergeben.
+8. Ticket erst nach `APPROVED` und Merge als `status:done` markieren und schliessen.
+9. Nach dem Merge raeumt der Implementer Worktree sowie lokalen und Remote-Branch auf.
 
-Wenn parallel gearbeitet wird, sollte jede Instanz ein anderes Ticket uebernehmen.
+Auch kleine produktive Aenderungen folgen diesem Ablauf. Wenn zwei Tickets dieselben zentralen Dateien aendern muessen, werden sie standardmaessig nicht parallelisiert.
 
-Parallel laufende Tickets muessen getrennte Write-Scopes haben. Wenn zwei Tickets dieselben Dateien aendern muessen, sollten sie nacheinander oder in bewusst koordinierter Reihenfolge umgesetzt werden.
+## Arbeitsraeume und Quelle der Wahrheit
 
-## Goldene Quelle
+`main` auf GitHub und im Hauptordner `/Volumes/Intenso/Dev/Budgetbuddy` ist die stabile Integrationsbasis.
 
-Alle produktiven Datei- und Codeaenderungen werden in `/Volumes/Intenso/Dev/Budgetbuddy` vorgenommen.
-
-Andere Codex-Arbeitsordner koennen als Scratch/Analyse dienen, sind aber nicht die massgebliche Projektquelle.
-
-Fuer parallele Implementierung ist pro Ticket ein eigener Branch und bei gleichzeitiger Arbeit ein eigener Git-Worktree verpflichtend. Details stehen in `docs/parallel-development.md`.
+Der Hauptordner bleibt dauerhaft auf `main` und dient als Kontrollraum, nicht als Implementierungsarbeitsplatz. Jede produktive Aenderung wird in einem eigenen Ticket-Worktree umgesetzt. Details stehen in `docs/parallel-development.md`.
 
 ## Review-Gate
 
@@ -47,13 +45,14 @@ Produktive Aenderungen muessen durch eine Reviewer-Instanz freigegeben werden.
 
 Empfohlener Ablauf:
 
-1. Implementer bearbeitet Issue.
+1. Implementer arbeitet im Ticket-Worktree.
 2. Implementer prueft Akzeptanzkriterien.
-3. Implementer erstellt PR und uebergibt Aenderungen an Reviewer.
-4. Reviewer liest `docs/review-workflow.md` und prueft die Aenderungen.
+3. Implementer erstellt PR gegen `main` und uebergibt Aenderungen an Reviewer.
+4. Reviewer liest `docs/review-workflow.md` und prueft den PR-Diff gegen `main`.
 5. Nur bei `APPROVED` und gruener CI darf in `main` gemerged werden.
 6. Bei `CHANGES_REQUESTED` geht das Feedback zurueck an den Implementer.
 7. Bei `BLOCKED` wird der Blocker im Issue dokumentiert.
+8. Nach erfolgreichem Merge raeumt der Implementer Worktree und Branch auf.
 
 Der Reviewer soll kritisch sein und Findings priorisieren, aber keine neuen Features in den Review hineinziehen.
 

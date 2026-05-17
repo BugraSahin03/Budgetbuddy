@@ -27,30 +27,31 @@ Bitte lies zuerst `docs/project-briefing.md`, das GitHub Issue `#XXX` (inkl. `[F
 Bearbeite danach Issue `#XXX`.
 
 Arbeitsregeln:
-- Setze das Issue auf `status:doing`, bevor du beginnst.
+- Lege zuerst vom aktuellen `main` Branch und Worktree an; setze das Issue erst danach auf `status:doing`.
 - Lies `docs/parallel-development.md`.
-- Arbeite auf einem eigenen Issue-Branch und bei Parallelarbeit in eigenem Worktree.
+- Arbeite immer auf einem eigenen Issue-Branch und in einem eigenen Worktree.
 - Nutze Branch-Schema `issue/<nr>-fin-<slug>`.
-- Klaere und beachte den Write-Scope fuer dieses Ticket.
+- Pruefe, dass Write-Scope, Read-Scope, Nicht-Ziele und Abhaengigkeiten direkt im Issue dokumentiert sind.
 - Aendere nur Dateien im Write-Scope.
 - Respektiere die Entscheidungen in `docs/adr/`.
 - Wenn du fachliches Wissen oder eine Entscheidung ergaenzt, dokumentiere sie in der passenden Datei.
 - Neue Erkenntnisse oder kleinere Entscheidungen gehoeren in `docs/decision-log.md`.
 - Grundlegende Entscheidungen, die Datenmodell, Architektur, Sicherheit, Deployment, Importstrategie oder zentrale Fachlogik aendern, gehoeren zusaetzlich als ADR nach `docs/adr/`.
 - Pruefe am Ende die Akzeptanzkriterien.
-- Erstelle/aktualisiere einen PR mit `Closes #XXX`.
+- Erstelle/aktualisiere einen PR gegen `main` mit `Closes #XXX`.
 - Setze das Issue bei Review-Uebergabe auf `status:review`.
 - Schliessen nur nach Reviewer-Entscheidung `APPROVED` und Merge.
+- Loesche nach erfolgreichem Merge den Ticket-Worktree sowie lokalen und Remote-Branch.
 
 Gib mir am Ende eine kurze Zusammenfassung der geaenderten Dateien, der erledigten Akzeptanzkriterien und eventuell offener Punkte.
 
 Ergaenze fuer den Reviewer ausserdem:
 - Issue-Nummer
 - Branch
-- Base Commit/Base Branch
-- Write-Scope
 - geaenderte Dateien
 - ausgefuehrte Checks
+- Dokumentation
+- bekannte Restpunkte
 ```
 
 ## Nur Analyse, keine Umsetzung
@@ -136,7 +137,7 @@ Reviewe danach die Aenderungen zu Issue `#XXX`.
 
 Dein Auftrag:
 - Pruefe, ob das Ticket und seine Akzeptanzkriterien erfuellt sind.
-- Pruefe mit `git diff --name-only <base>...HEAD`, welche Dateien wirklich Teil dieses Tickets sind.
+- Pruefe mit `git diff --name-only main...HEAD`, welche Dateien wirklich Teil dieses Tickets sind.
 - Pruefe, ob alle geaenderten Dateien im vereinbarten Write-Scope liegen.
 - Pruefe, ob die Aenderungen zum Projektziel und zu den fachlichen Regeln passen.
 - Pruefe, ob Kategorien, Sonderbudgets, Fixkosten, Bargeld und Transfers korrekt behandelt werden.
@@ -162,7 +163,7 @@ Findings:
 
 Geprueft:
 - Ticket-Akzeptanzkriterien
-- Ticket-Diff gegen Base
+- Ticket-Diff gegen `main`
 - Write-Scope
 - relevante Projektregeln
 - Tests/Build/Linting, falls vorhanden

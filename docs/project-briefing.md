@@ -30,6 +30,9 @@ Issue-Konventionen:
 - Status wird ueber genau ein `status:*` Label gepflegt (`status:todo|doing|review|blocked|done`)
 - Prioritaet wird ueber `priority:p0|p1|p2` gepflegt
 - MVP-Phasen laufen ueber Milestones (`MVP 0` bis `MVP 4`)
+- aktive Issues enthalten Write-Scope, Read-Scope, Nicht-Ziele und Abhaengigkeiten
+- jede produktive Umsetzung nutzt eigenen Branch und eigenen Worktree
+- der Hauptordner `/Volumes/Intenso/Dev/Budgetbuddy` bleibt auf `main`; Ticketarbeit findet in Worktrees wie `../Budgetbuddy-issue-<nr>` statt
 
 Neue Erkenntnisse oder Entscheidungen muessen dokumentiert werden. Kleine oder laufende Erkenntnisse gehoeren in `docs/decision-log.md`; grundlegende Projektentscheidungen zusaetzlich als ADR nach `docs/adr/`.
 

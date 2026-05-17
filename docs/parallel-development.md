@@ -1,69 +1,65 @@
 # Parallel Development Workflow
 
-Dieses Dokument beschreibt, wie mehrere Agents parallel arbeiten koennen, ohne sich gegenseitig Aenderungen zu ueberschreiben oder Reviews zu vermischen.
+Dieses Dokument beschreibt den verbindlichen Arbeitsablauf fuer Ticket-Branches und Worktrees.
 
 ## Grundprinzip
 
-Die goldene Quelle ist `/Volumes/Intenso/Dev/Budgetbuddy`.
+Die stabile Integrationsbasis ist `main` im Hauptordner `/Volumes/Intenso/Dev/Budgetbuddy` und auf GitHub.
 
-Parallel gearbeitet wird nicht direkt wild im gleichen Arbeitsbaum, sondern pro Ticket isoliert:
+Jede produktive Arbeit wird isoliert umgesetzt:
 
 - ein GitHub Issue
-- ein Branch
-- bei gleichzeitiger Arbeit zwingend ein eigener Git-Worktree
-- ein klarer Write-Scope
+- ein Ticket-Branch
+- ein eigener Git-Worktree
+- ein klarer Write-Scope im Issue
+- ein PR gegen `main`
 - ein Review nur gegen den Diff dieses Tickets
 
-## Empfohlenes Modell
+Der Hauptordner bleibt auf `main`. Dort wird nicht direkt implementiert.
 
-### Integration Branch
+## Standardmodell
 
-Der stabile Integrationsstand liegt auf dem Hauptbranch, z. B. `main`.
+### Branch und Worktree pro Issue
 
-Auf diesem Branch sollten keine Implementer direkt entwickeln. Er ist die Basis fuer neue Ticket-Branches und die Zielbasis fuer freigegebene Aenderungen.
-
-### Ticket Branch
-
-Jedes Ticket bekommt einen eigenen Branch:
+Jedes Ticket bekommt einen Branch im Schema:
 
 ```text
 issue/<github-nummer>-fin-<slug>
 ```
 
-Beispiele:
+und einen Worktree im Schema:
 
 ```text
-issue/42-fin-003-navigation-layout
-issue/57-fin-011-import-workflow
-issue/61-fin-016-backup-konzept
+../Budgetbuddy-issue-<github-nummer>
 ```
-
-### Worktree pro Agent
-
-Wenn mehrere Agents wirklich gleichzeitig arbeiten, muss jeder Agent in einem eigenen Worktree arbeiten.
 
 Beispiel:
 
 ```bash
-git worktree add ../Budgetbuddy-issue-42 -b issue/42-fin-003-navigation-layout main
+git switch main
+git pull --ff-only origin main
 git worktree add ../Budgetbuddy-issue-57 -b issue/57-fin-011-import-workflow main
 ```
 
-Damit haben Agents getrennte Arbeitsordner, aber teilen denselben Git-Verlauf.
+Danach wird im neuen Worktree gearbeitet:
 
-## Ticket Ownership
+```bash
+cd ../Budgetbuddy-issue-57
+```
 
-Bevor ein Ticket umgesetzt wird, sollte der erlaubte Aenderungsbereich festgelegt werden.
+Auch wenn nur eine Instanz arbeitet, gilt derselbe Ablauf.
 
-Jedes aktive Ticket braucht:
+## Issue-Setup vor Arbeitsbeginn
 
-- GitHub-Issue-ID und FIN-Referenz
-- Branchname
-- Basis-Commit oder Basis-Branch
+Bevor ein Ticket auf `status:doing` gesetzt wird, muss das GitHub Issue enthalten:
+
+- FIN-Referenz
 - Write-Scope
 - Read-Scope
 - explizite Nicht-Ziele
-- Abhaengigkeiten zu anderen Tickets
+- Abhaengigkeiten
+
+Erst wenn Branch und Worktree existieren, wird das Issue auf `status:doing` gesetzt.
 
 ### Write-Scope
 
@@ -72,19 +68,14 @@ Der Write-Scope definiert, welche Dateien oder Ordner ein Implementer aendern da
 Beispiel:
 
 ```text
-Issue: #57 ([FIN-011])
-Branch: issue/57-fin-011-import-workflow
 Write-Scope:
 - src/import/**
 - tests/import-*.test.ts
 - docs/import-and-bank-notes.md
 - docs/decision-log.md
-Nicht erlaubt:
-- app/settings/**
-- docs/review-workflow.md
 ```
 
-Wenn waehrend der Umsetzung ein anderer Bereich notwendig wird, soll der Implementer stoppen und die Scope-Erweiterung dokumentieren oder bestaetigen lassen.
+Wenn waehrend der Umsetzung ein anderer Bereich notwendig wird, stoppt der Implementer und dokumentiert die Scope-Erweiterung im Issue, bevor er weiterarbeitet.
 
 ### Read-Scope
 
@@ -92,40 +83,41 @@ Der Read-Scope kann breiter sein. Ein Agent darf Projektdateien lesen, um Kontex
 
 ## Umgang mit gemeinsamen Dateien
 
-Gemeinsame Dateien sind konfliktanfaellig:
+Konfliktanfaellig sind insbesondere:
 
 - `docs/decision-log.md`
 - `docs/project-briefing.md`
 - ADRs
 - zentrale Konfigurationen
 
-Regel:
+Regeln:
 
-- Ticketstatus, Prioritaet und Freigabe laufen ueber GitHub Issue-Labels und PR-Review.
-- `docs/decision-log.md` darf durch Ticket-Branches ergaenzt werden, aber nur mit einem eigenen datierten Abschnitt.
+- Der Write-Scope im Issue ist fuehrend.
+- `docs/decision-log.md` darf ergaenzt werden, aber nur mit einem eigenen datierten Abschnitt.
 - ADRs werden nur angelegt, wenn eine grundlegende Entscheidung getroffen wurde.
-- Wenn zwei Tickets dieselbe zentrale Datei stark veraendern muessen, sollten sie nicht parallel laufen.
+- Wenn zwei Tickets dieselbe zentrale Datei stark veraendern muessen, werden sie standardmaessig nicht parallelisiert.
 
 ## Implementer-Ablauf
 
 1. `docs/project-briefing.md`, `docs/codex-workflow.md` und dieses Dokument lesen.
-2. Issue auf `status:doing` setzen.
-3. Eigenen Branch/Worktree nutzen.
-4. Nur Dateien im Write-Scope aendern.
-5. Akzeptanzkriterien pruefen.
-6. Tests/Build/Linting ausfuehren, soweit sinnvoll.
-7. PR mit `Closes #<issue>` erstellen.
-8. Handoff fuer Reviewer schreiben und Label auf `status:review` setzen.
+2. GitHub Issue inkl. Write-Scope pruefen.
+3. Von aktuellem `main` Branch und Worktree anlegen.
+4. Issue auf `status:doing` setzen.
+5. Nur Dateien im Write-Scope aendern.
+6. Akzeptanzkriterien pruefen.
+7. Tests/Build/Linting ausfuehren, soweit sinnvoll.
+8. PR gegen `main` mit `Closes #<issue>` erstellen.
+9. Handoff fuer Reviewer schreiben und Issue auf `status:review` setzen.
 
 ## Reviewer-Ablauf
 
-Der Reviewer reviewed nur den Ticket-Diff, nicht das ganze Projekt.
+Der Reviewer prueft standardmaessig den PR-Diff gegen `main`, nicht das ganze Projekt.
 
 Pflichtpruefung:
 
 ```bash
-git diff --name-only <base>...HEAD
-git diff <base>...HEAD
+git diff --name-only main...HEAD
+git diff main...HEAD
 ```
 
 Der Reviewer prueft:
@@ -145,22 +137,14 @@ Entscheidung: CHANGES_REQUESTED
 
 ## Handoff an Reviewer
 
-Implementer sollen am Ende diese Informationen liefern:
+Implementer liefern am Ende:
 
 ```md
 Issue: #57 ([FIN-011])
 Branch: issue/57-fin-011-import-workflow
-Base: <commit-oder-branch>
-
-Write-Scope:
-- ...
 
 Geaenderte Dateien:
 - ...
-
-Akzeptanzkriterien:
-- [x] ...
-- [ ] ...
 
 Ausgefuehrte Checks:
 - `npm run test`
@@ -174,15 +158,33 @@ Bekannte Restpunkte:
 - ...
 ```
 
-## Integration nach Freigabe
+Der Write-Scope wird im Issue gepflegt und im Handoff nur bei Abweichungen erneut erwaehnt.
+
+## Integration und Cleanup nach Freigabe
 
 Nur nach `APPROVED`:
 
-1. Branch gegen aktuellen Integrationsstand aktualisieren.
+1. Branch gegen aktuellen `main` aktualisieren.
 2. Falls Konflikte entstehen: zurueck an Implementer.
 3. Checks erneut ausfuehren.
-4. Branch in Hauptbranch mergen.
+4. PR in `main` mergen.
 5. Issue auf `status:done` setzen und schliessen.
+6. Implementer loescht den Ticket-Worktree sowie lokalen und Remote-Branch.
+
+Beispiel nach erfolgreichem Merge:
+
+```bash
+cd /Volumes/Intenso/Dev/Budgetbuddy
+git switch main
+git pull --ff-only origin main
+git worktree remove ../Budgetbuddy-issue-57
+git branch -d issue/57-fin-011-import-workflow
+git push origin --delete issue/57-fin-011-import-workflow
+```
+
+## Ausnahmen
+
+Gestapelte Branches sind kein Standardworkflow. Wenn eine Abhaengigkeit sie ausnahmsweise erfordert, muss dies im Issue und im PR klar begruendet werden; Reviewer pruefen dann explizit die gewaehlte Base.
 
 ## Gute Parallelisierung
 

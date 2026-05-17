@@ -88,3 +88,5 @@ Die Basisinitialisierung erfolgt in:
 ## Einstieg fuer neue Codex-Instanzen
 
 Neue Instanzen sollten zuerst `docs/project-briefing.md` lesen. Danach je nach Aufgabe GitHub Issues (statt `docs/backlog.md`), `docs/codex-workflow.md`, `docs/parallel-development.md`, `docs/domain-model.md`, `docs/import-and-bank-notes.md`, `docs/review-workflow.md` und `docs/decision-log.md`.
+
+Arbeitsstandard: Der Hauptordner bleibt auf `main`. Jede produktive Aenderung startet von aktuellem `main` in einem eigenen Ticket-Worktree wie `../Budgetbuddy-issue-<nr>` und einem Branch im Schema `issue/<nr>-fin-<slug>`.

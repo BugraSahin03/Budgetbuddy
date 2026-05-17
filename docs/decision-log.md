@@ -55,6 +55,27 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-05-17 - Entwicklungsworkflow auf dauerhafte Ticket-Worktrees umgestellt
+
+Quelle/Ticket: Prozessentscheidung
+
+Erkenntnis/Entscheidung:
+
+- Der Hauptordner `/Volumes/Intenso/Dev/Budgetbuddy` bleibt dauerhaft auf `main` und dient als Kontrollraum.
+- Jede produktive Aenderung nutzt einen eigenen Branch und eigenen Worktree, auch ohne parallele Arbeit.
+- Standardfluss ist: Issue -> Worktree/Branch -> PR gegen `main` -> Review -> Merge nach `main` -> Worktree/Branch loeschen.
+- Write-Scope, Read-Scope, Nicht-Ziele und Abhaengigkeiten gehoeren direkt ins GitHub Issue.
+- Gestapelte Branches sind nur noch ein begruendeter Ausnahmefall.
+
+Auswirkung:
+
+- Es gibt nur noch einen Arbeitsmodus statt Sonderregeln fuer Einzel- und Parallelarbeit.
+- `main` bleibt sauber, und erledigte Branches/Worktrees werden nach Merge konsequent entfernt.
+
+Folgeaktion:
+
+- Workflow-Dokumente, Prompts und Issue-Template an den neuen Standard anpassen.
+
 ## 2026-05-17 - Ticketquelle auf GitHub Issues migriert
 
 Quelle/Ticket: Prozessmigration
@@ -192,6 +213,7 @@ Auswirkung:
 Folgeaktion:
 
 - Bei neuen Tickets Write-Scope und Branch/Worktree im Handoff an den Reviewer angeben.
+- Diese fruehere Prozessentscheidung wurde am 2026-05-17 durch den verbindlichen Worktree-Standard verschaerft.
 
 ## 2026-04-27 - FIN-002 Schema- und Betragskonvention festgelegt
 
