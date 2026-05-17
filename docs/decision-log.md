@@ -55,6 +55,26 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-05-17 - Ticketquelle auf GitHub Issues migriert
+
+Quelle/Ticket: Prozessmigration
+
+Erkenntnis/Entscheidung:
+
+- `docs/backlog.md` wird als Archiv eingefroren und nicht mehr aktiv gepflegt.
+- Ticketstatus, Prioritaet und MVP-Phase laufen ab jetzt ueber GitHub Issues (Labels + Milestones).
+- Parallelarbeit nutzt pro Ticket eigene Branches im Schema `issue/<nummer>-fin-<slug>` und bei Gleichzeitigkeit getrennte Worktrees.
+- Merge auf `main` soll ueber PR + Review + CI + Branch Protection abgesichert werden.
+
+Auswirkung:
+
+- Die bisherige Konfliktquelle durch parallele Edits an `docs/backlog.md` entfaellt.
+- Ticketfortschritt ist pro Issue atomar und nachvollziehbar.
+
+Folgeaktion:
+
+- Migrationsscript ausfuehren (`--execute`) und mit `--verify` validieren.
+
 ## 2026-04-26 - Initialer Projektrahmen dokumentiert
 
 Quelle/Ticket: Projektstart
@@ -150,7 +170,7 @@ Auswirkung:
 
 Folgeaktion:
 
-- Bei zukuenftigen Tickets Review-Status im Backlog oder in der Ticketnotiz festhalten.
+- Bei zukuenftigen Tickets Review-Status im Issue (`status:review`) festhalten.
 
 ## 2026-04-27 - Parallelentwicklung ueber Ticket-Branches und Write-Scopes
 

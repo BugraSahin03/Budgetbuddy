@@ -14,7 +14,7 @@ Der erste echte Nutzen entsteht durch Sparkassen-Importe, manuelle Eintraege, Ka
 
 Neue Instanzen sollen zuerst dieses Dokument lesen. Danach je nach Aufgabe:
 
-1. `docs/backlog.md` fuer Ticketstatus, Prioritaeten und naechste Arbeit
+1. GitHub Issues fuer Ticketstatus, Prioritaeten und naechste Arbeit
 2. `docs/codex-workflow.md` fuer parallele Arbeitsweise
 3. `docs/domain-model.md` fuer Fachmodell und Datenregeln
 4. `docs/import-and-bank-notes.md` fuer Sparkassen-Import und Bankthemen
@@ -23,6 +23,13 @@ Neue Instanzen sollen zuerst dieses Dokument lesen. Danach je nach Aufgabe:
 7. `docs/review-workflow.md` fuer Reviewer-Gate und Freigabeprozess
 8. `docs/adr/` fuer grundlegende Architekturentscheidungen
 9. `docs/prompts.md` fuer kopierbare Prompts an weitere Codex-Instanzen
+
+Issue-Konventionen:
+
+- FIN-Referenz bleibt im Titel, z. B. `[FIN-003] Erste App-Navigation und Layout bauen`
+- Status wird ueber genau ein `status:*` Label gepflegt (`status:todo|doing|review|blocked|done`)
+- Prioritaet wird ueber `priority:p0|p1|p2` gepflegt
+- MVP-Phasen laufen ueber Milestones (`MVP 0` bis `MVP 4`)
 
 Neue Erkenntnisse oder Entscheidungen muessen dokumentiert werden. Kleine oder laufende Erkenntnisse gehoeren in `docs/decision-log.md`; grundlegende Projektentscheidungen zusaetzlich als ADR nach `docs/adr/`.
 

@@ -1,8 +1,12 @@
-# Backlog / Tickets
+# Backlog / Tickets (Archiv)
+
+> Archivstatus seit 2026-05-17: Diese Datei ist read-only und dient nur als historische Referenz.
+> Aktive Ticketpflege laeuft ab jetzt ausschliesslich ueber GitHub Issues.
 
 ## Arbeitsweise
 
-Tickets werden in diesem Dokument gepflegt, bis ein GitHub-Repository existiert. Spaeter koennen sie als GitHub Issues uebernommen werden.
+Tickets wurden bis zur GitHub-Issue-Migration in diesem Dokument gepflegt.
+Diese Datei wird nicht mehr aktiv aktualisiert.
 
 Neue Codex-Instanzen sollen vor der Umsetzung `docs/project-briefing.md` und `docs/codex-workflow.md` lesen.
 
@@ -80,7 +84,8 @@ Notizen:
 
 ### FIN-003 Erste App-Navigation und Layout bauen
 
-Status: `todo`
+Status: `done`
+Review: `approved`
 Prioritaet: `P0`
 
 Ziel: Die App bekommt eine klare Grundnavigation.
@@ -97,7 +102,8 @@ Akzeptanzkriterien:
 
 ### FIN-004 Kategorien verwalten
 
-Status: `todo`
+Status: `done`
+Review: `approved`
 Prioritaet: `P0`
 
 Ziel: Feste Kategorien koennen gepflegt werden.

@@ -8,9 +8,9 @@ Die goldene Quelle ist `/Volumes/Intenso/Dev/Budgetbuddy`.
 
 Parallel gearbeitet wird nicht direkt wild im gleichen Arbeitsbaum, sondern pro Ticket isoliert:
 
-- ein Ticket
+- ein GitHub Issue
 - ein Branch
-- optional ein eigener Git-Worktree
+- bei gleichzeitiger Arbeit zwingend ein eigener Git-Worktree
 - ein klarer Write-Scope
 - ein Review nur gegen den Diff dieses Tickets
 
@@ -27,26 +27,26 @@ Auf diesem Branch sollten keine Implementer direkt entwickeln. Er ist die Basis 
 Jedes Ticket bekommt einen eigenen Branch:
 
 ```text
-ticket/FIN-XXX-kurzer-name
+issue/<github-nummer>-fin-<slug>
 ```
 
 Beispiele:
 
 ```text
-ticket/FIN-002-datenmodell
-ticket/FIN-003-navigation-layout
-ticket/FIN-010-sparkassen-csv-analyse
+issue/42-fin-003-navigation-layout
+issue/57-fin-011-import-workflow
+issue/61-fin-016-backup-konzept
 ```
 
 ### Worktree pro Agent
 
-Wenn mehrere Agents wirklich gleichzeitig arbeiten, sollte jeder Agent in einem eigenen Worktree arbeiten.
+Wenn mehrere Agents wirklich gleichzeitig arbeiten, muss jeder Agent in einem eigenen Worktree arbeiten.
 
 Beispiel:
 
 ```bash
-git worktree add ../Budgetbuddy-FIN-002 -b ticket/FIN-002-datenmodell main
-git worktree add ../Budgetbuddy-FIN-003 -b ticket/FIN-003-navigation-layout main
+git worktree add ../Budgetbuddy-issue-42 -b issue/42-fin-003-navigation-layout main
+git worktree add ../Budgetbuddy-issue-57 -b issue/57-fin-011-import-workflow main
 ```
 
 Damit haben Agents getrennte Arbeitsordner, aber teilen denselben Git-Verlauf.
@@ -57,7 +57,7 @@ Bevor ein Ticket umgesetzt wird, sollte der erlaubte Aenderungsbereich festgeleg
 
 Jedes aktive Ticket braucht:
 
-- Ticket-ID
+- GitHub-Issue-ID und FIN-Referenz
 - Branchname
 - Basis-Commit oder Basis-Branch
 - Write-Scope
@@ -72,15 +72,15 @@ Der Write-Scope definiert, welche Dateien oder Ordner ein Implementer aendern da
 Beispiel:
 
 ```text
-Ticket: FIN-002
-Branch: ticket/FIN-002-datenmodell
+Issue: #57 ([FIN-011])
+Branch: issue/57-fin-011-import-workflow
 Write-Scope:
-- src/db/**
-- tests/db-*.test.ts
-- docs/domain-model.md
+- src/import/**
+- tests/import-*.test.ts
+- docs/import-and-bank-notes.md
 - docs/decision-log.md
 Nicht erlaubt:
-- app/**
+- app/settings/**
 - docs/review-workflow.md
 ```
 
@@ -94,7 +94,6 @@ Der Read-Scope kann breiter sein. Ein Agent darf Projektdateien lesen, um Kontex
 
 Gemeinsame Dateien sind konfliktanfaellig:
 
-- `docs/backlog.md`
 - `docs/decision-log.md`
 - `docs/project-briefing.md`
 - ADRs
@@ -102,21 +101,21 @@ Gemeinsame Dateien sind konfliktanfaellig:
 
 Regel:
 
-- `docs/backlog.md` wird moeglichst durch eine koordinierende Instanz oder im Rahmen der Ticket-Uebergabe aktualisiert.
+- Ticketstatus, Prioritaet und Freigabe laufen ueber GitHub Issue-Labels und PR-Review.
 - `docs/decision-log.md` darf durch Ticket-Branches ergaenzt werden, aber nur mit einem eigenen datierten Abschnitt.
 - ADRs werden nur angelegt, wenn eine grundlegende Entscheidung getroffen wurde.
 - Wenn zwei Tickets dieselbe zentrale Datei stark veraendern muessen, sollten sie nicht parallel laufen.
 
 ## Implementer-Ablauf
 
-1. `docs/project-briefing.md`, `docs/backlog.md`, `docs/codex-workflow.md` und dieses Dokument lesen.
-2. Ticket und Write-Scope bestaetigen.
+1. `docs/project-briefing.md`, `docs/codex-workflow.md` und dieses Dokument lesen.
+2. Issue auf `status:doing` setzen.
 3. Eigenen Branch/Worktree nutzen.
 4. Nur Dateien im Write-Scope aendern.
 5. Akzeptanzkriterien pruefen.
 6. Tests/Build/Linting ausfuehren, soweit sinnvoll.
-7. Handoff fuer Reviewer schreiben.
-8. Ticket nicht eigenmaechtig auf `done` setzen.
+7. PR mit `Closes #<issue>` erstellen.
+8. Handoff fuer Reviewer schreiben und Label auf `status:review` setzen.
 
 ## Reviewer-Ablauf
 
@@ -149,8 +148,8 @@ Entscheidung: CHANGES_REQUESTED
 Implementer sollen am Ende diese Informationen liefern:
 
 ```md
-Ticket: FIN-XXX
-Branch: ticket/FIN-XXX-kurzer-name
+Issue: #57 ([FIN-011])
+Branch: issue/57-fin-011-import-workflow
 Base: <commit-oder-branch>
 
 Write-Scope:
@@ -183,7 +182,7 @@ Nur nach `APPROVED`:
 2. Falls Konflikte entstehen: zurueck an Implementer.
 3. Checks erneut ausfuehren.
 4. Branch in Hauptbranch mergen.
-5. Ticket auf `done` setzen.
+5. Issue auf `status:done` setzen und schliessen.
 
 ## Gute Parallelisierung
 
@@ -198,7 +197,5 @@ Nicht gut parallelisierbar:
 
 - zwei Tickets am Datenbankschema
 - zwei Tickets am gleichen Dashboard
-- parallele Umbauten an `docs/backlog.md`
 - UI-Ticket und CSS-Refactor an denselben Komponenten
 - Importworkflow und Datenmodell, wenn das Schema noch nicht freigegeben ist
-

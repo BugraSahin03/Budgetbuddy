@@ -5,15 +5,15 @@ Diese Prompts koennen kopiert werden, wenn eine neue Codex-Instanz am Projekt ar
 ## Allgemeiner Einstieg
 
 ```text
-Bitte starte damit, die Datei `docs/project-briefing.md` vollstaendig zu lesen. Lies danach `docs/backlog.md` und `docs/codex-workflow.md`.
+Bitte starte damit, die Datei `docs/project-briefing.md` vollstaendig zu lesen. Lies danach das relevante GitHub Issue und `docs/codex-workflow.md`.
 
 Ziel: Verstehe das Projekt, den aktuellen Stand, die fachlichen Regeln und die Arbeitsweise fuer parallele Codex-Instanzen.
 
 Fasse mir danach kurz zusammen:
 - worum es in dem Projekt geht
 - welche fachlichen Entscheidungen wichtig sind
-- welche Tickets aktuell offen sind
-- welches Ticket du als naechstes bearbeiten wuerdest
+- welche Issues aktuell offen sind
+- welches Issue du als naechstes bearbeiten wuerdest
 - ob du Blocker oder offene Fragen siehst
 
 Bitte nimm noch keine Code-Aenderungen vor, bevor du diese Zusammenfassung geliefert hast.
@@ -22,14 +22,15 @@ Bitte nimm noch keine Code-Aenderungen vor, bevor du diese Zusammenfassung gelie
 ## Ticket bearbeiten
 
 ```text
-Bitte lies zuerst `docs/project-briefing.md`, `docs/backlog.md` und `docs/codex-workflow.md`.
+Bitte lies zuerst `docs/project-briefing.md`, das GitHub Issue `#XXX` (inkl. `[FIN-XXX]`-Titel) und `docs/codex-workflow.md`.
 
-Bearbeite danach Ticket `FIN-XXX` aus `docs/backlog.md`.
+Bearbeite danach Issue `#XXX`.
 
 Arbeitsregeln:
-- Setze das Ticket im Backlog auf `doing`, bevor du beginnst.
+- Setze das Issue auf `status:doing`, bevor du beginnst.
 - Lies `docs/parallel-development.md`.
-- Arbeite auf einem eigenen Ticket-Branch oder Worktree, wenn parallel entwickelt wird.
+- Arbeite auf einem eigenen Issue-Branch und bei Parallelarbeit in eigenem Worktree.
+- Nutze Branch-Schema `issue/<nr>-fin-<slug>`.
 - Klaere und beachte den Write-Scope fuer dieses Ticket.
 - Aendere nur Dateien im Write-Scope.
 - Respektiere die Entscheidungen in `docs/adr/`.
@@ -37,12 +38,14 @@ Arbeitsregeln:
 - Neue Erkenntnisse oder kleinere Entscheidungen gehoeren in `docs/decision-log.md`.
 - Grundlegende Entscheidungen, die Datenmodell, Architektur, Sicherheit, Deployment, Importstrategie oder zentrale Fachlogik aendern, gehoeren zusaetzlich als ADR nach `docs/adr/`.
 - Pruefe am Ende die Akzeptanzkriterien.
-- Gib die Aenderungen nach Umsetzung an eine Reviewer-Instanz.
-- Setze das Ticket nur nach Reviewer-Entscheidung `APPROVED` auf `done`.
+- Erstelle/aktualisiere einen PR mit `Closes #XXX`.
+- Setze das Issue bei Review-Uebergabe auf `status:review`.
+- Schliessen nur nach Reviewer-Entscheidung `APPROVED` und Merge.
 
 Gib mir am Ende eine kurze Zusammenfassung der geaenderten Dateien, der erledigten Akzeptanzkriterien und eventuell offener Punkte.
 
 Ergaenze fuer den Reviewer ausserdem:
+- Issue-Nummer
 - Branch
 - Base Commit/Base Branch
 - Write-Scope
@@ -53,9 +56,9 @@ Ergaenze fuer den Reviewer ausserdem:
 ## Nur Analyse, keine Umsetzung
 
 ```text
-Bitte lies `docs/project-briefing.md`, `docs/backlog.md`, `docs/domain-model.md` und `docs/codex-workflow.md`.
+Bitte lies `docs/project-briefing.md`, das GitHub Issue `#XXX`, `docs/domain-model.md` und `docs/codex-workflow.md`.
 
-Analysiere danach Ticket `FIN-XXX`, aber nimm keine Code-Aenderungen vor.
+Analysiere danach das Issue, aber nimm keine Code-Aenderungen vor.
 
 Ich moechte von dir:
 - welche Dateien wahrscheinlich betroffen sind
@@ -70,11 +73,11 @@ Ich moechte von dir:
 ## Import-Thema
 
 ```text
-Bitte lies `docs/project-briefing.md`, `docs/import-and-bank-notes.md`, `docs/domain-model.md` und `docs/backlog.md`.
+Bitte lies `docs/project-briefing.md`, `docs/import-and-bank-notes.md`, `docs/domain-model.md` und das relevante GitHub Issue `#XXX`.
 
 Fokus: Sparkassen-Import, CSV/CAMT, Duplikaterkennung, Bargeldabhebungen als Transfer und Zuordnungsregeln.
 
-Bearbeite Ticket `FIN-XXX` oder schlage mir vor, welches Import-Ticket als naechstes sinnvoll ist.
+Bearbeite Issue `#XXX` oder schlage mir vor, welches Import-Issue als naechstes sinnvoll ist.
 
 Wichtig:
 - Verwende keine echten Bankzugangsdaten.
@@ -86,11 +89,11 @@ Wichtig:
 ## UI-/Frontend-Thema
 
 ```text
-Bitte lies `docs/project-briefing.md`, `docs/backlog.md`, `docs/domain-model.md` und `docs/codex-workflow.md`.
+Bitte lies `docs/project-briefing.md`, das GitHub Issue `#XXX`, `docs/domain-model.md` und `docs/codex-workflow.md`.
 
 Fokus: ruhige, desktop-first Finanz-App. Keine Marketing-Landingpage. Tabellen, Filter, klare Warnungen und gute Monatsuebersicht sind wichtiger als dekorative Optik.
 
-Bearbeite Ticket `FIN-XXX`.
+Bearbeite Issue `#XXX`.
 
 Bitte achte darauf:
 - feste Kategorien und Sonderbudgets getrennt anzeigen
@@ -112,7 +115,7 @@ Pruefe die folgende Erkenntnis/Entscheidung und halte sie passend im Projekt fes
 Regeln:
 - Wenn es eine kleinere Erkenntnis oder fachliche Klaerung ist, ergaenze `docs/decision-log.md`.
 - Wenn es eine grundlegende Entscheidung ist, erstelle zusaetzlich eine neue ADR in `docs/adr/`.
-- Aktualisiere betroffene Dateien wie `docs/domain-model.md`, `docs/import-and-bank-notes.md` oder `docs/backlog.md`, falls noetig.
+- Aktualisiere betroffene Dateien wie `docs/domain-model.md` oder `docs/import-and-bank-notes.md`, falls noetig.
 - Fasse am Ende kurz zusammen, wo du was dokumentiert hast.
 ```
 
@@ -123,13 +126,13 @@ Du bist die Reviewer-Instanz fuer dieses Projekt. Du bist die letzte Qualitaetsi
 
 Bitte lies zuerst:
 - `docs/project-briefing.md`
-- `docs/backlog.md`
+- das relevante GitHub Issue `#XXX`
 - `docs/codex-workflow.md`
 - `docs/parallel-development.md`
 - `docs/review-workflow.md`
 - je nach betroffenem Bereich `docs/domain-model.md`, `docs/import-and-bank-notes.md` und `docs/adr/`
 
-Reviewe danach die Aenderungen zu Ticket `FIN-XXX`.
+Reviewe danach die Aenderungen zu Issue `#XXX`.
 
 Dein Auftrag:
 - Pruefe, ob das Ticket und seine Akzeptanzkriterien erfuellt sind.
@@ -170,15 +173,15 @@ Freigabe-Bedingung:
 Rest-Risiko:
 - Kurzer Hinweis, falls etwas bewusst nicht geprueft werden konnte.
 
-Nur wenn deine Entscheidung `APPROVED` ist, darf das Ticket auf `done` gesetzt oder produktiviert werden.
+Nur wenn deine Entscheidung `APPROVED` ist, darf gemerged und das Ticket auf `status:done` gesetzt werden.
 ```
 
 ## Implementer nach Review-Feedback
 
 ```text
-Bitte lies `docs/project-briefing.md`, `docs/backlog.md`, `docs/codex-workflow.md` und `docs/review-workflow.md`.
+Bitte lies `docs/project-briefing.md`, das GitHub Issue `#XXX`, `docs/codex-workflow.md` und `docs/review-workflow.md`.
 
-Setze das Review-Feedback zu Ticket `FIN-XXX` um:
+Setze das Review-Feedback zu Issue `#XXX` um:
 
 <REVIEW_FEEDBACK_HIER_EINFUEGEN>
 

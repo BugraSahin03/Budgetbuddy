@@ -1,0 +1,86 @@
+name: FIN Ticket
+description: Arbeitsticket fuer Budgetbuddy mit FIN-Referenz, Ziel und Akzeptanzkriterien
+title: "[FIN-XXX] "
+labels:
+  - status:todo
+  - type:feature
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Bitte FIN-Referenz im Titel belassen (z. B. `[FIN-003] Erste App-Navigation und Layout bauen`).
+  - type: input
+    id: fin_ref
+    attributes:
+      label: FIN-Referenz
+      description: Interne FIN-ID, z. B. FIN-003
+      placeholder: FIN-XXX
+    validations:
+      required: true
+  - type: dropdown
+    id: priority
+    attributes:
+      label: Prioritaet
+      options:
+        - P0
+        - P1
+        - P2
+    validations:
+      required: true
+  - type: dropdown
+    id: milestone
+    attributes:
+      label: MVP-Phase
+      options:
+        - MVP 0: Fundament
+        - MVP 1: Manuelle Nutzung
+        - MVP 2: Import
+        - MVP 3: Auswertungen
+        - MVP 4: Betrieb und Sicherheit
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Ziel
+      description: Welches Ergebnis soll dieses Ticket liefern?
+      placeholder: Beschreibe das Ziel in 1-3 Saetzen.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance_criteria
+    attributes:
+      label: Akzeptanzkriterien
+      description: Checkbare Kriterien als Liste
+      placeholder: |
+        - [ ] Kriterium 1
+        - [ ] Kriterium 2
+    validations:
+      required: true
+  - type: textarea
+    id: write_scope
+    attributes:
+      label: Write-Scope
+      description: Welche Dateien/Ordner duerfen geaendert werden?
+      placeholder: |
+        - src/**
+        - tests/**
+        - docs/decision-log.md
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Nicht-Ziele
+      description: Was ist explizit nicht Teil dieses Tickets?
+      placeholder: |
+        - Kein Refactor ausserhalb des Tickets
+        - Keine Datenmodell-Aenderung
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notizen
+      description: Optionaler Kontext, Links oder Risiken
+      placeholder: Optional

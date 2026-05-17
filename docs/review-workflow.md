@@ -10,14 +10,14 @@ Der Reviewer ist die letzte Qualitaetsinstanz. Er prueft, ob eine Implementer-In
 
 ### Implementer
 
-- bearbeitet ein Ticket
-- setzt den Ticketstatus auf `doing`
+- bearbeitet ein GitHub Issue
+- setzt den Issue-Status auf `status:doing`
 - arbeitet auf einem eigenen Ticket-Branch/Worktree, wenn parallel entwickelt wird
 - haelt den vereinbarten Write-Scope ein
 - implementiert die Aenderung
 - prueft Akzeptanzkriterien
 - dokumentiert Erkenntnisse und Entscheidungen
-- uebergibt die Aenderungen an den Reviewer
+- uebergibt die Aenderungen per PR an den Reviewer
 
 ### Reviewer
 
@@ -34,7 +34,7 @@ Der Reviewer muss am Ende genau eine Entscheidung treffen:
 - `CHANGES_REQUESTED`: Aenderungen muessen vom Implementer angepasst werden.
 - `BLOCKED`: Review kann nicht sinnvoll abgeschlossen werden, z. B. wegen fehlender Infos, kaputtem Setup oder unklarem Ticket.
 
-Nur bei `APPROVED` darf ein Ticket auf `done` gesetzt oder produktiviert werden.
+Nur bei `APPROVED` und gruener CI darf in `main` gemerged werden.
 
 ## Pruefkriterien
 
@@ -107,13 +107,13 @@ Rest-Risiko:
 - ...
 ```
 
-## Status im Backlog
+## Status im Issue
 
 Empfohlener Ablauf:
 
-1. Implementer setzt Ticket auf `doing`.
-2. Implementer setzt es nach Umsetzung nicht direkt auf `done`, sondern notiert `Review: pending`.
+1. Implementer setzt Issue auf `status:doing`.
+2. Nach Umsetzung setzt Implementer auf `status:review` und erstellt/aktualisiert den PR.
 3. Reviewer prueft.
-4. Bei `APPROVED`: Ticket auf `done` setzen.
-5. Bei `CHANGES_REQUESTED`: Ticket bleibt `doing`, Feedback geht an Implementer.
-6. Bei `BLOCKED`: Ticket auf `blocked` oder Blocker im Ticket dokumentieren.
+4. Bei `APPROVED`: Merge, dann Issue auf `status:done` setzen und schliessen.
+5. Bei `CHANGES_REQUESTED`: Issue bleibt offen und geht zurueck an Implementer.
+6. Bei `BLOCKED`: Issue auf `status:blocked` oder Blocker im Issue dokumentieren.
