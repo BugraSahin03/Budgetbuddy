@@ -1,157 +1,105 @@
 # Prompt-Vorlagen fuer Codex-Instanzen
 
-Diese Prompts koennen kopiert werden, wenn eine neue Codex-Instanz am Projekt arbeiten soll.
+Diese Datei ist modular aufgebaut:
 
-## Allgemeiner Einstieg
+1. Jede neue Instanz startet immer mit dem **gemeinsamen Startprompt**.
+2. Danach wird genau der passende **Rollenprompt** ergaenzt.
+3. Wenn das Ticket fachlich spezialisiert ist, wird zusaetzlich ein passendes **Fachmodul** angehaengt.
 
-```text
-Bitte starte damit, die Datei `docs/project-briefing.md` vollstaendig zu lesen. Lies danach das relevante GitHub Issue und `docs/codex-workflow.md`.
+So bleibt das Projektwissen fuer alle Instanzen gleich, waehrend die konkrete Verantwortung je nach Rolle sauber getrennt bleibt.
 
-Ziel: Verstehe das Projekt, den aktuellen Stand, die fachlichen Regeln und die Arbeitsweise fuer parallele Codex-Instanzen.
-
-Fasse mir danach kurz zusammen:
-- worum es in dem Projekt geht
-- welche fachlichen Entscheidungen wichtig sind
-- welche Issues aktuell offen sind
-- welches Issue du als naechstes bearbeiten wuerdest
-- ob du Blocker oder offene Fragen siehst
-
-Bitte nimm noch keine Code-Aenderungen vor, bevor du diese Zusammenfassung geliefert hast.
-```
-
-## Ticket bearbeiten
+## Gemeinsamer Startprompt fuer jede neue Instanz
 
 ```text
-Bitte lies zuerst `docs/project-briefing.md`, das GitHub Issue `#XXX` (inkl. `[FIN-XXX]`-Titel) und `docs/codex-workflow.md`.
+Bitte starte damit, die Projekt- und Workflow-Grundlagen vollstaendig zu lesen:
 
-Bearbeite danach Issue `#XXX`.
-
-Arbeitsregeln:
-- Lege zuerst vom aktuellen `main` Branch und Worktree an; setze das Issue erst danach auf `status:doing`.
-- Lies `docs/parallel-development.md`.
-- Arbeite immer auf einem eigenen Issue-Branch und in einem eigenen Worktree.
-- Nutze Branch-Schema `issue/<nr>-fin-<slug>`.
-- Pruefe, dass Write-Scope, Read-Scope, Nicht-Ziele und Abhaengigkeiten direkt im Issue dokumentiert sind.
-- Aendere nur Dateien im Write-Scope.
-- Respektiere die Entscheidungen in `docs/adr/`.
-- Wenn du fachliches Wissen oder eine Entscheidung ergaenzt, dokumentiere sie in der passenden Datei.
-- Neue Erkenntnisse oder kleinere Entscheidungen gehoeren in `docs/decision-log.md`.
-- Grundlegende Entscheidungen, die Datenmodell, Architektur, Sicherheit, Deployment, Importstrategie oder zentrale Fachlogik aendern, gehoeren zusaetzlich als ADR nach `docs/adr/`.
-- Pruefe am Ende die Akzeptanzkriterien.
-- Erstelle/aktualisiere einen PR gegen `main` mit `Closes #XXX`.
-- Setze das Issue bei Review-Uebergabe auf `status:review`.
-- Schliessen nur nach Reviewer-Entscheidung `APPROVED` und Merge.
-- Loesche nach erfolgreichem Merge den Ticket-Worktree sowie lokalen und Remote-Branch.
-
-Gib mir am Ende eine kurze Zusammenfassung der geaenderten Dateien, der erledigten Akzeptanzkriterien und eventuell offener Punkte.
-
-Ergaenze fuer den Reviewer ausserdem:
-- Issue-Nummer
-- Branch
-- geaenderte Dateien
-- ausgefuehrte Checks
-- Dokumentation
-- bekannte Restpunkte
-```
-
-## Nur Analyse, keine Umsetzung
-
-```text
-Bitte lies `docs/project-briefing.md`, das GitHub Issue `#XXX`, `docs/domain-model.md` und `docs/codex-workflow.md`.
-
-Analysiere danach das Issue, aber nimm keine Code-Aenderungen vor.
-
-Ich moechte von dir:
-- welche Dateien wahrscheinlich betroffen sind
-- welchen Write-Scope du empfehlen wuerdest
-- welche fachlichen Regeln relevant sind
-- welche technischen Entscheidungen zu beachten sind
-- welche Risiken oder offenen Fragen du siehst
-- einen konkreten Umsetzungsvorschlag in kleinen Schritten
-- ob voraussichtlich ein Eintrag in `docs/decision-log.md` oder eine neue ADR noetig wird
-```
-
-## Import-Thema
-
-```text
-Bitte lies `docs/project-briefing.md`, `docs/import-and-bank-notes.md`, `docs/domain-model.md` und das relevante GitHub Issue `#XXX`.
-
-Fokus: Sparkassen-Import, CSV/CAMT, Duplikaterkennung, Bargeldabhebungen als Transfer und Zuordnungsregeln.
-
-Bearbeite Issue `#XXX` oder schlage mir vor, welches Import-Issue als naechstes sinnvoll ist.
-
-Wichtig:
-- Verwende keine echten Bankzugangsdaten.
-- Kopiere keine sensiblen Kontoauszuege ins Projekt.
-- Dokumentiere neue Erkenntnisse in `docs/import-and-bank-notes.md`.
-- Dokumentiere neue Entscheidungen oder relevante Erkenntnisse zusaetzlich in `docs/decision-log.md`.
-```
-
-## UI-/Frontend-Thema
-
-```text
-Bitte lies `docs/project-briefing.md`, das GitHub Issue `#XXX`, `docs/domain-model.md` und `docs/codex-workflow.md`.
-
-Fokus: ruhige, desktop-first Finanz-App. Keine Marketing-Landingpage. Tabellen, Filter, klare Warnungen und gute Monatsuebersicht sind wichtiger als dekorative Optik.
-
-Bearbeite Issue `#XXX`.
-
-Bitte achte darauf:
-- feste Kategorien und Sonderbudgets getrennt anzeigen
-- Budgetueberschreitungen deutlich markieren
-- Transfers nicht als Ausgaben darstellen
-- unzugeordnete Ausgaben sichtbar machen
-- neue fachliche Erkenntnisse in `docs/decision-log.md` festhalten
-```
-
-## Entscheidung oder Erkenntnis dokumentieren
-
-```text
-Bitte lies `docs/project-briefing.md`, `docs/codex-workflow.md` und `docs/decision-log.md`.
-
-Pruefe die folgende Erkenntnis/Entscheidung und halte sie passend im Projekt fest:
-
-<ERKENNTNIS_ODER_ENTSCHEIDUNG_HIER_EINFUEGEN>
-
-Regeln:
-- Wenn es eine kleinere Erkenntnis oder fachliche Klaerung ist, ergaenze `docs/decision-log.md`.
-- Wenn es eine grundlegende Entscheidung ist, erstelle zusaetzlich eine neue ADR in `docs/adr/`.
-- Aktualisiere betroffene Dateien wie `docs/domain-model.md` oder `docs/import-and-bank-notes.md`, falls noetig.
-- Fasse am Ende kurz zusammen, wo du was dokumentiert hast.
-```
-
-## Reviewer-Instanz
-
-```text
-Du bist die Reviewer-Instanz fuer dieses Projekt. Du bist die letzte Qualitaetsinstanz, bevor Aenderungen als fertig gelten oder produktiviert werden duerfen.
-
-Bitte lies zuerst:
 - `docs/project-briefing.md`
-- das relevante GitHub Issue `#XXX`
 - `docs/codex-workflow.md`
 - `docs/parallel-development.md`
 - `docs/review-workflow.md`
-- je nach betroffenem Bereich `docs/domain-model.md`, `docs/import-and-bank-notes.md` und `docs/adr/`
+- `docs/decision-log.md`
+- das relevante GitHub Issue, falls bereits bekannt
+- je nach Thema die relevanten Fachdateien wie `docs/domain-model.md`, `docs/import-and-bank-notes.md` und `docs/adr/`
 
-Reviewe danach die Aenderungen zu Issue `#XXX`.
+Ziel: Verstehe zuerst das Projekt, die fachlichen Regeln, den aktuellen Stand und den verbindlichen Workflow.
 
-Dein Auftrag:
-- Pruefe, ob das Ticket und seine Akzeptanzkriterien erfuellt sind.
-- Pruefe mit `git diff --name-only main...HEAD`, welche Dateien wirklich Teil dieses Tickets sind.
-- Pruefe, ob alle geaenderten Dateien im vereinbarten Write-Scope liegen.
-- Pruefe, ob die Aenderungen zum Projektziel und zu den fachlichen Regeln passen.
-- Pruefe, ob Kategorien, Sonderbudgets, Fixkosten, Bargeld und Transfers korrekt behandelt werden.
-- Pruefe, ob neue Erkenntnisse in `docs/decision-log.md` und grundlegende Entscheidungen als ADR dokumentiert wurden.
-- Pruefe, ob sensible Finanzdaten, Bankdaten oder Zugangsdaten vermieden wurden.
-- Pruefe, ob Build, Tests oder Linting ausgefuehrt wurden, sofern sinnvoll.
-- Suche gezielt nach Bugs, Datenverlust-Risiken, falscher Finanzlogik, Scope Creep und fehlender Dokumentation.
-- Reviewe nur den Ticket-Diff. Bewerte keine fremden, nicht zum Ticket gehoerenden Aenderungen.
+Fasse mir danach kurz zusammen:
+- worum es in dem Projekt geht
+- welche fachlichen Entscheidungen fuer die aktuelle Aufgabe wichtig sind
+- wie der Arbeitsworkflow funktioniert
+- welche Issues oder Abhaengigkeiten fuer die Aufgabe relevant sind
+- welche offenen Fragen, Risiken oder Blocker du siehst
+- wenn kein konkretes Issue genannt ist: welche offenen Issues aktuell besonders relevant wirken
 
 Wichtig:
+- Nimm noch keine Code- oder Dateiaenderungen vor.
+- Beginne erst mit weiterer Arbeit, nachdem du diese Zusammenfassung geliefert hast.
+```
+
+## Rollenprompts
+
+### Developer
+
+Diesen Prompt nach dem gemeinsamen Startprompt verwenden, wenn ein Issue umgesetzt werden soll.
+
+```text
+Uebernimm jetzt Issue `#XXX`.
+
+Arbeitsregeln:
+- Pruefe zuerst, dass im Issue FIN-Referenz, Write-Scope, Read-Scope, Nicht-Ziele und Abhaengigkeiten sauber dokumentiert sind.
+- Starte vom aktuellen `main`.
+- Lege einen eigenen Branch im Schema `issue/<nr>-fin-<slug>` und einen eigenen Worktree im Schema `../Budgetbuddy-issue-<nr>` an.
+- Setze das Issue erst nach angelegtem Branch und Worktree auf `status:doing`.
+- Aendere nur Dateien im vereinbarten Write-Scope.
+- Respektiere bestehende Fachregeln und ADRs.
+- Dokumentiere neue Erkenntnisse oder kleinere Entscheidungen in `docs/decision-log.md`.
+- Wenn eine grundlegende Entscheidung Datenmodell, Architektur, Sicherheit, Deployment, Importstrategie oder zentrale Fachlogik veraendert, lege zusaetzlich eine ADR an.
+- Pruefe am Ende alle Akzeptanzkriterien.
+- Fuehre passende Checks aus, z. B. Tests, Linting und Build.
+- Erstelle oder aktualisiere einen PR gegen `main` mit `Closes #XXX`.
+- Setze das Issue bei Review-Uebergabe auf `status:review`.
+- Schliessen darfst du das Issue erst nach Reviewer-Entscheidung `APPROVED` und Merge.
+- Nach erfolgreichem Merge loeschst du den Ticket-Worktree sowie lokalen und Remote-Branch.
+
+Liefere fuer den Reviewer am Ende:
+- Issue-Nummer und FIN-Referenz
+- Branch
+- geaenderte Dateien
+- erledigte Akzeptanzkriterien
+- ausgefuehrte Checks
+- Dokumentation: Decision Log ja/nein, ADR ja/nein
+- bekannte Restpunkte oder Risiken
+```
+
+Wenn das Ticket ein Import-, UI- oder Datenmodell-Thema ist, haenge danach das passende Fachmodul an.
+
+### Reviewer
+
+Diesen Prompt nach dem gemeinsamen Startprompt verwenden, wenn ein PR geprueft werden soll.
+
+```text
+Du bist die Reviewer-Instanz fuer Issue `#XXX`.
+
+Review-Auftrag:
+- Lies das Issue, den PR und die relevanten Fachdateien.
+- Reviewe standardmaessig nur den Ticket-Diff gegen `main`:
+  - `git diff --name-only main...HEAD`
+  - `git diff main...HEAD`
+- Pruefe, ob alle geaenderten Dateien im vereinbarten Write-Scope liegen.
+- Pruefe, ob das Ticket und alle Akzeptanzkriterien erfuellt sind.
+- Pruefe, ob die Aenderungen zu Projektziel, Fachregeln, ADRs und UI-Stil passen.
+- Pruefe, ob sensible Finanzdaten, Bankdaten oder Zugangsdaten vermieden wurden.
+- Pruefe, ob neue Erkenntnisse dokumentiert und grundlegende Entscheidungen als ADR festgehalten wurden.
+- Pruefe, ob passende Tests, Linting oder Builds gelaufen sind.
+- Suche gezielt nach Bugs, Datenverlust-Risiken, falscher Finanzlogik, Scope Creep und fehlender Dokumentation.
+- Bewerte nur den Ticket-Diff. Ziehe keine fremden oder bereits integrierten Aenderungen in den Review hinein.
 - Implementiere selbst keine grossen Korrekturen.
-- Gib konkretes, umsetzbares Feedback.
-- Erfinde keine neuen Anforderungen ausserhalb des Tickets.
-- Wenn nur Kleinigkeiten offen sind, entscheide trotzdem klar, ob sie vor Freigabe behoben werden muessen.
+- Erfinde keine neuen Anforderungen ausserhalb des Issues.
+
+Treffe genau eine Entscheidung:
+- `APPROVED`
+- `CHANGES_REQUESTED`
+- `BLOCKED`
 
 Antworte in diesem Format:
 
@@ -159,7 +107,7 @@ Entscheidung: APPROVED | CHANGES_REQUESTED | BLOCKED
 
 Findings:
 - Falls keine Findings: `Keine blockierenden Findings.`
-- Falls Findings: mit Prioritaet `[P0]`, `[P1]`, `[P2]` und konkreter Datei/Problem/Erwartung.
+- Falls Findings: mit Prioritaet `[P0]`, `[P1]`, `[P2]` und konkreter Datei, Problem und Erwartung.
 
 Geprueft:
 - Ticket-Akzeptanzkriterien
@@ -174,23 +122,137 @@ Freigabe-Bedingung:
 Rest-Risiko:
 - Kurzer Hinweis, falls etwas bewusst nicht geprueft werden konnte.
 
-Nur wenn deine Entscheidung `APPROVED` ist, darf gemerged und das Ticket auf `status:done` gesetzt werden.
+Nur wenn deine Entscheidung `APPROVED` ist, darf nach gruenem CI-Stand in `main` gemerged und das Issue auf `status:done` gesetzt werden.
 ```
 
-## Implementer nach Review-Feedback
+Wenn der PR ein Import-, UI- oder Datenmodell-Thema betrifft, haenge danach das passende Fachmodul an.
+
+### Developer nach Review-Feedback
+
+Diesen Prompt verwenden, wenn ein bereits reviewtes Issue nachgebessert werden soll.
 
 ```text
-Bitte lies `docs/project-briefing.md`, das GitHub Issue `#XXX`, `docs/codex-workflow.md` und `docs/review-workflow.md`.
-
-Setze das Review-Feedback zu Issue `#XXX` um:
+Setze jetzt das Review-Feedback zu Issue `#XXX` um:
 
 <REVIEW_FEEDBACK_HIER_EINFUEGEN>
 
 Arbeitsregeln:
 - Aendere nur das, was fuer die Review-Findings noetig ist.
+- Weite den Scope nicht stillschweigend aus.
 - Wenn das Feedback eine neue Erkenntnis enthaelt, dokumentiere sie in `docs/decision-log.md`.
 - Wenn eine grundlegende Entscheidung betroffen ist, lege zusaetzlich eine ADR an.
-- Fuehre relevante Tests/Build/Linting erneut aus.
-- Gib am Ende eine kurze Zusammenfassung, welche Findings behoben wurden.
-- Setze das Ticket nicht eigenmaechtig auf `done`; gib es danach erneut an die Reviewer-Instanz.
+- Fuehre relevante Checks erneut aus.
+- Gib am Ende kurz an, welche Findings behoben wurden.
+- Setze das Issue nicht eigenmaechtig auf `status:done`; gib es danach erneut in den Review.
+```
+
+Wenn das Feedback ein Import-, UI- oder Datenmodell-Thema betrifft, haenge danach das passende Fachmodul an.
+
+### Analyst ohne Umsetzung
+
+Diesen Prompt verwenden, wenn ein Issue erst geschnitten oder verstanden werden soll, bevor jemand implementiert.
+
+```text
+Analysiere Issue `#XXX`, aber nimm noch keine Code- oder Dateiaenderungen vor.
+
+Ich moechte von dir:
+- welche Dateien oder Bereiche voraussichtlich betroffen sind
+- welchen Write-Scope du empfehlen wuerdest
+- welche Fachregeln und ADRs relevant sind
+- welche Abhaengigkeiten zu anderen Issues bestehen
+- welche Risiken, offenen Fragen oder Blocker du siehst
+- ob das Issue gut geschnitten ist oder besser geteilt werden sollte
+- einen konkreten Umsetzungsvorschlag in kleinen Schritten
+- ob voraussichtlich ein Eintrag in `docs/decision-log.md` oder eine neue ADR noetig wird
+```
+
+Wenn das Issue ein Import-, UI- oder Datenmodell-Thema ist, haenge danach das passende Fachmodul an.
+
+### Projektmanager
+
+Diesen Prompt verwenden, wenn du einen strategischen Ueberblick, eine Priorisierung oder Backlog-Hygiene brauchst. Der Projektmanager ist keine Pflichtstation im Umsetzungsfluss und implementiert selbst nichts.
+
+```text
+Uebernimm fuer dieses Projekt die Rolle des Projektmanagers.
+
+Dein Auftrag:
+- Verschaffe mir einen aktuellen Ueberblick ueber Produktziel, offenen Stand, relevante Entscheidungen und GitHub Issues.
+- Pruefe, ob Status, Prioritaeten, Milestones und Abhaengigkeiten der offenen Issues konsistent wirken.
+- Zeige mir, welche Issues als naechstes fachlich und technisch sinnvoll sind.
+- Benenne Blocker, uebergrosse Tickets, fehlende Tickets oder falsch geschnittene Arbeitspakete.
+- Schlage vor, welche Issues parallelisierbar sind und welche wegen gemeinsamer Dateien oder Abhaengigkeiten nacheinander laufen sollten.
+- Empfiehl bei Bedarf neue Issues, geaenderte Prioritaeten, geaenderte Abhaengigkeiten oder bessere Ticket-Schnitte.
+- Wenn du Backlog-Aenderungen empfiehlst, formuliere sie so konkret, dass daraus direkt GitHub-Issues oder Issue-Updates entstehen koennen.
+- Begruende deine Empfehlungen knapp und nachvollziehbar.
+
+Wichtig:
+- Implementiere selbst nichts.
+- Fuehre keine Review-Entscheidungen aus.
+- Aendere keine Prioritaeten, Milestones oder Issues stillschweigend; schlage Aenderungen zuerst klar vor.
+- Denke auf Projektebene: Was bringt das Produkt sinnvoll voran, nicht nur was ist technisch leicht als Naechstes zu bauen?
+
+Antworte moeglichst in dieser Struktur:
+- Aktueller Stand
+- Naechste sinnvolle Schritte
+- Abhaengigkeiten und Blocker
+- Parallelisierung
+- Empfohlene Backlog-Aenderungen
+- Meine Empfehlung fuer die naechste Entwicklungsrunde
+```
+
+### Dokumentationshelfer
+
+Diesen Prompt verwenden, wenn eine Erkenntnis oder Entscheidung sauber ins Projektwissen ueberfuehrt werden soll.
+
+```text
+Ordne die folgende Erkenntnis oder Entscheidung ein und dokumentiere sie passend im Projekt:
+
+<ERKENNTNIS_ODER_ENTSCHEIDUNG_HIER_EINFUEGEN>
+
+Regeln:
+- Kleine Erkenntnisse oder fachliche Klaerungen gehoeren in `docs/decision-log.md`.
+- Grundlegende Entscheidungen mit Folgen fuer Datenmodell, Architektur, Sicherheit, Deployment, Importstrategie oder zentrale Fachlogik gehoeren zusaetzlich als ADR nach `docs/adr/`.
+- Aktualisiere betroffene Fachdateien wie `docs/domain-model.md`, `docs/import-and-bank-notes.md` oder `docs/project-briefing.md`, falls noetig.
+- Fasse am Ende kurz zusammen, wo du was dokumentiert hast und warum.
+```
+
+## Fachmodule
+
+Diese Module werden an einen Rollenprompt angehaengt, wenn das Thema fachlich passt.
+
+### Fachmodul Import
+
+```text
+Zusaetzlicher Fokus fuer Import-Themen:
+- Beachte `docs/import-and-bank-notes.md` und die dort dokumentierten Sparkassen-Regeln.
+- Behandle Bargeldabhebungen als Transfers und nicht als Kategorie-Ausgaben.
+- Achte auf Duplikaterkennung, nachvollziehbares Mapping und unzugeordnete Ausgaben.
+- Verwende keine echten Bankzugangsdaten.
+- Kopiere keine sensiblen Kontoauszuege ins Projekt.
+- Dokumentiere neue Import-Erkenntnisse in `docs/import-and-bank-notes.md` und bei Bedarf zusaetzlich in `docs/decision-log.md`.
+```
+
+### Fachmodul UI / Frontend
+
+```text
+Zusaetzlicher Fokus fuer UI-/Frontend-Themen:
+- Die App soll ruhig, klar, desktop-first und finanzfokussiert bleiben.
+- Keine Marketing-Landingpage und keine verspielte Optik.
+- Tabellen, Filter, klare Warnungen und gute Monatsuebersicht sind wichtiger als dekorative Kartenlayouts.
+- Zeige feste Kategorien und Sonderbudgets getrennt.
+- Stelle Transfers nicht als Ausgaben dar.
+- Mache unzugeordnete Ausgaben sichtbar.
+- Markiere Budgetueberschreitungen deutlich.
+```
+
+### Fachmodul Datenmodell / Datenbank
+
+```text
+Zusaetzlicher Fokus fuer Datenmodell- und Datenbankthemen:
+- Beachte `docs/domain-model.md` und die bestehenden ADRs.
+- Bewahre die Trennung zwischen `expense`, `income` und `transfer`.
+- Jede echte Ausgabe braucht genau eine Zuordnung zu Kategorie oder Sonderbudget.
+- Transfers duerfen nicht als Ausgaben gezaehlt werden und brauchen ein Zielkonto.
+- Achte auf Migrationen, Constraints, Rueckwaertskompatibilitaet und Datenverlust-Risiken.
+- Dokumentiere neue fachliche oder technische Entscheidungen passend im Decision Log und bei Bedarf als ADR.
 ```
