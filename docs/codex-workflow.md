@@ -48,8 +48,8 @@ Empfohlener Ablauf:
 1. Implementer arbeitet im Ticket-Worktree.
 2. Implementer prueft Akzeptanzkriterien.
 3. Implementer erstellt PR gegen `main` und uebergibt Aenderungen an Reviewer.
-4. Reviewer liest `docs/review-workflow.md` und prueft den PR-Diff gegen `main`.
-5. Nur bei `APPROVED` und gruener CI darf in `main` gemerged werden.
+4. Reviewer liest `docs/review-workflow.md`, prueft den PR-Diff gegen `main` und gibt bei Freigabe eine formale GitHub-PR-Review mit `Approve` ab.
+5. Nur bei formaler GitHub-PR-Freigabe (`Approve`) und gruener CI darf in `main` gemerged werden.
 6. Bei `CHANGES_REQUESTED` geht das Feedback zurueck an den Implementer.
 7. Bei `BLOCKED` wird der Blocker im Issue dokumentiert.
 8. Nach erfolgreichem Merge raeumt der Implementer Worktree und Branch auf.

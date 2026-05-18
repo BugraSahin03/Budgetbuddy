@@ -55,6 +55,24 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-05-18 - Reviewer-Freigabe muss im GitHub-PR sichtbar sein
+
+Quelle/Ticket: Prozessentscheidung
+
+Erkenntnis/Entscheidung:
+
+- Eine Reviewer-Entscheidung `APPROVED` gilt erst als Merge-Freigabe, wenn im GitHub-PR eine formale Review mit `Approve` abgegeben wurde.
+- Kommentare oder Chat-Hinweise allein reichen nicht als Freigabe aus.
+
+Auswirkung:
+
+- GitHub bildet den tatsaechlichen Review-Zustand sichtbar ab.
+- Merge-Regeln koennen spaeter technisch ueber Branch Protection abgesichert werden.
+
+Folgeaktion:
+
+- Review-Workflow, Gesamtworkflow und Reviewer-Prompt entsprechend nachschaerfen.
+
 ## 2026-05-17 - Entwicklungsworkflow auf dauerhafte Ticket-Worktrees umgestellt
 
 Quelle/Ticket: Prozessentscheidung

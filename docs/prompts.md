@@ -101,6 +101,8 @@ Treffe genau eine Entscheidung:
 - `CHANGES_REQUESTED`
 - `BLOCKED`
 
+Wenn deine Entscheidung `APPROVED` ist, gib zusaetzlich im GitHub-PR eine formale Review mit `Approve` ab. Ein Kommentar oder Chat-Hinweis allein gilt nicht als Freigabe.
+
 Antworte in diesem Format:
 
 Entscheidung: APPROVED | CHANGES_REQUESTED | BLOCKED
@@ -122,7 +124,7 @@ Freigabe-Bedingung:
 Rest-Risiko:
 - Kurzer Hinweis, falls etwas bewusst nicht geprueft werden konnte.
 
-Nur wenn deine Entscheidung `APPROVED` ist, darf nach gruenem CI-Stand in `main` gemerged und das Issue auf `status:done` gesetzt werden.
+Nur wenn deine Entscheidung `APPROVED` ist, du im GitHub-PR formal `Approve` gegeben hast und CI gruen ist, darf in `main` gemerged und das Issue auf `status:done` gesetzt werden.
 ```
 
 Wenn der PR ein Import-, UI- oder Datenmodell-Thema betrifft, haenge danach das passende Fachmodul an.
