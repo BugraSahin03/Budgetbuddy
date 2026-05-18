@@ -167,7 +167,7 @@ Nur nach `APPROVED`:
 1. Branch gegen aktuellen `main` aktualisieren.
 2. Falls Konflikte entstehen: zurueck an Implementer.
 3. Checks erneut ausfuehren.
-4. PR in `main` mergen.
+4. PR in `main` mergen, sobald das Issue auf `status:ready-to-merge` steht und CI gruen ist.
 5. Issue auf `status:done` setzen und schliessen.
 6. Implementer loescht den Ticket-Worktree sowie lokalen und Remote-Branch.
 

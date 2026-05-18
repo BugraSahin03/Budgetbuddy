@@ -102,11 +102,11 @@ Treffe genau eine Entscheidung:
 - `BLOCKED`
 
 Bilde deine Entscheidung zusaetzlich sichtbar im GitHub-PR ab:
-- bei `APPROVED`: formale Review mit `Approve`
-- bei `CHANGES_REQUESTED`: formale Review mit `Request changes` und konkreten Findings, damit klar dokumentiert ist, was geaendert werden muss
+- bei `APPROVED`: strukturierter PR-Kommentar mit `Entscheidung: APPROVED` und anschliessend Issue auf `status:ready-to-merge` setzen
+- bei `CHANGES_REQUESTED`: strukturierter PR-Kommentar mit konkreten Findings, damit klar dokumentiert ist, was geaendert werden muss
 - bei `BLOCKED`: Blocker im PR und im Issue dokumentieren, keine Freigabe
 
-Ein Kommentar oder Chat-Hinweis allein gilt nicht als Freigabe.
+Im Ein-Personen-Repo gilt ein unstrukturierter Kommentar oder Chat-Hinweis allein nicht als Freigabe.
 
 Antworte in diesem Format:
 
@@ -129,7 +129,7 @@ Freigabe-Bedingung:
 Rest-Risiko:
 - Kurzer Hinweis, falls etwas bewusst nicht geprueft werden konnte.
 
-Nur wenn deine Entscheidung `APPROVED` ist, du im GitHub-PR formal `Approve` gegeben hast und CI gruen ist, darf in `main` gemerged und das Issue auf `status:done` gesetzt werden.
+Nur wenn deine Entscheidung `APPROVED` ist, ein strukturierter PR-Kommentar vorliegt, das Issue auf `status:ready-to-merge` steht und CI gruen ist, darf in `main` gemerged und das Issue auf `status:done` gesetzt werden.
 ```
 
 Wenn der PR ein Import-, UI- oder Datenmodell-Thema betrifft, haenge danach das passende Fachmodul an.

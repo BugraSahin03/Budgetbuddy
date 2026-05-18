@@ -27,7 +27,7 @@ Neue Instanzen sollen zuerst dieses Dokument lesen. Danach je nach Aufgabe:
 Issue-Konventionen:
 
 - FIN-Referenz bleibt im Titel, z. B. `[FIN-003] Erste App-Navigation und Layout bauen`
-- Status wird ueber genau ein `status:*` Label gepflegt (`status:todo|doing|review|blocked|done`)
+- Status wird ueber genau ein `status:*` Label gepflegt (`status:todo|doing|review|ready-to-merge|blocked|done`)
 - Prioritaet wird ueber `priority:p0|p1|p2` gepflegt
 - MVP-Phasen laufen ueber Milestones (`MVP 0` bis `MVP 4`)
 - aktive Issues enthalten Write-Scope, Read-Scope, Nicht-Ziele und Abhaengigkeiten

@@ -24,8 +24,9 @@ Closes #
 
 ## Review-Status
 
-- [ ] Issue steht auf `status:review`
-- [ ] Reviewer-Handoff (Base, Write-Scope, Restpunkte) ist im PR enthalten
+- [ ] Issue steht bei Uebergabe auf `status:review`
+- [ ] Reviewer-Handoff (Write-Scope-Abweichungen, Restpunkte) ist im PR enthalten
+- [ ] Nach Freigabe setzt der Reviewer das Issue auf `status:ready-to-merge`
 
 ## Dokumentation
 

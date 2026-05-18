@@ -7,6 +7,7 @@ const LABELS = [
   { name: "status:todo", color: "C2E0C6", description: "Noch offen" },
   { name: "status:doing", color: "FBCA04", description: "In Arbeit" },
   { name: "status:review", color: "1D76DB", description: "Fertig umgesetzt, Review offen" },
+  { name: "status:ready-to-merge", color: "0E8A16", description: "Review freigegeben, bereit zum Merge" },
   { name: "status:blocked", color: "D73A4A", description: "Blockiert" },
   { name: "status:done", color: "0E8A16", description: "Erledigt" },
   { name: "priority:p0", color: "B60205", description: "Notwendig fuer ersten nutzbaren MVP" },
@@ -42,6 +43,7 @@ const STATUS_LABELS = new Set([
   "status:todo",
   "status:doing",
   "status:review",
+  "status:ready-to-merge",
   "status:blocked",
   "status:done",
 ]);

@@ -26,8 +26,8 @@ Der Reviewer ist die letzte Qualitaetsinstanz. Er prueft, ob eine Implementer-In
 - gibt klares Feedback
 - entscheidet, ob die Aenderungen freigegeben werden
 - bildet jede Entscheidung sichtbar im GitHub-PR ab:
-  - `APPROVED` mit `Approve`
-  - `CHANGES_REQUESTED` mit `Request changes` und konkreten Findings
+  - `APPROVED` mit strukturiertem Review-Kommentar und Statuswechsel auf `status:ready-to-merge`
+  - `CHANGES_REQUESTED` mit strukturiertem PR-Kommentar und konkreten Findings
   - `BLOCKED` durch dokumentierten Blocker im PR und Issue ohne Freigabe
 
 ## Reviewer-Entscheidungen
@@ -38,9 +38,15 @@ Der Reviewer muss am Ende genau eine Entscheidung treffen:
 - `CHANGES_REQUESTED`: Aenderungen muessen vom Implementer angepasst werden.
 - `BLOCKED`: Review kann nicht sinnvoll abgeschlossen werden, z. B. wegen fehlender Infos, kaputtem Setup oder unklarem Ticket.
 
-Nur bei formaler GitHub-PR-Freigabe (`Approve`) und gruener CI darf in `main` gemerged werden. Ein Kommentar oder Chat-Hinweis allein gilt nicht als Freigabe.
+Im Ein-Personen-Repo ist eine formale GitHub-Selbstfreigabe technisch nicht moeglich. Deshalb gilt eine Reviewer-Freigabe erst dann als mergefaehig, wenn:
 
-Bei `CHANGES_REQUESTED` muss der Reviewer im GitHub-PR eine formale Review mit `Request changes` abgeben und konkret dokumentieren, was geaendert werden muss. Bei `BLOCKED` dokumentiert der Reviewer den Blocker im PR und im Issue; es gibt keine Freigabe.
+1. im PR ein strukturierter Reviewer-Kommentar mit `Entscheidung: APPROVED` steht,
+2. das Issue auf `status:ready-to-merge` gesetzt wurde,
+3. CI gruen ist.
+
+Ein unstrukturierter Kommentar oder Chat-Hinweis allein gilt nicht als Freigabe.
+
+Bei `CHANGES_REQUESTED` dokumentiert der Reviewer im PR konkret, was geaendert werden muss. Bei `BLOCKED` dokumentiert der Reviewer den Blocker im PR und im Issue; es gibt keine Freigabe.
 
 ## Pruefkriterien
 
@@ -77,7 +83,7 @@ Der Reviewer soll keine fremden oder bereits integrierten Aenderungen bewerten, 
 
 ## Feedback-Format
 
-Bei Problemen soll der Reviewer konkrete, umsetzbare Punkte nennen. Bei `CHANGES_REQUESTED` werden diese Punkte zusaetzlich in der formalen GitHub-PR-Review mit `Request changes` dokumentiert:
+Bei Problemen soll der Reviewer konkrete, umsetzbare Punkte nennen. Bei `CHANGES_REQUESTED` werden diese Punkte im PR-Kommentar dokumentiert:
 
 ```md
 Entscheidung: CHANGES_REQUESTED
@@ -101,7 +107,7 @@ Freigabe-Bedingung:
 
 Bei Freigabe:
 
-Der Reviewer gibt zusaetzlich im GitHub-PR eine formale Review mit `Approve` ab.
+Der Reviewer schreibt einen strukturierten PR-Kommentar mit `Entscheidung: APPROVED` und setzt das Issue auf `status:ready-to-merge`.
 
 ```md
 Entscheidung: APPROVED
@@ -125,10 +131,10 @@ Empfohlener Ablauf:
 2. Implementer setzt Issue auf `status:doing`.
 3. Nach Umsetzung setzt Implementer auf `status:review` und erstellt/aktualisiert den PR gegen `main`.
 4. Reviewer prueft und bildet die Entscheidung im GitHub-PR ab:
-   - `APPROVED` -> `Approve`
-   - `CHANGES_REQUESTED` -> `Request changes` mit konkreten Findings
+   - `APPROVED` -> strukturierter PR-Kommentar + Issue auf `status:ready-to-merge`
+   - `CHANGES_REQUESTED` -> strukturierter PR-Kommentar mit konkreten Findings
    - `BLOCKED` -> Blocker im PR und Issue dokumentieren
-5. Bei formaler PR-Freigabe (`Approve`): Merge nach `main`, dann Issue auf `status:done` setzen und schliessen.
+5. Bei `status:ready-to-merge` und gruener CI: Merge nach `main`, dann Issue auf `status:done` setzen und schliessen.
 6. Implementer loescht danach Worktree sowie lokalen und Remote-Branch.
 7. Bei `CHANGES_REQUESTED`: Issue bleibt offen und geht mit den im PR dokumentierten Findings zurueck an den Implementer.
 8. Bei `BLOCKED`: Issue auf `status:blocked` setzen oder Blocker im Issue dokumentieren; keine Freigabe.

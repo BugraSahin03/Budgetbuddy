@@ -55,6 +55,26 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-05-18 - Ein-Personen-Review nutzt `status:ready-to-merge`
+
+Quelle/Ticket: Prozessentscheidung
+
+Erkenntnis/Entscheidung:
+
+- Der Review-Statuslauf ist jetzt: `status:todo -> status:doing -> status:review -> status:ready-to-merge -> status:done`.
+- Da GitHub Selbstfreigaben desselben Accounts nicht erlaubt, gilt im Ein-Personen-Repo ein strukturierter Reviewer-Kommentar im PR zusammen mit `status:ready-to-merge` als Freigabe.
+- `status:done` bleibt ausschliesslich fuer bereits gemergte Arbeit reserviert.
+- Bei `CHANGES_REQUESTED` stehen die konkreten Findings im PR-Kommentar; bei `BLOCKED` wird der Blocker im PR und Issue dokumentiert.
+
+Auswirkung:
+
+- Der Review-Zustand bleibt auf GitHub sichtbar, ohne einen zweiten GitHub-Account vorauszusetzen.
+- Vor Review, freigegeben zum Merge und bereits integriert sind klar unterscheidbar.
+
+Folgeaktion:
+
+- Workflow-Dokumente, Reviewer-Prompt, PR-Template und Labels an `status:ready-to-merge` anpassen.
+
 ## 2026-05-18 - Reviewer-Entscheidungen muessen im GitHub-PR sichtbar sein
 
 Quelle/Ticket: Prozessentscheidung
@@ -75,6 +95,7 @@ Auswirkung:
 Folgeaktion:
 
 - Review-Workflow, Gesamtworkflow und Reviewer-Prompt entsprechend nachschaerfen.
+- Diese Entscheidung wurde am 2026-05-18 fuer das Ein-Personen-Repo durch `status:ready-to-merge` konkretisiert.
 
 ## 2026-05-17 - Entwicklungsworkflow auf dauerhafte Ticket-Worktrees umgestellt
 

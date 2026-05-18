@@ -28,8 +28,9 @@ Wenn eine Instanz an einem Ticket arbeitet:
 5. Bei neuen Entscheidungen ein ADR oder eine Notiz im passenden Dokument ergaenzen.
 6. Nach Umsetzung Akzeptanzkriterien pruefen.
 7. PR gegen `main` mit `Closes #<issue>` erstellen und Aenderungen an Reviewer uebergeben.
-8. Ticket erst nach `APPROVED` und Merge als `status:done` markieren und schliessen.
-9. Nach dem Merge raeumt der Implementer Worktree sowie lokalen und Remote-Branch auf.
+8. Reviewer setzt bei Freigabe das Issue auf `status:ready-to-merge`.
+9. Ticket erst nach Merge als `status:done` markieren und schliessen.
+10. Nach dem Merge raeumt der Implementer Worktree sowie lokalen und Remote-Branch auf.
 
 Auch kleine produktive Aenderungen folgen diesem Ablauf. Wenn zwei Tickets dieselben zentralen Dateien aendern muessen, werden sie standardmaessig nicht parallelisiert.
 
@@ -48,11 +49,11 @@ Empfohlener Ablauf:
 1. Implementer arbeitet im Ticket-Worktree.
 2. Implementer prueft Akzeptanzkriterien.
 3. Implementer erstellt PR gegen `main` und uebergibt Aenderungen an Reviewer.
-4. Reviewer liest `docs/review-workflow.md`, prueft den PR-Diff gegen `main` und bildet seine Entscheidung formal im GitHub-PR ab:
-   - `APPROVED` -> `Approve`
-   - `CHANGES_REQUESTED` -> `Request changes` mit konkreten Findings
+4. Reviewer liest `docs/review-workflow.md`, prueft den PR-Diff gegen `main` und dokumentiert seine Entscheidung als strukturierten PR-Kommentar:
+   - `APPROVED` -> strukturierter Review-Kommentar im PR + Issue auf `status:ready-to-merge`
+   - `CHANGES_REQUESTED` -> strukturierter PR-Kommentar mit konkreten Findings; Issue bleibt offen
    - `BLOCKED` -> Blocker im PR und Issue dokumentieren, keine Freigabe
-5. Nur bei formaler GitHub-PR-Freigabe (`Approve`) und gruener CI darf in `main` gemerged werden.
+5. Nur bei `status:ready-to-merge` und gruener CI darf in `main` gemerged werden.
 6. Bei `CHANGES_REQUESTED` geht das konkrete Review-Feedback zurueck an den Implementer.
 7. Bei `BLOCKED` wird der Blocker im PR und Issue dokumentiert.
 8. Nach erfolgreichem Merge raeumt der Implementer Worktree und Branch auf.
