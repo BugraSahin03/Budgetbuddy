@@ -55,13 +55,16 @@ Folgeaktion:
 - ...
 ```
 
-## 2026-05-18 - Reviewer-Freigabe muss im GitHub-PR sichtbar sein
+## 2026-05-18 - Reviewer-Entscheidungen muessen im GitHub-PR sichtbar sein
 
 Quelle/Ticket: Prozessentscheidung
 
 Erkenntnis/Entscheidung:
 
-- Eine Reviewer-Entscheidung `APPROVED` gilt erst als Merge-Freigabe, wenn im GitHub-PR eine formale Review mit `Approve` abgegeben wurde.
+- Jede Reviewer-Entscheidung soll im GitHub-PR sichtbar abgebildet werden.
+- `APPROVED` gilt erst als Merge-Freigabe, wenn im PR eine formale Review mit `Approve` abgegeben wurde.
+- `CHANGES_REQUESTED` wird als formale Review mit `Request changes` abgegeben und enthaelt konkrete Findings, damit klar dokumentiert ist, was geaendert werden muss.
+- `BLOCKED` wird im PR und im Issue dokumentiert; es gibt keine Freigabe.
 - Kommentare oder Chat-Hinweise allein reichen nicht als Freigabe aus.
 
 Auswirkung:

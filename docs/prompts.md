@@ -101,7 +101,12 @@ Treffe genau eine Entscheidung:
 - `CHANGES_REQUESTED`
 - `BLOCKED`
 
-Wenn deine Entscheidung `APPROVED` ist, gib zusaetzlich im GitHub-PR eine formale Review mit `Approve` ab. Ein Kommentar oder Chat-Hinweis allein gilt nicht als Freigabe.
+Bilde deine Entscheidung zusaetzlich sichtbar im GitHub-PR ab:
+- bei `APPROVED`: formale Review mit `Approve`
+- bei `CHANGES_REQUESTED`: formale Review mit `Request changes` und konkreten Findings, damit klar dokumentiert ist, was geaendert werden muss
+- bei `BLOCKED`: Blocker im PR und im Issue dokumentieren, keine Freigabe
+
+Ein Kommentar oder Chat-Hinweis allein gilt nicht als Freigabe.
 
 Antworte in diesem Format:
 

@@ -25,7 +25,10 @@ Der Reviewer ist die letzte Qualitaetsinstanz. Er prueft, ob eine Implementer-In
 - prueft die Aenderungen kritisch
 - gibt klares Feedback
 - entscheidet, ob die Aenderungen freigegeben werden
-- gibt bei `APPROVED` zusaetzlich eine formale GitHub-PR-Review mit `Approve` ab
+- bildet jede Entscheidung sichtbar im GitHub-PR ab:
+  - `APPROVED` mit `Approve`
+  - `CHANGES_REQUESTED` mit `Request changes` und konkreten Findings
+  - `BLOCKED` durch dokumentierten Blocker im PR und Issue ohne Freigabe
 
 ## Reviewer-Entscheidungen
 
@@ -36,6 +39,8 @@ Der Reviewer muss am Ende genau eine Entscheidung treffen:
 - `BLOCKED`: Review kann nicht sinnvoll abgeschlossen werden, z. B. wegen fehlender Infos, kaputtem Setup oder unklarem Ticket.
 
 Nur bei formaler GitHub-PR-Freigabe (`Approve`) und gruener CI darf in `main` gemerged werden. Ein Kommentar oder Chat-Hinweis allein gilt nicht als Freigabe.
+
+Bei `CHANGES_REQUESTED` muss der Reviewer im GitHub-PR eine formale Review mit `Request changes` abgeben und konkret dokumentieren, was geaendert werden muss. Bei `BLOCKED` dokumentiert der Reviewer den Blocker im PR und im Issue; es gibt keine Freigabe.
 
 ## Pruefkriterien
 
@@ -72,7 +77,7 @@ Der Reviewer soll keine fremden oder bereits integrierten Aenderungen bewerten, 
 
 ## Feedback-Format
 
-Bei Problemen soll der Reviewer konkrete, umsetzbare Punkte nennen:
+Bei Problemen soll der Reviewer konkrete, umsetzbare Punkte nennen. Bei `CHANGES_REQUESTED` werden diese Punkte zusaetzlich in der formalen GitHub-PR-Review mit `Request changes` dokumentiert:
 
 ```md
 Entscheidung: CHANGES_REQUESTED
@@ -119,8 +124,11 @@ Empfohlener Ablauf:
 1. Implementer legt Branch und Worktree an.
 2. Implementer setzt Issue auf `status:doing`.
 3. Nach Umsetzung setzt Implementer auf `status:review` und erstellt/aktualisiert den PR gegen `main`.
-4. Reviewer prueft und gibt bei Freigabe eine formale GitHub-PR-Review mit `Approve` ab.
+4. Reviewer prueft und bildet die Entscheidung im GitHub-PR ab:
+   - `APPROVED` -> `Approve`
+   - `CHANGES_REQUESTED` -> `Request changes` mit konkreten Findings
+   - `BLOCKED` -> Blocker im PR und Issue dokumentieren
 5. Bei formaler PR-Freigabe (`Approve`): Merge nach `main`, dann Issue auf `status:done` setzen und schliessen.
 6. Implementer loescht danach Worktree sowie lokalen und Remote-Branch.
-7. Bei `CHANGES_REQUESTED`: Issue bleibt offen und geht zurueck an Implementer.
-8. Bei `BLOCKED`: Issue auf `status:blocked` oder Blocker im Issue dokumentieren.
+7. Bei `CHANGES_REQUESTED`: Issue bleibt offen und geht mit den im PR dokumentierten Findings zurueck an den Implementer.
+8. Bei `BLOCKED`: Issue auf `status:blocked` setzen oder Blocker im Issue dokumentieren; keine Freigabe.
