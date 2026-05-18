@@ -258,3 +258,22 @@ Folgeaktion:
 
 - Reviewer-Pruefung fuer FIN-010.
 - Danach Umsetzung von `FIN-011` auf Basis des dokumentierten Feldmappings.
+
+## 2026-05-18 - FIN-005 Monatsbudgets pro Kategorie und Monatspflege
+
+Quelle/Ticket: `FIN-005`
+
+Erkenntnis/Entscheidung:
+
+- Monatsbudgets werden pro `month_key` und Kategorie gepflegt; unterschiedliche Werte je Monat sind direkt zulaessig.
+- Ein leerer Budgetwert loescht den Monatswert fuer die Kategorie bewusst, statt `0` zu erzwingen.
+- Die Budgetansicht zeigt aktive Kategorien sowie Kategorien mit bereits vorhandenem Monatswert, damit historische Monatsbudgets sichtbar bleiben.
+
+Auswirkung:
+
+- Fehlende Budgetwerte sind im UI klar erkennbar und gezielt nachpflegbar.
+- Ueberschreitungen werden als Hinweis markiert, Buchungen aber nicht blockiert.
+
+Folgeaktion:
+
+- FIN-013 kann die Monatsbudgetdaten direkt fuer Dashboard-Warnungen und Restwerte verwenden.
