@@ -10,18 +10,37 @@ let transactions: TransactionsModule;
 
 const PREFIX = "TEST-FIN-007-";
 
-function cleanupTestTransactions(): void {
-  dbClient
+function tableExists(tableName: string): boolean {
+  const row = dbClient
     .getDb()
     .prepare(
       `
-        DELETE FROM fixed_cost_transaction_links
-        WHERE transaction_id IN (
-          SELECT id FROM transactions WHERE description LIKE ?
-        )
+        SELECT 1 AS existsFlag
+        FROM sqlite_master
+        WHERE type = 'table'
+          AND name = ?
+        LIMIT 1
       `,
     )
-    .run(`${PREFIX}%`);
+    .get(tableName) as { existsFlag: number } | undefined;
+
+  return row?.existsFlag === 1;
+}
+
+function cleanupTestTransactions(): void {
+  if (tableExists("fixed_cost_transaction_links")) {
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          DELETE FROM fixed_cost_transaction_links
+          WHERE transaction_id IN (
+            SELECT id FROM transactions WHERE description LIKE ?
+          )
+        `,
+      )
+      .run(`${PREFIX}%`);
+  }
   dbClient.getDb().prepare("DELETE FROM transactions WHERE description LIKE ?").run(`${PREFIX}%`);
   dbClient.getDb().prepare("DELETE FROM fixed_costs WHERE name LIKE ?").run(`${PREFIX}%`);
 }
