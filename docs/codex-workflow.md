@@ -53,10 +53,13 @@ Empfohlener Ablauf:
    - `APPROVED` -> strukturierter Review-Kommentar im PR + Issue auf `status:ready-to-merge`
    - `CHANGES_REQUESTED` -> strukturierter PR-Kommentar mit konkreten Findings; Issue bleibt offen
    - `BLOCKED` -> Blocker im PR und Issue dokumentieren, keine Freigabe
-5. Nur bei `status:ready-to-merge` und gruener CI darf in `main` gemerged werden.
-6. Bei `CHANGES_REQUESTED` geht das konkrete Review-Feedback zurueck an den Implementer.
-7. Bei `BLOCKED` wird der Blocker im PR und Issue dokumentiert.
-8. Nach erfolgreichem Merge raeumt der Implementer Worktree und Branch auf.
+5. Vor Merge ist der Review-Gate-Check Pflicht:
+   - letzte formale PR-Review-Entscheidung pruefen (`Approve` oder `Request changes`)
+   - bei letzter Entscheidung `CHANGES_REQUESTED` kein Merge
+6. Nur bei `status:ready-to-merge`, letzter formaler Entscheidung `APPROVED` und gruener CI darf in `main` gemerged werden.
+7. Bei `CHANGES_REQUESTED` geht das konkrete Review-Feedback zurueck an den Implementer.
+8. Bei `BLOCKED` wird der Blocker im PR und Issue dokumentiert.
+9. Nach erfolgreichem Merge raeumt der Implementer Worktree und Branch auf.
 
 Der Reviewer soll kritisch sein und Findings priorisieren, aber keine neuen Features in den Review hineinziehen.
 
@@ -115,6 +118,14 @@ Vermeiden:
 - verspielte Optik
 - ueberladene Kartenlayouts
 - harte Budget-Sperren
+
+## Test-Stabilitaet
+
+Bei Test-Fixtures und Cleanup in DB-Tests gilt:
+
+- Cleanup darf nie blind auf optional erzeugte Tabellen zugreifen.
+- Vor `DELETE`/`UPDATE` auf spaeter erzeugte Tabellen immer Existenz pruefen (z. B. ueber `sqlite_master`) oder Setup idempotent sicherstellen.
+- PRs mit Testaenderungen muessen explizit auf Robustheit gegen Reihenfolge-/Timing-Effekte geprueft werden.
 
 ## Reihenfolge der Umsetzung
 
