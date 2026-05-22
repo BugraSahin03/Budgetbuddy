@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
+import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
   createSpecialBudget,
   setSpecialBudgetActive,
@@ -35,34 +36,14 @@ function parseSpecialBudgetId(rawValue: FormDataEntryValue | null): number {
   return specialBudgetId;
 }
 
-function parsePlannedAmountCents(rawValue: FormDataEntryValue | null): number {
-  const normalized = toSingleString(rawValue).trim().replace(",", ".");
-
-  if (normalized.length === 0) {
-    throw new Error("Geplanter Betrag ist erforderlich.");
-  }
-
-  const parsed = Number.parseFloat(normalized);
-
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error("Geplanter Betrag muss 0 oder groesser sein.");
-  }
-
-  const cents = Math.round(parsed * 100);
-
-  if (cents > 99_999_999) {
-    throw new Error("Geplanter Betrag ist zu gross.");
-  }
-
-  return cents;
-}
-
 export async function createSpecialBudgetAction(formData: FormData): Promise<never> {
   try {
     createSpecialBudget({
       name: toSingleString(formData.get("name")),
       monthKey: toSingleString(formData.get("monthKey")),
-      plannedAmountCents: parsePlannedAmountCents(formData.get("plannedAmount")),
+      plannedAmountCents: parsePlannedAmountCents(
+        toSingleString(formData.get("plannedAmount")),
+      ),
       note: toSingleString(formData.get("note")),
     });
 
