@@ -26,8 +26,8 @@ Der Reviewer ist die letzte Qualitaetsinstanz. Er prueft, ob eine Implementer-In
 - gibt klares Feedback
 - entscheidet, ob die Aenderungen freigegeben werden
 - bildet jede Entscheidung sichtbar im GitHub-PR ab:
-  - `APPROVED` mit strukturiertem Review-Kommentar und Statuswechsel auf `status:ready-to-merge`
-  - `CHANGES_REQUESTED` mit strukturiertem PR-Kommentar und konkreten Findings
+  - `APPROVED` mit formaler GitHub-Review `Approve` und strukturiertem Review-Kommentar, danach Statuswechsel auf `status:ready-to-merge`
+  - `CHANGES_REQUESTED` mit formaler GitHub-Review `Request changes` und strukturiertem PR-Kommentar mit konkreten Findings
   - `BLOCKED` durch dokumentierten Blocker im PR und Issue ohne Freigabe
 
 ## Reviewer-Entscheidungen
@@ -47,6 +47,12 @@ Im Ein-Personen-Repo ist eine formale GitHub-Selbstfreigabe technisch nicht moeg
 Ein unstrukturierter Kommentar oder Chat-Hinweis allein gilt nicht als Freigabe.
 
 Bei `CHANGES_REQUESTED` dokumentiert der Reviewer im PR konkret, was geaendert werden muss. Bei `BLOCKED` dokumentiert der Reviewer den Blocker im PR und im Issue; es gibt keine Freigabe.
+
+Merge-Gate (Pflicht vor jedem Merge):
+
+1. Letzte formale Reviewer-Entscheidung im PR pruefen (`Approve` oder `Request changes`).
+2. Bei letzter Entscheidung `CHANGES_REQUESTED` darf nicht gemerged werden.
+3. Nur bei `APPROVED`, `status:ready-to-merge` und gruener CI darf gemerged werden.
 
 ## Pruefkriterien
 
