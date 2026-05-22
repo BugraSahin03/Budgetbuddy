@@ -257,6 +257,25 @@ Folgeaktion:
 - Bei neuen Tickets Write-Scope und Branch/Worktree im Handoff an den Reviewer angeben.
 - Diese fruehere Prozessentscheidung wurde am 2026-05-17 durch den verbindlichen Worktree-Standard verschaerft.
 
+## 2026-05-22 - FIN-009 markiert Fixkosten ueber manuelle Transaktions-Verknuepfung
+
+Quelle/Ticket: `FIN-009`
+
+Erkenntnis/Entscheidung:
+
+- Fuer den MVP werden Fixkosten-Transaktionen nicht automatisch erkannt, sondern manuell in der Fixkostenansicht markiert.
+- Die Markierung speichert optional `wirkt_fuer_monat` (`YYYY-MM`); ohne Angabe gilt der Buchungsmonat.
+- Die Transaktionsliste zeigt markierte Eintraege visuell als `Fixkosten`.
+
+Auswirkung:
+
+- Grenzfaelle rund um Monatswechsel sind ohne Automatisierung sauber abbildbar.
+- FIN-020 bleibt als Folgearbeit fuer moegliche spaetere Auto-Zuordnung bestehen.
+
+Folgeaktion:
+
+- FIN-013B kann die Markierung in der Monatsdarstellung nutzen.
+
 ## 2026-04-27 - FIN-002 Schema- und Betragskonvention festgelegt
 
 Quelle/Ticket: `FIN-002`

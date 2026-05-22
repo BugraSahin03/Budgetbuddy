@@ -11,7 +11,19 @@ let transactions: TransactionsModule;
 const PREFIX = "TEST-FIN-007-";
 
 function cleanupTestTransactions(): void {
+  dbClient
+    .getDb()
+    .prepare(
+      `
+        DELETE FROM fixed_cost_transaction_links
+        WHERE transaction_id IN (
+          SELECT id FROM transactions WHERE description LIKE ?
+        )
+      `,
+    )
+    .run(`${PREFIX}%`);
   dbClient.getDb().prepare("DELETE FROM transactions WHERE description LIKE ?").run(`${PREFIX}%`);
+  dbClient.getDb().prepare("DELETE FROM fixed_costs WHERE name LIKE ?").run(`${PREFIX}%`);
 }
 
 function ensureSpecialBudget(monthKey: string): number {
@@ -301,5 +313,169 @@ describe("transactions repository", () => {
     expect(stored.transactionType).toBe("transfer");
     expect(stored.categoryId).toBeNull();
     expect(stored.specialBudgetId).toBeNull();
+  });
+
+  it("exposes fixed cost marker fields when transaction is linked", async () => {
+    cleanupTestTransactions();
+
+    const fixedCosts = await import("@/src/fixed-costs/repository");
+    fixedCosts.createFixedCost({
+      name: `${PREFIX}FixedMarker`,
+      plannedAmountInput: "9,99",
+      bookingDayOfMonthInput: "",
+      paymentNote: "",
+      note: "",
+    });
+
+    const fixedCostId = fixedCosts
+      .listFixedCosts()
+      .find((row) => row.name === `${PREFIX}FixedMarker`)?.id;
+    expect(fixedCostId).toBeDefined();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const categoryId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Freizeit'")
+      .get() as { id: number }).id;
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-22",
+      description: `${PREFIX}FixedCostLinked`,
+      transactionType: "expense",
+      amountInput: "9,99",
+      accountId,
+      destinationAccountId: null,
+      categoryId,
+      specialBudgetId: null,
+    });
+
+    const created = transactions
+      .listManualTransactions()
+      .find((row) => row.description === `${PREFIX}FixedCostLinked`);
+    expect(created).toBeDefined();
+
+    fixedCosts.assignTransactionToFixedCost(created!.id, fixedCostId!, "2026-05");
+
+    const linked = transactions
+      .listManualTransactions()
+      .find((row) => row.id === created!.id);
+
+    expect(linked?.fixedCostName).toBe(`${PREFIX}FixedMarker`);
+    expect(linked?.fixedCostEffectiveMonthKey).toBe("2026-05");
+  });
+
+  it("supports fixed costs summary and manual wirkt_fuer_monat assignment", async () => {
+    cleanupTestTransactions();
+
+    const fixedCosts = await import("@/src/fixed-costs/repository");
+    fixedCosts.createFixedCost({
+      name: `${PREFIX}Streaming`,
+      plannedAmountInput: "12,99",
+      bookingDayOfMonthInput: "1",
+      paymentNote: "SEPA",
+      note: "Monatlich",
+    });
+
+    const fixedCostId = fixedCosts
+      .listFixedCosts()
+      .find((row) => row.name === `${PREFIX}Streaming`)?.id;
+    expect(fixedCostId).toBeDefined();
+
+    const summary = fixedCosts.getFixedCostsSummary();
+    expect(summary.activeCount).toBeGreaterThanOrEqual(1);
+    expect(summary.plannedTotalCents).toBeGreaterThanOrEqual(1299);
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const categoryId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Fitness'")
+      .get() as { id: number }).id;
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-29",
+      description: `${PREFIX}StreamingCharge`,
+      transactionType: "expense",
+      amountInput: "12,99",
+      accountId,
+      destinationAccountId: null,
+      categoryId,
+      specialBudgetId: null,
+    });
+
+    const created = transactions
+      .listManualTransactions()
+      .find((row) => row.description === `${PREFIX}StreamingCharge`);
+    expect(created).toBeDefined();
+
+    fixedCosts.assignTransactionToFixedCost(created!.id, fixedCostId!, "2026-06");
+
+    const assignment = fixedCosts
+      .listExpenseTransactionsForFixedCostAssignment()
+      .find((row) => row.transactionId === created!.id);
+    expect(assignment?.effectiveMonthKey).toBe("2026-06");
+
+    fixedCosts.unassignTransactionFromFixedCost(created!.id);
+    const afterRemove = fixedCosts
+      .listExpenseTransactionsForFixedCostAssignment()
+      .find((row) => row.transactionId === created!.id);
+    expect(afterRemove?.fixedCostId).toBeNull();
+  });
+
+  it("rejects invalid fixed cost booking day and non-expense assignment", async () => {
+    cleanupTestTransactions();
+
+    const fixedCosts = await import("@/src/fixed-costs/repository");
+
+    expect(() =>
+      fixedCosts.createFixedCost({
+        name: `${PREFIX}InvalidDay`,
+        plannedAmountInput: "10",
+        bookingDayOfMonthInput: "42",
+        paymentNote: "",
+        note: "",
+      }),
+    ).toThrow("Abbuchungstag muss zwischen 1 und 31 liegen.");
+
+    fixedCosts.createFixedCost({
+      name: `${PREFIX}Insurance`,
+      plannedAmountInput: "45",
+      bookingDayOfMonthInput: "",
+      paymentNote: "",
+      note: "",
+    });
+
+    const fixedCostId = fixedCosts
+      .listFixedCosts()
+      .find((row) => row.name === `${PREFIX}Insurance`)!.id;
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-20",
+      description: `${PREFIX}IncomeTx`,
+      transactionType: "income",
+      amountInput: "100",
+      accountId,
+      destinationAccountId: null,
+      categoryId: null,
+      specialBudgetId: null,
+    });
+
+    const incomeTx = transactions
+      .listManualTransactions()
+      .find((row) => row.description === `${PREFIX}IncomeTx`);
+    expect(incomeTx).toBeDefined();
+
+    expect(() => fixedCosts.assignTransactionToFixedCost(incomeTx!.id, fixedCostId, "")).toThrow(
+      "Nur manuelle Ausgaben koennen als Fixkosten markiert werden.",
+    );
   });
 });
