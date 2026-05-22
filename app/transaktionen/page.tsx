@@ -3,6 +3,7 @@ import {
   updateManualTransactionAction,
 } from "@/app/transaktionen/actions";
 import {
+  getCashAccountSnapshot,
   listActiveAccountOptions,
   listActiveCategoryOptions,
   listActiveSpecialBudgetOptionsForMonth,
@@ -89,6 +90,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   const error = toSingleParam(params.error);
 
   const accountOptions = listActiveAccountOptions();
+  const cashSnapshot = getCashAccountSnapshot();
   const categoryOptions = listActiveCategoryOptions();
   const monthKey = new Date().toISOString().slice(0, 7);
   const defaultSpecialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(monthKey);
@@ -112,6 +114,11 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   }
 
   const defaultAccountId = accountOptions[0]?.id ?? "";
+  const sparkasseAccountId =
+    accountOptions.find((account) => account.name === "Sparkasse")?.id ?? defaultAccountId;
+  const cashAccountId =
+    accountOptions.find((account) => account.name === cashSnapshot.accountName)?.id ??
+    defaultAccountId;
 
   return (
     <section className="space-y-4">
@@ -129,12 +136,45 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
             <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-slate-700">
               Manuelle Buchungen: {manualTransactions.length}
             </span>
+            <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-sky-700">
+              Bargeldbestand: {formatEuro(cashSnapshot.currentBalanceCents)}
+            </span>
             <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">
               Offen: {openAssignments}
             </span>
           </div>
         </div>
       </header>
+
+      <form
+        action={createManualTransactionAction}
+        className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+      >
+        <input type="hidden" name="bookingDate" value={new Date().toISOString().slice(0, 10)} />
+        <input type="hidden" name="transactionType" value="transfer" />
+        <input type="hidden" name="accountId" value={sparkasseAccountId} />
+        <input type="hidden" name="destinationAccountId" value={cashAccountId} />
+        <input type="hidden" name="categoryId" value="" />
+        <input type="hidden" name="specialBudgetId" value="" />
+        <input type="hidden" name="description" value="Bargeldabhebung" />
+        <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="quick-withdrawal-amount">
+          Bargeldabhebung (Transfer Sparkasse -{">"} Bargeld)
+        </label>
+        <input
+          id="quick-withdrawal-amount"
+          name="amount"
+          required
+          inputMode="decimal"
+          placeholder="50,00"
+          className="w-28 rounded-lg border border-slate-300 px-3 py-2 text-sm"
+        />
+        <button
+          type="submit"
+          className="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-200"
+        >
+          Abhebung als Transfer erfassen
+        </button>
+      </form>
 
       {notice ? (
         <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">

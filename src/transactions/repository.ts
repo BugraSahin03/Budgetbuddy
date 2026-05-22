@@ -34,6 +34,13 @@ export type SpecialBudgetOption = {
   monthKey: string;
 };
 
+export type CashAccountSnapshot = {
+  accountId: number;
+  accountName: string;
+  openingBalanceCents: number;
+  currentBalanceCents: number;
+};
+
 export type ManualTransactionInput = {
   bookingDate: string;
   description: string;
@@ -354,6 +361,60 @@ export function listActiveSpecialBudgetOptionsForMonth(
       `,
     )
     .all(monthKey) as SpecialBudgetOption[];
+}
+
+export function getCashAccountSnapshot(): CashAccountSnapshot {
+  const account = getDb()
+    .prepare(
+      `
+        SELECT
+          id,
+          name,
+          opening_balance_cents AS openingBalanceCents
+        FROM accounts
+        WHERE account_type = 'cash'
+          AND is_active = 1
+        LIMIT 1
+      `,
+    )
+    .get() as
+    | { id: number; name: string; openingBalanceCents: number }
+    | undefined;
+
+  if (!account) {
+    throw new Error("Aktives Bargeldkonto wurde nicht gefunden.");
+  }
+
+  const cashOutgoing = getDb()
+    .prepare(
+      `
+        SELECT COALESCE(SUM(amount_cents), 0) AS total
+        FROM transactions
+        WHERE account_id = ?
+      `,
+    )
+    .get(account.id) as { total: number };
+
+  const cashIncomingTransfers = getDb()
+    .prepare(
+      `
+        SELECT COALESCE(SUM(-amount_cents), 0) AS total
+        FROM transactions
+        WHERE destination_account_id = ?
+          AND transaction_type = 'transfer'
+      `,
+    )
+    .get(account.id) as { total: number };
+
+  const currentBalanceCents =
+    account.openingBalanceCents + cashOutgoing.total + cashIncomingTransfers.total;
+
+  return {
+    accountId: account.id,
+    accountName: account.name,
+    openingBalanceCents: account.openingBalanceCents,
+    currentBalanceCents,
+  };
 }
 
 export function createManualTransaction(input: ManualTransactionInput): void {
