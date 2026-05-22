@@ -319,3 +319,22 @@ Auswirkung:
 Folgeaktion:
 
 - FIN-013 kann die Monatsbudgetdaten direkt fuer Dashboard-Warnungen und Restwerte verwenden.
+
+## 2026-05-22 - FIN-011A CSV-Vorschau trennt Zeilenfehler von Fatalfehlern
+
+Quelle/Ticket: `FIN-011A`
+
+Erkenntnis/Entscheidung:
+
+- Der Vorschau-Parser gibt sowohl gueltige Zeilen als auch zeilenbezogene Parsing-Fehler zurueck, statt beim ersten Fehler komplett abzubrechen.
+- Fatalfehler (keine Datei, leere Datei, komplett unlesbar) werden separat behandelt.
+- Vorschau zeigt die fuer FIN-010 relevanten Felder direkt normalisiert: Buchungstag, Betrag, Beschreibung, Gegenpartei, Info.
+
+Auswirkung:
+
+- Nutzer koennen auch bei teilfehlerhaften CSVs bereits valide Buchungen pruefen.
+- Fehler sind klar nachvollziehbar ueber Zeilenhinweise im Importscreen.
+
+Folgeaktion:
+
+- FIN-011B kann auf dieser Vorschau die Duplikatmarkierung aufsetzen.
