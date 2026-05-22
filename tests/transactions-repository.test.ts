@@ -219,4 +219,87 @@ describe("transactions repository", () => {
     const deleted = transactions.listManualTransactions().find((row) => row.id === created.id);
     expect(deleted).toBeUndefined();
   });
+
+  it("tracks cash balance from transfer-in and cash expense", () => {
+    cleanupTestTransactions();
+
+    const sparkasseId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const cashId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Bargeld'")
+      .get() as { id: number }).id;
+    const categoryId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Freizeit'")
+      .get() as { id: number }).id;
+
+    const balanceBefore = transactions.getCashAccountSnapshot().currentBalanceCents;
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-22",
+      description: `${PREFIX}CashWithdrawalTransfer`,
+      transactionType: "transfer",
+      amountInput: "50",
+      accountId: sparkasseId,
+      destinationAccountId: cashId,
+      categoryId: null,
+      specialBudgetId: null,
+    });
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-22",
+      description: `${PREFIX}CashExpense`,
+      transactionType: "expense",
+      amountInput: "12",
+      accountId: cashId,
+      destinationAccountId: null,
+      categoryId,
+      specialBudgetId: null,
+    });
+
+    const balanceAfter = transactions.getCashAccountSnapshot().currentBalanceCents;
+    expect(balanceAfter - balanceBefore).toBe(3800);
+  });
+
+  it("stores cash withdrawal transfer without category assignment", () => {
+    cleanupTestTransactions();
+
+    const sparkasseId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const cashId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Bargeld'")
+      .get() as { id: number }).id;
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-22",
+      description: `${PREFIX}NoCategoryTransfer`,
+      transactionType: "transfer",
+      amountInput: "30",
+      accountId: sparkasseId,
+      destinationAccountId: cashId,
+      categoryId: null,
+      specialBudgetId: null,
+    });
+
+    const stored = dbClient
+      .getDb()
+      .prepare(
+        "SELECT category_id AS categoryId, special_budget_id AS specialBudgetId, transaction_type AS transactionType FROM transactions WHERE description = ?",
+      )
+      .get(`${PREFIX}NoCategoryTransfer`) as {
+      categoryId: number | null;
+      specialBudgetId: number | null;
+      transactionType: string;
+    };
+
+    expect(stored.transactionType).toBe("transfer");
+    expect(stored.categoryId).toBeNull();
+    expect(stored.specialBudgetId).toBeNull();
+  });
 });
