@@ -45,7 +45,13 @@ function toAmountInput(cents: number): string {
   return (Math.abs(cents) / 100).toFixed(2).replace(".", ",");
 }
 
-function statusFromRow(row: TransactionListItem): "Zugeordnet" | "Transfer" | "Einnahme" | "Zuordnen" {
+function statusFromRow(
+  row: TransactionListItem,
+): "Fixkosten" | "Zugeordnet" | "Transfer" | "Einnahme" | "Zuordnen" {
+  if (row.fixedCostName) {
+    return "Fixkosten";
+  }
+
   if (row.transactionType === "transfer") {
     return "Transfer";
   }
@@ -62,6 +68,10 @@ function statusFromRow(row: TransactionListItem): "Zugeordnet" | "Transfer" | "E
 }
 
 function statusBadgeClass(status: string): string {
+  if (status === "Fixkosten") {
+    return "border-violet-200 bg-violet-50 text-violet-700";
+  }
+
   if (status === "Zuordnen") {
     return "border-amber-200 bg-amber-50 text-amber-700";
   }
