@@ -21,6 +21,7 @@ Aktueller Referenzexport (CSV):
 Anonymisierte Projekt-Referenz:
 
 - `docs/samples/sparkasse-umsatz-anonymized.csv`
+- `docs/samples/sparkasse-umsatz-camtv8-20260522-anonymized.csv` (Stand 2026-05-22)
 
 Formatmerkmale (Stand 2026-04-26):
 

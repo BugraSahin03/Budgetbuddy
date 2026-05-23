@@ -1,5 +1,22 @@
 import "server-only";
 
+export type SparkasseCsvRow = {
+  accountIban: string;
+  bookingDate: string;
+  valueDate: string;
+  bookingText: string;
+  purpose: string;
+  counterparty: string;
+  counterpartyIban: string;
+  counterpartyBic: string;
+  amountCents: number;
+  currencyCode: string;
+  info: string;
+  endToEndReference: string;
+  mandateReference: string;
+  description: string;
+};
+
 export type SparkassePreviewRow = {
   bookingDate: string;
   amountCents: number;
@@ -9,17 +26,24 @@ export type SparkassePreviewRow = {
 };
 
 export type SparkasseParseResult = {
-  rows: SparkassePreviewRow[];
+  rows: SparkasseCsvRow[];
   errors: string[];
 };
 
 const REQUIRED_HEADERS = [
+  "Auftragskonto",
   "Buchungstag",
+  "Valutadatum",
   "Buchungstext",
   "Verwendungszweck",
   "Beguenstigter/Zahlungspflichtiger",
+  "Kontonummer/IBAN",
+  "BIC (SWIFT-Code)",
   "Betrag",
+  "Waehrung",
   "Info",
+  "Kundenreferenz (End-to-End)",
+  "Mandatsreferenz",
 ] as const;
 
 function parseCsvLine(line: string): string[] {
@@ -122,7 +146,7 @@ export function parseSparkasseCsvToPreview(fileContent: string): SparkasseParseR
     };
   }
 
-  const rows: SparkassePreviewRow[] = [];
+  const rows: SparkasseCsvRow[] = [];
   const errors: string[] = [];
 
   for (let lineIndex = 1; lineIndex < lines.length; lineIndex += 1) {
@@ -131,20 +155,37 @@ export function parseSparkasseCsvToPreview(fileContent: string): SparkasseParseR
 
     try {
       const bookingDate = parseGermanDate(cells[headerIndex.get("Buchungstag") ?? -1] ?? "");
+      const valueDate = parseGermanDate(cells[headerIndex.get("Valutadatum") ?? -1] ?? "");
       const amountCents = parseAmountCents(cells[headerIndex.get("Betrag") ?? -1] ?? "");
+      const accountIban = cells[headerIndex.get("Auftragskonto") ?? -1]?.trim() ?? "";
       const bookingText = cells[headerIndex.get("Buchungstext") ?? -1] ?? "";
       const purpose = cells[headerIndex.get("Verwendungszweck") ?? -1] ?? "";
       const counterparty =
         cells[headerIndex.get("Beguenstigter/Zahlungspflichtiger") ?? -1]?.trim() ||
         "(ohne Gegenpartei)";
+      const counterpartyIban = cells[headerIndex.get("Kontonummer/IBAN") ?? -1]?.trim() ?? "";
+      const counterpartyBic = cells[headerIndex.get("BIC (SWIFT-Code)") ?? -1]?.trim() ?? "";
+      const currencyCode = cells[headerIndex.get("Waehrung") ?? -1]?.trim() || "EUR";
       const info = cells[headerIndex.get("Info") ?? -1]?.trim() || "";
+      const endToEndReference =
+        cells[headerIndex.get("Kundenreferenz (End-to-End)") ?? -1]?.trim() ?? "";
+      const mandateReference = cells[headerIndex.get("Mandatsreferenz") ?? -1]?.trim() ?? "";
 
       rows.push({
+        accountIban,
         bookingDate,
+        valueDate,
+        bookingText: bookingText.trim(),
+        purpose: purpose.trim(),
+        counterpartyIban,
+        counterpartyBic,
         amountCents,
+        currencyCode,
         description: combineDescription(bookingText, purpose),
         counterparty,
         info,
+        endToEndReference,
+        mandateReference,
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : "Unbekannter Fehler";
@@ -153,4 +194,14 @@ export function parseSparkasseCsvToPreview(fileContent: string): SparkasseParseR
   }
 
   return { rows, errors };
+}
+
+export function mapSparkasseRowsToPreviewRows(rows: SparkasseCsvRow[]): SparkassePreviewRow[] {
+  return rows.map((row) => ({
+    bookingDate: row.bookingDate,
+    amountCents: row.amountCents,
+    description: row.description,
+    counterparty: row.counterparty,
+    info: row.info,
+  }));
 }

@@ -51,7 +51,17 @@ describe("schema migrations", () => {
     expect(sql).toContain("ALTER TABLE categories ADD COLUMN icon_name TEXT;");
   });
 
+  it("contains migration for imported expenses without category assignment", () => {
+    const sql = migrations.find((migration) => migration.id === "0003_fin_011b")
+      ?.sql ?? "";
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS transactions_new");
+    expect(sql).toContain("source_type = 'import'");
+    expect(sql).toContain("category_id IS NULL");
+    expect(sql).toContain("special_budget_id IS NULL");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0002_fin_004");
+    expect(getLatestSchemaVersion()).toBe("0003_fin_011b");
   });
 });

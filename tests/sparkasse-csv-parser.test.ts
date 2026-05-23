@@ -14,11 +14,20 @@ describe("sparkasse csv parser", () => {
     expect(result.errors).toEqual([]);
     expect(result.rows).toHaveLength(1);
     expect(result.rows[0]).toEqual({
+      accountIban: "DE00111111110000000001",
       bookingDate: "2026-04-24",
+      valueDate: "2026-04-24",
+      bookingText: "DIG. KARTE (APPLE PAY)",
+      purpose: "2026-04-23T20:21 Debitk.10 2029-12",
+      counterpartyIban: "DE002",
+      counterpartyBic: "BANKDEFFXXX",
       amountCents: -358,
+      currencyCode: "EUR",
       description: "DIG. KARTE (APPLE PAY) | 2026-04-23T20:21 Debitk.10 2029-12",
       counterparty: "SUPERMARKT A",
       info: "Umsatz gebucht",
+      endToEndReference: "651",
+      mandateReference: "",
     });
   });
 

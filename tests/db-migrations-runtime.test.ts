@@ -226,6 +226,39 @@ describe("database migrations runtime behavior", () => {
     expect(columns.some((column) => column.name === "icon_name")).toBe(true);
   });
 
+  it("allows imported expenses without assignment", () => {
+    const account = db
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as AccountRow;
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id,
+          transaction_type,
+          booking_date,
+          amount_cents,
+          description,
+          source_type
+        )
+        VALUES (?, 'expense', '2026-05-22', -1599, 'Import Test Ausgabe', 'import')
+      `,
+    ).run(account.id);
+
+    const inserted = db
+      .prepare(
+        `
+          SELECT id
+          FROM transactions
+          WHERE description = 'Import Test Ausgabe'
+            AND source_type = 'import'
+        `,
+      )
+      .get() as { id: number } | undefined;
+
+    expect(inserted?.id).toBeDefined();
+  });
+
   it("keeps historical references when a category is deactivated", () => {
     const account = db
       .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
