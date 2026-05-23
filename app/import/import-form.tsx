@@ -41,19 +41,45 @@ export function ImportForm() {
           />
         </div>
 
-        <button
-          type="submit"
-          disabled={isPending}
-          className="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-sm font-semibold text-sky-800 transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isPending ? "CSV wird geparst..." : "Vorschau laden"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="submit"
+            name="intent"
+            value="preview"
+            disabled={isPending}
+            className="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-sm font-semibold text-sky-800 transition hover:bg-sky-200 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? "Wird verarbeitet..." : "Vorschau laden"}
+          </button>
+
+          <button
+            type="submit"
+            name="intent"
+            value="confirm"
+            disabled={isPending}
+            className="rounded-lg border border-emerald-300 bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {isPending ? "Import laeuft..." : "Import bestaetigen"}
+          </button>
+        </div>
       </form>
 
       {state.fatalError ? (
         <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {state.fatalError}
         </p>
+      ) : null}
+
+      {state.persisted ? (
+        <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Import abgeschlossen</p>
+          <div className="mt-2 grid gap-2 text-sm text-emerald-900 md:grid-cols-4">
+            <p>Importlauf-ID: <span className="font-semibold">{state.persisted.importRunId}</span></p>
+            <p>Gefunden: <span className="font-semibold">{state.persisted.detectedRows}</span></p>
+            <p>Importiert: <span className="font-semibold">{state.persisted.importedRows}</span></p>
+            <p>Duplikate: <span className="font-semibold">{state.persisted.duplicateRows}</span></p>
+          </div>
+        </section>
       ) : null}
 
       {state.result?.errors.length ? (
@@ -81,7 +107,7 @@ export function ImportForm() {
             </thead>
             <tbody className="divide-y divide-slate-100">
               {state.result.rows.map((row) => (
-                <tr key={`${row.bookingDate}-${row.amountCents}-${row.description}`}>
+                <tr key={`${row.bookingDate}-${row.amountCents}-${row.description}-${row.endToEndReference}`}>
                   <td className="px-3 py-2 text-slate-700">{row.bookingDate}</td>
                   <td className={`px-3 py-2 font-semibold ${amountTone(row.amountCents)}`}>
                     {formatEuroFromCents(row.amountCents)}

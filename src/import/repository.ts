@@ -1,0 +1,47 @@
+import "server-only";
+
+import { getDb } from "@/src/db/client";
+
+export type ImportedTransactionListItem = {
+  id: number;
+  bookingDate: string;
+  description: string;
+  amountCents: number;
+  transactionType: "expense" | "income" | "transfer" | "refund";
+  sourceAccountName: string;
+  destinationAccountName: string | null;
+  counterpartyName: string | null;
+  categoryName: string | null;
+  specialBudgetName: string | null;
+  importRunId: number | null;
+};
+
+export function listImportedTransactions(): ImportedTransactionListItem[] {
+  const rows = getDb()
+    .prepare(
+      `
+        SELECT
+          t.id,
+          t.booking_date AS bookingDate,
+          t.description,
+          t.amount_cents AS amountCents,
+          t.transaction_type AS transactionType,
+          source.name AS sourceAccountName,
+          destination.name AS destinationAccountName,
+          t.counterparty_name AS counterpartyName,
+          c.name AS categoryName,
+          sb.name AS specialBudgetName,
+          t.import_run_id AS importRunId
+        FROM transactions t
+        INNER JOIN accounts source ON source.id = t.account_id
+        LEFT JOIN accounts destination ON destination.id = t.destination_account_id
+        LEFT JOIN categories c ON c.id = t.category_id
+        LEFT JOIN special_budgets sb ON sb.id = t.special_budget_id
+        WHERE t.source_type = 'import'
+        ORDER BY t.booking_date DESC, t.id DESC
+      `,
+    )
+    .all() as ImportedTransactionListItem[];
+
+  return rows;
+}

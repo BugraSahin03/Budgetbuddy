@@ -11,6 +11,7 @@ import {
   type TransactionListItem,
   type TransactionType,
 } from "@/src/transactions/repository";
+import { listImportedTransactions } from "@/src/import/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -105,6 +106,19 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   const monthKey = new Date().toISOString().slice(0, 7);
   const defaultSpecialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(monthKey);
   const manualTransactions = listManualTransactions();
+  const importedTransactions = listImportedTransactions();
+  const importedTransfers = importedTransactions.filter(
+    (row) => row.transactionType === "transfer",
+  );
+  const importedNonTransfers = importedTransactions.filter(
+    (row) => row.transactionType !== "transfer",
+  );
+  const importedOpenAssignments = importedTransactions.filter(
+    (row) =>
+      row.transactionType === "expense" &&
+      row.categoryName === null &&
+      row.specialBudgetName === null,
+  ).length;
 
   let openAssignments = 0;
   const specialBudgetOptionsByMonth = new Map<string, ReturnType<typeof listActiveSpecialBudgetOptionsForMonth>>();
@@ -372,6 +386,114 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
           </tbody>
         </table>
       </div>
+
+      <section className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <header className="flex flex-wrap items-end justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+              Importierte Buchungen
+            </p>
+            <h3 className="text-base font-semibold text-slate-900">
+              Ergebnisse aus bestaetigten Importlaeufen
+            </h3>
+          </div>
+          <div className="flex flex-wrap gap-2 text-xs">
+            <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-slate-700">
+              Importierte Buchungen: {importedTransactions.length}
+            </span>
+            <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">
+              Offene Zuordnung (Ausgaben): {importedOpenAssignments}
+            </span>
+          </div>
+        </header>
+
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="min-w-full divide-y divide-slate-200 text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
+                <th className="px-3 py-2 font-semibold">Datum</th>
+                <th className="px-3 py-2 font-semibold">Buchung</th>
+                <th className="px-3 py-2 font-semibold">Gegenpartei</th>
+                <th className="px-3 py-2 font-semibold">Betrag</th>
+                <th className="px-3 py-2 font-semibold">Zuordnung</th>
+                <th className="px-3 py-2 font-semibold">Importlauf</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {importedNonTransfers.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-3 py-4 text-center text-sm text-slate-600">
+                    Noch keine importierten Ausgaben/Einnahmen vorhanden.
+                  </td>
+                </tr>
+              ) : (
+                importedNonTransfers.map((row) => {
+                  const assignment =
+                    row.transactionType === "expense"
+                      ? row.categoryName ?? row.specialBudgetName ?? "Zuordnen"
+                      : "Keine Zuordnung noetig";
+
+                  return (
+                    <tr key={`imported-main-${row.id}`}>
+                      <td className="px-3 py-2">{row.bookingDate}</td>
+                      <td className="px-3 py-2 font-medium text-slate-900">{row.description}</td>
+                      <td className="px-3 py-2 text-slate-700">{row.counterpartyName ?? "-"}</td>
+                      <td className="px-3 py-2 text-slate-900">{formatEuro(row.amountCents)}</td>
+                      <td className="px-3 py-2">
+                        {assignment === "Zuordnen" ? (
+                          <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
+                            Zuordnen
+                          </span>
+                        ) : (
+                          <span className="text-slate-700">{assignment}</span>
+                        )}
+                      </td>
+                      <td className="px-3 py-2 text-slate-600">#{row.importRunId ?? "-"}</td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="overflow-x-auto rounded-lg border border-slate-200">
+          <table className="min-w-full divide-y divide-slate-200 text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
+                <th className="px-3 py-2 font-semibold">Datum</th>
+                <th className="px-3 py-2 font-semibold">Transfer</th>
+                <th className="px-3 py-2 font-semibold">Strecke</th>
+                <th className="px-3 py-2 font-semibold">Betrag</th>
+                <th className="px-3 py-2 font-semibold">Importlauf</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {importedTransfers.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="px-3 py-4 text-center text-sm text-slate-600">
+                    Keine importierten Transfers vorhanden.
+                  </td>
+                </tr>
+              ) : (
+                importedTransfers.map((row) => (
+                  <tr key={`imported-transfer-${row.id}`}>
+                    <td className="px-3 py-2">{row.bookingDate}</td>
+                    <td className="px-3 py-2 font-medium text-slate-900">{row.description}</td>
+                    <td className="px-3 py-2 text-slate-700">
+                      {row.sourceAccountName}
+                      {" -> "}
+                      {row.destinationAccountName ?? "(ohne Zielkonto)"}
+                    </td>
+                    <td className="px-3 py-2 text-slate-900">{formatEuro(row.amountCents)}</td>
+                    <td className="px-3 py-2 text-slate-600">#{row.importRunId ?? "-"}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </section>
   );
 }
