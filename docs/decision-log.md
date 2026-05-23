@@ -357,3 +357,23 @@ Auswirkung:
 Folgeaktion:
 
 - FIN-011B kann auf dieser Vorschau die Duplikatmarkierung aufsetzen.
+
+## 2026-05-23 - FIN-011B Importpersistenz mit Dedupe-Fingerprints
+
+Quelle/Ticket: `FIN-011B`
+
+Erkenntnis/Entscheidung:
+
+- Sparkassen-Importpersistenz protokolliert jeden Lauf in `import_runs` und persistiert erfolgreich importierte Zeilen in `transactions` + `imported_transactions`.
+- Duplikaterkennung erfolgt ueber einen SHA-256 Fingerprint auf normalisierten Kernfeldern aus FIN-010 (u. a. Konto, Buchungstag, Betrag, Gegenpartei, Verwendungszweck, End-to-End, Mandatsreferenz).
+- Importierte `expense`-Buchungen duerfen initial ohne Kategorie/Sonderbudget gespeichert werden; manuelle Ausgaben behalten die bestehende Pflichtzuordnung.
+
+Auswirkung:
+
+- Doppelte CSV-Importe werden nachvollziehbar als Duplikate gezaehlt und nicht erneut importiert.
+- Ergebniszahlen pro Importlauf (`detected/imported/duplicate`) sind konsistent abrufbar.
+- FIN-011C kann auf den persistierten Importdaten fuer Bestaetigungs- und Markierungs-UI aufsetzen.
+
+Folgeaktion:
+
+- In FIN-011C unzugeordnete importierte Ausgaben sichtbar markieren und nachtraegliche Zuordnung abschliessen.

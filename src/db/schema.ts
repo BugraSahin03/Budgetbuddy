@@ -199,6 +199,138 @@ const fin004MigrationSql = `
 ALTER TABLE categories ADD COLUMN icon_name TEXT;
 `;
 
+const fin011bMigrationSql = `
+PRAGMA foreign_keys = OFF;
+
+CREATE TABLE IF NOT EXISTS transactions_new (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
+  destination_account_id INTEGER REFERENCES accounts(id) ON DELETE RESTRICT,
+  transaction_type TEXT NOT NULL CHECK (transaction_type IN ('expense', 'income', 'transfer', 'refund')),
+  booking_date TEXT NOT NULL,
+  value_date TEXT,
+  amount_cents INTEGER NOT NULL CHECK (amount_cents != 0),
+  currency_code TEXT NOT NULL DEFAULT 'EUR',
+  description TEXT NOT NULL,
+  counterparty_name TEXT,
+  counterparty_iban TEXT,
+  source_type TEXT NOT NULL CHECK (source_type IN ('manual', 'import')),
+  import_run_id INTEGER REFERENCES import_runs(id) ON DELETE SET NULL,
+  import_fingerprint TEXT,
+  category_id INTEGER REFERENCES categories(id) ON DELETE RESTRICT,
+  special_budget_id INTEGER REFERENCES special_budgets(id) ON DELETE RESTRICT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (
+    (transaction_type = 'expense' AND amount_cents < 0)
+    OR (transaction_type = 'transfer' AND amount_cents < 0)
+    OR (transaction_type = 'income' AND amount_cents > 0)
+    OR (transaction_type = 'refund' AND amount_cents > 0)
+  ),
+  CHECK (destination_account_id IS NULL OR destination_account_id != account_id),
+  CHECK (
+    (
+      transaction_type = 'expense'
+      AND destination_account_id IS NULL
+      AND (
+        (
+          source_type = 'manual'
+          AND (
+            (category_id IS NOT NULL AND special_budget_id IS NULL)
+            OR (category_id IS NULL AND special_budget_id IS NOT NULL)
+          )
+        )
+        OR
+        (
+          source_type = 'import'
+          AND category_id IS NULL
+          AND special_budget_id IS NULL
+        )
+      )
+    )
+    OR
+    (
+      transaction_type = 'transfer'
+      AND destination_account_id IS NOT NULL
+      AND category_id IS NULL
+      AND special_budget_id IS NULL
+    )
+    OR
+    (
+      transaction_type IN ('income', 'refund')
+      AND destination_account_id IS NULL
+      AND category_id IS NULL
+      AND special_budget_id IS NULL
+    )
+  )
+);
+
+INSERT INTO transactions_new (
+  id,
+  account_id,
+  destination_account_id,
+  transaction_type,
+  booking_date,
+  value_date,
+  amount_cents,
+  currency_code,
+  description,
+  counterparty_name,
+  counterparty_iban,
+  source_type,
+  import_run_id,
+  import_fingerprint,
+  category_id,
+  special_budget_id,
+  created_at,
+  updated_at
+)
+SELECT
+  id,
+  account_id,
+  destination_account_id,
+  transaction_type,
+  booking_date,
+  value_date,
+  amount_cents,
+  currency_code,
+  description,
+  counterparty_name,
+  counterparty_iban,
+  source_type,
+  import_run_id,
+  import_fingerprint,
+  category_id,
+  special_budget_id,
+  created_at,
+  updated_at
+FROM transactions;
+
+DROP TABLE transactions;
+ALTER TABLE transactions_new RENAME TO transactions;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_import_fingerprint_unique
+ON transactions(import_fingerprint)
+WHERE import_fingerprint IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_transactions_booking_date
+ON transactions(booking_date);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_account_id
+ON transactions(account_id);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_transaction_type
+ON transactions(transaction_type);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_category_id
+ON transactions(category_id);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_special_budget_id
+ON transactions(special_budget_id);
+
+PRAGMA foreign_keys = ON;
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -209,6 +341,11 @@ export const migrations: readonly Migration[] = [
     id: "0002_fin_004",
     name: "FIN-004 optional category icon metadata",
     sql: fin004MigrationSql,
+  },
+  {
+    id: "0003_fin_011b",
+    name: "FIN-011B allow imported expenses without assignment",
+    sql: fin011bMigrationSql,
   },
 ];
 
