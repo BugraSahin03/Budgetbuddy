@@ -103,10 +103,14 @@ export function ImportForm() {
                 <th className="px-3 py-2 font-semibold">Beschreibung</th>
                 <th className="px-3 py-2 font-semibold">Gegenpartei</th>
                 <th className="px-3 py-2 font-semibold">Info</th>
+                <th className="px-3 py-2 font-semibold">Regelvorschlag</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {state.result.rows.map((row) => (
+              {state.result.rows.map((row, index) => {
+                const suggestion = state.suggestions.find((item) => item.rowIndex === index);
+
+                return (
                 <tr key={`${row.bookingDate}-${row.amountCents}-${row.description}-${row.endToEndReference}`}>
                   <td className="px-3 py-2 text-slate-700">{row.bookingDate}</td>
                   <td className={`px-3 py-2 font-semibold ${amountTone(row.amountCents)}`}>
@@ -115,8 +119,18 @@ export function ImportForm() {
                   <td className="px-3 py-2 text-slate-900">{row.description}</td>
                   <td className="px-3 py-2 text-slate-700">{row.counterparty}</td>
                   <td className="px-3 py-2 text-slate-600">{row.info || "-"}</td>
+                  <td className="px-3 py-2 text-slate-700">
+                    {suggestion ? (
+                      <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                        {suggestion.label}
+                      </span>
+                    ) : (
+                      <span className="text-xs text-slate-500">-</span>
+                    )}
+                  </td>
                 </tr>
-              ))}
+                );
+              })}
             </tbody>
           </table>
         </section>

@@ -1,9 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 import { persistSparkasseCsvImport } from "@/src/import/persistence";
 import { parseSparkasseCsvToPreview } from "@/src/import/sparkasse-csv";
+import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
+import {
+  createImportRule,
+  listActiveImportRules,
+  parseRuleInputFromFormData,
+  updateImportRule,
+} from "@/src/import-rules/repository";
 
 import { type ImportPreviewState, importPreviewInitialState } from "@/app/import/state";
 
@@ -38,6 +46,7 @@ export async function parseSparkasseCsvAction(
     const parsed = parseSparkasseCsvToPreview(fileContent);
 
     if (intent === "confirm") {
+      const activeRules = listActiveImportRules();
       const persisted = persistSparkasseCsvImport({
         sourceFilename: file.name || "sparkasse.csv",
         fileContent,
@@ -50,18 +59,67 @@ export async function parseSparkasseCsvAction(
         result: parsed,
         fatalError: null,
         persisted,
+        suggestions: buildImportRuleSuggestions({
+          rows: parsed.rows,
+          rules: activeRules,
+        }),
       };
     }
+
+    const activeRules = listActiveImportRules();
+    const suggestions = buildImportRuleSuggestions({
+      rows: parsed.rows,
+      rules: activeRules,
+    });
 
     return {
       result: parsed,
       fatalError: null,
       persisted: null,
+      suggestions,
     };
   } catch {
     return {
       ...importPreviewInitialState,
       fatalError: "Datei konnte nicht verarbeitet werden.",
     };
+  }
+}
+
+function toErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message.trim().length > 0) {
+    return error.message;
+  }
+
+  return "Regel konnte nicht gespeichert werden.";
+}
+
+function encodeMessage(message: string): string {
+  return encodeURIComponent(message);
+}
+
+export async function createImportRuleAction(formData: FormData): Promise<never> {
+  try {
+    createImportRule(parseRuleInputFromFormData(formData));
+    revalidatePath("/import");
+    redirect("/import?notice=" + encodeMessage("Import-Regel erstellt."));
+  } catch (error) {
+    redirect("/import?error=" + encodeMessage(toErrorMessage(error)));
+  }
+}
+
+export async function updateImportRuleAction(formData: FormData): Promise<never> {
+  try {
+    const ruleId = Number.parseInt(String(formData.get("ruleId") ?? ""), 10);
+
+    if (!Number.isInteger(ruleId) || ruleId <= 0) {
+      throw new Error("Regel-ID ist ungueltig.");
+    }
+
+    updateImportRule(ruleId, parseRuleInputFromFormData(formData));
+    revalidatePath("/import");
+    redirect("/import?notice=" + encodeMessage("Import-Regel gespeichert."));
+  } catch (error) {
+    redirect("/import?error=" + encodeMessage(toErrorMessage(error)));
   }
 }
