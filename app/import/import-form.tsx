@@ -2,10 +2,8 @@
 
 import { useActionState } from "react";
 
-import {
-  importPreviewInitialState,
-  parseSparkasseCsvAction,
-} from "@/app/import/actions";
+import { parseSparkasseCsvAction } from "@/app/import/actions";
+import { importPreviewInitialState } from "@/app/import/state";
 
 function formatEuroFromCents(amountCents: number): string {
   return new Intl.NumberFormat("de-DE", {

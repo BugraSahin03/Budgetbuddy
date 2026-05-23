@@ -1,16 +1,7 @@
 "use server";
 
-import { parseSparkasseCsvToPreview, type SparkasseParseResult } from "@/src/import/sparkasse-csv";
-
-export type ImportPreviewState = {
-  result: SparkasseParseResult | null;
-  fatalError: string | null;
-};
-
-const EMPTY_STATE: ImportPreviewState = {
-  result: null,
-  fatalError: null,
-};
+import { type ImportPreviewState, importPreviewInitialState } from "@/app/import/state";
+import { parseSparkasseCsvToPreview } from "@/src/import/sparkasse-csv";
 
 export async function parseSparkasseCsvAction(
   _previousState: ImportPreviewState,
@@ -20,14 +11,14 @@ export async function parseSparkasseCsvAction(
 
   if (!(file instanceof File)) {
     return {
-      ...EMPTY_STATE,
+      ...importPreviewInitialState,
       fatalError: "Bitte eine CSV-Datei auswaehlen.",
     };
   }
 
   if (file.size === 0) {
     return {
-      ...EMPTY_STATE,
+      ...importPreviewInitialState,
       fatalError: "Die ausgewaehlte Datei ist leer.",
     };
   }
@@ -43,10 +34,8 @@ export async function parseSparkasseCsvAction(
     };
   } catch {
     return {
-      ...EMPTY_STATE,
+      ...importPreviewInitialState,
       fatalError: "Datei konnte nicht geparst werden.",
     };
   }
 }
-
-export { EMPTY_STATE as importPreviewInitialState };
