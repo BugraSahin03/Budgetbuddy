@@ -377,3 +377,23 @@ Auswirkung:
 Folgeaktion:
 
 - In FIN-011C unzugeordnete importierte Ausgaben sichtbar markieren und nachtraegliche Zuordnung abschliessen.
+
+## 2026-05-23 - FIN-011C Importbestaetigung und Ergebnisdarstellung abgeschlossen
+
+Quelle/Ticket: `FIN-011C`
+
+Erkenntnis/Entscheidung:
+
+- Der Importscreen fuehrt Vorschau und Bestaetigung ueber einen gemeinsamen Upload-Flow mit zwei Intents (`preview`/`confirm`) zusammen.
+- Bei `confirm` wird direkt persistiert und die Ergebniszahlen aus `import_runs` (gefunden/importiert/duplikat) werden unmittelbar im UI angezeigt.
+- Die Transaktionsansicht trennt importierte Transfers sichtbar von importierten Ausgaben/Einnahmen; unzugeordnete importierte Ausgaben werden explizit als `Zuordnen` markiert.
+
+Auswirkung:
+
+- Import kann im MVP-Endzustand ohne Zwischenschritte bestaetigt werden.
+- Importierte Buchungen sind in `Transaktionen` sichtbar und fachlich klar getrennt dargestellt.
+- Offene Zuordnungen aus Importen sind fuer Folgeschritte (z. B. Regelengine/Zuordnungsdialog) klar erkennbar.
+
+Folgeaktion:
+
+- In FIN-012 auf dieser Markierung aufsetzen und Zuordnungsregeln zur schrittweisen Automatisierung einfuehren.
