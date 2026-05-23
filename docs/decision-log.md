@@ -397,3 +397,22 @@ Auswirkung:
 Folgeaktion:
 
 - In FIN-012 auf dieser Markierung aufsetzen und Zuordnungsregeln zur schrittweisen Automatisierung einfuehren.
+
+## 2026-05-23 - FIN-013B Dashboard trennt Budgetsicht, Sonderbudgets und Transferdarstellung
+
+Quelle/Ticket: `FIN-013B`
+
+Erkenntnis/Entscheidung:
+
+- Das Monatsdashboard nutzt die bestehende FIN-013A-Aggregation unveraendert und bildet die UI in getrennten Abschnitten ab: Kategorien, Sonderbudgets und Monatsbuchungen.
+- Transfers werden im Dashboard explizit markiert und nicht als Ausgaben in Budgettabellen interpretiert.
+- Fixkosten werden in der Monatsbuchungsliste ueber eigenen visuellen Status hervorgehoben und bleiben damit in relevanten Ansichten klar erkennbar.
+
+Auswirkung:
+
+- Die Monatsuebersicht ist als nutzbare UI direkt fuer MVP 3 einsetzbar.
+- Warnungen bei Ueberschreitungen sind transparent und ohne neue Fachlogik sichtbar.
+
+Folgeaktion:
+
+- FIN-014/FIN-015 koennen auf der stabilen Dashboard-Basissicht mit vertieften Auswertungen aufsetzen.
