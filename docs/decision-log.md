@@ -416,3 +416,22 @@ Auswirkung:
 Folgeaktion:
 
 - FIN-014/FIN-015 koennen auf der stabilen Dashboard-Basissicht mit vertieften Auswertungen aufsetzen.
+
+## 2026-05-23 - FIN-012 Regelvorschlaege als persistente Import-Regeln eingefuehrt
+
+Quelle/Ticket: `FIN-012`
+
+Erkenntnis/Entscheidung:
+
+- Import-Regeln werden als persistente Datensaetze (`import_rules`) mit Match-Feld, Muster, Zieltyp und Prioritaet verwaltet.
+- Regelvorschlaege werden im Import-Preview pro Zeile eingeblendet und priorisiert nur der erste passende Treffer je Buchung verwendet.
+- Zieltypen im MVP: Kategorie, Sonderbudget oder `Transfer -> Bargeld` (inkl. expliziter Regelmoeglichkeit fuer Bargeldabhebung).
+
+Auswirkung:
+
+- Wiederkehrende Buchungen koennen schneller mit konsistenten Vorschlaegen verarbeitet werden.
+- Regeln sind nachtraeglich editierbar und lassen sich schrittweise verfeinern.
+
+Folgeaktion:
+
+- In einem Folgeschritt kann die Uebernahme der Vorschlaege von rein visueller Empfehlung auf direkte Zuordnungsaktion erweitert werden.
