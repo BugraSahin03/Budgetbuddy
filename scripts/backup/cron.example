@@ -1,0 +1,2 @@
+# Beispiel (taeglich 02:30):
+# 30 2 * * * cd /absolute/path/to/Budgetbuddy && node scripts/backup/create-backup.mjs >> data/backups/backup.log 2>&1

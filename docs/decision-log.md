@@ -435,3 +435,22 @@ Auswirkung:
 Folgeaktion:
 
 - In einem Folgeschritt kann die Uebernahme der Vorschlaege von rein visueller Empfehlung auf direkte Zuordnungsaktion erweitert werden.
+
+## 2026-05-24 - FIN-016 nutzt dateibasierte SQLite-Backups mit konfigurierbarem Zielordner
+
+Quelle/Ticket: `FIN-016`
+
+Erkenntnis/Entscheidung:
+
+- Das MVP-Backup wird als Datei-Kopie der SQLite-DB umgesetzt (`scripts/backup/create-backup.mjs`).
+- Der Zielordner ist konfigurierbar ueber `BUDGETBUDDY_BACKUP_DIR` oder CLI-Flag `--backup-dir`.
+- Fuer automatische lokale Backups wird ein Cron-Beispiel bereitgestellt, ohne plattformspezifische Deployment-Logik.
+
+Auswirkung:
+
+- Manuelle Sicherung ist direkt nutzbar und ohne Datenmodell-/Runtime-Aenderung moeglich.
+- Auto-Backup ist fuer lokale Nutzung vorbereitet und bleibt bewusst einfach nachvollziehbar.
+
+Folgeaktion:
+
+- Restore-Schritte sind in `docs/backup-and-restore.md` dokumentiert.
