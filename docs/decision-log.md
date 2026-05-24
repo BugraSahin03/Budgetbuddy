@@ -454,3 +454,21 @@ Auswirkung:
 Folgeaktion:
 
 - Restore-Schritte sind in `docs/backup-and-restore.md` dokumentiert.
+
+## 2026-05-24 - FIN-015 markiert Ausreisser ueber 1,5x Kategorien-Durchschnitt im Filterzeitraum
+
+Quelle/Ticket: `FIN-015`
+
+Erkenntnis/Entscheidung:
+
+- Fuer die erste Trend-Auswertung gilt eine Buchungs-/Monatsausgabe je Kategorie als Ausreisser, wenn sie mindestens `1,5x` ueber dem Kategorie-Durchschnitt des gewaehlten Zeitraums liegt.
+- Der Vergleich aktueller Monat wird gegen Vormonat (falls im Zeitraum vorhanden) und gegen den Durchschnitt der Vormonate angezeigt.
+
+Auswirkung:
+
+- Ausreisser sind fuer Nutzer schnell erkennbar, ohne komplexe Statistik im MVP einzufuehren.
+- Die Logik bleibt spaeter erweiterbar (z. B. robustere Schwellen).
+
+Folgeaktion:
+
+- Bei spaeterem Feedback kann die Ausreisser-Definition in FIN-020+ nachgeschaerft werden.
