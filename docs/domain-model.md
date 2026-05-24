@@ -118,11 +118,18 @@ Wichtige Felder:
 - Name
 - Betrag
 - Abbuchungsinfo
+- optionaler Wirkmonat `wirkt_fuer_monat` (`YYYY-MM`) fuer Monatswechsel-Faelle
 - Frequenz, spaeter optional
 - Notiz
 - aktiv/inaktiv
 
 Fixkosten werden fuer den Start nicht durch N26-Import abgeglichen.
+
+MVP-Regel fuer Planung/Ist bei Monatswechseln:
+
+- Wenn `wirkt_fuer_monat` gesetzt ist, zaehlt die Buchung fuer diesen Wirkmonat.
+- Wenn `wirkt_fuer_monat` nicht gesetzt ist, zaehlt der Buchungsmonat.
+- Die automatische Herleitung des Wirkmonats bleibt eine spaetere Erweiterung.
 
 ### Importlauf
 
