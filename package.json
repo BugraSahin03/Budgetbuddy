@@ -9,9 +9,7 @@
     "lint": "eslint",
     "test": "vitest run",
     "test:watch": "vitest",
-    "migrate:issues": "node scripts/migrate-backlog-to-issues.mjs",
-    "backup:create": "node scripts/backup/create-backup.mjs",
-    "backup:auto": "node scripts/backup/create-backup.mjs"
+    "migrate:issues": "node scripts/migrate-backlog-to-issues.mjs"
   },
   "dependencies": {
     "better-sqlite3": "^12.4.1",

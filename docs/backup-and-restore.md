@@ -7,7 +7,7 @@ Diese Anleitung beschreibt das lokale Backup der SQLite-Datenbank.
 Im Projektordner ausfuehren:
 
 ```bash
-npm run backup:create
+node scripts/backup/create-backup.mjs
 ```
 
 Standardziele:
@@ -18,9 +18,9 @@ Standardziele:
 
 Optionen:
 
-- Backup-Ordner per ENV: `BUDGETBUDDY_BACKUP_DIR=/pfad/zum/ordner npm run backup:create`
-- Backup-Ordner per CLI: `npm run backup:create -- --backup-dir /pfad/zum/ordner`
-- DB-Pfad per ENV: `BUDGETBUDDY_DB_PATH=/pfad/zur/budgetbuddy.db npm run backup:create`
+- Backup-Ordner per ENV: `BUDGETBUDDY_BACKUP_DIR=/pfad/zum/ordner node scripts/backup/create-backup.mjs`
+- Backup-Ordner per CLI: `node scripts/backup/create-backup.mjs --backup-dir /pfad/zum/ordner`
+- DB-Pfad per ENV: `BUDGETBUDDY_DB_PATH=/pfad/zur/budgetbuddy.db node scripts/backup/create-backup.mjs`
 
 ## 2) Automatisches lokales Backup vorbereiten
 
@@ -32,7 +32,7 @@ Vorgehen:
 2. Crontab oeffnen: `crontab -e`
 3. Beispielzeile uebernehmen und ggf. Uhrzeit anpassen.
 
-Damit laeuft taeglich ein lokales Backup ueber `npm run backup:auto`.
+Damit laeuft taeglich ein lokales Backup ueber `node scripts/backup/create-backup.mjs`.
 
 ## 3) Wiederherstellung (Restore)
 
