@@ -55,6 +55,26 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-05-24 - FIN-021 Doku-Nachzug in Briefing und Domain Model
+
+Quelle/Ticket: `FIN-021`, Folge `FIN-022`
+
+Erkenntnis/Entscheidung:
+
+- Die in FIN-021 entschiedene Fixkosten-Monatszuordnung wird in den Kern-Dokumenten konsistent nachgezogen.
+- `project-briefing.md` beschreibt jetzt die MVP-Regel mit optionalem `wirkt_fuer_monat` (`YYYY-MM`) und Default auf Buchungsmonat.
+- Die offene Frage zur Fixkosten-Monatszuordnung wurde aus den offenen Fragen entfernt, da fachlich bereits entschieden.
+- `domain-model.md` fuehrt die gleiche Regel explizit fuer Planung/Ist bei Monatswechseln.
+
+Auswirkung:
+
+- Kein Widerspruch mehr zwischen Ticketentscheidung und zentraler Projektdokumentation.
+- Nachfolgende Tickets (insbesondere FIN-020) starten mit klarer, einheitlicher Regelbasis.
+
+Folgeaktion:
+
+- FIN-022 nach Review auf `status:done` setzen und schliessen.
+
 ## 2026-05-18 - Ein-Personen-Review nutzt `status:ready-to-merge`
 
 Quelle/Ticket: Prozessentscheidung
