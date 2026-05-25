@@ -8,39 +8,11 @@ type DashboardModule = typeof import("@/src/dashboard/repository");
 let dbClient: DbClientModule;
 let dashboard: DashboardModule;
 
-const PREFIX = "TEST-FIN-013A-";
+const PREFIX = "TEST-FIN-027-";
 const TEST_MONTH = "2031-01";
-
-function tableExists(tableName: string): boolean {
-  const row = dbClient
-    .getDb()
-    .prepare(
-      `
-        SELECT 1 AS existsFlag
-        FROM sqlite_master
-        WHERE type = 'table'
-          AND name = ?
-        LIMIT 1
-      `,
-    )
-    .get(tableName) as { existsFlag: number } | undefined;
-
-  return row?.existsFlag === 1;
-}
 
 function cleanup(): void {
   const db = dbClient.getDb();
-
-  if (tableExists("fixed_cost_transaction_links")) {
-    db.prepare(
-      `
-        DELETE FROM fixed_cost_transaction_links
-        WHERE transaction_id IN (
-          SELECT id FROM transactions WHERE description LIKE ?
-        )
-      `,
-    ).run(`${PREFIX}%`);
-  }
 
   db.prepare("DELETE FROM transactions WHERE description LIKE ?").run(`${PREFIX}%`);
   db.prepare("DELETE FROM special_budgets WHERE name LIKE ?").run(`${PREFIX}%`);
@@ -64,14 +36,13 @@ beforeAll(async () => {
 });
 
 describe("dashboard repository", () => {
-  it("aggregates month totals and excludes transfers from expenses", () => {
+  it("calculates available from income - planned fixed costs - variable expenses", () => {
     cleanup();
 
     const db = dbClient.getDb();
     const sparkasseId = getAccountId("Sparkasse");
     const cashId = getAccountId("Bargeld");
     const einkaufId = getCategoryId("Einkauf");
-    const freizeitId = getCategoryId("Freizeit");
     const baselinePlannedFixedCostsCents = (
       db
         .prepare(
@@ -87,9 +58,9 @@ describe("dashboard repository", () => {
     db.prepare(
       `
         INSERT INTO monthly_category_budgets (month_key, category_id, budget_amount_cents)
-        VALUES (?, ?, 50000), (?, ?, 10000)
+        VALUES (?, ?, 50000)
       `,
-    ).run(TEST_MONTH, einkaufId, TEST_MONTH, freizeitId);
+    ).run(TEST_MONTH, einkaufId);
 
     const specialBudget = db
       .prepare(
@@ -101,15 +72,13 @@ describe("dashboard repository", () => {
       .run(`${PREFIX}Bali`, TEST_MONTH);
     const specialBudgetId = Number(specialBudget.lastInsertRowid);
 
-    const fixedCost = db
-      .prepare(
-        `
-          INSERT INTO fixed_costs (name, planned_amount_cents, booking_day_of_month, payment_note, note, is_active)
-          VALUES (?, 3490, 1, 'SEPA', 'Test', 1)
-        `,
-      )
-      .run(`${PREFIX}Fitness`);
-    const fixedCostId = Number(fixedCost.lastInsertRowid);
+    db.prepare(
+      `
+        INSERT INTO fixed_costs (name, planned_amount_cents, booking_day_of_month, payment_note, note, is_active)
+        VALUES (?, 3490, 1, 'FITNESS STUDIO', 'Test', 1)
+      `,
+    ).run(`${PREFIX}Fitness Studio`);
+    const fixedCostPlanCents = 3490;
 
     db.prepare(
       `
@@ -129,24 +98,12 @@ describe("dashboard repository", () => {
       `,
     ).run(sparkasseId, `${PREFIX}Groceries`, einkaufId);
 
-    const fixedTx = db
-      .prepare(
-        `
-        INSERT INTO transactions (
-          account_id, destination_account_id, transaction_type, booking_date, amount_cents,
-          currency_code, description, source_type, category_id, special_budget_id
-          ) VALUES (?, NULL, 'expense', '2031-01-09', -3490, 'EUR', ?, 'manual', ?, NULL)
-        `,
-      )
-      .run(sparkasseId, `${PREFIX}FitnessCharge`, freizeitId);
-    const fixedTxId = Number(fixedTx.lastInsertRowid);
-
     db.prepare(
       `
         INSERT INTO transactions (
           account_id, destination_account_id, transaction_type, booking_date, amount_cents,
           currency_code, description, source_type, category_id, special_budget_id
-        ) VALUES (?, NULL, 'expense', '2031-01-12', -5000, 'EUR', ?, 'manual', NULL, ?)
+        ) VALUES (?, NULL, 'expense', '2031-01-09', -5000, 'EUR', ?, 'manual', NULL, ?)
       `,
     ).run(sparkasseId, `${PREFIX}BaliExpense`, specialBudgetId);
 
@@ -159,40 +116,58 @@ describe("dashboard repository", () => {
       `,
     ).run(sparkasseId, cashId, `${PREFIX}CashTransfer`);
 
-    db.exec(
+    db.prepare(
       `
-        CREATE TABLE IF NOT EXISTS fixed_cost_transaction_links (
-          transaction_id INTEGER PRIMARY KEY REFERENCES transactions(id) ON DELETE CASCADE,
-          fixed_cost_id INTEGER NOT NULL REFERENCES fixed_costs(id) ON DELETE RESTRICT,
-          effective_month_key TEXT,
-          created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-        )
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, amount_cents,
+          currency_code, description, counterparty_name, source_type, category_id, special_budget_id
+        ) VALUES (?, NULL, 'expense', '2031-01-16', -2500, 'EUR', ?, ?, 'import', NULL, NULL)
       `,
+    ).run(
+      sparkasseId,
+      `${PREFIX}ImportVariableExpense`,
+      `${PREFIX}OFFENER BUCHUNGSTEXT`,
     );
 
     db.prepare(
       `
-        INSERT INTO fixed_cost_transaction_links (transaction_id, fixed_cost_id, effective_month_key)
-        VALUES (?, ?, ?)
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, amount_cents,
+          currency_code, description, counterparty_name, source_type, category_id, special_budget_id
+        ) VALUES (?, NULL, 'expense', '2031-01-17', -4000, 'EUR', ?, ?, 'import', NULL, NULL)
       `,
-    ).run(fixedTxId, fixedCostId, TEST_MONTH);
+    ).run(sparkasseId, `${PREFIX}UEBERWEISUNG | N26-Fix. Monatsblock`, "N26 BANK");
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, amount_cents,
+          currency_code, description, counterparty_name, source_type, category_id, special_budget_id
+        ) VALUES (?, NULL, 'expense', '2031-01-18', -3490, 'EUR', ?, ?, 'import', NULL, NULL)
+      `,
+    ).run(
+      sparkasseId,
+      `${PREFIX}Lastschrift Fitness`,
+      `${PREFIX}FITNESS STUDIO`,
+    );
 
     const snapshot = dashboard.getDashboardMonthSnapshot(TEST_MONTH);
 
     expect(snapshot.totals.incomeCents).toBe(200000);
-    expect(snapshot.totals.expenseCents).toBe(18490);
-    expect(snapshot.totals.plannedFixedCostsCents).toBe(baselinePlannedFixedCostsCents + 3490);
-    expect(snapshot.totals.actualFixedCostsCents).toBe(3490);
+    // Variable expenses include manual + imported expenses, but exclude fixed-cost control hits.
+    expect(snapshot.totals.expenseCents).toBe(17500);
+    expect(snapshot.totals.plannedFixedCostsCents).toBe(
+      baselinePlannedFixedCostsCents + fixedCostPlanCents,
+    );
+    // Ist-Kontrolle: N26-Sammeltransfer (4000) + direkte Fixkostenabbuchung (3490).
+    expect(snapshot.totals.actualFixedCostsCents).toBe(7490);
     expect(snapshot.totals.availableCents).toBe(
-      200000 - 18490 - (baselinePlannedFixedCostsCents + 3490),
+      200000 - 17500 - (baselinePlannedFixedCostsCents + fixedCostPlanCents),
     );
 
     const einkauf = snapshot.categoryRows.find((row) => row.categoryName === "Einkauf");
-    const freizeit = snapshot.categoryRows.find((row) => row.categoryName === "Freizeit");
     expect(einkauf?.spentAmountCents).toBe(10000);
     expect(einkauf?.remainingAmountCents).toBe(40000);
-    expect(freizeit?.spentAmountCents).toBe(3490);
 
     const bali = snapshot.specialBudgetRows.find((row) => row.name === `${PREFIX}Bali`);
     expect(bali?.plannedAmountCents).toBe(20000);
