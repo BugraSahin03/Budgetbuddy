@@ -331,6 +331,12 @@ ON transactions(special_budget_id);
 PRAGMA foreign_keys = ON;
 `;
 
+const fin025MigrationSql = `
+INSERT INTO app_meta (key, value)
+VALUES ('fixed_cost_assignment_mode', 'deprecated')
+ON CONFLICT(key) DO UPDATE SET value = excluded.value;
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -346,6 +352,11 @@ export const migrations: readonly Migration[] = [
     id: "0003_fin_011b",
     name: "FIN-011B allow imported expenses without assignment",
     sql: fin011bMigrationSql,
+  },
+  {
+    id: "0004_fin_025",
+    name: "FIN-025 deprecate manual fixed-cost transaction assignment model",
+    sql: fin025MigrationSql,
   },
 ];
 
