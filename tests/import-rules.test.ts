@@ -151,4 +151,24 @@ describe("import rules", () => {
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0].label).toBe("Transfer-Kandidat -> N26");
   });
+
+  it("does not recreate N26 default rule after edits or deactivation", () => {
+    const initial = repo.listImportRules().find((rule) => rule.name === "N26 Transfer-Kandidat");
+    expect(initial).toBeDefined();
+
+    repo.updateImportRule(initial!.id, {
+      ...initial!,
+      name: "N26 Transfer-Kandidat (angepasst)",
+      pattern: "N26-ALT",
+      isActive: false,
+    });
+
+    // Trigger table/bootstrap path again.
+    const after = repo.listImportRules().filter((rule) => rule.name.includes("N26 Transfer-Kandidat"));
+
+    expect(after).toHaveLength(1);
+    expect(after[0].name).toBe("N26 Transfer-Kandidat (angepasst)");
+    expect(after[0].pattern).toBe("N26-ALT");
+    expect(after[0].isActive).toBe(false);
+  });
 });
