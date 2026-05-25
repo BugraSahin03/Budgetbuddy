@@ -200,6 +200,20 @@ Aktueller Stand:
 - Diese Treffer sind Kontrollhinweise und sollen nicht als normale variable Monatsausgaben behandelt werden.
 - Die konkrete technische Umstellung auf das neue Monatsblock-Modell erfolgt in Folge-Issues (`#56`, `#57`, `#58`, `#59`).
 
+## Import-Kontrollmarkierungen fuer Fixkosten (FIN-026)
+
+Stand ab FIN-026:
+
+- Die bisherige Label-Logik `Transfer-Kandidat -> N26` wurde fuer die Vorschau auf eine klare
+  Fixkosten-Kontrollmarkierung umgestellt: `Fixkosten-Kontrolle: N26-Sammeltransfer`.
+- Neben dem N26-Hinweis gibt es jetzt eine zweite Erkennung:
+  `Fixkosten-Kontrolle: Direktabbuchung (<Fixkostenname>)`.
+- Direkte Sparkassen-Fixkostenmatches werden ueber eine einfache Heuristik erkannt:
+  - Ausgabe-Betrag (absolut) entspricht dem geplanten Fixkostenbetrag
+  - und Beschreibung/Gegenpartei enthalten Abbuchungsinfo oder Fixkostenname.
+- Diese Treffer werden in der Import-Vorschau als eigene Fixkosten-Kontrollsicht dargestellt.
+- Die Kontrollmarkierung ist bewusst getrennt von normalen Kategorie-/Sonderbudget-Regelvorschlaegen.
+
 ## Bankanbindung spaeter
 
 Moegliche Wege:

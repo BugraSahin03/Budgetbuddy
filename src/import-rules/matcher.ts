@@ -3,6 +3,13 @@ import "server-only";
 import type { SparkasseCsvRow } from "@/src/import/sparkasse-csv";
 import type { ImportRule } from "@/src/import-rules/repository";
 
+type FixedCostForImportMatching = {
+  name: string;
+  plannedAmountCents: number;
+  paymentNote: string | null;
+  isActive: boolean;
+};
+
 export type ImportRuleSuggestion = {
   rowIndex: number;
   label: string;
@@ -28,7 +35,7 @@ function getMatchText(row: SparkasseCsvRow, matchField: ImportRule["matchField"]
 function suggestionLabel(rule: ImportRule): string {
   if (rule.targetType === "transfer_cash") {
     if (rule.name === "N26 Transfer-Kandidat") {
-      return "Transfer-Kandidat -> N26";
+      return "Fixkosten-Kontrolle: N26-Sammeltransfer";
     }
 
     return "Transfer -> Bargeld";
@@ -41,15 +48,67 @@ function suggestionLabel(rule: ImportRule): string {
   return `Sonderbudget-ID ${rule.specialBudgetId}`;
 }
 
+function normalizeToken(value: string | null): string {
+  return normalize(value ?? "").replace(/[^A-Z0-9]+/g, " ").trim();
+}
+
+function tokenFromFixedCost(fixedCost: FixedCostForImportMatching): string {
+  const paymentNote = normalizeToken(fixedCost.paymentNote);
+  if (paymentNote.length >= 3) {
+    return paymentNote;
+  }
+
+  return normalizeToken(fixedCost.name);
+}
+
+function buildDirectFixedCostSuggestion(
+  row: SparkasseCsvRow,
+  fixedCosts: FixedCostForImportMatching[],
+): Omit<ImportRuleSuggestion, "rowIndex"> | null {
+  if (row.amountCents >= 0) {
+    return null;
+  }
+
+  const haystack = normalizeToken(`${row.description} ${row.counterparty}`);
+  const absoluteAmount = Math.abs(row.amountCents);
+
+  for (const fixedCost of fixedCosts) {
+    if (!fixedCost.isActive) {
+      continue;
+    }
+
+    if (fixedCost.plannedAmountCents !== absoluteAmount) {
+      continue;
+    }
+
+    const token = tokenFromFixedCost(fixedCost);
+    if (token.length < 3) {
+      continue;
+    }
+
+    if (haystack.includes(token)) {
+      return {
+        label: `Fixkosten-Kontrolle: Direktabbuchung (${fixedCost.name})`,
+        ruleName: "Fixkosten-Matching (Direktabbuchung)",
+      };
+    }
+  }
+
+  return null;
+}
+
 export function buildImportRuleSuggestions(params: {
   rows: SparkasseCsvRow[];
   rules: ImportRule[];
+  fixedCosts?: FixedCostForImportMatching[];
 }): ImportRuleSuggestion[] {
   const activeRules = params.rules.filter((rule) => rule.isActive);
+  const fixedCosts = params.fixedCosts ?? [];
   const suggestions: ImportRuleSuggestion[] = [];
 
   for (let rowIndex = 0; rowIndex < params.rows.length; rowIndex += 1) {
     const row = params.rows[rowIndex];
+    let ruleMatched = false;
 
     for (const rule of activeRules) {
       const haystack = getMatchText(row, rule.matchField);
@@ -65,8 +124,21 @@ export function buildImportRuleSuggestions(params: {
           label: suggestionLabel(rule),
           ruleName: rule.name,
         });
+        ruleMatched = true;
         break;
       }
+    }
+
+    if (ruleMatched) {
+      continue;
+    }
+
+    const directFixedCostSuggestion = buildDirectFixedCostSuggestion(row, fixedCosts);
+    if (directFixedCostSuggestion) {
+      suggestions.push({
+        rowIndex,
+        ...directFixedCostSuggestion,
+      });
     }
   }
 

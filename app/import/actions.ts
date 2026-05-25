@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { persistSparkasseCsvImport } from "@/src/import/persistence";
 import { parseSparkasseCsvToPreview } from "@/src/import/sparkasse-csv";
 import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
+import { listFixedCosts } from "@/src/fixed-costs/repository";
 import {
   createImportRule,
   listActiveImportRules,
@@ -44,6 +45,7 @@ export async function parseSparkasseCsvAction(
 
   try {
     const parsed = parseSparkasseCsvToPreview(fileContent);
+    const activeFixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
 
     if (intent === "confirm") {
       const activeRules = listActiveImportRules();
@@ -62,6 +64,7 @@ export async function parseSparkasseCsvAction(
         suggestions: buildImportRuleSuggestions({
           rows: parsed.rows,
           rules: activeRules,
+          fixedCosts: activeFixedCosts,
         }),
       };
     }
@@ -70,6 +73,7 @@ export async function parseSparkasseCsvAction(
     const suggestions = buildImportRuleSuggestions({
       rows: parsed.rows,
       rules: activeRules,
+      fixedCosts: activeFixedCosts,
     });
 
     return {
