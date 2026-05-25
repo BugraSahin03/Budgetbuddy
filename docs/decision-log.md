@@ -532,3 +532,23 @@ Auswirkung:
 Folgeaktion:
 
 - Folge-Issues als Umsetzungsreihe nutzen: `#56` (Datenmodell/Persistenz), `#57` (Import-Erkennung), `#58` (Monatslogik/Dashboard), `#59` (Fixkosten-/Transaktions-UI).
+
+## 2026-05-25 - FIN-025 stilllegt manuelle Fixkosten-Transaktionszuordnung technisch
+
+Quelle/Ticket: `FIN-025`
+
+Erkenntnis/Entscheidung:
+
+- Die manuelle Zuordnung einzelner Transaktionen zu Fixkosten (`fixed_cost_transaction_links` + `wirkt_fuer_monat`) wird im Repository bewusst deaktiviert.
+- Neue Zuordnungen/Entfernungen sind im Monatsblock-Modell nicht mehr erlaubt und liefern eine klare Fehlermeldung.
+- Die technische Migration ist nicht-destruktiv: bestehende lokale Link-Daten werden nicht automatisch geloescht, aber fuer neue Zuordnungen nicht mehr genutzt.
+- In `app_meta` wird der Modus mit `fixed_cost_assignment_mode=deprecated` markiert.
+
+Auswirkung:
+
+- Fixkosten-Persistenz folgt der neuen Leitentscheidung aus FIN-024.
+- Folge-Tickets koennen Import-Erkennung und Dashboard-Logik auf einer klaren, vereinfachten Basis aufbauen.
+
+Folgeaktion:
+
+- FIN-026 bis FIN-028 setzen auf dieser Basis auf (Erkennung, Monatslogik, UI-Vereinfachung).

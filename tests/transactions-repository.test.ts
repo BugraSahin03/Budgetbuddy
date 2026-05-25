@@ -334,7 +334,7 @@ describe("transactions repository", () => {
     expect(stored.specialBudgetId).toBeNull();
   });
 
-  it("exposes fixed cost marker fields when transaction is linked", async () => {
+  it("keeps fixed cost marker fields empty because assignment model is deprecated", async () => {
     cleanupTestTransactions();
 
     const fixedCosts = await import("@/src/fixed-costs/repository");
@@ -376,17 +376,19 @@ describe("transactions repository", () => {
       .find((row) => row.description === `${PREFIX}FixedCostLinked`);
     expect(created).toBeDefined();
 
-    fixedCosts.assignTransactionToFixedCost(created!.id, fixedCostId!, "2026-05");
+    expect(() => fixedCosts.assignTransactionToFixedCost(created!.id, fixedCostId!, "2026-05")).toThrow(
+      "Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.",
+    );
 
     const linked = transactions
       .listManualTransactions()
       .find((row) => row.id === created!.id);
 
-    expect(linked?.fixedCostName).toBe(`${PREFIX}FixedMarker`);
-    expect(linked?.fixedCostEffectiveMonthKey).toBe("2026-05");
+    expect(linked?.fixedCostName).toBeNull();
+    expect(linked?.fixedCostEffectiveMonthKey).toBeNull();
   });
 
-  it("supports fixed costs summary and manual wirkt_fuer_monat assignment", async () => {
+  it("supports fixed costs summary without manual wirkt_fuer_monat assignment", async () => {
     cleanupTestTransactions();
 
     const fixedCosts = await import("@/src/fixed-costs/repository");
@@ -432,21 +434,22 @@ describe("transactions repository", () => {
       .find((row) => row.description === `${PREFIX}StreamingCharge`);
     expect(created).toBeDefined();
 
-    fixedCosts.assignTransactionToFixedCost(created!.id, fixedCostId!, "2026-06");
+    expect(() => fixedCosts.assignTransactionToFixedCost(created!.id, fixedCostId!, "2026-06")).toThrow(
+      "Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.",
+    );
 
     const assignment = fixedCosts
       .listExpenseTransactionsForFixedCostAssignment()
       .find((row) => row.transactionId === created!.id);
-    expect(assignment?.effectiveMonthKey).toBe("2026-06");
+    expect(assignment?.fixedCostId).toBeNull();
+    expect(assignment?.effectiveMonthKey).toBeNull();
 
-    fixedCosts.unassignTransactionFromFixedCost(created!.id);
-    const afterRemove = fixedCosts
-      .listExpenseTransactionsForFixedCostAssignment()
-      .find((row) => row.transactionId === created!.id);
-    expect(afterRemove?.fixedCostId).toBeNull();
+    expect(() => fixedCosts.unassignTransactionFromFixedCost(created!.id)).toThrow(
+      "Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.",
+    );
   });
 
-  it("rejects invalid fixed cost booking day and non-expense assignment", async () => {
+  it("rejects invalid fixed cost booking day and manual assignment attempts", async () => {
     cleanupTestTransactions();
 
     const fixedCosts = await import("@/src/fixed-costs/repository");
@@ -494,7 +497,7 @@ describe("transactions repository", () => {
     expect(incomeTx).toBeDefined();
 
     expect(() => fixedCosts.assignTransactionToFixedCost(incomeTx!.id, fixedCostId, "")).toThrow(
-      "Nur manuelle Ausgaben koennen als Fixkosten markiert werden.",
+      "Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.",
     );
   });
 });

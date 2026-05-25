@@ -311,4 +311,12 @@ describe("database migrations runtime behavior", () => {
     expect(transactionCount.count).toBe(1);
     expect(budgetCount.count).toBe(1);
   });
+
+  it("stores fixed-cost assignment mode as deprecated in app_meta", () => {
+    const row = db
+      .prepare("SELECT value FROM app_meta WHERE key = 'fixed_cost_assignment_mode' LIMIT 1")
+      .get() as { value?: string } | undefined;
+
+    expect(row?.value).toBe("deprecated");
+  });
 });

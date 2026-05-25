@@ -32,25 +32,18 @@ export type FixedCostAssignmentItem = {
   effectiveMonthKey: string | null;
 };
 
-const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 const AMOUNT_PATTERN = /^\d+(?:[.,]\d{1,2})?$/;
 
 function ensureRuntimeTables(): void {
-  getDb().exec(`
-    CREATE TABLE IF NOT EXISTS fixed_cost_transaction_links (
-      transaction_id INTEGER PRIMARY KEY REFERENCES transactions(id) ON DELETE CASCADE,
-      fixed_cost_id INTEGER NOT NULL REFERENCES fixed_costs(id) ON DELETE RESTRICT,
-      effective_month_key TEXT CHECK (effective_month_key IS NULL OR (length(effective_month_key) = 7 AND substr(effective_month_key, 5, 1) = '-')),
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-
-    CREATE INDEX IF NOT EXISTS idx_fixed_cost_links_fixed_cost_id
-    ON fixed_cost_transaction_links(fixed_cost_id);
-
-    CREATE INDEX IF NOT EXISTS idx_fixed_cost_links_effective_month_key
-    ON fixed_cost_transaction_links(effective_month_key);
-  `);
+  getDb()
+    .prepare(
+      `
+        INSERT INTO app_meta (key, value)
+        VALUES ('fixed_cost_assignment_mode', 'deprecated')
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      `,
+    )
+    .run();
 }
 
 function mapSqliteBoolean(value: number): boolean {
@@ -127,10 +120,6 @@ function normalizeOptionalText(value: string, maxLength: number, label: string):
   return normalized;
 }
 
-function toMonthKeyFromDate(bookingDate: string): string {
-  return bookingDate.slice(0, 7);
-}
-
 export function listFixedCosts(): FixedCostListItem[] {
   ensureRuntimeTables();
 
@@ -145,11 +134,7 @@ export function listFixedCosts(): FixedCostListItem[] {
           fc.payment_note AS paymentNote,
           fc.note,
           fc.is_active AS isActive,
-          (
-            SELECT COUNT(*)
-            FROM fixed_cost_transaction_links fctl
-            WHERE fctl.fixed_cost_id = fc.id
-          ) AS monthlyAssignmentCount
+          0 AS monthlyAssignmentCount
         FROM fixed_costs fc
         ORDER BY fc.is_active DESC, fc.name COLLATE NOCASE ASC
       `,
@@ -304,13 +289,11 @@ export function listExpenseTransactionsForFixedCostAssignment(limit = 80): Fixed
           t.description,
           t.amount_cents AS amountCents,
           source.name AS accountName,
-          fctl.fixed_cost_id AS fixedCostId,
-          fc.name AS fixedCostName,
-          fctl.effective_month_key AS effectiveMonthKey
+          NULL AS fixedCostId,
+          NULL AS fixedCostName,
+          NULL AS effectiveMonthKey
         FROM transactions t
         INNER JOIN accounts source ON source.id = t.account_id
-        LEFT JOIN fixed_cost_transaction_links fctl ON fctl.transaction_id = t.id
-        LEFT JOIN fixed_costs fc ON fc.id = fctl.fixed_cost_id
         WHERE t.source_type = 'manual'
           AND t.transaction_type = 'expense'
         ORDER BY t.booking_date DESC, t.id DESC
@@ -321,68 +304,19 @@ export function listExpenseTransactionsForFixedCostAssignment(limit = 80): Fixed
 }
 
 export function assignTransactionToFixedCost(
-  transactionId: number,
-  fixedCostId: number,
-  effectiveMonthKeyInput: string,
+  _transactionId: number,
+  _fixedCostId: number,
+  _effectiveMonthKeyInput: string,
 ): void {
   ensureRuntimeTables();
-
-  const transaction = getDb()
-    .prepare(
-      "SELECT id, booking_date AS bookingDate, transaction_type AS transactionType, source_type AS sourceType FROM transactions WHERE id = ?",
-    )
-    .get(transactionId) as
-    | { id: number; bookingDate: string; transactionType: string; sourceType: string }
-    | undefined;
-
-  if (!transaction) {
-    throw new Error("Transaktion wurde nicht gefunden.");
-  }
-
-  if (transaction.sourceType !== "manual" || transaction.transactionType !== "expense") {
-    throw new Error("Nur manuelle Ausgaben koennen als Fixkosten markiert werden.");
-  }
-
-  const fixedCost = getDb()
-    .prepare("SELECT id, is_active AS isActive FROM fixed_costs WHERE id = ?")
-    .get(fixedCostId) as { id: number; isActive: number } | undefined;
-
-  if (!fixedCost || fixedCost.isActive !== 1) {
-    throw new Error("Aktiver Fixkosten-Eintrag wurde nicht gefunden.");
-  }
-
-  const rawMonth = effectiveMonthKeyInput.trim();
-  const effectiveMonthKey =
-    rawMonth.length === 0 ? toMonthKeyFromDate(transaction.bookingDate) : rawMonth;
-
-  if (!MONTH_KEY_PATTERN.test(effectiveMonthKey)) {
-    throw new Error("wirkt_fuer_monat muss im Format YYYY-MM gesetzt sein.");
-  }
-
-  getDb()
-    .prepare(
-      `
-        INSERT INTO fixed_cost_transaction_links (
-          transaction_id,
-          fixed_cost_id,
-          effective_month_key,
-          updated_at
-        )
-        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(transaction_id)
-        DO UPDATE SET
-          fixed_cost_id = excluded.fixed_cost_id,
-          effective_month_key = excluded.effective_month_key,
-          updated_at = CURRENT_TIMESTAMP
-      `,
-    )
-    .run(transactionId, fixedCostId, effectiveMonthKey);
+  void _transactionId;
+  void _fixedCostId;
+  void _effectiveMonthKeyInput;
+  throw new Error("Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.");
 }
 
-export function unassignTransactionFromFixedCost(transactionId: number): void {
+export function unassignTransactionFromFixedCost(_transactionId: number): void {
   ensureRuntimeTables();
-
-  getDb()
-    .prepare("DELETE FROM fixed_cost_transaction_links WHERE transaction_id = ?")
-    .run(transactionId);
+  void _transactionId;
+  throw new Error("Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.");
 }

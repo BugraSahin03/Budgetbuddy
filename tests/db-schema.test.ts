@@ -61,7 +61,15 @@ describe("schema migrations", () => {
     expect(sql).toContain("special_budget_id IS NULL");
   });
 
+  it("contains migration that deprecates manual fixed-cost transaction assignments", () => {
+    const sql = migrations.find((migration) => migration.id === "0004_fin_025")
+      ?.sql ?? "";
+
+    expect(sql).toContain("fixed_cost_assignment_mode");
+    expect(sql).toContain("deprecated");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0003_fin_011b");
+    expect(getLatestSchemaVersion()).toBe("0004_fin_025");
   });
 });

@@ -131,6 +131,11 @@ MVP-Regel (FIN-024):
 - `wirkt_fuer_monat` ist nicht Teil des Zielmodells.
 - N26-Sammeltransfer und direkte Sparkassen-Fixkostenmatches sind Kontrollinformationen, keine normalen variablen Monatsausgaben.
 
+Technischer Migrationshinweis (FIN-025):
+
+- Fruehere manuelle Zuordnungslogik ueber `fixed_cost_transaction_links` wird fachlich stillgelegt.
+- Bestehende lokale Altdaten werden nicht destruktiv geloescht, aber im Zielmodell nicht mehr fuer neue Zuordnungen verwendet.
+
 ### Importlauf
 
 Ein Importlauf dokumentiert eine eingelesene Bankdatei.
