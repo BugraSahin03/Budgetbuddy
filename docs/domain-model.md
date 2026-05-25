@@ -97,7 +97,7 @@ Sonderbudgets koennen wiederkehrend manuell in mehreren Monaten angelegt werden,
 
 ### Fixkosten
 
-Fixkosten sind geplante regelmaessige Kosten.
+Fixkosten sind ein monatlicher Planungsblock aus der Fixkostenliste.
 
 Beispiele aus der Excel:
 
@@ -118,18 +118,18 @@ Wichtige Felder:
 - Name
 - Betrag
 - Abbuchungsinfo
-- optionaler Wirkmonat `wirkt_fuer_monat` (`YYYY-MM`) fuer Monatswechsel-Faelle
 - Frequenz, spaeter optional
 - Notiz
 - aktiv/inaktiv
 
-Fixkosten werden fuer den Start nicht durch N26-Import abgeglichen.
+Fixkosten werden fuer den Start nicht ueber ein eigenes N26-Fachmodell importiert.
 
-MVP-Regel fuer Planung/Ist bei Monatswechseln:
+MVP-Regel (FIN-024):
 
-- Wenn `wirkt_fuer_monat` gesetzt ist, zaehlt die Buchung fuer diesen Wirkmonat.
-- Wenn `wirkt_fuer_monat` nicht gesetzt ist, zaehlt der Buchungsmonat.
-- Die automatische Herleitung des Wirkmonats bleibt eine spaetere Erweiterung.
+- Die aktive Fixkostensumme reduziert den verfuegbaren Monatsbetrag direkt.
+- Einzeltransaktionen werden nicht mehr manuell als Fixkosten markiert.
+- `wirkt_fuer_monat` ist nicht Teil des Zielmodells.
+- N26-Sammeltransfer und direkte Sparkassen-Fixkostenmatches sind Kontrollinformationen, keine normalen variablen Monatsausgaben.
 
 ### Importlauf
 

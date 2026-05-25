@@ -148,15 +148,15 @@ Beispiel:
 
 ### Fixkosten
 
-Fixkosten sind echte Ausgaben. Die Eintraege aus der Fixkostenliste werden real gebucht.
+Fixkosten werden im MVP als monatlicher Planungsblock aus der Fixkostenliste gefuehrt.
 
-Fixkosten koennen teils direkt zum Monatsersten ueberwiesen werden und teils untermonatlich abgebucht werden.
-Fuer den MVP gilt bei Monatswechseln eine einfache, manuelle Wirkmonat-Logik:
+Leitregel (FIN-024):
 
-- Fixkostenbuchungen koennen optional einem Wirkmonat `YYYY-MM` zugeordnet werden (`wirkt_fuer_monat`).
-- Wenn `wirkt_fuer_monat` nicht gesetzt ist, gilt standardmaessig der Buchungsmonat.
-- Fixkosten werden in relevanten Transaktionsansichten visuell markiert.
-- Eine automatische Zuordnung fuer Grenzfaelle ist nicht Teil des MVP und bleibt Folgearbeit.
+- Die aktive Fixkostensumme wird direkt vom Monatsbudget abgezogen.
+- `wirkt_fuer_monat` ist nicht Teil des Zielmodells.
+- Einzelne Transaktionen werden nicht mehr manuell als Fixkosten markiert.
+- N26 ist kein eigenes Fachobjekt, sondern nur ein technischer Zahlungsweg fuer bereits bekannte Fixkosten.
+- Erkannte N26-Sammeltransfers und direkte Sparkassen-Fixkostenmatches bleiben als Kontrollsicht sichtbar, werden aber nicht als normale variable Monats-Transaktionen behandelt.
 
 Aktuell soll der N26-Teil nicht importiert werden. Die App soll eine Fixkostenliste wie in Excel enthalten und deren Summe in Monatsuebersichten beruecksichtigen.
 
@@ -207,4 +207,4 @@ Siehe auch:
 
 ## Offene Fragen
 
-- Soll die Sparkassen-Ueberweisung an N26 als Fixkosten bezahlt, als Transfer oder in Auswertungen komplett ignoriert werden?
+- (aktuell keine offenen Kernfragen)

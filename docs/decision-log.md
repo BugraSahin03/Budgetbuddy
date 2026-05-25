@@ -511,3 +511,24 @@ Auswirkung:
 Folgeaktion:
 
 - Falls spaeter gewuenscht, kann eine explizite Confirm-UI fuer pro-Zeile-Uebernahme von Kandidaten folgen.
+
+## 2026-05-25 - FIN-024 setzt neues Fixkosten-Leitmodell auf Monatsblock fest
+
+Quelle/Ticket: `FIN-024` (Abgrenzung zu `#27` und `#36`)
+
+Erkenntnis/Entscheidung:
+
+- Das Fixkostenmodell wird auf ein einfaches Monatsblock-Modell aus der Fixkostenliste festgelegt.
+- Die aktive Fixkostensumme reduziert den verfuegbaren Monatsbetrag direkt.
+- `wirkt_fuer_monat` und die manuelle Fixkosten-Markierung einzelner Transaktionen sind nicht mehr Teil des Zielmodells.
+- N26 wird nicht als eigenes Fachobjekt modelliert; Sparkasse -> N26 ist ein technischer Zahlungsweg fuer bereits bekannte Fixkosten.
+- Erkannte N26-Sammeltransfers und direkte Sparkassen-Fixkostenmatches bleiben als Kontrollsicht sichtbar, fachlich aber ausserhalb der normalen variablen Monatsausgaben.
+
+Auswirkung:
+
+- Die vorherige Linienfuehrung aus `#27`/`#36` wird bewusst abgeloest.
+- Doku-Basis fuer alle Folgeumsetzungen ist jetzt einheitlich.
+
+Folgeaktion:
+
+- Folge-Issues als Umsetzungsreihe nutzen: `#56` (Datenmodell/Persistenz), `#57` (Import-Erkennung), `#58` (Monatslogik/Dashboard), `#59` (Fixkosten-/Transaktions-UI).
