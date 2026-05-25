@@ -61,7 +61,9 @@ describe("import rules", () => {
       priority: 20,
     });
 
-    const rules = repo.listImportRules();
+    const rules = repo
+      .listImportRules()
+      .filter((rule) => rule.name === "REWE -> Einkauf" || rule.name === "Bali -> Sonderbudget");
     expect(rules).toHaveLength(2);
 
     repo.updateImportRule(rules[0].id, {
@@ -111,5 +113,42 @@ describe("import rules", () => {
 
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0].label).toBe("Transfer -> Bargeld");
+  });
+
+  it("ships editable default N26 transfer candidate rule", () => {
+    const rules = repo.listImportRules();
+    const n26Rule = rules.find((rule) => rule.name === "N26 Transfer-Kandidat");
+
+    expect(n26Rule).toBeDefined();
+    expect(n26Rule?.name).toBe("N26 Transfer-Kandidat");
+    expect(n26Rule?.pattern).toBe("N26-Fix.");
+    expect(n26Rule?.matchField).toBe("description");
+    expect(n26Rule?.targetType).toBe("transfer_cash");
+    expect(n26Rule?.isActive).toBe(true);
+
+    const suggestions = matcher.buildImportRuleSuggestions({
+      rules: repo.listActiveImportRules(),
+      rows: [
+        {
+          accountIban: "DE001",
+          bookingDate: "2026-05-23",
+          valueDate: "2026-05-23",
+          bookingText: "UEBERWEISUNG",
+          purpose: "N26-Fix. Monatsblock",
+          counterparty: "N26 BANK",
+          counterpartyIban: "",
+          counterpartyBic: "",
+          amountCents: -4000,
+          currencyCode: "EUR",
+          info: "Umsatz gebucht",
+          endToEndReference: "",
+          mandateReference: "",
+          description: "UEBERWEISUNG | N26-Fix. Monatsblock",
+        },
+      ],
+    });
+
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0].label).toBe("Transfer-Kandidat -> N26");
   });
 });

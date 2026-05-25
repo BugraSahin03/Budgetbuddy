@@ -47,6 +47,41 @@ function ensureImportRulesTable(): void {
     CREATE INDEX IF NOT EXISTS idx_import_rules_active_priority
       ON import_rules(is_active, priority, id);
   `);
+
+  // FIN-023 default: editable N26 transfer candidate pattern.
+  const existingDefault = getDb()
+    .prepare(
+      `
+        SELECT id
+        FROM import_rules
+        WHERE name = 'N26 Transfer-Kandidat'
+          AND pattern = 'N26-Fix.'
+          AND target_type = 'transfer_cash'
+        LIMIT 1
+      `,
+    )
+    .get() as { id: number } | undefined;
+
+  if (!existingDefault) {
+    getDb()
+      .prepare(
+        `
+          INSERT INTO import_rules (
+            name,
+            pattern,
+            match_field,
+            target_type,
+            category_id,
+            special_budget_id,
+            is_active,
+            priority,
+            updated_at
+          )
+          VALUES ('N26 Transfer-Kandidat', 'N26-Fix.', 'description', 'transfer_cash', NULL, NULL, 1, 60, CURRENT_TIMESTAMP)
+        `,
+      )
+      .run();
+  }
 }
 
 function toNullablePositiveInt(raw: string): number | null {

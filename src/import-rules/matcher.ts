@@ -27,6 +27,10 @@ function getMatchText(row: SparkasseCsvRow, matchField: ImportRule["matchField"]
 
 function suggestionLabel(rule: ImportRule): string {
   if (rule.targetType === "transfer_cash") {
+    if (rule.name === "N26 Transfer-Kandidat") {
+      return "Transfer-Kandidat -> N26";
+    }
+
     return "Transfer -> Bargeld";
   }
 
