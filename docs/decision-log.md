@@ -492,3 +492,22 @@ Auswirkung:
 Folgeaktion:
 
 - Bei spaeterem Feedback kann die Ausreisser-Definition in FIN-020+ nachgeschaerft werden.
+
+## 2026-05-25 - FIN-023 nutzt editierbare Default-Regel fuer N26-Transfer-Kandidaten
+
+Quelle/Ticket: `FIN-023`
+
+Erkenntnis/Entscheidung:
+
+- Fuer N26-Transfer-Kandidaten wird eine vorinstallierte, aber voll editierbare Import-Regel genutzt (`N26 Transfer-Kandidat`, Pattern `N26-Fix.`).
+- Treffer werden im Import als Vorschlag `Transfer-Kandidat -> N26` angezeigt und nicht hart als `transfer` persistiert.
+- Damit bleibt der manuelle Override auf `expense` erhalten, wie in #26 gefordert.
+
+Auswirkung:
+
+- Das Pattern ist ohne Codeaenderung in der Regelverwaltung pflegbar.
+- Die Importklassifikation bleibt transparent und nicht-blackboxartig.
+
+Folgeaktion:
+
+- Falls spaeter gewuenscht, kann eine explizite Confirm-UI fuer pro-Zeile-Uebernahme von Kandidaten folgen.

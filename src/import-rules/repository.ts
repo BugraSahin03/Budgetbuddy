@@ -47,6 +47,65 @@ function ensureImportRulesTable(): void {
     CREATE INDEX IF NOT EXISTS idx_import_rules_active_priority
       ON import_rules(is_active, priority, id);
   `);
+
+  // FIN-023 default: editable N26 transfer candidate pattern.
+  // Seed must run at most once and must respect user edits/deactivation.
+  const seedState = getDb()
+    .prepare(
+      `
+        SELECT value
+        FROM app_meta
+        WHERE key = 'import_rule_seed_n26_transfer_candidate_v1'
+        LIMIT 1
+      `,
+    )
+    .get() as { value?: string } | undefined;
+
+  if (seedState?.value === "1") {
+    return;
+  }
+
+  const existingDefault = getDb()
+    .prepare(
+      `
+        SELECT id
+        FROM import_rules
+        WHERE name = 'N26 Transfer-Kandidat'
+        LIMIT 1
+      `,
+    )
+    .get() as { id: number } | undefined;
+
+  if (!existingDefault) {
+    getDb()
+      .prepare(
+        `
+          INSERT INTO import_rules (
+            name,
+            pattern,
+            match_field,
+            target_type,
+            category_id,
+            special_budget_id,
+            is_active,
+            priority,
+            updated_at
+          )
+          VALUES ('N26 Transfer-Kandidat', 'N26-Fix.', 'description', 'transfer_cash', NULL, NULL, 1, 60, CURRENT_TIMESTAMP)
+        `,
+      )
+      .run();
+  }
+
+  getDb()
+    .prepare(
+      `
+        INSERT INTO app_meta (key, value)
+        VALUES ('import_rule_seed_n26_transfer_candidate_v1', '1')
+        ON CONFLICT(key) DO UPDATE SET value = excluded.value
+      `,
+    )
+    .run();
 }
 
 function toNullablePositiveInt(raw: string): number | null {

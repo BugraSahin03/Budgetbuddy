@@ -61,7 +61,7 @@ export default async function ImportPage({ searchParams }: ImportPageProps) {
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Regelvorschlaege</p>
           <h3 className="text-base font-semibold text-slate-900">Import-Regel anlegen</h3>
           <p className="text-sm text-slate-600">
-            Regeln schlagen Kategorie, Sonderbudget oder Transfer-Bargeld fuer passende Buchungen vor.
+            Regeln schlagen Kategorie, Sonderbudget oder Transfer-Kandidaten fuer passende Buchungen vor.
           </p>
         </div>
 

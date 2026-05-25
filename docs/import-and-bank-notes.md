@@ -180,6 +180,25 @@ Zusatzregeln:
 - Keine Kategorie/Sonderbudget-Zuordnung am Importpunkt setzen.
 - Falls Regeln nicht eindeutig treffen: Buchung im Import als "Transfer-Kandidat" markieren statt hart zuzuordnen.
 
+## N26-Transfer-Kandidaten (FIN-023)
+
+Aus der fachlichen Klaerung #26:
+
+- Sparkasse -> N26 wird im MVP als Transfer-Kontext behandelt.
+- Das Matching bleibt im Import ein Vorschlag (kein harter Zwang).
+- Manuelle Umstellung auf `expense` bleibt moeglich.
+
+Aktueller Stand:
+
+- Es gibt eine vorinstallierte, editierbare Import-Regel:
+  - Name: `N26 Transfer-Kandidat`
+  - Pattern: `N26-Fix.`
+  - Match-Feld: `Beschreibung`
+  - Zieltyp: `Transfer-Kandidat N26`
+- Das Pattern ist in der Import-Regelverwaltung pflegbar und kann ohne Codeaenderung angepasst oder deaktiviert werden.
+- Treffer werden in der Vorschau als `Transfer-Kandidat -> N26` markiert.
+- Persistenz erzwingt dadurch keinen Transfer; ohne explizite Transfer-Logik bleibt die Buchung beim Import als `expense` und kann manuell umgestellt werden.
+
 ## Bankanbindung spaeter
 
 Moegliche Wege:
