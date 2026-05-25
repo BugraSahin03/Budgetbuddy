@@ -10,6 +10,12 @@ type FixedCostForImportMatching = {
   isActive: boolean;
 };
 
+const N26_CONTROL_RULE_NAMES = new Set([
+  "N26 Sammeltransfer Kontrolle",
+  "N26 Transfer-Kandidat",
+]);
+const N26_CONTROL_PATTERN = "N26-FIX.";
+
 export type ImportRuleSuggestion = {
   rowIndex: number;
   label: string;
@@ -32,9 +38,20 @@ function getMatchText(row: SparkasseCsvRow, matchField: ImportRule["matchField"]
   return normalize(`${row.description} ${row.counterparty}`);
 }
 
+function isN26ControlRule(rule: ImportRule): boolean {
+  if (rule.targetType !== "transfer_cash") {
+    return false;
+  }
+
+  return (
+    N26_CONTROL_RULE_NAMES.has(rule.name) ||
+    normalize(rule.pattern).includes(N26_CONTROL_PATTERN)
+  );
+}
+
 function suggestionLabel(rule: ImportRule): string {
   if (rule.targetType === "transfer_cash") {
-    if (rule.name === "N26 Transfer-Kandidat") {
+    if (isN26ControlRule(rule)) {
       return "Fixkosten-Kontrolle: N26-Sammeltransfer";
     }
 

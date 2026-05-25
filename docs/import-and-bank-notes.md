@@ -178,9 +178,9 @@ Zusatzregeln:
 
 - Bei erkannter Bargeldabhebung als `transfer` modellieren (`Sparkasse -> Bargeld`).
 - Keine Kategorie/Sonderbudget-Zuordnung am Importpunkt setzen.
-- Falls Regeln nicht eindeutig treffen: Buchung im Import als "Transfer-Kandidat" markieren statt hart zuzuordnen.
+- Falls Regeln nicht eindeutig treffen: Buchung als unklare Import-Ausgabe sichtbar lassen statt hart zuzuordnen.
 
-## N26-Transfer-Kandidaten und Fixkosten-Kontrollsicht (FIN-024)
+## N26-Kontrollmuster und Fixkosten-Kontrollsicht (FIN-024 bis FIN-029)
 
 Aus der fachlichen Klaerung #26:
 
@@ -191,21 +191,19 @@ Aus der fachlichen Klaerung #26:
 Aktueller Stand:
 
 - Es gibt eine vorinstallierte, editierbare Import-Regel:
-  - Name: `N26 Transfer-Kandidat`
+  - Name: `N26 Sammeltransfer Kontrolle`
   - Pattern: `N26-Fix.`
   - Match-Feld: `Beschreibung`
-  - Zieltyp: `Transfer-Kandidat N26`
+  - Zieltyp: `transfer_cash` (technischer Transferhinweis)
 - Das Pattern ist in der Import-Regelverwaltung pflegbar und kann ohne Codeaenderung angepasst oder deaktiviert werden.
-- Treffer werden in der Vorschau als `Transfer-Kandidat -> N26` markiert.
+- Treffer werden in der Vorschau als `Fixkosten-Kontrolle: N26-Sammeltransfer` markiert.
 - Diese Treffer sind Kontrollhinweise und sollen nicht als normale variable Monatsausgaben behandelt werden.
-- Die konkrete technische Umstellung auf das neue Monatsblock-Modell erfolgt in Folge-Issues (`#56`, `#57`, `#58`, `#59`).
+- Die technische Umstellung auf das Monatsblock-Modell ist durch die FIN-Reihe `#56` bis `#60` umgesetzt.
 
 ## Import-Kontrollmarkierungen fuer Fixkosten (FIN-026)
 
-Stand ab FIN-026:
+Stand ab FIN-029:
 
-- Die bisherige Label-Logik `Transfer-Kandidat -> N26` wurde fuer die Vorschau auf eine klare
-  Fixkosten-Kontrollmarkierung umgestellt: `Fixkosten-Kontrolle: N26-Sammeltransfer`.
 - Neben dem N26-Hinweis gibt es jetzt eine zweite Erkennung:
   `Fixkosten-Kontrolle: Direktabbuchung (<Fixkostenname>)`.
 - Direkte Sparkassen-Fixkostenmatches werden ueber eine einfache Heuristik erkannt:

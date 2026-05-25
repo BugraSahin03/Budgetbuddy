@@ -157,8 +157,7 @@ Leitregel (FIN-024):
 - Einzelne Transaktionen werden nicht mehr manuell als Fixkosten markiert.
 - N26 ist kein eigenes Fachobjekt, sondern nur ein technischer Zahlungsweg fuer bereits bekannte Fixkosten.
 - Erkannte N26-Sammeltransfers und direkte Sparkassen-Fixkostenmatches bleiben als Kontrollsicht sichtbar, werden aber nicht als normale variable Monats-Transaktionen behandelt.
-
-Aktuell soll der N26-Teil nicht importiert werden. Die App soll eine Fixkostenliste wie in Excel enthalten und deren Summe in Monatsuebersichten beruecksichtigen.
+- Es gibt keine direkte N26-Bankanbindung; N26-Hinweise entstehen nur aus dem Sparkassen-Import.
 
 ## Nicht-Ziele fuer den Start
 
@@ -169,7 +168,7 @@ Aktuell soll der N26-Teil nicht importiert werden. Die App soll eine Fixkostenli
 - keine verpflichtende Exportfunktion
 - kein Audit-Log fuer jede Aenderung
 - keine direkte Bankanbindung im ersten MVP
-- kein N26-Import im ersten MVP
+- kein direkter N26-Import im ersten MVP
 
 ## Technische Richtung
 

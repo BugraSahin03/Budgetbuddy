@@ -10,37 +10,7 @@ let transactions: TransactionsModule;
 
 const PREFIX = "TEST-FIN-007-";
 
-function tableExists(tableName: string): boolean {
-  const row = dbClient
-    .getDb()
-    .prepare(
-      `
-        SELECT 1 AS existsFlag
-        FROM sqlite_master
-        WHERE type = 'table'
-          AND name = ?
-        LIMIT 1
-      `,
-    )
-    .get(tableName) as { existsFlag: number } | undefined;
-
-  return row?.existsFlag === 1;
-}
-
 function cleanupTestTransactions(): void {
-  if (tableExists("fixed_cost_transaction_links")) {
-    dbClient
-      .getDb()
-      .prepare(
-        `
-          DELETE FROM fixed_cost_transaction_links
-          WHERE transaction_id IN (
-            SELECT id FROM transactions WHERE description LIKE ?
-          )
-        `,
-      )
-      .run(`${PREFIX}%`);
-  }
   dbClient.getDb().prepare("DELETE FROM transactions WHERE description LIKE ?").run(`${PREFIX}%`);
   dbClient.getDb().prepare("DELETE FROM fixed_costs WHERE name LIKE ?").run(`${PREFIX}%`);
 }
@@ -334,61 +304,7 @@ describe("transactions repository", () => {
     expect(stored.specialBudgetId).toBeNull();
   });
 
-  it("keeps fixed cost marker fields empty because assignment model is deprecated", async () => {
-    cleanupTestTransactions();
-
-    const fixedCosts = await import("@/src/fixed-costs/repository");
-    fixedCosts.createFixedCost({
-      name: `${PREFIX}FixedMarker`,
-      plannedAmountInput: "9,99",
-      bookingDayOfMonthInput: "",
-      paymentNote: "",
-      note: "",
-    });
-
-    const fixedCostId = fixedCosts
-      .listFixedCosts()
-      .find((row) => row.name === `${PREFIX}FixedMarker`)?.id;
-    expect(fixedCostId).toBeDefined();
-
-    const accountId = (dbClient
-      .getDb()
-      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
-      .get() as { id: number }).id;
-    const categoryId = (dbClient
-      .getDb()
-      .prepare("SELECT id FROM categories WHERE name = 'Freizeit'")
-      .get() as { id: number }).id;
-
-    transactions.createManualTransaction({
-      bookingDate: "2026-05-22",
-      description: `${PREFIX}FixedCostLinked`,
-      transactionType: "expense",
-      amountInput: "9,99",
-      accountId,
-      destinationAccountId: null,
-      categoryId,
-      specialBudgetId: null,
-    });
-
-    const created = transactions
-      .listManualTransactions()
-      .find((row) => row.description === `${PREFIX}FixedCostLinked`);
-    expect(created).toBeDefined();
-
-    expect(() => fixedCosts.assignTransactionToFixedCost(created!.id, fixedCostId!, "2026-05")).toThrow(
-      "Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.",
-    );
-
-    const linked = transactions
-      .listManualTransactions()
-      .find((row) => row.id === created!.id);
-
-    expect(linked?.fixedCostName).toBeNull();
-    expect(linked?.fixedCostEffectiveMonthKey).toBeNull();
-  });
-
-  it("supports fixed costs summary without manual wirkt_fuer_monat assignment", async () => {
+  it("supports fixed costs summary as monthly block without transaction assignment", async () => {
     cleanupTestTransactions();
 
     const fixedCosts = await import("@/src/fixed-costs/repository");
@@ -433,23 +349,9 @@ describe("transactions repository", () => {
       .listManualTransactions()
       .find((row) => row.description === `${PREFIX}StreamingCharge`);
     expect(created).toBeDefined();
-
-    expect(() => fixedCosts.assignTransactionToFixedCost(created!.id, fixedCostId!, "2026-06")).toThrow(
-      "Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.",
-    );
-
-    const assignment = fixedCosts
-      .listExpenseTransactionsForFixedCostAssignment()
-      .find((row) => row.transactionId === created!.id);
-    expect(assignment?.fixedCostId).toBeNull();
-    expect(assignment?.effectiveMonthKey).toBeNull();
-
-    expect(() => fixedCosts.unassignTransactionFromFixedCost(created!.id)).toThrow(
-      "Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.",
-    );
   });
 
-  it("rejects invalid fixed cost booking day and manual assignment attempts", async () => {
+  it("rejects invalid fixed cost booking day", async () => {
     cleanupTestTransactions();
 
     const fixedCosts = await import("@/src/fixed-costs/repository");
@@ -464,40 +366,6 @@ describe("transactions repository", () => {
       }),
     ).toThrow("Abbuchungstag muss zwischen 1 und 31 liegen.");
 
-    fixedCosts.createFixedCost({
-      name: `${PREFIX}Insurance`,
-      plannedAmountInput: "45",
-      bookingDayOfMonthInput: "",
-      paymentNote: "",
-      note: "",
-    });
-
-    const fixedCostId = fixedCosts
-      .listFixedCosts()
-      .find((row) => row.name === `${PREFIX}Insurance`)!.id;
-    const accountId = (dbClient
-      .getDb()
-      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
-      .get() as { id: number }).id;
-
-    transactions.createManualTransaction({
-      bookingDate: "2026-05-20",
-      description: `${PREFIX}IncomeTx`,
-      transactionType: "income",
-      amountInput: "100",
-      accountId,
-      destinationAccountId: null,
-      categoryId: null,
-      specialBudgetId: null,
-    });
-
-    const incomeTx = transactions
-      .listManualTransactions()
-      .find((row) => row.description === `${PREFIX}IncomeTx`);
-    expect(incomeTx).toBeDefined();
-
-    expect(() => fixedCosts.assignTransactionToFixedCost(incomeTx!.id, fixedCostId, "")).toThrow(
-      "Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.",
-    );
+    expect(fixedCosts.listFixedCosts().some((row) => row.name === `${PREFIX}InvalidDay`)).toBe(false);
   });
 });
