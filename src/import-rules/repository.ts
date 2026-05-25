@@ -28,6 +28,11 @@ export type ImportRuleInput = {
   priority: number;
 };
 
+const N26_CONTROL_RULE_NAME = "N26 Sammeltransfer Kontrolle";
+const LEGACY_N26_CONTROL_RULE_NAME = "N26 Transfer-Kandidat";
+const N26_CONTROL_PATTERN = "N26-Fix.";
+const N26_CONTROL_SEED_KEY = "import_rule_seed_n26_control_v2";
+
 function ensureImportRulesTable(): void {
   getDb().exec(`
     CREATE TABLE IF NOT EXISTS import_rules (
@@ -48,18 +53,18 @@ function ensureImportRulesTable(): void {
       ON import_rules(is_active, priority, id);
   `);
 
-  // FIN-023 default: editable N26 transfer candidate pattern.
+  // FIN-029 default: editable N26 control rule for transfer hints.
   // Seed must run at most once and must respect user edits/deactivation.
   const seedState = getDb()
     .prepare(
       `
         SELECT value
         FROM app_meta
-        WHERE key = 'import_rule_seed_n26_transfer_candidate_v1'
+        WHERE key = ?
         LIMIT 1
       `,
     )
-    .get() as { value?: string } | undefined;
+    .get(N26_CONTROL_SEED_KEY) as { value?: string } | undefined;
 
   if (seedState?.value === "1") {
     return;
@@ -68,13 +73,23 @@ function ensureImportRulesTable(): void {
   const existingDefault = getDb()
     .prepare(
       `
-        SELECT id
+        SELECT id, name
         FROM import_rules
-        WHERE name = 'N26 Transfer-Kandidat'
+        WHERE name IN (?, ?)
+        ORDER BY CASE
+          WHEN name = ? THEN 0
+          WHEN name = ? THEN 1
+          ELSE 2
+        END
         LIMIT 1
       `,
     )
-    .get() as { id: number } | undefined;
+    .get(
+      N26_CONTROL_RULE_NAME,
+      LEGACY_N26_CONTROL_RULE_NAME,
+      N26_CONTROL_RULE_NAME,
+      LEGACY_N26_CONTROL_RULE_NAME,
+    ) as { id: number; name: string } | undefined;
 
   if (!existingDefault) {
     getDb()
@@ -91,21 +106,33 @@ function ensureImportRulesTable(): void {
             priority,
             updated_at
           )
-          VALUES ('N26 Transfer-Kandidat', 'N26-Fix.', 'description', 'transfer_cash', NULL, NULL, 1, 60, CURRENT_TIMESTAMP)
+          VALUES (?, ?, 'description', 'transfer_cash', NULL, NULL, 1, 60, CURRENT_TIMESTAMP)
         `,
       )
-      .run();
+      .run(N26_CONTROL_RULE_NAME, N26_CONTROL_PATTERN);
+  } else if (existingDefault.name === LEGACY_N26_CONTROL_RULE_NAME) {
+    getDb()
+      .prepare(
+        `
+          UPDATE import_rules
+          SET
+            name = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `,
+      )
+      .run(N26_CONTROL_RULE_NAME, existingDefault.id);
   }
 
   getDb()
     .prepare(
       `
         INSERT INTO app_meta (key, value)
-        VALUES ('import_rule_seed_n26_transfer_candidate_v1', '1')
+        VALUES (?, '1')
         ON CONFLICT(key) DO UPDATE SET value = excluded.value
       `,
     )
-    .run();
+    .run(N26_CONTROL_SEED_KEY);
 }
 
 function toNullablePositiveInt(raw: string): number | null {

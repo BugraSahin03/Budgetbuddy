@@ -33,11 +33,7 @@ function formatMonthLabel(monthKey: string): string {
   return `${month}.${year}`;
 }
 
-function transactionTypeTone(type: string, isFixedCost: boolean): string {
-  if (isFixedCost) {
-    return "border-violet-200 bg-violet-50 text-violet-700";
-  }
-
+function transactionTypeTone(type: string): string {
   if (type === "transfer") {
     return "border-sky-200 bg-sky-50 text-sky-700";
   }
@@ -49,11 +45,7 @@ function transactionTypeTone(type: string, isFixedCost: boolean): string {
   return "border-slate-200 bg-slate-100 text-slate-700";
 }
 
-function transactionTypeLabel(type: string, isFixedCost: boolean): string {
-  if (isFixedCost) {
-    return "Fixkosten";
-  }
-
+function transactionTypeLabel(type: string): string {
   if (type === "transfer") {
     return "Transfer";
   }
@@ -233,7 +225,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Monatsbuchungen</p>
-            <h2 className="text-lg font-semibold text-slate-900">Fixkosten und Transfers klar markiert</h2>
+            <h2 className="text-lg font-semibold text-slate-900">Monatsbuchungen mit Transfer-Markierung</h2>
           </div>
           <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700">
             Transfers (separat markiert): {transferCount}
@@ -273,13 +265,9 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                       <span
                         className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${transactionTypeTone(
                           transaction.transactionType,
-                          Boolean(transaction.fixedCostName),
                         )}`}
                       >
-                        {transactionTypeLabel(
-                          transaction.transactionType,
-                          Boolean(transaction.fixedCostName),
-                        )}
+                        {transactionTypeLabel(transaction.transactionType)}
                       </span>
                     </td>
                   </tr>

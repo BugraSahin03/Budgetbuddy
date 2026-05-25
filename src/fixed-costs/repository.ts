@@ -24,17 +24,6 @@ export type FixedCostInput = {
   note: string;
 };
 
-export type FixedCostAssignmentItem = {
-  transactionId: number;
-  bookingDate: string;
-  description: string;
-  amountCents: number;
-  accountName: string;
-  fixedCostId: number | null;
-  fixedCostName: string | null;
-  effectiveMonthKey: string | null;
-};
-
 export type FixedCostControlMatchItem = {
   transactionId: number;
   bookingDate: string;
@@ -291,32 +280,6 @@ export function getFixedCostsSummary(): { activeCount: number; plannedTotalCents
   return row;
 }
 
-export function listExpenseTransactionsForFixedCostAssignment(limit = 80): FixedCostAssignmentItem[] {
-  ensureRuntimeTables();
-
-  return getDb()
-    .prepare(
-      `
-        SELECT
-          t.id AS transactionId,
-          t.booking_date AS bookingDate,
-          t.description,
-          t.amount_cents AS amountCents,
-          source.name AS accountName,
-          NULL AS fixedCostId,
-          NULL AS fixedCostName,
-          NULL AS effectiveMonthKey
-        FROM transactions t
-        INNER JOIN accounts source ON source.id = t.account_id
-        WHERE t.source_type = 'manual'
-          AND t.transaction_type = 'expense'
-        ORDER BY t.booking_date DESC, t.id DESC
-        LIMIT ?
-      `,
-    )
-    .all(limit) as FixedCostAssignmentItem[];
-}
-
 function toMatcherRow(row: {
   bookingDate: string;
   description: string;
@@ -415,22 +378,4 @@ export function listFixedCostControlMatches(limit = 120): FixedCostControlMatchI
   }
 
   return result;
-}
-
-export function assignTransactionToFixedCost(
-  _transactionId: number,
-  _fixedCostId: number,
-  _effectiveMonthKeyInput: string,
-): void {
-  ensureRuntimeTables();
-  void _transactionId;
-  void _fixedCostId;
-  void _effectiveMonthKeyInput;
-  throw new Error("Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.");
-}
-
-export function unassignTransactionFromFixedCost(_transactionId: number): void {
-  ensureRuntimeTables();
-  void _transactionId;
-  throw new Error("Manuelle Fixkosten-Transaktionszuordnung ist im Monatsblock-Modell deaktiviert.");
 }

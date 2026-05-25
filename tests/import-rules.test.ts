@@ -115,12 +115,12 @@ describe("import rules", () => {
     expect(suggestions[0].label).toBe("Transfer -> Bargeld");
   });
 
-  it("ships editable default N26 transfer candidate rule", () => {
+  it("ships editable default N26 control rule", () => {
     const rules = repo.listImportRules();
-    const n26Rule = rules.find((rule) => rule.name === "N26 Transfer-Kandidat");
+    const n26Rule = rules.find((rule) => rule.name === "N26 Sammeltransfer Kontrolle");
 
     expect(n26Rule).toBeDefined();
-    expect(n26Rule?.name).toBe("N26 Transfer-Kandidat");
+    expect(n26Rule?.name).toBe("N26 Sammeltransfer Kontrolle");
     expect(n26Rule?.pattern).toBe("N26-Fix.");
     expect(n26Rule?.matchField).toBe("description");
     expect(n26Rule?.targetType).toBe("transfer_cash");
@@ -163,7 +163,9 @@ describe("import rules", () => {
     });
 
     const suggestions = matcher.buildImportRuleSuggestions({
-      rules: repo.listActiveImportRules().filter((rule) => rule.name !== "N26 Transfer-Kandidat"),
+      rules: repo
+        .listActiveImportRules()
+        .filter((rule) => rule.name !== "N26 Sammeltransfer Kontrolle"),
       fixedCosts: fixedCosts.listFixedCosts(),
       rows: [
         {
@@ -192,21 +194,25 @@ describe("import rules", () => {
   });
 
   it("does not recreate N26 default rule after edits or deactivation", () => {
-    const initial = repo.listImportRules().find((rule) => rule.name === "N26 Transfer-Kandidat");
+    const initial = repo
+      .listImportRules()
+      .find((rule) => rule.name === "N26 Sammeltransfer Kontrolle");
     expect(initial).toBeDefined();
 
     repo.updateImportRule(initial!.id, {
       ...initial!,
-      name: "N26 Transfer-Kandidat (angepasst)",
+      name: "N26 Sammeltransfer Kontrolle (angepasst)",
       pattern: "N26-ALT",
       isActive: false,
     });
 
     // Trigger table/bootstrap path again.
-    const after = repo.listImportRules().filter((rule) => rule.name.includes("N26 Transfer-Kandidat"));
+    const after = repo
+      .listImportRules()
+      .filter((rule) => rule.name.includes("N26 Sammeltransfer Kontrolle"));
 
     expect(after).toHaveLength(1);
-    expect(after[0].name).toBe("N26 Transfer-Kandidat (angepasst)");
+    expect(after[0].name).toBe("N26 Sammeltransfer Kontrolle (angepasst)");
     expect(after[0].pattern).toBe("N26-ALT");
     expect(after[0].isActive).toBe(false);
   });

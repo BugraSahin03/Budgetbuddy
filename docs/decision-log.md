@@ -76,6 +76,28 @@ Folgeaktion:
 
 - FIN-028 kann die UI auf diese getrennten Kennzahlen aufsetzen.
 
+## 2026-05-25 - FIN-029 konsolidiert Altlogik und Doku auf das Monatsblockmodell
+
+Quelle/Ticket: `FIN-029`
+
+Erkenntnis/Entscheidung:
+
+- Verbleibende Altlogik zur manuellen Fixkosten-Transaktionszuordnung wurde aus App-/Repository-Pfaden entfernt.
+- Historische Begriffe wie `Transfer-Kandidat -> N26` wurden in UI, Tests und Doku auf die aktuelle
+  Kontrollsicht-Sprache umgestellt.
+- Die vorinstallierte N26-Regel wird einheitlich als `N26 Sammeltransfer Kontrolle` gefuehrt.
+- Historische Entscheidungen aus FIN-009/FIN-021/FIN-023 bleiben dokumentiert, werden aber klar als
+  durch FIN-024 bis FIN-028 ueberholt eingeordnet.
+
+Auswirkung:
+
+- Es gibt keinen widerspruechlichen Mix aus Alt- und Neumodell mehr.
+- Ticket-Folge FIN-024 bis FIN-029 ist in Code, Tests und Doku konsistent nachvollziehbar.
+
+Folgeaktion:
+
+- Neue Tickets sollen ausschliesslich auf die Kontrollsicht- und Monatsblockbegriffe referenzieren.
+
 ## 2026-05-25 - FIN-028 entfernt manuelle Fixkosten-Markierung aus der UI
 
 Quelle/Ticket: `FIN-028`
@@ -86,8 +108,7 @@ Erkenntnis/Entscheidung:
 - Stattdessen wird eine reine Kontrollsicht mit erkannten Fixkosten-Treffern aus Importen angezeigt
   (N26-Sammeltransfer und direkte Fixkostenmatches).
 - Die Transaktionsseite behandelt Fixkosten nicht mehr als manuellen Sonderstatus innerhalb variabler Buchungen.
-- In `src/transactions/repository.ts` werden fixe Markerfelder fuer manuelle Buchungen nur noch als
-  `NULL` geliefert; es gibt keine fachliche Join-Abhaengigkeit zur alten Linktabelle.
+- Es gibt keine fachliche Join-Abhaengigkeit zur alten Linktabelle.
 
 Auswirkung:
 
@@ -108,6 +129,7 @@ Erkenntnis/Entscheidung:
 - `project-briefing.md` beschreibt jetzt die MVP-Regel mit optionalem `wirkt_fuer_monat` (`YYYY-MM`) und Default auf Buchungsmonat.
 - Die offene Frage zur Fixkosten-Monatszuordnung wurde aus den offenen Fragen entfernt, da fachlich bereits entschieden.
 - `domain-model.md` fuehrt die gleiche Regel explizit fuer Planung/Ist bei Monatswechseln.
+- Historischer Hinweis: Diese FIN-021-Regel wurde spaeter durch FIN-024 fachlich ersetzt.
 
 Auswirkung:
 
@@ -320,8 +342,6 @@ Folgeaktion:
 - Bei neuen Tickets Write-Scope und Branch/Worktree im Handoff an den Reviewer angeben.
 - Diese fruehere Prozessentscheidung wurde am 2026-05-17 durch den verbindlichen Worktree-Standard verschaerft.
 
-## 2026-05-22 - FIN-009 markiert Fixkosten ueber manuelle Transaktions-Verknuepfung
-
 ## 2026-05-25 - FIN-026 stellt Importhinweise auf Fixkosten-Kontrollmarkierungen um
 
 Quelle/Ticket: `FIN-026`
@@ -345,6 +365,8 @@ Folgeaktion:
 
 - FIN-027 nutzt diese Kontrolltreffer fuer die Monatslogik-Abgrenzung zwischen variablen Ausgaben und Fixkostenkontrolle.
 
+## 2026-05-22 - FIN-009 markiert Fixkosten ueber manuelle Transaktions-Verknuepfung
+
 Quelle/Ticket: `FIN-009`
 
 Erkenntnis/Entscheidung:
@@ -352,6 +374,7 @@ Erkenntnis/Entscheidung:
 - Fuer den MVP werden Fixkosten-Transaktionen nicht automatisch erkannt, sondern manuell in der Fixkostenansicht markiert.
 - Die Markierung speichert optional `wirkt_fuer_monat` (`YYYY-MM`); ohne Angabe gilt der Buchungsmonat.
 - Die Transaktionsliste zeigt markierte Eintraege visuell als `Fixkosten`.
+- Historischer Hinweis: Diese Entscheidung wurde durch FIN-024 bis FIN-028 fachlich und technisch abgeloest.
 
 Auswirkung:
 
@@ -493,6 +516,7 @@ Erkenntnis/Entscheidung:
 - Das Monatsdashboard nutzt die bestehende FIN-013A-Aggregation unveraendert und bildet die UI in getrennten Abschnitten ab: Kategorien, Sonderbudgets und Monatsbuchungen.
 - Transfers werden im Dashboard explizit markiert und nicht als Ausgaben in Budgettabellen interpretiert.
 - Fixkosten werden in der Monatsbuchungsliste ueber eigenen visuellen Status hervorgehoben und bleiben damit in relevanten Ansichten klar erkennbar.
+- Historischer Hinweis: Die visuelle Fixkosten-Markierung in Monatsbuchungen wurde spaeter durch FIN-028 entfernt.
 
 Auswirkung:
 
@@ -568,6 +592,7 @@ Erkenntnis/Entscheidung:
 - Fuer N26-Transfer-Kandidaten wird eine vorinstallierte, aber voll editierbare Import-Regel genutzt (`N26 Transfer-Kandidat`, Pattern `N26-Fix.`).
 - Treffer werden im Import als Vorschlag `Transfer-Kandidat -> N26` angezeigt und nicht hart als `transfer` persistiert.
 - Damit bleibt der manuelle Override auf `expense` erhalten, wie in #26 gefordert.
+- Historischer Hinweis: Die Begriffe wurden spaeter in FIN-026/FIN-029 auf die Kontrollsicht umgestellt.
 
 Auswirkung:
 

@@ -15,8 +15,6 @@ export type TransactionListItem = {
   categoryName: string | null;
   specialBudgetName: string | null;
   specialBudgetMonthKey: string | null;
-  fixedCostName: string | null;
-  fixedCostEffectiveMonthKey: string | null;
 };
 
 export type AccountOption = {
@@ -302,9 +300,7 @@ export function listManualTransactions(): TransactionListItem[] {
           t.amount_cents AS amountCents,
           c.name AS categoryName,
           sb.name AS specialBudgetName,
-          sb.month_key AS specialBudgetMonthKey,
-          NULL AS fixedCostName,
-          NULL AS fixedCostEffectiveMonthKey
+          sb.month_key AS specialBudgetMonthKey
         FROM transactions t
         INNER JOIN accounts source ON source.id = t.account_id
         LEFT JOIN accounts destination ON destination.id = t.destination_account_id
