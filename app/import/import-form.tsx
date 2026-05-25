@@ -18,10 +18,17 @@ function amountTone(amountCents: number): string {
   return amountCents < 0 ? "text-red-700" : "text-emerald-700";
 }
 
+function isFixedCostControlLabel(label: string): boolean {
+  return label.startsWith("Fixkosten-Kontrolle:");
+}
+
 export function ImportForm() {
   const [state, formAction, isPending] = useActionState(
     parseSparkasseCsvAction,
     importPreviewInitialState,
+  );
+  const fixedCostControls = state.suggestions.filter((item) =>
+    isFixedCostControlLabel(item.label),
   );
 
   return (
@@ -121,7 +128,13 @@ export function ImportForm() {
                   <td className="px-3 py-2 text-slate-600">{row.info || "-"}</td>
                   <td className="px-3 py-2 text-slate-700">
                     {suggestion ? (
-                      <span className="inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700">
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
+                          isFixedCostControlLabel(suggestion.label)
+                            ? "border-violet-200 bg-violet-50 text-violet-700"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        }`}
+                      >
                         {suggestion.label}
                       </span>
                     ) : (
@@ -133,6 +146,38 @@ export function ImportForm() {
               })}
             </tbody>
           </table>
+        </section>
+      ) : null}
+
+      {state.result?.rows.length && fixedCostControls.length ? (
+        <section className="rounded-xl border border-violet-200 bg-violet-50 p-4 shadow-sm">
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-violet-700">
+            Fixkosten-Kontrollsicht
+          </p>
+          <p className="mt-1 text-sm text-violet-900">
+            Diese Treffer werden als Fixkostenbezogene Kontrolle markiert und nicht als normale
+            variable Regelzuordnung behandelt.
+          </p>
+          <ul className="mt-3 space-y-2 text-sm text-violet-900">
+            {fixedCostControls.map((item) => {
+              const row = state.result?.rows[item.rowIndex];
+              if (!row) {
+                return null;
+              }
+
+              return (
+                <li key={`${item.rowIndex}-${item.ruleName}`} className="rounded-lg border border-violet-200 bg-white px-3 py-2">
+                  <span className="font-semibold">{item.label}</span>
+                  <span className="text-violet-700"> | </span>
+                  <span>{row.bookingDate}</span>
+                  <span className="text-violet-700"> | </span>
+                  <span>{row.description}</span>
+                  <span className="text-violet-700"> | </span>
+                  <span>{formatEuroFromCents(row.amountCents)}</span>
+                </li>
+              );
+            })}
+          </ul>
         </section>
       ) : null}
     </div>

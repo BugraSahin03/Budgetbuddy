@@ -279,6 +279,29 @@ Folgeaktion:
 
 ## 2026-05-22 - FIN-009 markiert Fixkosten ueber manuelle Transaktions-Verknuepfung
 
+## 2026-05-25 - FIN-026 stellt Importhinweise auf Fixkosten-Kontrollmarkierungen um
+
+Quelle/Ticket: `FIN-026`
+
+Erkenntnis/Entscheidung:
+
+- Die Import-Vorschau verwendet fuer den bisherigen N26-Hinweis nicht mehr das Label
+  `Transfer-Kandidat -> N26`, sondern `Fixkosten-Kontrolle: N26-Sammeltransfer`.
+- Zusaetzlich wurde eine direkte Sparkassen-Fixkostenerkennung eingefuehrt:
+  `Fixkosten-Kontrolle: Direktabbuchung (<Fixkostenname>)`.
+- Match-Heuristik: Betrag muss zum aktiven Fixkostenbetrag passen, und der Buchungstext muss
+  Abbuchungsinfo oder Fixkostennamen enthalten.
+- Die Treffer werden in der Importseite als separater Kontrollblock sichtbar gemacht.
+
+Auswirkung:
+
+- Import-Regeln bleiben nachvollziehbar, aber sprechen nun die neue Fachlogik aus FIN-024/FIN-025 klarer aus.
+- Direkte Fixkostenabbuchungen sind bereits im Import pruefbar, ohne sofort eine neue Dashboard-Logik vorauszusetzen.
+
+Folgeaktion:
+
+- FIN-027 nutzt diese Kontrolltreffer fuer die Monatslogik-Abgrenzung zwischen variablen Ausgaben und Fixkostenkontrolle.
+
 Quelle/Ticket: `FIN-009`
 
 Erkenntnis/Entscheidung:

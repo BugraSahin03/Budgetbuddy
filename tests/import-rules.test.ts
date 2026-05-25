@@ -149,7 +149,46 @@ describe("import rules", () => {
     });
 
     expect(suggestions).toHaveLength(1);
-    expect(suggestions[0].label).toBe("Transfer-Kandidat -> N26");
+    expect(suggestions[0].label).toBe("Fixkosten-Kontrolle: N26-Sammeltransfer");
+  });
+
+  it("recognizes direct fixed-cost debit as control hit", async () => {
+    const fixedCosts = await import("@/src/fixed-costs/repository");
+    fixedCosts.createFixedCost({
+      name: "Fitness Studio",
+      plannedAmountInput: "29,99",
+      bookingDayOfMonthInput: "2",
+      paymentNote: "FITNESS STUDIO",
+      note: "",
+    });
+
+    const suggestions = matcher.buildImportRuleSuggestions({
+      rules: repo.listActiveImportRules().filter((rule) => rule.name !== "N26 Transfer-Kandidat"),
+      fixedCosts: fixedCosts.listFixedCosts(),
+      rows: [
+        {
+          accountIban: "DE001",
+          bookingDate: "2026-05-02",
+          valueDate: "2026-05-02",
+          bookingText: "LASTSCHRIFT",
+          purpose: "Mitgliedsbeitrag",
+          counterparty: "FITNESS STUDIO",
+          counterpartyIban: "",
+          counterpartyBic: "",
+          amountCents: -2999,
+          currencyCode: "EUR",
+          info: "Umsatz gebucht",
+          endToEndReference: "",
+          mandateReference: "",
+          description: "LASTSCHRIFT | Mitgliedsbeitrag",
+        },
+      ],
+    });
+
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0].label).toBe(
+      "Fixkosten-Kontrolle: Direktabbuchung (Fitness Studio)",
+    );
   });
 
   it("does not recreate N26 default rule after edits or deactivation", () => {

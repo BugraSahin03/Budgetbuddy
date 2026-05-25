@@ -43,9 +43,11 @@ describe("import workflow finalization", () => {
     expect(state.fatalError).toBeNull();
     expect(state.persisted).not.toBeNull();
     expect(state.persisted?.importedRows).toBe(3);
-    expect(state.suggestions.some((suggestion) => suggestion.label === "Transfer-Kandidat -> N26")).toBe(
-      true,
-    );
+    expect(
+      state.suggestions.some(
+        (suggestion) => suggestion.label === "Fixkosten-Kontrolle: N26-Sammeltransfer",
+      ),
+    ).toBe(true);
 
     const imported = listImportedTransactions();
     expect(imported).toHaveLength(3);
