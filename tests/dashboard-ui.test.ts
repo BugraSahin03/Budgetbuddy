@@ -81,6 +81,7 @@ describe("dashboard ui adapters", () => {
     const kpis = buildDashboardKpis(snapshot);
     expect(kpis.some((card) => card.label === "Einnahmen")).toBe(true);
     expect(kpis.some((card) => card.label === "Bargeldbestand")).toBe(true);
+    expect(kpis.some((card) => card.label === "Fixkosten (Ist-Kontrolle)")).toBe(true);
 
     expect(countOverBudgetWarnings(snapshot)).toBe(2);
   });

@@ -2,6 +2,10 @@ import "server-only";
 
 import { getDb } from "@/src/db/client";
 import { listMonthlyBudgetCategories, type MonthlyBudgetCategoryRow } from "@/src/budgets/repository";
+import { listFixedCosts } from "@/src/fixed-costs/repository";
+import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
+import { listActiveImportRules } from "@/src/import-rules/repository";
+import type { SparkasseCsvRow } from "@/src/import/sparkasse-csv";
 import { getCashAccountSnapshot } from "@/src/transactions/repository";
 
 export type DashboardTotals = {
@@ -42,18 +46,6 @@ function normalizeMonthKey(monthKey: string): string {
   return normalized;
 }
 
-function ensureFixedCostLinksTable(): void {
-  getDb().exec(`
-    CREATE TABLE IF NOT EXISTS fixed_cost_transaction_links (
-      transaction_id INTEGER PRIMARY KEY REFERENCES transactions(id) ON DELETE CASCADE,
-      fixed_cost_id INTEGER NOT NULL REFERENCES fixed_costs(id) ON DELETE RESTRICT,
-      effective_month_key TEXT CHECK (effective_month_key IS NULL OR (length(effective_month_key) = 7 AND substr(effective_month_key, 5, 1) = '-')),
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-}
-
 function mapSqliteBoolean(value: number): boolean {
   return value === 1;
 }
@@ -64,8 +56,7 @@ function getIncomeCents(monthKey: string): number {
       `
         SELECT COALESCE(SUM(amount_cents), 0) AS total
         FROM transactions
-        WHERE source_type = 'manual'
-          AND transaction_type IN ('income', 'refund')
+        WHERE transaction_type IN ('income', 'refund')
           AND substr(booking_date, 1, 7) = ?
       `,
     )
@@ -74,20 +65,105 @@ function getIncomeCents(monthKey: string): number {
   return row.total;
 }
 
-function getExpenseCents(monthKey: string): number {
+function listImportedExpenseRowsForMonth(monthKey: string): Array<{
+  id: number;
+  bookingDate: string;
+  amountCents: number;
+  description: string;
+  counterpartyName: string | null;
+}> {
+  return getDb()
+    .prepare(
+      `
+        SELECT
+          id,
+          booking_date AS bookingDate,
+          amount_cents AS amountCents,
+          description,
+          counterparty_name AS counterpartyName
+        FROM transactions
+        WHERE source_type = 'import'
+          AND transaction_type = 'expense'
+          AND substr(booking_date, 1, 7) = ?
+        ORDER BY booking_date ASC, id ASC
+      `,
+    )
+    .all(monthKey) as Array<{
+    id: number;
+    bookingDate: string;
+    amountCents: number;
+    description: string;
+    counterpartyName: string | null;
+  }>;
+}
+
+function mapImportedExpenseToMatcherRow(
+  row: ReturnType<typeof listImportedExpenseRowsForMonth>[number],
+): SparkasseCsvRow {
+  return {
+    accountIban: "",
+    bookingDate: row.bookingDate,
+    valueDate: row.bookingDate,
+    bookingText: row.description,
+    purpose: "",
+    counterparty: row.counterpartyName ?? "",
+    counterpartyIban: "",
+    counterpartyBic: "",
+    amountCents: row.amountCents,
+    currencyCode: "EUR",
+    info: "",
+    endToEndReference: "",
+    mandateReference: "",
+    description: row.description,
+  };
+}
+
+function buildImportedFixedCostControlCents(monthKey: string): number {
+  const importedExpenses = listImportedExpenseRowsForMonth(monthKey);
+  if (importedExpenses.length === 0) {
+    return 0;
+  }
+
+  const rules = listActiveImportRules();
+  const fixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
+  const mappedRows = importedExpenses.map(mapImportedExpenseToMatcherRow);
+  const suggestions = buildImportRuleSuggestions({
+    rows: mappedRows,
+    rules,
+    fixedCosts,
+  });
+
+  const controlledIndices = new Set(
+    suggestions
+      .filter((suggestion) => suggestion.label.startsWith("Fixkosten-Kontrolle:"))
+      .map((suggestion) => suggestion.rowIndex),
+  );
+
+  let total = 0;
+  for (const index of controlledIndices) {
+    const row = importedExpenses[index];
+    if (!row) {
+      continue;
+    }
+    total += Math.max(0, -row.amountCents);
+  }
+
+  return total;
+}
+
+function getExpenseCents(monthKey: string, fixedCostControlCents: number): number {
   const row = getDb()
     .prepare(
       `
         SELECT COALESCE(SUM(-amount_cents), 0) AS total
         FROM transactions
-        WHERE source_type = 'manual'
-          AND transaction_type = 'expense'
+        WHERE transaction_type = 'expense'
           AND substr(booking_date, 1, 7) = ?
       `,
     )
     .get(monthKey) as { total: number };
 
-  return row.total;
+  return Math.max(0, row.total - fixedCostControlCents);
 }
 
 function getPlannedFixedCostsCents(): number {
@@ -100,25 +176,6 @@ function getPlannedFixedCostsCents(): number {
       `,
     )
     .get() as { total: number };
-
-  return row.total;
-}
-
-function getActualFixedCostsCents(monthKey: string): number {
-  ensureFixedCostLinksTable();
-
-  const row = getDb()
-    .prepare(
-      `
-        SELECT COALESCE(SUM(-t.amount_cents), 0) AS total
-        FROM fixed_cost_transaction_links fctl
-        INNER JOIN transactions t ON t.id = fctl.transaction_id
-        WHERE t.source_type = 'manual'
-          AND t.transaction_type = 'expense'
-          AND fctl.effective_month_key = ?
-      `,
-    )
-    .get(monthKey) as { total: number };
 
   return row.total;
 }
@@ -170,10 +227,10 @@ function listSpecialBudgetRows(monthKey: string): DashboardSpecialBudgetRow[] {
 export function getDashboardMonthSnapshot(monthKey: string): DashboardMonthSnapshot {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
 
+  const actualFixedCostsCents = buildImportedFixedCostControlCents(normalizedMonthKey);
   const incomeCents = getIncomeCents(normalizedMonthKey);
-  const expenseCents = getExpenseCents(normalizedMonthKey);
+  const expenseCents = getExpenseCents(normalizedMonthKey, actualFixedCostsCents);
   const plannedFixedCostsCents = getPlannedFixedCostsCents();
-  const actualFixedCostsCents = getActualFixedCostsCents(normalizedMonthKey);
   const cashBalanceCents = getCashAccountSnapshot().currentBalanceCents;
 
   return {

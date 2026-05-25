@@ -55,6 +55,27 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-05-25 - FIN-027 entkoppelt Monatslogik von alter Fixkosten-Linktabelle
+
+Quelle/Ticket: `FIN-027`
+
+Erkenntnis/Entscheidung:
+
+- Die Dashboard-Berechnung nutzt nicht mehr `fixed_cost_transaction_links` oder `wirkt_fuer_monat`.
+- `Verfuegbar` wird als `Einnahmen - aktive Fixkosten (Plan) - variable Ausgaben` berechnet.
+- Als `Fixkosten (Ist-Kontrolle)` wird ein separater Kontrollwert aus importierten
+  FIN-026-Fixkostenmarkierungen gefuehrt (N26-Sammeltransfer + direkte Fixkostenmatches).
+- Diese Ist-Kontrolltreffer werden aus der variablen Ausgabensumme herausgerechnet.
+
+Auswirkung:
+
+- Die Monatslogik folgt dem neuen Monatsblockmodell und bleibt klar von alter Markierungslogik getrennt.
+- Erkannten Fixkostenimporte verzerren nicht mehr die variable Monatsausgaben-KPI.
+
+Folgeaktion:
+
+- FIN-028 kann die UI auf diese getrennten Kennzahlen aufsetzen.
+
 ## 2026-05-24 - FIN-021 Doku-Nachzug in Briefing und Domain Model
 
 Quelle/Ticket: `FIN-021`, Folge `FIN-022`

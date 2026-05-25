@@ -106,7 +106,7 @@ export function buildDashboardKpis(snapshot: DashboardMonthSnapshot): DashboardK
       tone: "text-slate-900",
     },
     {
-      label: "Fixkosten (Ist)",
+      label: "Fixkosten (Ist-Kontrolle)",
       value: formatEuro(snapshot.totals.actualFixedCostsCents),
       tone: "text-violet-700",
     },

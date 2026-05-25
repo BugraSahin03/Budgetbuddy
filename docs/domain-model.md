@@ -199,6 +199,18 @@ Summe aller echten Ausgaben im Monat, ohne Transfers.
 
 Bargeldabhebungen sind Transfers und zaehlen nicht als Ausgabe. Die spaeteren manuellen Barzahlungen zaehlen als Ausgabe.
 
+### Verfuegbar (FIN-027)
+
+`Verfuegbar = Einkommen - aktive Fixkostensumme (Plan) - variable Ausgaben`
+
+Dabei gilt:
+
+- aktive Fixkostensumme ist der monatliche Planungsblock aus `fixed_costs` (aktiv).
+- variable Ausgaben enthalten normale Monatsausgaben, aber keine als Fixkosten-Kontrolle erkannten
+  Importtreffer.
+- erkannte N26-Sammeltransfers und direkte Fixkostenmatches werden als separater
+  Ist-Kontrollwert gefuehrt und nicht in die variable Ausgabensumme eingerechnet.
+
 ## Datenqualitaetsregeln
 
 - Jede Ausgabe muss zugeordnet sein.
