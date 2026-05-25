@@ -57,18 +57,6 @@ export type ManualTransactionInput = {
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const AMOUNT_PATTERN = /^\d+(?:[.,]\d{1,2})?$/;
 
-function ensureFixedCostLinksTable(): void {
-  getDb().exec(`
-    CREATE TABLE IF NOT EXISTS fixed_cost_transaction_links (
-      transaction_id INTEGER PRIMARY KEY REFERENCES transactions(id) ON DELETE CASCADE,
-      fixed_cost_id INTEGER NOT NULL REFERENCES fixed_costs(id) ON DELETE RESTRICT,
-      effective_month_key TEXT CHECK (effective_month_key IS NULL OR (length(effective_month_key) = 7 AND substr(effective_month_key, 5, 1) = '-')),
-      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
-    );
-  `);
-}
-
 function toMonthKey(bookingDate: string): string {
   return bookingDate.slice(0, 7);
 }
@@ -301,8 +289,6 @@ function validateAndShapeInput(input: ManualTransactionInput): {
 }
 
 export function listManualTransactions(): TransactionListItem[] {
-  ensureFixedCostLinksTable();
-
   const rows = getDb()
     .prepare(
       `
@@ -317,15 +303,13 @@ export function listManualTransactions(): TransactionListItem[] {
           c.name AS categoryName,
           sb.name AS specialBudgetName,
           sb.month_key AS specialBudgetMonthKey,
-          fc.name AS fixedCostName,
-          fctl.effective_month_key AS fixedCostEffectiveMonthKey
+          NULL AS fixedCostName,
+          NULL AS fixedCostEffectiveMonthKey
         FROM transactions t
         INNER JOIN accounts source ON source.id = t.account_id
         LEFT JOIN accounts destination ON destination.id = t.destination_account_id
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN special_budgets sb ON sb.id = t.special_budget_id
-        LEFT JOIN fixed_cost_transaction_links fctl ON fctl.transaction_id = t.id
-        LEFT JOIN fixed_costs fc ON fc.id = fctl.fixed_cost_id
         WHERE t.source_type = 'manual'
         ORDER BY t.booking_date DESC, t.id DESC
       `,

@@ -76,6 +76,28 @@ Folgeaktion:
 
 - FIN-028 kann die UI auf diese getrennten Kennzahlen aufsetzen.
 
+## 2026-05-25 - FIN-028 entfernt manuelle Fixkosten-Markierung aus der UI
+
+Quelle/Ticket: `FIN-028`
+
+Erkenntnis/Entscheidung:
+
+- Die Seite `/fixkosten` zeigt keine manuelle Zuordnung von Einzeltransaktionen (`wirkt_fuer_monat`) mehr.
+- Stattdessen wird eine reine Kontrollsicht mit erkannten Fixkosten-Treffern aus Importen angezeigt
+  (N26-Sammeltransfer und direkte Fixkostenmatches).
+- Die Transaktionsseite behandelt Fixkosten nicht mehr als manuellen Sonderstatus innerhalb variabler Buchungen.
+- In `src/transactions/repository.ts` werden fixe Markerfelder fuer manuelle Buchungen nur noch als
+  `NULL` geliefert; es gibt keine fachliche Join-Abhaengigkeit zur alten Linktabelle.
+
+Auswirkung:
+
+- Die UI entspricht dem vereinfachten Monatsblockmodell aus FIN-024 bis FIN-027.
+- Nutzer sehen Fixkostenpflege und Fixkostenkontrolle klar getrennt, ohne alte Mischlogik.
+
+Folgeaktion:
+
+- Weitere UI-Politur (falls gewuenscht) kann in separaten Tickets erfolgen, ohne die Fachlogik erneut anzufassen.
+
 ## 2026-05-24 - FIN-021 Doku-Nachzug in Briefing und Domain Model
 
 Quelle/Ticket: `FIN-021`, Folge `FIN-022`

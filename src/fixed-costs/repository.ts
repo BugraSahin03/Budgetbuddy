@@ -1,6 +1,9 @@
 import "server-only";
 
 import { getDb } from "@/src/db/client";
+import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
+import { listActiveImportRules } from "@/src/import-rules/repository";
+import type { SparkasseCsvRow } from "@/src/import/sparkasse-csv";
 
 export type FixedCostListItem = {
   id: number;
@@ -30,6 +33,17 @@ export type FixedCostAssignmentItem = {
   fixedCostId: number | null;
   fixedCostName: string | null;
   effectiveMonthKey: string | null;
+};
+
+export type FixedCostControlMatchItem = {
+  transactionId: number;
+  bookingDate: string;
+  description: string;
+  counterpartyName: string | null;
+  amountCents: number;
+  importRunId: number | null;
+  controlLabel: string;
+  ruleName: string;
 };
 
 const AMOUNT_PATTERN = /^\d+(?:[.,]\d{1,2})?$/;
@@ -301,6 +315,106 @@ export function listExpenseTransactionsForFixedCostAssignment(limit = 80): Fixed
       `,
     )
     .all(limit) as FixedCostAssignmentItem[];
+}
+
+function toMatcherRow(row: {
+  bookingDate: string;
+  description: string;
+  counterpartyName: string | null;
+  amountCents: number;
+}): SparkasseCsvRow {
+  return {
+    accountIban: "",
+    bookingDate: row.bookingDate,
+    valueDate: row.bookingDate,
+    bookingText: row.description,
+    purpose: "",
+    counterparty: row.counterpartyName ?? "",
+    counterpartyIban: "",
+    counterpartyBic: "",
+    amountCents: row.amountCents,
+    currencyCode: "EUR",
+    info: "",
+    endToEndReference: "",
+    mandateReference: "",
+    description: row.description,
+  };
+}
+
+export function listFixedCostControlMatches(limit = 120): FixedCostControlMatchItem[] {
+  ensureRuntimeTables();
+
+  const importedExpenseRows = getDb()
+    .prepare(
+      `
+        SELECT
+          t.id AS transactionId,
+          t.booking_date AS bookingDate,
+          t.description,
+          t.counterparty_name AS counterpartyName,
+          t.amount_cents AS amountCents,
+          t.import_run_id AS importRunId
+        FROM transactions t
+        WHERE t.source_type = 'import'
+          AND t.transaction_type = 'expense'
+        ORDER BY t.booking_date DESC, t.id DESC
+        LIMIT ?
+      `,
+    )
+    .all(limit) as Array<{
+    transactionId: number;
+    bookingDate: string;
+    description: string;
+    counterpartyName: string | null;
+    amountCents: number;
+    importRunId: number | null;
+  }>;
+
+  if (importedExpenseRows.length === 0) {
+    return [];
+  }
+
+  const rules = listActiveImportRules();
+  const fixedCosts = listFixedCosts().filter((row) => row.isActive);
+  const suggestions = buildImportRuleSuggestions({
+    rows: importedExpenseRows.map(toMatcherRow),
+    rules,
+    fixedCosts,
+  });
+
+  const byIndex = new Map<number, { label: string; ruleName: string }>();
+  for (const suggestion of suggestions) {
+    if (!suggestion.label.startsWith("Fixkosten-Kontrolle:")) {
+      continue;
+    }
+    if (!byIndex.has(suggestion.rowIndex)) {
+      byIndex.set(suggestion.rowIndex, {
+        label: suggestion.label,
+        ruleName: suggestion.ruleName,
+      });
+    }
+  }
+
+  const result: FixedCostControlMatchItem[] = [];
+  for (let index = 0; index < importedExpenseRows.length; index += 1) {
+    const suggestion = byIndex.get(index);
+    if (!suggestion) {
+      continue;
+    }
+    const row = importedExpenseRows[index];
+    result.push({
+      transactionId: row.transactionId,
+      bookingDate: row.bookingDate,
+      description: row.description,
+      counterpartyName: row.counterpartyName,
+      amountCents: row.amountCents,
+      importRunId: row.importRunId,
+      controlLabel: suggestion.label,
+      ruleName: suggestion.ruleName,
+    });
+  }
+
+  return result;
 }
 
 export function assignTransactionToFixedCost(

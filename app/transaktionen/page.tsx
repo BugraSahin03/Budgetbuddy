@@ -48,11 +48,7 @@ function toAmountInput(cents: number): string {
 
 function statusFromRow(
   row: TransactionListItem,
-): "Fixkosten" | "Zugeordnet" | "Transfer" | "Einnahme" | "Zuordnen" {
-  if (row.fixedCostName) {
-    return "Fixkosten";
-  }
-
+): "Zugeordnet" | "Transfer" | "Einnahme" | "Zuordnen" {
   if (row.transactionType === "transfer") {
     return "Transfer";
   }
@@ -69,10 +65,6 @@ function statusFromRow(
 }
 
 function statusBadgeClass(status: string): string {
-  if (status === "Fixkosten") {
-    return "border-violet-200 bg-violet-50 text-violet-700";
-  }
-
   if (status === "Zuordnen") {
     return "border-amber-200 bg-amber-50 text-amber-700";
   }

@@ -1,11 +1,10 @@
 import {
   createFixedCostAction,
   updateFixedCostAction,
-  updateFixedCostAssignmentAction,
 } from "@/app/fixkosten/actions";
 import {
   getFixedCostsSummary,
-  listExpenseTransactionsForFixedCostAssignment,
+  listFixedCostControlMatches,
   listFixedCosts,
 } from "@/src/fixed-costs/repository";
 
@@ -53,8 +52,7 @@ export default async function FixedCostsPage({ searchParams }: FixedCostsPagePro
 
   const fixedCosts = listFixedCosts();
   const summary = getFixedCostsSummary();
-  const assignmentRows = listExpenseTransactionsForFixedCostAssignment();
-  const activeFixedCosts = fixedCosts.filter((row) => row.isActive);
+  const controlMatches = listFixedCostControlMatches();
 
   return (
     <section className="space-y-4">
@@ -78,9 +76,9 @@ export default async function FixedCostsPage({ searchParams }: FixedCostsPagePro
         </article>
 
         <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Markierte Ausgaben</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Kontrolltreffer</p>
           <p className="mt-2 text-2xl font-semibold text-slate-900">
-            {assignmentRows.filter((row) => row.fixedCostId !== null).length}
+            {controlMatches.length}
           </p>
         </article>
       </section>
@@ -228,8 +226,15 @@ export default async function FixedCostsPage({ searchParams }: FixedCostsPagePro
 
       <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="mb-3 border-b border-slate-100 pb-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Transaktions-Markierung</p>
-          <h3 className="text-sm font-semibold text-slate-900">Manuelle Zuordnung fuer `wirkt_fuer_monat` (YYYY-MM)</h3>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+            Kontrollsicht
+          </p>
+          <h3 className="text-sm font-semibold text-slate-900">
+            Erkannte N26-Sammeltransfers und direkte Fixkostenmatches
+          </h3>
+          <p className="mt-1 text-xs text-slate-600">
+            Diese Treffer sind Kontrollinformationen und keine manuelle Markierung variabler Ausgaben.
+          </p>
         </div>
 
         <table className="min-w-full divide-y divide-slate-200 text-sm">
@@ -237,57 +242,34 @@ export default async function FixedCostsPage({ searchParams }: FixedCostsPagePro
             <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
               <th className="px-3 py-2 font-semibold">Datum</th>
               <th className="px-3 py-2 font-semibold">Buchung</th>
-              <th className="px-3 py-2 font-semibold">Konto</th>
+              <th className="px-3 py-2 font-semibold">Gegenpartei</th>
               <th className="px-3 py-2 font-semibold">Betrag</th>
-              <th className="px-3 py-2 font-semibold">Fixkosten</th>
-              <th className="px-3 py-2 font-semibold">wirkt_fuer_monat</th>
-              <th className="px-3 py-2 font-semibold">Aktion</th>
+              <th className="px-3 py-2 font-semibold">Kontrolltyp</th>
+              <th className="px-3 py-2 font-semibold">Importlauf</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {assignmentRows.length === 0 ? (
+            {controlMatches.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-sm text-slate-600">
-                  Keine manuellen Ausgaben fuer Markierung vorhanden.
+                <td colSpan={6} className="px-3 py-6 text-center text-sm text-slate-600">
+                  Keine Fixkosten-Kontrolltreffer vorhanden.
                 </td>
               </tr>
             ) : (
-              assignmentRows.map((row) => (
+              controlMatches.map((row) => (
                 <tr key={row.transactionId}>
                   <td className="px-3 py-2 text-slate-700">{row.bookingDate}</td>
                   <td className="px-3 py-2 font-medium text-slate-900">{row.description}</td>
-                  <td className="px-3 py-2 text-slate-700">{row.accountName}</td>
+                  <td className="px-3 py-2">
+                    {row.counterpartyName ?? "-"}
+                  </td>
                   <td className="px-3 py-2 text-slate-700">{formatEuro(row.amountCents)}</td>
                   <td className="px-3 py-2">
-                    <form action={updateFixedCostAssignmentAction} className="grid gap-2 md:grid-cols-3">
-                      <input type="hidden" name="transactionId" value={row.transactionId} />
-                      <select name="fixedCostId" defaultValue={String(row.fixedCostId ?? "")} className="rounded border border-slate-300 px-2 py-1 text-xs">
-                        <option value="">-</option>
-                        {activeFixedCosts.map((fixedCost) => (
-                          <option key={fixedCost.id} value={fixedCost.id}>
-                            {fixedCost.name}
-                          </option>
-                        ))}
-                      </select>
-                      <input
-                        name="effectiveMonthKey"
-                        defaultValue={row.effectiveMonthKey ?? row.bookingDate.slice(0, 7)}
-                        placeholder="YYYY-MM"
-                        className="rounded border border-slate-300 px-2 py-1 text-xs"
-                      />
-                      <div className="flex gap-2">
-                        <button type="submit" name="intent" value="save" className="rounded border border-sky-300 bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-800">
-                          Speichern
-                        </button>
-                        <button type="submit" name="intent" value="remove" className="rounded border border-red-300 bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">
-                          Entfernen
-                        </button>
-                      </div>
-                    </form>
+                    <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
+                      {row.controlLabel}
+                    </span>
                   </td>
-                  <td className="px-3 py-2 text-slate-700">{row.fixedCostName ?? "-"}</td>
-                  <td className="px-3 py-2 text-slate-700">{row.effectiveMonthKey ?? "-"}</td>
-                  <td className="px-3 py-2 text-xs text-slate-500">Nur fuer manuelle Ausgaben</td>
+                  <td className="px-3 py-2 text-slate-600">#{row.importRunId ?? "-"}</td>
                 </tr>
               ))
             )}
