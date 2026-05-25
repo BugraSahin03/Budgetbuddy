@@ -4,11 +4,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import {
-  assignTransactionToFixedCost,
   createFixedCost,
   setFixedCostActive,
   type FixedCostInput,
-  unassignTransactionFromFixedCost,
   updateFixedCost,
 } from "@/src/fixed-costs/repository";
 
@@ -80,31 +78,6 @@ export async function updateFixedCostAction(formData: FormData): Promise<never> 
     updateFixedCost(fixedCostId, parseFixedCostInput(formData));
     revalidatePath("/fixkosten");
     redirect("/fixkosten?notice=" + encodeMessage("Fixkosten-Eintrag gespeichert."));
-  } catch (error) {
-    redirect("/fixkosten?error=" + encodeMessage(toErrorMessage(error)));
-  }
-}
-
-export async function updateFixedCostAssignmentAction(formData: FormData): Promise<never> {
-  try {
-    const transactionId = parsePositiveInt(formData.get("transactionId"), "Transaktions-ID");
-    const intent = toSingleString(formData.get("intent"));
-
-    if (intent === "remove") {
-      unassignTransactionFromFixedCost(transactionId);
-      revalidatePath("/fixkosten");
-      revalidatePath("/transaktionen");
-      redirect("/fixkosten?notice=" + encodeMessage("Fixkosten-Markierung entfernt."));
-    }
-
-    const fixedCostId = parsePositiveInt(formData.get("fixedCostId"), "Fixkosten-ID");
-    const effectiveMonthKey = toSingleString(formData.get("effectiveMonthKey"));
-
-    assignTransactionToFixedCost(transactionId, fixedCostId, effectiveMonthKey);
-
-    revalidatePath("/fixkosten");
-    revalidatePath("/transaktionen");
-    redirect("/fixkosten?notice=" + encodeMessage("Fixkosten-Markierung gespeichert."));
   } catch (error) {
     redirect("/fixkosten?error=" + encodeMessage(toErrorMessage(error)));
   }
