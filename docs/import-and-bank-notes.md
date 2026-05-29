@@ -114,6 +114,13 @@ Ein Import soll:
 - unzugeordnete Ausgaben sichtbar markieren
 - Importlauf protokollieren
 
+## Zielmonat im Import (FIN-031)
+
+- Beim Bestaetigen eines Imports kann ein expliziter Zielmonat (`YYYY-MM`) fuer den gesamten Importlauf gesetzt werden.
+- Der Zielmonat wird auf alle importierten Buchungen des Laufes als `effective_month_key` angewendet.
+- Standard ohne Eingabe: Zielmonat wird aus den Buchungen des Imports erkannt.
+- Bei ungueltigem Format wird eine klare Fehlermeldung angezeigt (`Zielmonat muss im Format YYYY-MM vorliegen.`).
+
 ## Duplikaterkennung
 
 Moegliche Bestandteile einer stabilen Duplikatkennung:

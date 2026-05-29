@@ -88,6 +88,70 @@ describe("transactions repository", () => {
     expect(stored?.effectiveMonthKey).toBe("2026-05");
   });
 
+  it("stores explicit target month independent from booking date", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const categoryId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as { id: number }).id;
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-22",
+      effectiveMonthKey: "2026-06",
+      description: `${PREFIX}ExplicitTargetMonth`,
+      transactionType: "expense",
+      amountInput: "10,00",
+      accountId,
+      destinationAccountId: null,
+      categoryId,
+      specialBudgetId: null,
+    });
+
+    const stored = dbClient
+      .getDb()
+      .prepare(
+        "SELECT booking_date AS bookingDate, effective_month_key AS effectiveMonthKey FROM transactions WHERE description = ? LIMIT 1",
+      )
+      .get(`${PREFIX}ExplicitTargetMonth`) as
+      | { bookingDate: string; effectiveMonthKey: string }
+      | undefined;
+
+    expect(stored?.bookingDate).toBe("2026-05-22");
+    expect(stored?.effectiveMonthKey).toBe("2026-06");
+  });
+
+  it("rejects invalid target month format", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const categoryId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as { id: number }).id;
+
+    expect(() =>
+      transactions.createManualTransaction({
+        bookingDate: "2026-05-22",
+        effectiveMonthKey: "2026/05",
+        description: `${PREFIX}InvalidTargetMonth`,
+        transactionType: "expense",
+        amountInput: "10,00",
+        accountId,
+        destinationAccountId: null,
+        categoryId,
+        specialBudgetId: null,
+      }),
+    ).toThrow("Zielmonat muss im Format YYYY-MM vorliegen.");
+  });
+
   it("rejects expense without exactly one assignment", () => {
     cleanupTestTransactions();
 
@@ -228,6 +292,52 @@ describe("transactions repository", () => {
 
     const deleted = transactions.listManualTransactions().find((row) => row.id === created.id);
     expect(deleted).toBeUndefined();
+  });
+
+  it("validates special budget month against explicit target month", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const specialBudgetMayId = ensureSpecialBudget("2026-05");
+    const specialBudgetJuneId = ensureSpecialBudget("2026-06");
+
+    expect(() =>
+      transactions.createManualTransaction({
+        bookingDate: "2026-05-15",
+        effectiveMonthKey: "2026-06",
+        description: `${PREFIX}SpecialBudgetMismatch`,
+        transactionType: "expense",
+        amountInput: "15,00",
+        accountId,
+        destinationAccountId: null,
+        categoryId: null,
+        specialBudgetId: specialBudgetMayId,
+      }),
+    ).toThrow("Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.");
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-15",
+      effectiveMonthKey: "2026-06",
+      description: `${PREFIX}SpecialBudgetMatch`,
+      transactionType: "expense",
+      amountInput: "15,00",
+      accountId,
+      destinationAccountId: null,
+      categoryId: null,
+      specialBudgetId: specialBudgetJuneId,
+    });
+
+    const stored = dbClient
+      .getDb()
+      .prepare(
+        "SELECT effective_month_key AS effectiveMonthKey FROM transactions WHERE description = ? LIMIT 1",
+      )
+      .get(`${PREFIX}SpecialBudgetMatch`) as { effectiveMonthKey: string } | undefined;
+
+    expect(stored?.effectiveMonthKey).toBe("2026-06");
   });
 
   it("tracks cash balance from transfer-in and cash expense", () => {

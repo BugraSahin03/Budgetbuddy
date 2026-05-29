@@ -663,3 +663,22 @@ Auswirkung:
 Folgeaktion:
 
 - FIN-026 bis FIN-028 setzen auf dieser Basis auf (Erkennung, Monatslogik, UI-Vereinfachung).
+
+## 2026-05-29 - FIN-031 macht Zielmonat in manueller Erfassung und Import-Confirm explizit
+
+Quelle/Ticket: `FIN-031`
+
+Erkenntnis/Entscheidung:
+
+- Der fachliche Zielmonat (`effective_month_key`) wird in der manuellen Transaktionsmaske und beim Bearbeiten explizit erfasst (`YYYY-MM`).
+- Beim Import-Confirm kann ein Zielmonat fuer den gesamten Importlauf gesetzt werden; ohne Eingabe wird ein Standardmonat aus den Import-Buchungen erkannt.
+- Sonderbudget-Monatspruefungen laufen gegen den fachlichen Zielmonat statt gegen das reine Buchungsdatum.
+
+Auswirkung:
+
+- Buchungsdatum und fachlicher Auswertungsmonat koennen bewusst voneinander abweichen, ohne Umwege ueber Datenmigrationen.
+- Monatsbezogene Auswertungen und Sonderbudget-Zuordnungen bleiben konsistent mit der Nutzerentscheidung.
+
+Folgeaktion:
+
+- FIN-032 bis FIN-035 koennen auf expliziten Zielmonaten in Import/Manuell-Flow aufbauen.

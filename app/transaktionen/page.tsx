@@ -95,8 +95,9 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
   const accountOptions = listActiveAccountOptions();
   const cashSnapshot = getCashAccountSnapshot();
   const categoryOptions = listActiveCategoryOptions();
-  const monthKey = new Date().toISOString().slice(0, 7);
-  const defaultSpecialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(monthKey);
+  const todayIsoDate = new Date().toISOString().slice(0, 10);
+  const defaultMonthKey = todayIsoDate.slice(0, 7);
+  const defaultSpecialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(defaultMonthKey);
   const manualTransactions = listManualTransactions();
   const importedTransactions = listImportedTransactions();
   const importedTransfers = importedTransactions.filter(
@@ -120,7 +121,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
       openAssignments += 1;
     }
 
-    const rowMonthKey = row.bookingDate.slice(0, 7);
+    const rowMonthKey = row.effectiveMonthKey;
     if (!specialBudgetOptionsByMonth.has(rowMonthKey)) {
       specialBudgetOptionsByMonth.set(
         rowMonthKey,
@@ -166,7 +167,8 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
         action={createManualTransactionAction}
         className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
       >
-        <input type="hidden" name="bookingDate" value={new Date().toISOString().slice(0, 10)} />
+        <input type="hidden" name="bookingDate" value={todayIsoDate} />
+        <input type="hidden" name="effectiveMonthKey" value={defaultMonthKey} />
         <input type="hidden" name="transactionType" value="transfer" />
         <input type="hidden" name="accountId" value={sparkasseAccountId} />
         <input type="hidden" name="destinationAccountId" value={cashAccountId} />
@@ -210,7 +212,21 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
       >
         <div className="xl:col-span-2">
           <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-date">Datum</label>
-          <input id="new-date" type="date" name="bookingDate" required defaultValue={new Date().toISOString().slice(0, 10)} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+          <input id="new-date" type="date" name="bookingDate" required defaultValue={todayIsoDate} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
+        </div>
+
+        <div className="xl:col-span-2">
+          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-effective-month">
+            Zielmonat
+          </label>
+          <input
+            id="new-effective-month"
+            name="effectiveMonthKey"
+            defaultValue={defaultMonthKey}
+            pattern="^\d{4}-(0[1-9]|1[0-2])$"
+            placeholder="YYYY-MM"
+            className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
+          />
         </div>
 
         <div className="xl:col-span-2">
@@ -258,7 +274,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
         </div>
 
         <div className="xl:col-span-3">
-          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-special-budget">Sonderbudget ({monthKey})</label>
+          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-special-budget">Sonderbudget ({defaultMonthKey})</label>
           <select id="new-special-budget" name="specialBudgetId" defaultValue="" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
             <option value="">-</option>
             {defaultSpecialBudgetOptions.map((budget) => (
@@ -302,7 +318,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
             ) : (
               manualTransactions.map((row) => {
                 const status = statusFromRow(row);
-                const rowMonthKey = row.bookingDate.slice(0, 7);
+                const rowMonthKey = row.effectiveMonthKey;
                 const rowSpecialBudgets = specialBudgetOptionsByMonth.get(rowMonthKey) ?? [];
 
                 return (
@@ -323,8 +339,9 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
                       <form action={updateManualTransactionAction} className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
                         <input type="hidden" name="transactionId" value={row.id} />
 
-                        <div className="grid gap-2 md:grid-cols-4">
+                        <div className="grid gap-2 md:grid-cols-5">
                           <input type="date" name="bookingDate" defaultValue={row.bookingDate} className="rounded border border-slate-300 px-2 py-1 text-xs" />
+                          <input name="effectiveMonthKey" defaultValue={row.effectiveMonthKey} pattern="^\d{4}-(0[1-9]|1[0-2])$" className="rounded border border-slate-300 px-2 py-1 text-xs" />
                           <select name="transactionType" defaultValue={row.transactionType} className="rounded border border-slate-300 px-2 py-1 text-xs">
                             <option value="expense">Ausgabe</option>
                             <option value="income">Einkommen</option>

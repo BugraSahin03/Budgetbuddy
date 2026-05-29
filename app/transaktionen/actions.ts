@@ -65,6 +65,7 @@ function encodeMessage(message: string): string {
 function parseManualTransactionInput(formData: FormData): ManualTransactionInput {
   return {
     bookingDate: toSingleString(formData.get("bookingDate")),
+    effectiveMonthKey: toSingleString(formData.get("effectiveMonthKey")),
     description: toSingleString(formData.get("description")),
     transactionType: parseTransactionType(formData.get("transactionType")),
     amountInput: toSingleString(formData.get("amount")),

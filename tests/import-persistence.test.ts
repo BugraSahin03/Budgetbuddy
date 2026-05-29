@@ -10,7 +10,10 @@ vi.mock("@/src/db/client", () => ({
   getDb: () => db,
 }));
 
-const { persistSparkasseCsvImport } = await import("@/src/import/persistence");
+const {
+  detectDefaultImportMonthKey,
+  persistSparkasseCsvImport,
+} = await import("@/src/import/persistence");
 
 const SAMPLE_CSV = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"
 "DE00111111110000000001";"24.04.26";"24.04.26";"DIG. KARTE (APPLE PAY)";"2026-04-23T20:21 Debitk.10 2029-12 ";"";"";"65134322015674230426202105";"";"";"";"SUPERMARKT A/STRASSE 1/STADT/DE";"DE00222222220000000002";"BANKDEFFXXX";"-3,58";"EUR";"Umsatz gebucht"
@@ -98,5 +101,54 @@ describe("import persistence and dedupe", () => {
       .prepare("SELECT COUNT(*) AS count FROM imported_transactions")
       .get() as { count: number };
     expect(importCount.count).toBe(3);
+  });
+
+  it("applies explicit target month to all imported rows", () => {
+    const result = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse.csv",
+      fileContent: SAMPLE_CSV,
+      effectiveMonthKey: "2026-05",
+    });
+
+    expect(result.importedRows).toBe(3);
+
+    const rows = db
+      .prepare(
+        "SELECT effective_month_key AS effectiveMonthKey FROM transactions WHERE import_run_id = ?",
+      )
+      .all(result.importRunId) as Array<{ effectiveMonthKey: string }>;
+
+    expect(rows).toHaveLength(3);
+    expect(rows.every((row) => row.effectiveMonthKey === "2026-05")).toBe(true);
+  });
+
+  it("rejects invalid target month format for import confirm", () => {
+    expect(() =>
+      persistSparkasseCsvImport({
+        sourceFilename: "sparkasse.csv",
+        fileContent: SAMPLE_CSV,
+        effectiveMonthKey: "2026/04",
+      }),
+    ).toThrow("Zielmonat muss im Format YYYY-MM vorliegen.");
+  });
+
+  it("detects default target month from parsed booking rows", () => {
+    const preview = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse.csv",
+      fileContent: SAMPLE_CSV,
+    });
+
+    const rows = db
+      .prepare(
+        `
+          SELECT booking_date AS bookingDate
+          FROM transactions
+          WHERE import_run_id = ?
+          ORDER BY id ASC
+        `,
+      )
+      .all(preview.importRunId) as Array<{ bookingDate: string }>;
+
+    expect(detectDefaultImportMonthKey(rows)).toBe("2026-04");
   });
 });
