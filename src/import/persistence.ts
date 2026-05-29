@@ -85,6 +85,10 @@ function isCashWithdrawalTransfer(row: SparkasseCsvRow): boolean {
   );
 }
 
+function toMonthKey(bookingDate: string): string {
+  return bookingDate.slice(0, 7);
+}
+
 function determineTransactionShape(row: SparkasseCsvRow): {
   transactionType: "expense" | "income" | "transfer";
   destinationAccountId: number | null;
@@ -167,6 +171,7 @@ export function persistSparkasseCsvImport(params: {
               destination_account_id,
               transaction_type,
               booking_date,
+              effective_month_key,
               value_date,
               amount_cents,
               currency_code,
@@ -180,7 +185,7 @@ export function persistSparkasseCsvImport(params: {
               special_budget_id,
               updated_at
             )
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'import', ?, ?, NULL, NULL, CURRENT_TIMESTAMP)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'import', ?, ?, NULL, NULL, CURRENT_TIMESTAMP)
           `,
         )
         .run(
@@ -188,6 +193,7 @@ export function persistSparkasseCsvImport(params: {
           shape.destinationAccountId,
           shape.transactionType,
           row.bookingDate,
+          toMonthKey(row.bookingDate),
           row.valueDate,
           row.amountCents,
           row.currencyCode,

@@ -69,7 +69,16 @@ describe("schema migrations", () => {
     expect(sql).toContain("deprecated");
   });
 
+  it("contains migration for effective month key on transactions", () => {
+    const sql = migrations.find((migration) => migration.id === "0005_fin_030")
+      ?.sql ?? "";
+
+    expect(sql).toContain("effective_month_key TEXT NOT NULL");
+    expect(sql).toContain("substr(booking_date, 1, 7) AS effective_month_key");
+    expect(sql).toContain("idx_transactions_effective_month_key");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0004_fin_025");
+    expect(getLatestSchemaVersion()).toBe("0005_fin_030");
   });
 });

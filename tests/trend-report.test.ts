@@ -41,12 +41,12 @@ describe("trend report analytics", () => {
     db.prepare(
       `
         INSERT INTO transactions (
-          account_id, destination_account_id, transaction_type, booking_date, amount_cents,
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key, amount_cents,
           currency_code, description, source_type, category_id, special_budget_id
         ) VALUES
-          (?, NULL, 'expense', '2033-01-04', -10000, 'EUR', ?, 'manual', ?, NULL),
-          (?, NULL, 'expense', '2033-02-10', -30000, 'EUR', ?, 'manual', ?, NULL),
-          (?, NULL, 'expense', '2033-03-11', -20000, 'EUR', ?, 'manual', ?, NULL)
+          (?, NULL, 'expense', '2033-01-04', '2033-01', -10000, 'EUR', ?, 'manual', ?, NULL),
+          (?, NULL, 'expense', '2033-02-10', '2033-02', -30000, 'EUR', ?, 'manual', ?, NULL),
+          (?, NULL, 'expense', '2033-03-11', '2033-03', -20000, 'EUR', ?, 'manual', ?, NULL)
       `,
     ).run(
       sparkasseId,

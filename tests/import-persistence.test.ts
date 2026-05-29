@@ -58,12 +58,17 @@ describe("import persistence and dedupe", () => {
       .prepare(
         `
           SELECT transaction_type AS transactionType, destination_account_id AS destinationAccountId
+               , effective_month_key AS effectiveMonthKey
           FROM transactions
           WHERE source_type = 'import'
           ORDER BY id ASC
         `,
       )
-      .all() as Array<{ transactionType: string; destinationAccountId: number | null }>;
+      .all() as Array<{
+      transactionType: string;
+      destinationAccountId: number | null;
+      effectiveMonthKey: string;
+    }>;
 
     expect(txTypes).toHaveLength(3);
     expect(txTypes.some((tx) => tx.transactionType === "expense")).toBe(true);
@@ -71,6 +76,7 @@ describe("import persistence and dedupe", () => {
       txTypes.some((tx) => tx.transactionType === "transfer" && tx.destinationAccountId !== null),
     ).toBe(true);
     expect(txTypes.some((tx) => tx.transactionType === "income")).toBe(true);
+    expect(txTypes.every((tx) => tx.effectiveMonthKey === "2026-04")).toBe(true);
   });
 
   it("marks second identical import as duplicates", () => {

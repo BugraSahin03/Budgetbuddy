@@ -77,6 +77,15 @@ describe("transactions repository", () => {
     expect(created?.transactionType).toBe("expense");
     expect(created?.amountCents).toBe(-1050);
     expect(created?.categoryName).toBe("Einkauf");
+
+    const stored = dbClient
+      .getDb()
+      .prepare(
+        "SELECT effective_month_key AS effectiveMonthKey FROM transactions WHERE description = ? LIMIT 1",
+      )
+      .get(`${PREFIX}ExpenseCategory`) as { effectiveMonthKey: string } | undefined;
+
+    expect(stored?.effectiveMonthKey).toBe("2026-05");
   });
 
   it("rejects expense without exactly one assignment", () => {

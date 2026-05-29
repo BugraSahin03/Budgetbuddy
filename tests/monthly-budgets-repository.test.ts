@@ -34,12 +34,13 @@ describe("monthly budget repository", () => {
           account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           description,
           source_type,
           category_id
         )
-        VALUES (?, 'expense', '2026-05-12', -1200, 'Kino', 'manual', ?)
+        VALUES (?, 'expense', '2026-05-12', '2026-05', -1200, 'Kino', 'manual', ?)
       `,
     ).run(account.id, category.id);
 
@@ -49,12 +50,13 @@ describe("monthly budget repository", () => {
           account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           description,
           source_type,
           category_id
         )
-        VALUES (?, 'expense', '2026-06-02', -2300, 'Konzert', 'manual', ?)
+        VALUES (?, 'expense', '2026-06-02', '2026-06', -2300, 'Konzert', 'manual', ?)
       `,
     ).run(account.id, category.id);
 
