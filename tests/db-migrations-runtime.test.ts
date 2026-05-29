@@ -1,7 +1,7 @@
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { applyMigrations } from "@/src/db/schema";
+import { applyMigrations, migrations } from "@/src/db/schema";
 
 type AccountRow = {
   id: number;
@@ -72,12 +72,13 @@ describe("database migrations runtime behavior", () => {
           account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           description,
           source_type,
           category_id
         )
-        VALUES (?, 'expense', '2026-04-27', -1250, 'Einkauf Test', 'manual', ?)
+        VALUES (?, 'expense', '2026-04-27', '2026-04', -1250, 'Einkauf Test', 'manual', ?)
       `,
     ).run(account.id, category.id);
 
@@ -88,11 +89,12 @@ describe("database migrations runtime behavior", () => {
             account_id,
             transaction_type,
             booking_date,
+            effective_month_key,
             amount_cents,
             description,
             source_type
           )
-          VALUES (?, 'expense', '2026-04-27', -500, 'Ungueltig', 'manual')
+          VALUES (?, 'expense', '2026-04-27', '2026-04', -500, 'Ungueltig', 'manual')
         `,
       ).run(account.id),
     ).toThrow();
@@ -123,11 +125,12 @@ describe("database migrations runtime behavior", () => {
           destination_account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           description,
           source_type
         )
-        VALUES (?, ?, 'transfer', '2026-04-27', -5000, 'ATM Auszahlung', 'manual')
+        VALUES (?, ?, 'transfer', '2026-04-27', '2026-04', -5000, 'ATM Auszahlung', 'manual')
       `,
     ).run(sourceAccount.id, destinationAccount.id);
 
@@ -138,11 +141,12 @@ describe("database migrations runtime behavior", () => {
             account_id,
             transaction_type,
             booking_date,
+            effective_month_key,
             amount_cents,
             description,
             source_type
           )
-          VALUES (?, 'transfer', '2026-04-27', -1000, 'Ohne Zielkonto', 'manual')
+          VALUES (?, 'transfer', '2026-04-27', '2026-04', -1000, 'Ohne Zielkonto', 'manual')
         `,
       ).run(sourceAccount.id),
     ).toThrow();
@@ -153,13 +157,14 @@ describe("database migrations runtime behavior", () => {
           account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           description,
           source_type,
           import_run_id,
           import_fingerprint
         )
-        VALUES (?, 'income', '2026-04-27', 100000, 'Gehalt', 'import', ?, 'fp-1')
+        VALUES (?, 'income', '2026-04-27', '2026-04', 100000, 'Gehalt', 'import', ?, 'fp-1')
       `,
     ).run(sourceAccount.id, importRunId);
 
@@ -170,13 +175,14 @@ describe("database migrations runtime behavior", () => {
             account_id,
             transaction_type,
             booking_date,
+            effective_month_key,
             amount_cents,
             description,
             source_type,
             import_run_id,
             import_fingerprint
           )
-          VALUES (?, 'income', '2026-04-27', 100000, 'Duplikat', 'import', ?, 'fp-1')
+          VALUES (?, 'income', '2026-04-27', '2026-04', 100000, 'Duplikat', 'import', ?, 'fp-1')
         `,
       ).run(sourceAccount.id, importRunId),
     ).toThrow();
@@ -194,11 +200,12 @@ describe("database migrations runtime behavior", () => {
             account_id,
             transaction_type,
             booking_date,
+            effective_month_key,
             amount_cents,
             description,
             source_type
           )
-          VALUES (?, 'income', '2026-04-27', -1, 'Ungueltig Einkommen', 'manual')
+          VALUES (?, 'income', '2026-04-27', '2026-04', -1, 'Ungueltig Einkommen', 'manual')
         `,
       ).run(account.id),
     ).toThrow();
@@ -209,11 +216,12 @@ describe("database migrations runtime behavior", () => {
           account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           description,
           source_type
         )
-        VALUES (?, 'income', '2026-04-27', 1, 'Gueltig Einkommen', 'manual')
+        VALUES (?, 'income', '2026-04-27', '2026-04', 1, 'Gueltig Einkommen', 'manual')
       `,
     ).run(account.id);
   });
@@ -224,6 +232,89 @@ describe("database migrations runtime behavior", () => {
       .all() as Array<{ name: string }>;
 
     expect(columns.some((column) => column.name === "icon_name")).toBe(true);
+  });
+
+  it("adds effective month key column on transactions", () => {
+    const columns = db
+      .prepare("PRAGMA table_info(transactions)")
+      .all() as Array<{ name: string; notnull: number }>;
+
+    const effectiveMonthColumn = columns.find(
+      (column) => column.name === "effective_month_key",
+    );
+
+    expect(effectiveMonthColumn).toBeDefined();
+    expect(effectiveMonthColumn?.notnull).toBe(1);
+  });
+
+  it("backfills effective month key when migrating legacy transaction rows", () => {
+    const legacyDb = new Database(":memory:");
+    legacyDb.exec("PRAGMA foreign_keys = ON;");
+    legacyDb.exec(
+      `
+        CREATE TABLE app_meta (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        );
+        CREATE TABLE schema_migrations (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `,
+    );
+
+    for (const migration of migrations) {
+      if (migration.id === "0005_fin_030") {
+        continue;
+      }
+
+      legacyDb.exec(migration.sql);
+      legacyDb
+        .prepare("INSERT INTO schema_migrations (id, name) VALUES (?, ?)")
+        .run(migration.id, migration.name);
+    }
+
+    const account = legacyDb
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as AccountRow;
+    const category = legacyDb
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as CategoryRow;
+
+    legacyDb
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id,
+            transaction_type,
+            booking_date,
+            amount_cents,
+            description,
+            source_type,
+            category_id
+          )
+          VALUES (?, 'expense', '2026-04-27', -1299, 'Legacy Buchung', 'manual', ?)
+        `,
+      )
+      .run(account.id, category.id);
+
+    applyMigrations(legacyDb);
+
+    const migratedRow = legacyDb
+      .prepare(
+        `
+          SELECT effective_month_key AS effectiveMonthKey
+          FROM transactions
+          WHERE description = 'Legacy Buchung'
+          LIMIT 1
+        `,
+      )
+      .get() as { effectiveMonthKey: string } | undefined;
+
+    expect(migratedRow?.effectiveMonthKey).toBe("2026-04");
+
+    legacyDb.close();
   });
 
   it("allows imported expenses without assignment", () => {
@@ -237,11 +328,12 @@ describe("database migrations runtime behavior", () => {
           account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           description,
           source_type
         )
-        VALUES (?, 'expense', '2026-05-22', -1599, 'Import Test Ausgabe', 'import')
+        VALUES (?, 'expense', '2026-05-22', '2026-05', -1599, 'Import Test Ausgabe', 'import')
       `,
     ).run(account.id);
 
@@ -284,12 +376,13 @@ describe("database migrations runtime behavior", () => {
           account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           description,
           source_type,
           category_id
         )
-        VALUES (?, 'expense', '2026-04-15', -1500, 'Kino', 'manual', ?)
+        VALUES (?, 'expense', '2026-04-15', '2026-04', -1500, 'Kino', 'manual', ?)
       `,
     ).run(account.id, category.id);
 

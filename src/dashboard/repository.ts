@@ -57,7 +57,7 @@ function getIncomeCents(monthKey: string): number {
         SELECT COALESCE(SUM(amount_cents), 0) AS total
         FROM transactions
         WHERE transaction_type IN ('income', 'refund')
-          AND substr(booking_date, 1, 7) = ?
+          AND effective_month_key = ?
       `,
     )
     .get(monthKey) as { total: number };
@@ -84,7 +84,7 @@ function listImportedExpenseRowsForMonth(monthKey: string): Array<{
         FROM transactions
         WHERE source_type = 'import'
           AND transaction_type = 'expense'
-          AND substr(booking_date, 1, 7) = ?
+          AND effective_month_key = ?
         ORDER BY booking_date ASC, id ASC
       `,
     )
@@ -158,7 +158,7 @@ function getExpenseCents(monthKey: string, fixedCostControlCents: number): numbe
         SELECT COALESCE(SUM(-amount_cents), 0) AS total
         FROM transactions
         WHERE transaction_type = 'expense'
-          AND substr(booking_date, 1, 7) = ?
+          AND effective_month_key = ?
       `,
     )
     .get(monthKey) as { total: number };

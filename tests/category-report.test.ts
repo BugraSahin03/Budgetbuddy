@@ -52,14 +52,14 @@ describe("category report analytics", () => {
     db.prepare(
       `
         INSERT INTO transactions (
-          account_id, destination_account_id, transaction_type, booking_date, amount_cents,
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key, amount_cents,
           currency_code, description, source_type, category_id, special_budget_id
         ) VALUES
-          (?, NULL, 'expense', '2032-01-05', -12000, 'EUR', ?, 'manual', ?, NULL),
-          (?, NULL, 'expense', '2032-01-18', -4000, 'EUR', ?, 'manual', ?, NULL),
-          (?, NULL, 'expense', '2032-02-03', -18000, 'EUR', ?, 'manual', ?, NULL),
-          (?, NULL, 'expense', '2032-01-09', -7000, 'EUR', ?, 'manual', ?, NULL),
-          (?, ?, 'transfer', '2032-01-20', -5000, 'EUR', ?, 'manual', NULL, NULL)
+          (?, NULL, 'expense', '2032-01-05', '2032-01', -12000, 'EUR', ?, 'manual', ?, NULL),
+          (?, NULL, 'expense', '2032-01-18', '2032-01', -4000, 'EUR', ?, 'manual', ?, NULL),
+          (?, NULL, 'expense', '2032-02-03', '2032-02', -18000, 'EUR', ?, 'manual', ?, NULL),
+          (?, NULL, 'expense', '2032-01-09', '2032-01', -7000, 'EUR', ?, 'manual', ?, NULL),
+          (?, ?, 'transfer', '2032-01-20', '2032-01', -5000, 'EUR', ?, 'manual', NULL, NULL)
       `,
     ).run(
       sparkasseId,

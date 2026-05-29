@@ -43,6 +43,7 @@ describe("fixed-cost control matches", () => {
           destination_account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           currency_code,
           description,
@@ -50,7 +51,7 @@ describe("fixed-cost control matches", () => {
           source_type,
           category_id,
           special_budget_id
-        ) VALUES (?, NULL, 'expense', '2031-02-01', -4000, 'EUR', ?, 'N26 BANK', 'import', NULL, NULL)
+        ) VALUES (?, NULL, 'expense', '2031-02-01', '2031-02', -4000, 'EUR', ?, 'N26 BANK', 'import', NULL, NULL)
       `,
     ).run(sparkasseId, `${PREFIX}UEBERWEISUNG | N26-Fix. Monatsblock`);
 
@@ -61,6 +62,7 @@ describe("fixed-cost control matches", () => {
           destination_account_id,
           transaction_type,
           booking_date,
+          effective_month_key,
           amount_cents,
           currency_code,
           description,
@@ -68,7 +70,7 @@ describe("fixed-cost control matches", () => {
           source_type,
           category_id,
           special_budget_id
-        ) VALUES (?, NULL, 'expense', '2031-02-02', -3490, 'EUR', ?, ?, 'import', NULL, NULL)
+        ) VALUES (?, NULL, 'expense', '2031-02-02', '2031-02', -3490, 'EUR', ?, ?, 'import', NULL, NULL)
       `,
     ).run(sparkasseId, `${PREFIX}LASTSCHRIFT`, `${PREFIX}FITNESS STUDIO`);
 

@@ -76,6 +76,26 @@ Folgeaktion:
 
 - FIN-028 kann die UI auf diese getrennten Kennzahlen aufsetzen.
 
+## 2026-05-29 - FIN-030 fuehrt `effective_month_key` als fachlichen Monatsanker ein
+
+Quelle/Ticket: `FIN-030`
+
+Erkenntnis/Entscheidung:
+
+- `transactions` enthaelt jetzt das Pflichtfeld `effective_month_key` (`YYYY-MM`).
+- Eine Migration backfillt Bestandsdaten robust aus `booking_date` und legt einen Index auf `effective_month_key` an.
+- Monatsbezogene Aggregationen in Dashboard, Budgets und Kategorie/Trend-Reports verwenden fachlich nur noch `effective_month_key`.
+- Persistenzpfade fuer manuelle und importierte Buchungen setzen `effective_month_key` beim Schreiben explizit.
+
+Auswirkung:
+
+- Monatslogik ist zentral und konsistent an einem fachlichen Feld gebuendelt.
+- Folgearbeit zu Monatsnavigation und abweichendem Zielmonat (FIN-031 ff.) kann ohne erneuten Schemawechsel aufbauen.
+
+Folgeaktion:
+
+- In FIN-031 bis FIN-035 kann die UI den Zielmonat gezielt steuern, ohne Monatsaggregation erneut umzubauen.
+
 ## 2026-05-25 - FIN-029 konsolidiert Altlogik und Doku auf das Monatsblockmodell
 
 Quelle/Ticket: `FIN-029`

@@ -66,10 +66,10 @@ export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCate
           mb.budget_amount_cents AS budgetAmountCents,
           COALESCE((
             SELECT SUM(-t.amount_cents)
-            FROM transactions t
-            WHERE t.transaction_type = 'expense'
-              AND t.category_id = c.id
-              AND substr(t.booking_date, 1, 7) = ?
+              FROM transactions t
+              WHERE t.transaction_type = 'expense'
+                AND t.category_id = c.id
+              AND t.effective_month_key = ?
           ), 0) AS spentAmountCents
         FROM categories c
         LEFT JOIN monthly_category_budgets mb

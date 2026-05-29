@@ -189,6 +189,7 @@ function resolveSignedAmount(transactionType: TransactionType, absoluteCents: nu
 
 function validateAndShapeInput(input: ManualTransactionInput): {
   bookingDate: string;
+  effectiveMonthKey: string;
   description: string;
   transactionType: TransactionType;
   amountCents: number;
@@ -198,6 +199,7 @@ function validateAndShapeInput(input: ManualTransactionInput): {
   specialBudgetId: number | null;
 } {
   const bookingDate = normalizeBookingDate(input.bookingDate);
+  const effectiveMonthKey = toMonthKey(bookingDate);
   const description = normalizeDescription(input.description);
   const transactionType = input.transactionType;
   const accountId = ensurePositiveInt(input.accountId, "Konto");
@@ -220,6 +222,7 @@ function validateAndShapeInput(input: ManualTransactionInput): {
 
     return {
       bookingDate,
+      effectiveMonthKey,
       description,
       transactionType,
       amountCents,
@@ -245,6 +248,7 @@ function validateAndShapeInput(input: ManualTransactionInput): {
 
       return {
         bookingDate,
+        effectiveMonthKey,
         description,
         transactionType,
         amountCents,
@@ -258,12 +262,13 @@ function validateAndShapeInput(input: ManualTransactionInput): {
     const specialBudgetId = ensurePositiveInt(input.specialBudgetId ?? -1, "Sonderbudget");
     const specialBudget = getActiveSpecialBudgetById(specialBudgetId);
 
-    if (specialBudget.monthKey !== toMonthKey(bookingDate)) {
+    if (specialBudget.monthKey !== effectiveMonthKey) {
       throw new Error("Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.");
     }
 
     return {
       bookingDate,
+      effectiveMonthKey,
       description,
       transactionType,
       amountCents,
@@ -276,6 +281,7 @@ function validateAndShapeInput(input: ManualTransactionInput): {
 
   return {
     bookingDate,
+    effectiveMonthKey,
     description,
     transactionType,
     amountCents,
@@ -429,6 +435,7 @@ export function createManualTransaction(input: ManualTransactionInput): void {
             destination_account_id,
             transaction_type,
             booking_date,
+            effective_month_key,
             amount_cents,
             currency_code,
             description,
@@ -437,7 +444,7 @@ export function createManualTransaction(input: ManualTransactionInput): void {
             special_budget_id,
             updated_at
           )
-          VALUES (?, ?, ?, ?, ?, 'EUR', ?, 'manual', ?, ?, CURRENT_TIMESTAMP)
+          VALUES (?, ?, ?, ?, ?, ?, 'EUR', ?, 'manual', ?, ?, CURRENT_TIMESTAMP)
         `,
       )
       .run(
@@ -445,6 +452,7 @@ export function createManualTransaction(input: ManualTransactionInput): void {
         shaped.destinationAccountId,
         shaped.transactionType,
         shaped.bookingDate,
+        shaped.effectiveMonthKey,
         shaped.amountCents,
         shaped.description,
         shaped.categoryId,
@@ -469,6 +477,7 @@ export function updateManualTransaction(transactionId: number, input: ManualTran
             destination_account_id = ?,
             transaction_type = ?,
             booking_date = ?,
+            effective_month_key = ?,
             amount_cents = ?,
             description = ?,
             category_id = ?,
@@ -483,6 +492,7 @@ export function updateManualTransaction(transactionId: number, input: ManualTran
         shaped.destinationAccountId,
         shaped.transactionType,
         shaped.bookingDate,
+        shaped.effectiveMonthKey,
         shaped.amountCents,
         shaped.description,
         shaped.categoryId,

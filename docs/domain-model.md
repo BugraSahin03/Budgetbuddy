@@ -31,6 +31,7 @@ Beispiele:
 Wichtige Felder:
 
 - Datum
+- effektiver Zielmonat `effective_month_key` (`YYYY-MM`)
 - Betrag
 - Beschreibung/Name
 - Konto
@@ -184,6 +185,16 @@ Regeln:
 - `transfer`: Betrag aus Sicht des Quellkontos, daher typischerweise negativ
 
 Damit bleiben Importdaten und manuelle Buchungen konsistent und ohne Rundungsprobleme vergleichbar.
+
+### Effektiver Zielmonat (FIN-030)
+
+Monatsbezogene Auswertungen basieren fachlich auf `transactions.effective_month_key` und nicht mehr auf einer impliziten Ableitung aus `booking_date`.
+
+Fuer den aktuellen MVP gilt weiterhin:
+
+- Beim Anlegen wird `effective_month_key` initial aus `booking_date` abgeleitet.
+- Migrationen backfillen Bestandsdaten aus `booking_date`.
+- Folge-Tickets koennen die bewusste Abweichung zwischen Buchungsdatum und Zielmonat nutzen, ohne das Datenmodell erneut zu aendern.
 
 ### Sonderbudget-Ist
 
