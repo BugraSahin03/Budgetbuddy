@@ -186,13 +186,16 @@ Regeln:
 
 Damit bleiben Importdaten und manuelle Buchungen konsistent und ohne Rundungsprobleme vergleichbar.
 
-### Effektiver Zielmonat (FIN-030)
+### Effektiver Zielmonat (FIN-030/FIN-031)
 
 Monatsbezogene Auswertungen basieren fachlich auf `transactions.effective_month_key` und nicht mehr auf einer impliziten Ableitung aus `booking_date`.
 
 Fuer den aktuellen MVP gilt weiterhin:
 
-- Beim Anlegen wird `effective_month_key` initial aus `booking_date` abgeleitet.
+- Manuelle Buchungen erfassen den Zielmonat explizit (`YYYY-MM`), Standard bleibt der Monat aus `booking_date`.
+- Beim Import-Confirm kann ein Zielmonat fuer den gesamten Importlauf explizit gesetzt werden.
+- Ohne explizite Eingabe wird beim Import der Zielmonat aus den Buchungsdaten erkannt.
+- Sonderbudget-Pruefungen laufen gegen `effective_month_key`, nicht nur gegen `booking_date`.
 - Migrationen backfillen Bestandsdaten aus `booking_date`.
 - Folge-Tickets koennen die bewusste Abweichung zwischen Buchungsdatum und Zielmonat nutzen, ohne das Datenmodell erneut zu aendern.
 

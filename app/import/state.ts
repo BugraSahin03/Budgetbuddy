@@ -7,6 +7,7 @@ export type ImportPreviewState = {
   fatalError: string | null;
   persisted: ImportPersistenceResult | null;
   suggestions: ImportRuleSuggestion[];
+  detectedMonthKey: string | null;
 };
 
 export const importPreviewInitialState: ImportPreviewState = {
@@ -14,4 +15,5 @@ export const importPreviewInitialState: ImportPreviewState = {
   fatalError: null,
   persisted: null,
   suggestions: [],
+  detectedMonthKey: null,
 };

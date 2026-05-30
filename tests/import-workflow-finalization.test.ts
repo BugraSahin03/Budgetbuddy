@@ -36,6 +36,7 @@ describe("import workflow finalization", () => {
   it("confirms import and persists rows", async () => {
     const formData = new FormData();
     formData.set("intent", "confirm");
+    formData.set("effectiveMonthKey", "2026-05");
     formData.set("sparkasseCsv", new File([SAMPLE_CSV], "sparkasse.csv", { type: "text/csv" }));
 
     const state = await parseSparkasseCsvAction(importPreviewInitialState, formData);
@@ -43,6 +44,7 @@ describe("import workflow finalization", () => {
     expect(state.fatalError).toBeNull();
     expect(state.persisted).not.toBeNull();
     expect(state.persisted?.importedRows).toBe(3);
+    expect(state.detectedMonthKey).toBe("2026-04");
     expect(
       state.suggestions.some(
         (suggestion) => suggestion.label === "Fixkosten-Kontrolle: N26-Sammeltransfer",
@@ -61,5 +63,24 @@ describe("import workflow finalization", () => {
           row.destinationAccountName === null,
       ),
     ).toBe(true);
+
+    const importedMonths = db
+      .prepare(
+        "SELECT DISTINCT effective_month_key AS effectiveMonthKey FROM transactions WHERE source_type = 'import'",
+      )
+      .all() as Array<{ effectiveMonthKey: string }>;
+    expect(importedMonths).toEqual([{ effectiveMonthKey: "2026-05" }]);
+  });
+
+  it("shows validation error for invalid explicit target month", async () => {
+    const formData = new FormData();
+    formData.set("intent", "confirm");
+    formData.set("effectiveMonthKey", "2026/05");
+    formData.set("sparkasseCsv", new File([SAMPLE_CSV], "sparkasse.csv", { type: "text/csv" }));
+
+    const state = await parseSparkasseCsvAction(importPreviewInitialState, formData);
+
+    expect(state.persisted).toBeNull();
+    expect(state.fatalError).toBe("Zielmonat muss im Format YYYY-MM vorliegen.");
   });
 });

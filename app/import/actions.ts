@@ -3,7 +3,10 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { persistSparkasseCsvImport } from "@/src/import/persistence";
+import {
+  detectDefaultImportMonthKey,
+  persistSparkasseCsvImport,
+} from "@/src/import/persistence";
 import { parseSparkasseCsvToPreview } from "@/src/import/sparkasse-csv";
 import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
 import { listFixedCosts } from "@/src/fixed-costs/repository";
@@ -26,6 +29,7 @@ export async function parseSparkasseCsvAction(
 ): Promise<ImportPreviewState> {
   const file = formData.get("sparkasseCsv");
   const intent = toSingleString(formData.get("intent"));
+  const effectiveMonthKey = toSingleString(formData.get("effectiveMonthKey"));
 
   if (!(file instanceof File)) {
     return {
@@ -45,6 +49,7 @@ export async function parseSparkasseCsvAction(
 
   try {
     const parsed = parseSparkasseCsvToPreview(fileContent);
+    const detectedMonthKey = detectDefaultImportMonthKey(parsed.rows);
     const activeFixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
 
     if (intent === "confirm") {
@@ -52,6 +57,7 @@ export async function parseSparkasseCsvAction(
       const persisted = persistSparkasseCsvImport({
         sourceFilename: file.name || "sparkasse.csv",
         fileContent,
+        effectiveMonthKey,
       });
 
       revalidatePath("/transaktionen");
@@ -66,6 +72,7 @@ export async function parseSparkasseCsvAction(
           rules: activeRules,
           fixedCosts: activeFixedCosts,
         }),
+        detectedMonthKey,
       };
     }
 
@@ -81,11 +88,17 @@ export async function parseSparkasseCsvAction(
       fatalError: null,
       persisted: null,
       suggestions,
+      detectedMonthKey,
     };
-  } catch {
+  } catch (error) {
+    const message =
+      error instanceof Error && error.message.trim().length > 0
+        ? error.message
+        : "Datei konnte nicht verarbeitet werden.";
+
     return {
       ...importPreviewInitialState,
-      fatalError: "Datei konnte nicht verarbeitet werden.",
+      fatalError: message,
     };
   }
 }

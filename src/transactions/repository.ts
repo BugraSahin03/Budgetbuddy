@@ -7,6 +7,7 @@ export type TransactionType = "expense" | "income" | "transfer" | "refund";
 export type TransactionListItem = {
   id: number;
   bookingDate: string;
+  effectiveMonthKey: string;
   description: string;
   accountName: string;
   destinationAccountName: string | null;
@@ -43,6 +44,7 @@ export type CashAccountSnapshot = {
 
 export type ManualTransactionInput = {
   bookingDate: string;
+  effectiveMonthKey?: string;
   description: string;
   transactionType: TransactionType;
   amountInput: string;
@@ -53,6 +55,7 @@ export type ManualTransactionInput = {
 };
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 const AMOUNT_PATTERN = /^\d+(?:[.,]\d{1,2})?$/;
 
 function toMonthKey(bookingDate: string): string {
@@ -90,6 +93,20 @@ function normalizeBookingDate(bookingDate: string): string {
 
   if (!DATE_PATTERN.test(normalized)) {
     throw new Error("Datum muss im Format JJJJ-MM-TT vorliegen.");
+  }
+
+  return normalized;
+}
+
+function normalizeEffectiveMonthKey(effectiveMonthKey: string, fallback: string): string {
+  const normalized = effectiveMonthKey.trim();
+
+  if (normalized.length === 0) {
+    return fallback;
+  }
+
+  if (!MONTH_KEY_PATTERN.test(normalized)) {
+    throw new Error("Zielmonat muss im Format YYYY-MM vorliegen.");
   }
 
   return normalized;
@@ -199,7 +216,10 @@ function validateAndShapeInput(input: ManualTransactionInput): {
   specialBudgetId: number | null;
 } {
   const bookingDate = normalizeBookingDate(input.bookingDate);
-  const effectiveMonthKey = toMonthKey(bookingDate);
+  const effectiveMonthKey = normalizeEffectiveMonthKey(
+    input.effectiveMonthKey ?? "",
+    toMonthKey(bookingDate),
+  );
   const description = normalizeDescription(input.description);
   const transactionType = input.transactionType;
   const accountId = ensurePositiveInt(input.accountId, "Konto");
@@ -299,6 +319,7 @@ export function listManualTransactions(): TransactionListItem[] {
         SELECT
           t.id,
           t.booking_date AS bookingDate,
+          t.effective_month_key AS effectiveMonthKey,
           t.description,
           source.name AS accountName,
           destination.name AS destinationAccountName,

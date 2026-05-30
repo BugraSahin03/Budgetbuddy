@@ -13,6 +13,8 @@ export type ImportPersistenceResult = {
   parseErrors: string[];
 };
 
+const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+
 function normalizeFingerprintPart(value: string): string {
   return value.trim().replace(/\s+/g, " ");
 }
@@ -89,6 +91,67 @@ function toMonthKey(bookingDate: string): string {
   return bookingDate.slice(0, 7);
 }
 
+export function detectDefaultImportMonthKey(
+  rows: Array<Pick<SparkasseCsvRow, "bookingDate">>,
+): string | null {
+  if (rows.length === 0) {
+    return null;
+  }
+
+  const counts = new Map<string, number>();
+  const firstSeenIndex = new Map<string, number>();
+
+  rows.forEach((row, index) => {
+    const monthKey = toMonthKey(row.bookingDate);
+    if (!MONTH_KEY_PATTERN.test(monthKey)) {
+      return;
+    }
+
+    counts.set(monthKey, (counts.get(monthKey) ?? 0) + 1);
+    if (!firstSeenIndex.has(monthKey)) {
+      firstSeenIndex.set(monthKey, index);
+    }
+  });
+
+  let selected: string | null = null;
+  let selectedCount = -1;
+  let selectedFirstSeen = Number.MAX_SAFE_INTEGER;
+
+  for (const [monthKey, count] of counts.entries()) {
+    const firstSeen = firstSeenIndex.get(monthKey) ?? Number.MAX_SAFE_INTEGER;
+
+    if (count > selectedCount || (count === selectedCount && firstSeen < selectedFirstSeen)) {
+      selected = monthKey;
+      selectedCount = count;
+      selectedFirstSeen = firstSeen;
+    }
+  }
+
+  return selected;
+}
+
+function resolveImportEffectiveMonthKey(
+  rawMonthKey: string | null | undefined,
+  rows: SparkasseCsvRow[],
+): string {
+  const normalized = (rawMonthKey ?? "").trim();
+
+  if (normalized.length > 0) {
+    if (!MONTH_KEY_PATTERN.test(normalized)) {
+      throw new Error("Zielmonat muss im Format YYYY-MM vorliegen.");
+    }
+
+    return normalized;
+  }
+
+  const detected = detectDefaultImportMonthKey(rows);
+  if (!detected) {
+    throw new Error("Zielmonat konnte aus dem Import nicht abgeleitet werden.");
+  }
+
+  return detected;
+}
+
 function determineTransactionShape(row: SparkasseCsvRow): {
   transactionType: "expense" | "income" | "transfer";
   destinationAccountId: number | null;
@@ -116,8 +179,13 @@ function determineTransactionShape(row: SparkasseCsvRow): {
 export function persistSparkasseCsvImport(params: {
   sourceFilename: string;
   fileContent: string;
+  effectiveMonthKey?: string | null;
 }): ImportPersistenceResult {
   const parseResult = parseSparkasseCsvToPreview(params.fileContent);
+  const importEffectiveMonthKey = resolveImportEffectiveMonthKey(
+    params.effectiveMonthKey,
+    parseResult.rows,
+  );
 
   const db = getDb();
   const runInsert = db
@@ -193,7 +261,7 @@ export function persistSparkasseCsvImport(params: {
           shape.destinationAccountId,
           shape.transactionType,
           row.bookingDate,
-          toMonthKey(row.bookingDate),
+          importEffectiveMonthKey,
           row.valueDate,
           row.amountCents,
           row.currencyCode,

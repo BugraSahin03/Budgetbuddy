@@ -27,6 +27,8 @@ export function ImportForm() {
     parseSparkasseCsvAction,
     importPreviewInitialState,
   );
+  const fallbackMonthKey = new Date().toISOString().slice(0, 7);
+  const effectiveMonthDefault = state.detectedMonthKey ?? fallbackMonthKey;
   const fixedCostControls = state.suggestions.filter((item) =>
     isFixedCostControlLabel(item.label),
   );
@@ -46,6 +48,28 @@ export function ImportForm() {
             className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
             required
           />
+        </div>
+
+        <div>
+          <label
+            htmlFor="effectiveMonthKey"
+            className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500"
+          >
+            Zielmonat
+          </label>
+          <input
+            key={effectiveMonthDefault}
+            id="effectiveMonthKey"
+            name="effectiveMonthKey"
+            type="month"
+            defaultValue={effectiveMonthDefault}
+            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+          />
+          <p className="mt-1 text-xs text-slate-500">
+            {state.detectedMonthKey
+              ? `Automatisch erkannt: ${state.detectedMonthKey}. Du kannst bei Bedarf ueberschreiben.`
+              : "Ohne Eingabe wird der Zielmonat aus den Buchungen automatisch erkannt."}
+          </p>
         </div>
 
         <div className="flex flex-wrap gap-2">
