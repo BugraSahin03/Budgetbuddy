@@ -1,6 +1,14 @@
 import Link from "next/link";
 
 import {
+  MonthChip,
+  MonthHero,
+  MonthPageShell,
+  MonthSection,
+  MonthStatCard,
+  MonthTableShell,
+} from "@/app/monate/months-ui";
+import {
   buildDashboardKpis,
   categoryStatusLabel,
   categoryStatusTone,
@@ -61,6 +69,58 @@ function assignmentLabel(row: {
   return "Keine Zuordnung noetig";
 }
 
+function MonthNavLink({
+  href,
+  label,
+  direction,
+}: {
+  href: string;
+  label: string;
+  direction: "previous" | "next";
+}) {
+  const arrow = direction === "previous" ? "←" : "→";
+  const description = direction === "previous" ? "Vorheriger Monat" : "Naechster Monat";
+
+  return (
+    <Link
+      href={href}
+      className="group flex min-w-[12rem] items-center justify-between rounded-[1.25rem] border border-[color:var(--month-line)] bg-white/80 px-4 py-3 text-left shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-[color:var(--month-line-strong)]"
+    >
+      <div>
+        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
+          {description}
+        </p>
+        <p className="mt-1 text-sm font-semibold text-[color:var(--month-ink)]">{label}</p>
+      </div>
+      <span className="text-lg text-[color:var(--month-ink-soft)] transition group-hover:text-[color:var(--month-ink)]">
+        {arrow}
+      </span>
+    </Link>
+  );
+}
+
+function MonthMutedCard({
+  label,
+  value,
+  copy,
+}: {
+  label: string;
+  value?: string;
+  copy: string;
+}) {
+  return (
+    <article className="rounded-[1.35rem] border border-[color:var(--month-line)] bg-[color:var(--month-surface-muted)] p-5">
+      <p className="month-eyebrow">{label}</p>
+      {value ? (
+        <p className="mt-3 text-[1.7rem] font-semibold tracking-[-0.04em] text-[color:var(--month-ink)]">
+          {value}
+        </p>
+      ) : null}
+      <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">{copy}</p>
+    </article>
+  );
+}
+
 export default async function MonthDetailPage({ params }: MonthDetailPageProps) {
   const { monthKey } = await params;
   const month = getMonthDetail(monthKey);
@@ -68,98 +128,100 @@ export default async function MonthDetailPage({ params }: MonthDetailPageProps) 
   const warningCount = countOverBudgetWarnings(month.dashboard);
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-              Monatsdetail
-            </p>
-            <h2 className="text-lg font-semibold text-slate-900">{month.label}</h2>
-            <p className="mt-1 text-sm text-slate-600">
-              Vollstaendige Monatssicht mit KPIs, Budgets, Fixkostenblock und Buchungsliste.
-            </p>
+    <MonthPageShell>
+      <MonthHero
+        eyebrow="Monatsdetail"
+        title={month.label}
+        description="Ein Monat, eine vollstaendige Sicht: Kennzahlen, Budgets, Fixkostenblock und Buchungen in einer klaren Lesereihenfolge."
+        aside={
+          <div className="flex flex-col gap-3 md:items-end">
+            <MonthChip tone="neutral">{month.monthKey}</MonthChip>
+            <div className="flex flex-wrap gap-3">
+              <MonthNavLink
+                href={month.previousMonth.href}
+                label={month.previousMonth.label}
+                direction="previous"
+              />
+              {month.nextMonth ? (
+                <MonthNavLink
+                  href={month.nextMonth.href}
+                  label={month.nextMonth.label}
+                  direction="next"
+                />
+              ) : (
+                <div className="flex min-w-[12rem] items-center justify-between rounded-[1.25rem] border border-dashed border-[color:var(--month-line)] bg-white/55 px-4 py-3 text-left text-[color:var(--month-ink-muted)]">
+                  <div>
+                    <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em]">
+                      Naechster Monat
+                    </p>
+                    <p className="mt-1 text-sm font-semibold">Aktuellster Monat</p>
+                  </div>
+                  <span className="text-lg">→</span>
+                </div>
+              )}
+            </div>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href={month.previousMonth.href}
-              className="rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-            >
-              Vorheriger Monat
-            </Link>
-            {month.nextMonth ? (
-              <Link
-                href={month.nextMonth.href}
-                className="rounded-lg border border-slate-300 bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-200"
-              >
-                Naechster Monat
-              </Link>
-            ) : (
-              <span className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-medium text-slate-400">
-                Naechster Monat
-              </span>
-            )}
-          </div>
-        </div>
-      </section>
+        }
+      />
 
       <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
         {kpis.map((card) => (
-          <article key={card.label} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">{card.label}</p>
-            <p className={`mt-2 text-2xl font-semibold ${card.tone}`}>{card.value}</p>
-          </article>
+          <MonthStatCard
+            key={card.label}
+            label={card.label}
+            value={card.value}
+            tone={card.label === "Verfuegbar" && month.dashboard.totals.availableCents < 0 ? "danger" : "default"}
+          />
         ))}
       </section>
 
       {warningCount > 0 ? (
-        <section className="rounded-xl border border-red-200 bg-red-50 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-red-700">Warnbereich</p>
-          <h2 className="mt-2 text-base font-semibold text-red-900">
-            {warningCount} Budgetueberschreitung(en) aktiv
-          </h2>
-          <p className="mt-1 text-sm text-red-800">
-            Dieser Monat enthaelt mindestens eine klare Budgetwarnung.
-          </p>
+        <section className="rounded-[1.7rem] border border-red-200 bg-[linear-gradient(135deg,rgba(254,242,242,0.98),rgba(255,255,255,0.94))] p-5 shadow-[0_16px_40px_rgba(185,28,28,0.08)]">
+          <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="month-eyebrow text-red-700">Warnbereich</p>
+              <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-red-950">
+                {warningCount} Budgetueberschreitung(en) aktiv
+              </h2>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-red-900/80">
+                Dieser Monat enthaelt mindestens eine klare Budgetwarnung und sollte zuerst
+                auf Monatsseite geprueft werden.
+              </p>
+            </div>
+
+            <MonthChip tone="warn">Bitte zuerst pruefen</MonthChip>
+          </div>
         </section>
       ) : null}
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Kategorien</p>
-            <h2 className="text-lg font-semibold text-slate-900">Budget / Ist / Rest</h2>
-          </div>
-          <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-medium text-amber-700">
-            Transfers sind hier nicht als Ausgaben enthalten
-          </span>
-        </div>
-
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+      <MonthSection
+        eyebrow="Budgets"
+        title="Kategorien im Monatskontext"
+        description="Budget, Ist und Rest bleiben in einer ruhigen Tabelle zusammen. Transfers tauchen hier bewusst nicht als Ausgaben auf."
+        aside={<MonthChip tone="accent">Kategorien {month.dashboard.categoryRows.length}</MonthChip>}
+      >
+        <MonthTableShell>
+          <table className="month-table min-w-full">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
-                <th className="px-3 py-2 font-semibold">Kategorie</th>
-                <th className="px-3 py-2 font-semibold">Budget</th>
-                <th className="px-3 py-2 font-semibold">Ist</th>
-                <th className="px-3 py-2 font-semibold">Rest</th>
-                <th className="px-3 py-2 font-semibold">Status</th>
+              <tr>
+                <th>Kategorie</th>
+                <th>Budget</th>
+                <th>Ist</th>
+                <th>Rest</th>
+                <th>Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {month.dashboard.categoryRows.map((row) => (
-                <tr key={row.categoryId} className="text-slate-700">
-                  <td className="px-3 py-2 font-medium text-slate-900">{row.categoryName}</td>
-                  <td className="px-3 py-2">
-                    {row.budgetAmountCents === null ? "-" : formatEuro(row.budgetAmountCents)}
-                  </td>
-                  <td className="px-3 py-2">{formatEuro(row.spentAmountCents)}</td>
-                  <td className="px-3 py-2">
-                    {row.remainingAmountCents === null ? "-" : formatEuro(row.remainingAmountCents)}
-                  </td>
-                  <td className="px-3 py-2">
-                    <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${categoryStatusTone(row)}`}>
+                <tr key={row.categoryId}>
+                  <td className="font-semibold text-[color:var(--month-ink)]">{row.categoryName}</td>
+                  <td>{row.budgetAmountCents === null ? "-" : formatEuro(row.budgetAmountCents)}</td>
+                  <td>{formatEuro(row.spentAmountCents)}</td>
+                  <td>{row.remainingAmountCents === null ? "-" : formatEuro(row.remainingAmountCents)}</td>
+                  <td>
+                    <span
+                      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${categoryStatusTone(row)}`}
+                    >
                       {categoryStatusLabel(row)}
                     </span>
                   </td>
@@ -167,42 +229,44 @@ export default async function MonthDetailPage({ params }: MonthDetailPageProps) 
               ))}
             </tbody>
           </table>
-        </div>
-      </section>
+        </MonthTableShell>
+      </MonthSection>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Sonderbudgets</p>
-          <h2 className="text-lg font-semibold text-slate-900">Separat vom Kategoriebudget</h2>
-        </div>
-
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+      <MonthSection
+        eyebrow="Sonderbudgets"
+        title="Monatsspezifische Ausgabenziele"
+        description="Sonderbudgets stehen sichtbar neben den regulären Kategorien und bleiben als eigene Monatsentscheidung lesbar."
+        aside={<MonthChip tone="neutral">{month.dashboard.specialBudgetRows.length} Eintraege</MonthChip>}
+      >
+        <MonthTableShell>
+          <table className="month-table min-w-full">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
-                <th className="px-3 py-2 font-semibold">Sonderbudget</th>
-                <th className="px-3 py-2 font-semibold">Geplant</th>
-                <th className="px-3 py-2 font-semibold">Ist</th>
-                <th className="px-3 py-2 font-semibold">Rest</th>
-                <th className="px-3 py-2 font-semibold">Status</th>
+              <tr>
+                <th>Sonderbudget</th>
+                <th>Geplant</th>
+                <th>Ist</th>
+                <th>Rest</th>
+                <th>Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {month.dashboard.specialBudgetRows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-3 py-4 text-center text-sm text-slate-600">
+                  <td colSpan={5} className="py-8 text-center text-sm text-[color:var(--month-ink-soft)]">
                     Keine Sonderbudgets fuer diesen Monat vorhanden.
                   </td>
                 </tr>
               ) : (
                 month.dashboard.specialBudgetRows.map((row) => (
-                  <tr key={row.id} className="text-slate-700">
-                    <td className="px-3 py-2 font-medium text-slate-900">{row.name}</td>
-                    <td className="px-3 py-2">{formatEuro(row.plannedAmountCents)}</td>
-                    <td className="px-3 py-2">{formatEuro(row.actualExpenseCents)}</td>
-                    <td className="px-3 py-2">{formatEuro(row.remainingAmountCents)}</td>
-                    <td className="px-3 py-2">
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${specialBudgetStatusTone(row)}`}>
+                  <tr key={row.id}>
+                    <td className="font-semibold text-[color:var(--month-ink)]">{row.name}</td>
+                    <td>{formatEuro(row.plannedAmountCents)}</td>
+                    <td>{formatEuro(row.actualExpenseCents)}</td>
+                    <td>{formatEuro(row.remainingAmountCents)}</td>
+                    <td>
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${specialBudgetStatusTone(row)}`}
+                      >
                         {specialBudgetStatusLabel(row)}
                       </span>
                     </td>
@@ -211,90 +275,78 @@ export default async function MonthDetailPage({ params }: MonthDetailPageProps) 
               )}
             </tbody>
           </table>
-        </div>
-      </section>
+        </MonthTableShell>
+      </MonthSection>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Fixkostenblock</p>
-            <h2 className="text-lg font-semibold text-slate-900">Plan und Kontrollhinweis</h2>
-          </div>
-          <span className="rounded-full border border-violet-200 bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700">
-            Ist-Kontrolle: {formatEuro(month.dashboard.totals.actualFixedCostsCents)}
-          </span>
-        </div>
-
-        <div className="mt-4 grid gap-3 md:grid-cols-2">
-          <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">Fixkosten (Plan)</p>
-            <p className="mt-2 text-2xl font-semibold text-slate-900">
-              {formatEuro(month.dashboard.totals.plannedFixedCostsCents)}
-            </p>
-          </article>
-
-          <article className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs font-medium uppercase tracking-[0.12em] text-slate-500">Kontrollsicht</p>
-            <p className="mt-2 text-sm text-slate-700">
-              {month.dashboard.totals.actualFixedCostsCents > 0
+      <MonthSection
+        eyebrow="Fixkostenblock"
+        title="Plan und Kontrollsicht nebeneinander"
+        description="Der Planbetrag bleibt sichtbar, waehrend erkannte Importtreffer als ruhige Kontrollinformation danebenstehen."
+        aside={<MonthChip tone="violet">Ist-Kontrolle {formatEuro(month.dashboard.totals.actualFixedCostsCents)}</MonthChip>}
+      >
+        <div className="grid gap-4 lg:grid-cols-2">
+          <MonthMutedCard
+            label="Fixkosten (Plan)"
+            value={formatEuro(month.dashboard.totals.plannedFixedCostsCents)}
+            copy="Der monatliche Planblock reduziert den verfuegbaren Betrag direkt und bleibt als stabile Leitplanke sichtbar."
+          />
+          <MonthMutedCard
+            label="Kontrollsicht"
+            copy={
+              month.dashboard.totals.actualFixedCostsCents > 0
                 ? "Es wurden importierte Fixkosten-Kontrolltreffer in diesem Monat erkannt."
-                : "Fuer diesen Monat gibt es aktuell keinen importierten Fixkosten-Kontrollhinweis."}
-            </p>
-          </article>
+                : "Fuer diesen Monat gibt es aktuell keinen importierten Fixkosten-Kontrollhinweis."
+            }
+          />
         </div>
-      </section>
+      </MonthSection>
 
-      <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Monatsbuchungen</p>
-            <h2 className="text-lg font-semibold text-slate-900">Komplette Buchungsliste</h2>
-          </div>
-          <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-            Eintraege: {month.transactions.length}
-          </span>
-        </div>
-
-        <div className="mt-4 overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+      <MonthSection
+        eyebrow="Buchungen"
+        title="Komplette Buchungsliste des Monats"
+        description="Alle Monatsbuchungen bleiben in einer konsistenten Tabelle lesbar, inklusive Typ, Zuordnung und Quelle."
+        aside={<MonthChip tone="neutral">{month.transactions.length} Eintraege</MonthChip>}
+      >
+        <MonthTableShell>
+          <table className="month-table min-w-full">
             <thead>
-              <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
-                <th className="px-3 py-2 font-semibold">Datum</th>
-                <th className="px-3 py-2 font-semibold">Buchung</th>
-                <th className="px-3 py-2 font-semibold">Konto</th>
-                <th className="px-3 py-2 font-semibold">Betrag</th>
-                <th className="px-3 py-2 font-semibold">Typ</th>
-                <th className="px-3 py-2 font-semibold">Zuordnung</th>
-                <th className="px-3 py-2 font-semibold">Quelle</th>
+              <tr>
+                <th>Datum</th>
+                <th>Buchung</th>
+                <th>Konto</th>
+                <th>Betrag</th>
+                <th>Typ</th>
+                <th>Zuordnung</th>
+                <th>Quelle</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {month.transactions.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-3 py-4 text-center text-sm text-slate-600">
+                  <td colSpan={7} className="py-8 text-center text-sm text-[color:var(--month-ink-soft)]">
                     Keine Buchungen fuer diesen Monat vorhanden.
                   </td>
                 </tr>
               ) : (
                 month.transactions.map((transaction) => (
                   <tr key={`${transaction.sourceType}-${transaction.id}`}>
-                    <td className="px-3 py-2 text-slate-700">{transaction.bookingDate}</td>
-                    <td className="px-3 py-2 font-medium text-slate-900">
-                      {transaction.description}
-                    </td>
-                    <td className="px-3 py-2 text-slate-700">
+                    <td>{transaction.bookingDate}</td>
+                    <td className="font-semibold text-[color:var(--month-ink)]">{transaction.description}</td>
+                    <td>
                       {transaction.destinationAccountName
                         ? `${transaction.accountName} -> ${transaction.destinationAccountName}`
                         : transaction.accountName}
                     </td>
-                    <td className="px-3 py-2 text-slate-900">{formatEuro(transaction.amountCents)}</td>
-                    <td className="px-3 py-2">
-                      <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${transactionTypeTone(transaction.transactionType)}`}>
+                    <td>{formatEuro(transaction.amountCents)}</td>
+                    <td>
+                      <span
+                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${transactionTypeTone(transaction.transactionType)}`}
+                      >
                         {transactionTypeLabel(transaction.transactionType)}
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-slate-700">{assignmentLabel(transaction)}</td>
-                    <td className="px-3 py-2 text-slate-600">
+                    <td>{assignmentLabel(transaction)}</td>
+                    <td>
                       {transaction.sourceType === "import"
                         ? `Import${transaction.importRunId ? ` #${transaction.importRunId}` : ""}`
                         : "Manuell"}
@@ -304,8 +356,8 @@ export default async function MonthDetailPage({ params }: MonthDetailPageProps) 
               )}
             </tbody>
           </table>
-        </div>
-      </section>
-    </div>
+        </MonthTableShell>
+      </MonthSection>
+    </MonthPageShell>
   );
 }

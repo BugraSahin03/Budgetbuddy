@@ -95,6 +95,25 @@ Folgeaktion:
 
 - Nachfolgende Monats-UI-Tickets sollen neue Monatsdaten bevorzugt an das zentrale Readmodel andocken, nicht an eigene Monatsabfragen.
 
+## 2026-05-30 - FIN-035 gibt Monatsseiten eine eigene ruhige UI-Hierarchie
+
+Quelle/Ticket: `FIN-035`
+
+Erkenntnis/Entscheidung:
+
+- Monatsliste und Monatsdetailseite bekommen eine eigene visuelle Sprache mit weichen Panels, klarer Typohierarchie und leichterem Monatswechsel.
+- Die neue Monats-UI bleibt bewusst auf `app/monate/**` fokussiert; das Dashboard wird nicht parallel in denselben Look gezogen.
+- Monatsbezogene Tabellen bleiben dicht und lesbar, werden aber in konsistente Surface-Shells eingebettet.
+
+Auswirkung:
+
+- Die Monatsarbeit fuehlt sich klarer und eigenstaendiger an als die restlichen Verwaltungsseiten.
+- Nachfolgende Monats-Tickets koennen diese UI-Bausteine erweitern, ohne den Rest der App neu zu stylen.
+
+Folgeaktion:
+
+- Weitere visuelle Politur fuer nicht-monatliche Bereiche nur in eigenen Tickets und nicht implizit ueber Monatsarbeit mitziehen.
+
 ## 2026-05-29 - FIN-030 fuehrt `effective_month_key` als fachlichen Monatsanker ein
 
 Quelle/Ticket: `FIN-030`
