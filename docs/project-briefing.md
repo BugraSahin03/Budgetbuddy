@@ -10,6 +10,11 @@ Die App soll zuerst am Rechner laufen, spaeter als Web-App/PWA auf einem Raspber
 
 Der erste echte Nutzen entsteht durch Sparkassen-Importe, manuelle Eintraege, Kategorien, monatliche Sonderbudgets, Fixkosten-Uebersicht, Bargeldbestand und Monatsauswertungen.
 
+Aktueller Navigationsfokus:
+
+- Das Dashboard bleibt die monatliche Detailansicht fuer KPIs.
+- Die Monatsarbeit bekommt zusaetzlich einen eigenen Haupttab `Monate` als lueckenlosen Einstieg ueber alle verfuegbaren Monate.
+
 ## Einstieg fuer neue Codex-Instanzen
 
 Neue Instanzen sollen zuerst dieses Dokument lesen. Danach je nach Aufgabe:

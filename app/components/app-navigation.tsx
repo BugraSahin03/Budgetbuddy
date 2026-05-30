@@ -2,24 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-const NAV_ITEMS = [
-  { href: "/", label: "Dashboard" },
-  { href: "/transaktionen", label: "Transaktionen" },
-  { href: "/import", label: "Import" },
-  { href: "/kategorien", label: "Kategorien" },
-  { href: "/sonderbudgets", label: "Sonderbudgets" },
-  { href: "/fixkosten", label: "Fixkosten" },
-  { href: "/einstellungen", label: "Einstellungen" },
-] as const;
-
-function isActivePath(pathname: string, href: string): boolean {
-  if (href === "/") {
-    return pathname === "/";
-  }
-
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
+import { isActivePath, NAV_ITEMS } from "@/app/components/navigation-config";
 
 export function AppNavigation() {
   const pathname = usePathname();
