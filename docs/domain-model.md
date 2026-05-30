@@ -225,6 +225,20 @@ Dabei gilt:
 - erkannte N26-Sammeltransfers und direkte Fixkostenmatches werden als separater
   Ist-Kontrollwert gefuehrt und nicht in die variable Ausgabensumme eingerechnet.
 
+### Monatsdetailseite (FIN-033)
+
+Die Monatsdetailseite ist die zentrale Lesesicht fuer einen einzelnen Monat.
+
+Sie zeigt in einer zusammenhaengenden Ansicht:
+
+- Monats-KPIs
+- feste Kategorien mit Budget / Ist / Rest
+- Sonderbudgets des Monats
+- Fixkostenblock aus Plan und Kontrollsicht
+- komplette Buchungsliste des Monats aus manuellen und importierten Transaktionen
+
+Die Buchungsliste wird fachlich ueber `effective_month_key` bestimmt und nicht kuenstlich begrenzt.
+
 ## Datenqualitaetsregeln
 
 - Jede Ausgabe muss zugeordnet sein.
