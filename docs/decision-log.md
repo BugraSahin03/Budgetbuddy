@@ -682,3 +682,22 @@ Auswirkung:
 Folgeaktion:
 
 - FIN-032 bis FIN-035 koennen auf expliziten Zielmonaten in Import/Manuell-Flow aufbauen.
+
+## 2026-05-30 - FIN-032 fuehrt Monatsliste als zentralen Einstieg ueber bestehende Dashboard-Details ein
+
+Quelle/Ticket: `FIN-032`
+
+Erkenntnis/Entscheidung:
+
+- Die neue Route `/monate` zeigt eine lueckenlose Monatsliste vom ersten gespeicherten Aktivitaetsmonat bis zum aktuellen Monat.
+- Leere Zwischenmonate werden bewusst mitgefuehrt, damit Monatsnavigation nicht von vorhandenen Buchungen abhaengt.
+- Die Klick-Navigation fuehrt zunaechst auf die bestehende Dashboard-Monatsansicht via `/?month=YYYY-MM`, statt bereits eine eigene Detailseite aus FIN-033 vorwegzunehmen.
+
+Auswirkung:
+
+- Nutzer bekommen einen klaren Monats-Einstieg, ohne dass wir fuer FIN-032 schon eine neue Detailansicht doppelt aufbauen muessen.
+- FIN-033 und FIN-034 koennen spaeter auf derselben Monatsnavigation aufsetzen und eine eigene Detailseite ablösen oder vertiefen.
+
+Folgeaktion:
+
+- Monatsdetail-Readmodel und Monatsdetailseite werden in FIN-033/FIN-034 weiter vereinheitlicht.
