@@ -239,6 +239,25 @@ Sie zeigt in einer zusammenhaengenden Ansicht:
 
 Die Buchungsliste wird fachlich ueber `effective_month_key` bestimmt und nicht kuenstlich begrenzt.
 
+### Zentrales Monats-Readmodel (FIN-034)
+
+Monatsnahe Lesesichten bauen auf einer gemeinsamen Monatsdatenbasis auf.
+
+Diese liefert pro `effective_month_key` in einer konsistenten Form:
+
+- Monats-KPIs
+- feste Kategorien mit Budget / Ist / Rest
+- Sonderbudgets des Monats
+- Fixkosten-Planblock und erkannte Fixkosten-Kontrolltreffer
+- komplette Monatsbuchungsliste aus manuellen und importierten Buchungen
+
+Sortier- und Darstellungsregel fuer Monatsbuchungen:
+
+- primaer `booking_date` absteigend
+- sekundaer `id` absteigend
+
+Damit verwenden Monatsliste, Monatsdetailseite und Dashboard dieselbe fachliche Monatsbasis statt getrennter Monatsabfragen.
+
 ## Datenqualitaetsregeln
 
 - Jede Ausgabe muss zugeordnet sein.

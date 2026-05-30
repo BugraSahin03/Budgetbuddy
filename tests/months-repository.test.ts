@@ -11,7 +11,9 @@ vi.mock("@/src/db/client", () => ({
   getDb: () => db,
 }));
 
-const { buildMonthRange, getMonthDetail, listMonthTimeline } = await import("@/src/months/repository");
+const { buildMonthRange, getMonthDetail, getMonthSnapshot, listMonthTimeline } = await import(
+  "@/src/months/repository"
+);
 
 describe("months repository", () => {
   beforeEach(() => {
@@ -139,5 +141,60 @@ describe("months repository", () => {
     expect(detail.transactions[0]?.bookingDate).toBe("2031-03-14");
     expect(detail.transactions.some((row) => row.sourceType === "import")).toBe(true);
     expect(detail.transactions.some((row) => row.specialBudgetName === "Test Special")).toBe(true);
+  });
+
+  it("builds one shared month snapshot for totals, budgets and transactions", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+
+    db.prepare(
+      `
+        INSERT INTO monthly_category_budgets (month_key, category_id, budget_amount_cents)
+        VALUES ('2031-05', ?, 15000)
+      `,
+    ).run(einkaufId);
+
+    const specialBudgetId = Number(
+      db
+        .prepare(
+          `
+            INSERT INTO special_budgets (name, month_key, planned_amount_cents, note, is_active)
+            VALUES ('Mai Reise', '2031-05', 12000, 'Test', 1)
+          `,
+        )
+        .run().lastInsertRowid,
+    );
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, currency_code, description, source_type, category_id, special_budget_id
+        ) VALUES
+          (?, NULL, 'income', '2031-05-03', '2031-05', 250000, 'EUR', 'Gehalt', 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2031-05-10', '2031-05', -4200, 'EUR', 'Supermarkt', 'manual', ?, NULL),
+          (?, NULL, 'expense', '2031-05-15', '2031-05', -1800, 'EUR', 'Museumsbesuch', 'manual', NULL, ?)
+      `,
+    ).run(sparkasseId, sparkasseId, einkaufId, sparkasseId, specialBudgetId);
+
+    const snapshot = getMonthSnapshot("2031-05");
+
+    expect(snapshot.totals.monthKey).toBe("2031-05");
+    expect(snapshot.totals.incomeCents).toBe(250000);
+    expect(snapshot.categoryRows.find((row) => row.categoryName === "Einkauf")?.spentAmountCents).toBe(
+      4200,
+    );
+    expect(snapshot.specialBudgetRows.find((row) => row.name === "Mai Reise")?.actualExpenseCents).toBe(
+      1800,
+    );
+    expect(snapshot.transactions.map((transaction) => transaction.description)).toEqual([
+      "Museumsbesuch",
+      "Supermarkt",
+      "Gehalt",
+    ]);
   });
 });
