@@ -76,6 +76,25 @@ Folgeaktion:
 
 - FIN-028 kann die UI auf diese getrennten Kennzahlen aufsetzen.
 
+## 2026-05-30 - FIN-034 vereinheitlicht Monatsansichten auf ein zentrales Readmodel
+
+Quelle/Ticket: `FIN-034`
+
+Erkenntnis/Entscheidung:
+
+- Monatsaggregation fuer KPIs, Kategorien, Sonderbudgets, Fixkosten-Kontrollsicht und Monatsbuchungen liegt jetzt in `src/months/**` als gemeinsame Lesebasis.
+- Dashboard-Readlogik baut darauf nur noch als Adapter auf, statt dieselben Monatsabfragen separat zu pflegen.
+- Monatsbuchungen werden in allen Monatslesesichten einheitlich nach `booking_date DESC, id DESC` bereitgestellt.
+
+Auswirkung:
+
+- Monatsliste, Monatsdetailseite und Dashboard koennen fachlich konsistent auf denselben Monatsdaten aufsetzen.
+- Doppelte Monats-SQL und Drift-Risiko zwischen Monatsseiten und Dashboard sinken deutlich.
+
+Folgeaktion:
+
+- Nachfolgende Monats-UI-Tickets sollen neue Monatsdaten bevorzugt an das zentrale Readmodel andocken, nicht an eigene Monatsabfragen.
+
 ## 2026-05-29 - FIN-030 fuehrt `effective_month_key` als fachlichen Monatsanker ein
 
 Quelle/Ticket: `FIN-030`

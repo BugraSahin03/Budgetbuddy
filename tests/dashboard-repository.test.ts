@@ -12,6 +12,7 @@ vi.mock("@/src/db/client", () => ({
 }));
 
 const { getDashboardMonthSnapshot } = await import("@/src/dashboard/repository");
+const { getMonthSnapshot } = await import("@/src/months/repository");
 
 const PREFIX = "TEST-FIN-027-";
 const TEST_MONTH = "2031-01";
@@ -175,5 +176,27 @@ describe("dashboard repository", () => {
     expect(() => getDashboardMonthSnapshot("2026-5")).toThrow(
       "Monat muss im Format YYYY-MM vorliegen.",
     );
+  });
+
+  it("reuses the centralized month readmodel for dashboard data", () => {
+    const sparkasseId = getAccountId("Sparkasse");
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key, amount_cents,
+          currency_code, description, source_type, category_id, special_budget_id
+        ) VALUES (?, NULL, 'income', '2031-02-01', '2031-02', 99000, 'EUR', 'Shared Salary', 'manual', NULL, NULL)
+      `,
+    ).run(sparkasseId);
+
+    const dashboardSnapshot = getDashboardMonthSnapshot("2031-02");
+    const monthSnapshot = getMonthSnapshot("2031-02");
+
+    expect(dashboardSnapshot).toEqual({
+      totals: monthSnapshot.totals,
+      categoryRows: monthSnapshot.categoryRows,
+      specialBudgetRows: monthSnapshot.specialBudgetRows,
+    });
   });
 });
