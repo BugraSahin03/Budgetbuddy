@@ -14,6 +14,7 @@ Aktueller Navigationsfokus:
 
 - Das Dashboard bleibt die monatliche Detailansicht fuer KPIs.
 - Die Monatsarbeit bekommt zusaetzlich einen eigenen Haupttab `Monate` als lueckenlosen Einstieg ueber alle verfuegbaren Monate.
+- Die Monatsdetailseite unter `/monate/[monthKey]` ist die zentrale Vollsicht fuer einen einzelnen Monat.
 
 ## Einstieg fuer neue Codex-Instanzen
 

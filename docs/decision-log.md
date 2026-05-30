@@ -701,3 +701,22 @@ Auswirkung:
 Folgeaktion:
 
 - Monatsdetail-Readmodel und Monatsdetailseite werden in FIN-033/FIN-034 weiter vereinheitlicht.
+
+## 2026-05-30 - FIN-033 fuehrt zentrale Monatsdetailseite auf Basis des Monats-Readmodells ein
+
+Quelle/Ticket: `FIN-033`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsliste verlinkt nicht mehr in das Dashboard, sondern in eine echte Monatsdetailroute `/monate/[monthKey]`.
+- Die Monatsdetailseite nutzt ein zentrales Monats-Readmodell fuer KPIs, Fixkostenblock sowie die komplette gemeinsame Buchungsliste aus manuellen und importierten Transaktionen.
+- Die Vor-/Folgenavigation arbeitet monatsweise auf Kalenderbasis; der Folgemonat wird ab dem aktuellen Monat nicht weiter angeboten.
+
+Auswirkung:
+
+- Ein Monat ist jetzt an einer Stelle vollstaendig lesbar, ohne zwischen Dashboard, Transaktionen und Sonderbereichen springen zu muessen.
+- FIN-034 kann auf diesem Modell weiter aufsetzen und spaetere Monatsansichten fachlich weiter vereinheitlichen.
+
+Folgeaktion:
+
+- FIN-035 kann die neue Monatsdetailstruktur visuell vereinfachen, ohne die Fachlogik erneut umzubauen.

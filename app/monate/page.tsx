@@ -36,7 +36,7 @@ export default function MonthsPage() {
                   {month.monthKey}
                 </p>
                 <h3 className="mt-1 text-lg font-semibold text-slate-900">{month.label}</h3>
-                <p className="mt-1 text-sm text-slate-600">Monat im Dashboard oeffnen</p>
+                <p className="mt-1 text-sm text-slate-600">Monatsdetailseite oeffnen</p>
               </div>
 
               <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-medium text-sky-700">
