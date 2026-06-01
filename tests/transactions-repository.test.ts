@@ -471,6 +471,54 @@ describe("transactions repository", () => {
     ).toThrow("Buchung passt nicht zum ausgewaehlten Monat.");
   });
 
+  it("does not allow already assigned imported expenses to become open again", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const einkaufId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as { id: number }).id;
+
+    const importedInsert = dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id,
+            transaction_type,
+            booking_date,
+            effective_month_key,
+            amount_cents,
+            currency_code,
+            description,
+            source_type,
+            category_id,
+            special_budget_id
+          )
+          VALUES (?, 'expense', '2026-05-14', '2026-05', -1599, 'EUR', ?, 'import', NULL, NULL)
+        `,
+      )
+      .run(accountId, `${PREFIX}AssignedImportMustStayAssigned`);
+
+    const importedId = Number(importedInsert.lastInsertRowid);
+
+    transactions.updateExpenseAssignmentForMonth(importedId, "2026-05", {
+      categoryId: einkaufId,
+      specialBudgetId: null,
+    });
+
+    expect(() =>
+      transactions.updateExpenseAssignmentForMonth(importedId, "2026-05", {
+        categoryId: null,
+        specialBudgetId: null,
+      }),
+    ).toThrow("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
+  });
+
   it("validates special budget month against explicit target month", () => {
     cleanupTestTransactions();
 
