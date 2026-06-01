@@ -1,6 +1,7 @@
 export const NAV_ITEMS = [
   { href: "/", label: "Dashboard" },
   { href: "/monate", label: "Monate" },
+  { href: "/budgets", label: "Budgets" },
   { href: "/transaktionen", label: "Transaktionen" },
   { href: "/import", label: "Import" },
   { href: "/kategorien", label: "Kategorien" },
