@@ -799,3 +799,24 @@ Auswirkung:
 Folgeaktion:
 
 - Spaetere Tickets koennen entscheiden, ob auch die Neuanlage aus der Monatsseite heraus sinnvoll ist oder bewusst getrennt bleiben soll.
+
+## 2026-06-01 - FIN-040 zieht Ausgaben-Zuordnung direkt in die Monatsdetailseite
+
+Quelle/Ticket: `FIN-040`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsdetailseite darf Ausgaben jetzt direkt inline Kategorien oder aktiven Sonderbudgets desselben Monats zuweisen und umzuweisen.
+- Dafuer wird die Ausgaben-Zuordnungslogik zentral im Transaktions-Repository gebuendelt, statt getrennte Regeln fuer manuelle und importierte Monatsbuchungen aufzubauen.
+- Importierte Ausgaben duerfen im Datenmodell weiterhin offen bleiben, bis der Nutzer sie zuordnet; nach einer Zuordnung gelten aber dieselben Fachregeln wie bei manuellen Ausgaben.
+- Einkommen, Transfers und Rueckerstattungen bleiben in der Monatsbuchungsliste bewusst read-only.
+
+Auswirkung:
+
+- Die Monatsseite wird zur eigentlichen Arbeitsoberflaeche fuer die fachliche Pruefung eines Monats.
+- Manuelle und importierte Ausgaben folgen bei spaeteren Monatsaenderungen derselben serverseitigen Validierung.
+- Ungueltige Kombinationen bleiben an der Repository- und Datenbankgrenze blockiert.
+
+Folgeaktion:
+
+- Ein spaeteres Ticket kann entscheiden, ob offene importierte Ausgaben auf der Monatsseite noch staerker gefiltert oder priorisiert hervorgehoben werden sollen.

@@ -275,7 +275,7 @@ describe("database migrations runtime behavior", () => {
     );
 
     for (const migration of migrations) {
-      if (migration.id === "0005_fin_030") {
+      if (migration.id === "0005_fin_030" || migration.id === "0008_fin_040") {
         continue;
       }
 
@@ -413,6 +413,45 @@ describe("database migrations runtime behavior", () => {
         `,
       )
       .get() as { id: number } | undefined;
+
+    expect(inserted?.id).toBeDefined();
+  });
+
+  it("allows imported expenses with a later category assignment", () => {
+    const account = db
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as AccountRow;
+    const category = db
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as CategoryRow;
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id,
+          transaction_type,
+          booking_date,
+          effective_month_key,
+          amount_cents,
+          description,
+          source_type,
+          category_id
+        )
+        VALUES (?, 'expense', '2026-05-22', '2026-05', -1599, 'Import Test Ausgabe mit Kategorie', 'import', ?)
+      `,
+    ).run(account.id, category.id);
+
+    const inserted = db
+      .prepare(
+        `
+          SELECT id
+          FROM transactions
+          WHERE description = 'Import Test Ausgabe mit Kategorie'
+            AND source_type = 'import'
+            AND category_id = ?
+        `,
+      )
+      .get(category.id) as { id: number } | undefined;
 
     expect(inserted?.id).toBeDefined();
   });

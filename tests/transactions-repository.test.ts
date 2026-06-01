@@ -294,6 +294,183 @@ describe("transactions repository", () => {
     expect(deleted).toBeUndefined();
   });
 
+  it("reassigns expense transactions inside the selected month for manual and imported rows", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const einkaufId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as { id: number }).id;
+    const freizeitId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Freizeit'")
+      .get() as { id: number }).id;
+    const specialBudgetId = ensureSpecialBudget("2026-05");
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-08",
+      description: `${PREFIX}ReassignManual`,
+      transactionType: "expense",
+      amountInput: "18,50",
+      accountId,
+      destinationAccountId: null,
+      categoryId: einkaufId,
+      specialBudgetId: null,
+    });
+
+    const importedInsert = dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id,
+            transaction_type,
+            booking_date,
+            effective_month_key,
+            amount_cents,
+            currency_code,
+            description,
+            source_type,
+            category_id,
+            special_budget_id
+          )
+          VALUES (?, 'expense', '2026-05-09', '2026-05', -990, 'EUR', ?, 'import', NULL, NULL)
+        `,
+      )
+      .run(accountId, `${PREFIX}ReassignImport`);
+
+    const manual = transactions
+      .listManualTransactions()
+      .find((row) => row.description === `${PREFIX}ReassignManual`);
+
+    expect(manual).toBeDefined();
+
+    transactions.updateExpenseAssignmentForMonth(manual!.id, "2026-05", {
+      categoryId: null,
+      specialBudgetId,
+    });
+
+    transactions.updateExpenseAssignmentForMonth(Number(importedInsert.lastInsertRowid), "2026-05", {
+      categoryId: freizeitId,
+      specialBudgetId: null,
+    });
+
+    const reassignedManual = dbClient
+      .getDb()
+      .prepare(
+        `
+          SELECT category_id AS categoryId, special_budget_id AS specialBudgetId
+          FROM transactions
+          WHERE id = ?
+        `,
+      )
+      .get(manual!.id) as { categoryId: number | null; specialBudgetId: number | null };
+
+    const reassignedImport = dbClient
+      .getDb()
+      .prepare(
+        `
+          SELECT category_id AS categoryId, special_budget_id AS specialBudgetId
+          FROM transactions
+          WHERE id = ?
+        `,
+      )
+      .get(Number(importedInsert.lastInsertRowid)) as {
+      categoryId: number | null;
+      specialBudgetId: number | null;
+    };
+
+    expect(reassignedManual.categoryId).toBeNull();
+    expect(reassignedManual.specialBudgetId).toBe(specialBudgetId);
+    expect(reassignedImport.categoryId).toBe(freizeitId);
+    expect(reassignedImport.specialBudgetId).toBeNull();
+  });
+
+  it("blocks invalid month-context assignment changes", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const einkaufId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as { id: number }).id;
+    const specialBudgetMayId = ensureSpecialBudget("2026-05");
+    const specialBudgetJuneId = ensureSpecialBudget("2026-06");
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-11",
+      description: `${PREFIX}InvalidMonthContext`,
+      transactionType: "expense",
+      amountInput: "11,00",
+      accountId,
+      destinationAccountId: null,
+      categoryId: einkaufId,
+      specialBudgetId: null,
+    });
+
+    const expense = transactions
+      .listManualTransactions()
+      .find((row) => row.description === `${PREFIX}InvalidMonthContext`);
+
+    expect(expense).toBeDefined();
+
+    expect(() =>
+      transactions.updateExpenseAssignmentForMonth(expense!.id, "2026-05", {
+        categoryId: einkaufId,
+        specialBudgetId: specialBudgetMayId,
+      }),
+    ).toThrow("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
+
+    expect(() =>
+      transactions.updateExpenseAssignmentForMonth(expense!.id, "2026-05", {
+        categoryId: null,
+        specialBudgetId: specialBudgetJuneId,
+      }),
+    ).toThrow("Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.");
+
+    const incomeInsert = dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id,
+            transaction_type,
+            booking_date,
+            effective_month_key,
+            amount_cents,
+            currency_code,
+            description,
+            source_type,
+            category_id,
+            special_budget_id
+          )
+          VALUES (?, 'income', '2026-05-12', '2026-05', 5000, 'EUR', ?, 'import', NULL, NULL)
+        `,
+      )
+      .run(accountId, `${PREFIX}IncomeReadonly`);
+
+    expect(() =>
+      transactions.updateExpenseAssignmentForMonth(Number(incomeInsert.lastInsertRowid), "2026-05", {
+        categoryId: einkaufId,
+        specialBudgetId: null,
+      }),
+    ).toThrow("Nur Ausgaben koennen direkt zugeordnet werden.");
+
+    expect(() =>
+      transactions.updateExpenseAssignmentForMonth(expense!.id, "2026-06", {
+        categoryId: einkaufId,
+        specialBudgetId: null,
+      }),
+    ).toThrow("Buchung passt nicht zum ausgewaehlten Monat.");
+  });
+
   it("validates special budget month against explicit target month", () => {
     cleanupTestTransactions();
 

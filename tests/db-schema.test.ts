@@ -97,7 +97,17 @@ describe("schema migrations", () => {
     expect(sql).toContain("default_budget_amount_cents IS NULL");
   });
 
+  it("contains migration that allows imported expenses to be assigned later", () => {
+    const sql = migrations.find((migration) => migration.id === "0008_fin_040")
+      ?.sql ?? "";
+
+    expect(sql).toContain("source_type = 'import'");
+    expect(sql).toContain("(category_id IS NULL AND special_budget_id IS NULL)");
+    expect(sql).toContain("(category_id IS NOT NULL AND special_budget_id IS NULL)");
+    expect(sql).toContain("(category_id IS NULL AND special_budget_id IS NOT NULL)");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0007_fin_038b");
+    expect(getLatestSchemaVersion()).toBe("0008_fin_040");
   });
 });
