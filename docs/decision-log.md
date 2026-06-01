@@ -769,6 +769,7 @@ Erkenntnis/Entscheidung:
 - Die Monatsdetailseite darf fuer einen konkreten `effective_month_key` einen abweichenden Monatswert direkt pro Kategorie setzen.
 - Die Monatssicht verwendet immer einen effektiven Budgetwert nach Prioritaet: Monats-Override zuerst, sonst globaler Standardwert.
 - Ein leerer Inline-Wert in der Monatsdetailseite entfernt nur den Monats-Override dieses Monats; der globale Standard bleibt unberuehrt.
+- Beim Datenuebergang aus dem frueheren reinen Monatsbudget-Modell wird pro Kategorie der zuletzt gepflegte Monatswert als initialer globaler Standardwert uebernommen.
 
 Auswirkung:
 

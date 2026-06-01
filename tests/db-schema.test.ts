@@ -87,7 +87,17 @@ describe("schema migrations", () => {
     expect(sql).toContain("default_budget_amount_cents >= 0");
   });
 
+  it("contains migration that backfills global defaults from latest monthly budgets", () => {
+    const sql = migrations.find((migration) => migration.id === "0007_fin_038b")
+      ?.sql ?? "";
+
+    expect(sql).toContain("UPDATE categories");
+    expect(sql).toContain("FROM monthly_category_budgets");
+    expect(sql).toContain("ORDER BY mb.month_key DESC");
+    expect(sql).toContain("default_budget_amount_cents IS NULL");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0006_fin_038");
+    expect(getLatestSchemaVersion()).toBe("0007_fin_038b");
   });
 });
