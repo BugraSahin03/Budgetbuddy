@@ -11,9 +11,12 @@ vi.mock("@/src/db/client", () => ({
   getDb: () => db,
 }));
 
-const { listMonthlyBudgetCategories, setMonthlyCategoryBudget } = await import(
-  "@/src/budgets/repository"
-);
+const {
+  listCategoryBudgetDefaults,
+  listMonthlyBudgetCategories,
+  setCategoryDefaultBudget,
+  setMonthlyCategoryBudget,
+} = await import("@/src/budgets/repository");
 
 describe("monthly budget repository", () => {
   beforeEach(() => {
@@ -62,12 +65,9 @@ describe("monthly budget repository", () => {
 
     db.prepare(
       `
-        INSERT INTO monthly_category_budgets (
-          month_key,
-          category_id,
-          budget_amount_cents
-        )
-        VALUES ('2026-05', ?, 10000)
+        UPDATE categories
+        SET default_budget_amount_cents = 8000
+        WHERE id = ?
       `,
     ).run(category.id);
 
@@ -87,16 +87,18 @@ describe("monthly budget repository", () => {
     db.close();
   });
 
-  it("lists monthly budgets for the selected month", () => {
+  it("falls back to the global default budget when no month override exists", () => {
     const rows = listMonthlyBudgetCategories("2026-05");
     const freizeit = rows.find((row) => row.categoryName === "Freizeit");
 
-    expect(freizeit?.budgetAmountCents).toBe(10000);
+    expect(freizeit?.defaultBudgetAmountCents).toBe(8000);
+    expect(freizeit?.monthOverrideAmountCents).toBeNull();
+    expect(freizeit?.budgetAmountCents).toBe(8000);
     expect(freizeit?.spentAmountCents).toBe(1200);
-    expect(freizeit?.remainingAmountCents).toBe(8800);
+    expect(freizeit?.remainingAmountCents).toBe(6800);
   });
 
-  it("supports different values per month", () => {
+  it("uses a month override without changing the global default", () => {
     const may = listMonthlyBudgetCategories("2026-05").find(
       (row) => row.categoryName === "Freizeit",
     );
@@ -104,15 +106,19 @@ describe("monthly budget repository", () => {
       (row) => row.categoryName === "Freizeit",
     );
 
-    expect(may?.budgetAmountCents).toBe(10000);
+    expect(may?.budgetAmountCents).toBe(8000);
+    expect(may?.monthOverrideAmountCents).toBeNull();
     expect(june?.budgetAmountCents).toBe(5000);
+    expect(june?.monthOverrideAmountCents).toBe(5000);
+    expect(june?.defaultBudgetAmountCents).toBe(8000);
   });
 
-  it("can create and clear monthly budget values", () => {
+  it("can create and clear monthly budget overrides without deleting the global default", () => {
     const einkauf = db
       .prepare("SELECT id FROM categories WHERE name = 'Einkauf' LIMIT 1")
       .get() as { id: number };
 
+    setCategoryDefaultBudget(einkauf.id, "175.00");
     setMonthlyCategoryBudget("2026-05", einkauf.id, "249.90");
 
     let row = db
@@ -127,6 +133,14 @@ describe("monthly budget repository", () => {
 
     expect(row?.budget_amount_cents).toBe(24990);
 
+    let effective = listMonthlyBudgetCategories("2026-05").find(
+      (budgetRow) => budgetRow.categoryId === einkauf.id,
+    );
+
+    expect(effective?.defaultBudgetAmountCents).toBe(17500);
+    expect(effective?.monthOverrideAmountCents).toBe(24990);
+    expect(effective?.budgetAmountCents).toBe(24990);
+
     setMonthlyCategoryBudget("2026-05", einkauf.id, "");
 
     row = db
@@ -140,6 +154,14 @@ describe("monthly budget repository", () => {
       .get(einkauf.id) as { budget_amount_cents: number } | undefined;
 
     expect(row).toBeUndefined();
+
+    effective = listMonthlyBudgetCategories("2026-05").find(
+      (budgetRow) => budgetRow.categoryId === einkauf.id,
+    );
+
+    expect(effective?.defaultBudgetAmountCents).toBe(17500);
+    expect(effective?.monthOverrideAmountCents).toBeNull();
+    expect(effective?.budgetAmountCents).toBe(17500);
   });
 
   it("rejects invalid month input", () => {
@@ -150,5 +172,22 @@ describe("monthly budget repository", () => {
     expect(() => setMonthlyCategoryBudget("2026-5", einkauf.id, "20.00")).toThrow(
       "Monat muss im Format YYYY-MM vorliegen.",
     );
+  });
+
+  it("lists editable global defaults separately from month data", () => {
+    const einkauf = db
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf' LIMIT 1")
+      .get() as { id: number };
+
+    setCategoryDefaultBudget(einkauf.id, "250.00");
+
+    const defaults = listCategoryBudgetDefaults();
+    const einkaufRow = defaults.find((row) => row.categoryId === einkauf.id);
+    const freizeitRow = defaults.find((row) => row.categoryName === "Freizeit");
+
+    expect(einkaufRow?.defaultBudgetAmountCents).toBe(25000);
+    expect(einkaufRow?.monthlyOverrideCount).toBe(0);
+    expect(freizeitRow?.defaultBudgetAmountCents).toBe(8000);
+    expect(freizeitRow?.monthlyOverrideCount).toBe(1);
   });
 });

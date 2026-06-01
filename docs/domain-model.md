@@ -80,6 +80,13 @@ Beispiel:
 - April 2026, Einkauf, 500 EUR
 - April 2026, Freizeit, 200 EUR
 
+Seit FIN-038 gilt fachlich eine zweistufige Budgetlogik:
+
+- Die Seite `/budgets` pflegt den globalen Standardwert einer festen Kategorie.
+- Die Monatsdetailseite darf fuer einen konkreten Monat einen abweichenden Monatswert setzen.
+- Wenn fuer einen Monat kein eigener Monatswert existiert, gilt automatisch der globale Standardwert.
+- Ein leerer Monatswert loescht nur den Monats-Override dieses Monats und nicht den globalen Standardwert.
+
 Ein Monatsbudget ist kein hartes Limit. Ueberschreitungen sind erlaubt, werden aber stark markiert.
 
 ### Sonderbudget
@@ -172,6 +179,11 @@ Summe aller Ausgaben eines Monats, die einer festen Kategorie zugeordnet sind.
 ### Kategorie-Rest
 
 `Monatsbudget - Kategorie-Ist`
+
+Dabei ist `Monatsbudget` der effektive Monatswert:
+
+- Monats-Override fuer `effective_month_key`, falls vorhanden
+- sonst globaler Kategorie-Standardwert
 
 ### Betragskonvention (festgelegt)
 

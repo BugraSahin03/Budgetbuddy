@@ -480,6 +480,12 @@ ON transactions(special_budget_id);
 PRAGMA foreign_keys = ON;
 `;
 
+const fin038MigrationSql = `
+ALTER TABLE categories
+ADD COLUMN default_budget_amount_cents INTEGER
+CHECK (default_budget_amount_cents IS NULL OR default_budget_amount_cents >= 0);
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -505,6 +511,11 @@ export const migrations: readonly Migration[] = [
     id: "0005_fin_030",
     name: "FIN-030 add effective month key to transactions and backfill existing rows",
     sql: fin030MigrationSql,
+  },
+  {
+    id: "0006_fin_038",
+    name: "FIN-038 add global default category budget values",
+    sql: fin038MigrationSql,
   },
 ];
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { setMonthlyBudgetOverrideAction } from "@/app/monate/actions";
 import {
   MonthChip,
   MonthHero,
@@ -23,7 +24,28 @@ export const dynamic = "force-dynamic";
 
 type MonthDetailPageProps = {
   params: Promise<{ monthKey: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
+
+function toSingleParam(value: string | string[] | undefined): string | null {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+
+  return null;
+}
+
+function toInputAmount(amountCents: number | null): string {
+  if (amountCents === null) {
+    return "";
+  }
+
+  return (amountCents / 100).toFixed(2);
+}
 
 function transactionTypeTone(type: string): string {
   if (type === "transfer") {
@@ -121,8 +143,14 @@ function MonthMutedCard({
   );
 }
 
-export default async function MonthDetailPage({ params }: MonthDetailPageProps) {
+export default async function MonthDetailPage({
+  params,
+  searchParams,
+}: MonthDetailPageProps) {
   const { monthKey } = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const notice = toSingleParam(resolvedSearchParams.notice);
+  const error = toSingleParam(resolvedSearchParams.error);
   const month = getMonthDetail(monthKey);
   const kpis = buildDashboardKpis(month.dashboard);
   const warningCount = countOverBudgetWarnings(month.dashboard);
@@ -194,10 +222,22 @@ export default async function MonthDetailPage({ params }: MonthDetailPageProps) 
         </section>
       ) : null}
 
+      {notice ? (
+        <section className="rounded-[1.3rem] border border-emerald-200 bg-emerald-50/90 px-4 py-3 text-sm text-emerald-800">
+          {notice}
+        </section>
+      ) : null}
+
+      {error ? (
+        <section className="rounded-[1.3rem] border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-800">
+          {error}
+        </section>
+      ) : null}
+
       <MonthSection
         eyebrow="Budgets"
         title="Kategorien im Monatskontext"
-        description="Budget, Ist und Rest bleiben in einer ruhigen Tabelle zusammen. Transfers tauchen hier bewusst nicht als Ausgaben auf."
+        description="Hier wird der Monatswert pro Kategorie gepflegt. Ohne Monats-Override greift automatisch der globale Standardwert aus /budgets."
         aside={<MonthChip tone="accent">Kategorien {month.dashboard.categoryRows.length}</MonthChip>}
       >
         <MonthTableShell>
@@ -209,13 +249,37 @@ export default async function MonthDetailPage({ params }: MonthDetailPageProps) 
                 <th>Ist</th>
                 <th>Rest</th>
                 <th>Status</th>
+                <th>Quelle</th>
               </tr>
             </thead>
             <tbody>
               {month.dashboard.categoryRows.map((row) => (
                 <tr key={row.categoryId}>
                   <td className="font-semibold text-[color:var(--month-ink)]">{row.categoryName}</td>
-                  <td>{row.budgetAmountCents === null ? "-" : formatEuro(row.budgetAmountCents)}</td>
+                  <td>
+                    <form action={setMonthlyBudgetOverrideAction} className="flex min-w-[15rem] flex-col gap-2 md:min-w-[17rem]">
+                      <input type="hidden" name="monthKey" value={month.monthKey} />
+                      <input type="hidden" name="categoryId" value={row.categoryId} />
+                      <div className="flex items-center gap-2">
+                        <input
+                          name="budgetAmount"
+                          inputMode="decimal"
+                          defaultValue={toInputAmount(row.monthOverrideAmountCents ?? row.budgetAmountCents)}
+                          placeholder={row.defaultBudgetAmountCents === null ? "z. B. 250.00" : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`}
+                          className="w-full rounded-lg border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
+                        />
+                        <button
+                          type="submit"
+                          className="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-xs font-semibold text-sky-800 transition hover:bg-sky-200"
+                        >
+                          Speichern
+                        </button>
+                      </div>
+                      <p className="text-xs leading-5 text-[color:var(--month-ink-soft)]">
+                        Leerer Wert entfernt nur den Monats-Override fuer {month.label}.
+                      </p>
+                    </form>
+                  </td>
                   <td>{formatEuro(row.spentAmountCents)}</td>
                   <td>{row.remainingAmountCents === null ? "-" : formatEuro(row.remainingAmountCents)}</td>
                   <td>
@@ -224,6 +288,13 @@ export default async function MonthDetailPage({ params }: MonthDetailPageProps) 
                     >
                       {categoryStatusLabel(row)}
                     </span>
+                  </td>
+                  <td className="text-xs text-[color:var(--month-ink-soft)]">
+                    {row.monthOverrideAmountCents !== null
+                      ? "Monats-Override aktiv"
+                      : row.defaultBudgetAmountCents !== null
+                        ? "Globaler Standard"
+                        : "Noch kein Budgetwert"}
                   </td>
                 </tr>
               ))}

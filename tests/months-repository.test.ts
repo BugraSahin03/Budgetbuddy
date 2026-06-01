@@ -197,4 +197,39 @@ describe("months repository", () => {
       "Gehalt",
     ]);
   });
+
+  it("uses the category default as month fallback until an explicit month override exists", () => {
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+
+    db.prepare(
+      `
+        UPDATE categories
+        SET default_budget_amount_cents = 22000
+        WHERE id = ?
+      `,
+    ).run(einkaufId);
+
+    let snapshot = getMonthSnapshot("2031-06");
+    let einkauf = snapshot.categoryRows.find((row) => row.categoryId === einkaufId);
+
+    expect(einkauf?.defaultBudgetAmountCents).toBe(22000);
+    expect(einkauf?.monthOverrideAmountCents).toBeNull();
+    expect(einkauf?.budgetAmountCents).toBe(22000);
+
+    db.prepare(
+      `
+        INSERT INTO monthly_category_budgets (month_key, category_id, budget_amount_cents)
+        VALUES ('2031-06', ?, 17500)
+      `,
+    ).run(einkaufId);
+
+    snapshot = getMonthSnapshot("2031-06");
+    einkauf = snapshot.categoryRows.find((row) => row.categoryId === einkaufId);
+
+    expect(einkauf?.defaultBudgetAmountCents).toBe(22000);
+    expect(einkauf?.monthOverrideAmountCents).toBe(17500);
+    expect(einkauf?.budgetAmountCents).toBe(17500);
+  });
 });

@@ -247,6 +247,16 @@ describe("database migrations runtime behavior", () => {
     expect(effectiveMonthColumn?.notnull).toBe(1);
   });
 
+  it("adds global default budget column on categories", () => {
+    const columns = db
+      .prepare("PRAGMA table_info(categories)")
+      .all() as Array<{ name: string }>;
+
+    expect(
+      columns.some((column) => column.name === "default_budget_amount_cents"),
+    ).toBe(true);
+  });
+
   it("backfills effective month key when migrating legacy transaction rows", () => {
     const legacyDb = new Database(":memory:");
     legacyDb.exec("PRAGMA foreign_keys = ON;");

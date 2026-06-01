@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
-import { setCategoryDefaultBudget } from "@/src/budgets/repository";
+import { setMonthlyCategoryBudget } from "@/src/budgets/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
@@ -25,26 +25,32 @@ function toErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "Standardbudget konnte nicht gespeichert werden.";
+  return "Monatsbudget konnte nicht gespeichert werden.";
 }
 
 function encodeMessage(message: string): string {
   return encodeURIComponent(message);
 }
 
-export async function setCategoryDefaultBudgetAction(formData: FormData): Promise<never> {
+export async function setMonthlyBudgetOverrideAction(formData: FormData): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+
   try {
     const categoryId = parseCategoryId(formData.get("categoryId"));
     const budgetAmount = toSingleString(formData.get("budgetAmount"));
 
-    setCategoryDefaultBudget(categoryId, budgetAmount);
-    revalidatePath("/budgets");
+    setMonthlyCategoryBudget(monthKey, categoryId, budgetAmount);
     revalidatePath("/");
     revalidatePath("/monate");
+    revalidatePath(`/monate/${monthKey}`);
     revalidatePath("/auswertungen");
 
-    redirect(`/budgets?notice=${encodeMessage("Standardbudget gespeichert.")}`);
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monatsbudget gespeichert.")}`,
+    );
   } catch (error) {
-    redirect(`/budgets?error=${encodeMessage(toErrorMessage(error))}`);
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
+    );
   }
 }

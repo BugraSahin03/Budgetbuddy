@@ -758,3 +758,24 @@ Auswirkung:
 Folgeaktion:
 
 - FIN-035 kann die neue Monatsdetailstruktur visuell vereinfachen, ohne die Fachlogik erneut umzubauen.
+
+## 2026-06-01 - FIN-038 trennt globales Kategorie-Standardbudget und Monats-Override sauber
+
+Quelle/Ticket: `FIN-038`
+
+Erkenntnis/Entscheidung:
+
+- `/budgets` pflegt ab jetzt den globalen Standardwert je fester Kategorie statt eines monatsbezogenen Werts.
+- Die Monatsdetailseite darf fuer einen konkreten `effective_month_key` einen abweichenden Monatswert direkt pro Kategorie setzen.
+- Die Monatssicht verwendet immer einen effektiven Budgetwert nach Prioritaet: Monats-Override zuerst, sonst globaler Standardwert.
+- Ein leerer Inline-Wert in der Monatsdetailseite entfernt nur den Monats-Override dieses Monats; der globale Standard bleibt unberuehrt.
+
+Auswirkung:
+
+- Nutzer koennen Monatsarbeit direkt in `/monate/[monthKey]` erledigen, ohne den globalen Kategorien-Standard versehentlich zu ueberschreiben.
+- Monatsdetailseite, Dashboard und weitere Monatslesesichten koennen dieselbe Budgetbasis verwenden.
+- Das Datenmodell traegt nun sowohl den globalen Kategorie-Standard als auch optionale monatsbezogene Overrides.
+
+Folgeaktion:
+
+- FIN-039 kann dieselbe Interaktionsidee fuer Sonderbudgets im Monatskontext weiterziehen.
