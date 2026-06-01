@@ -1,6 +1,10 @@
 import Link from "next/link";
 
-import { setMonthlyBudgetOverrideAction } from "@/app/monate/actions";
+import {
+  setMonthlyBudgetOverrideAction,
+  updateMonthlySpecialBudgetAction,
+  updateMonthlySpecialBudgetStateAction,
+} from "@/app/monate/actions";
 import {
   MonthChip,
   MonthHero,
@@ -318,12 +322,13 @@ export default async function MonthDetailPage({
                 <th>Ist</th>
                 <th>Rest</th>
                 <th>Status</th>
+                <th>Aktion</th>
               </tr>
             </thead>
             <tbody>
               {month.dashboard.specialBudgetRows.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="py-8 text-center text-sm text-[color:var(--month-ink-soft)]">
+                  <td colSpan={6} className="py-8 text-center text-sm text-[color:var(--month-ink-soft)]">
                     Keine Sonderbudgets fuer diesen Monat vorhanden.
                   </td>
                 </tr>
@@ -331,7 +336,30 @@ export default async function MonthDetailPage({
                 month.dashboard.specialBudgetRows.map((row) => (
                   <tr key={row.id}>
                     <td className="font-semibold text-[color:var(--month-ink)]">{row.name}</td>
-                    <td>{formatEuro(row.plannedAmountCents)}</td>
+                    <td>
+                      <form action={updateMonthlySpecialBudgetAction} className="flex min-w-[15rem] flex-col gap-2 md:min-w-[17rem]">
+                        <input type="hidden" name="monthKey" value={month.monthKey} />
+                        <input type="hidden" name="specialBudgetId" value={row.id} />
+                        <div className="flex items-center gap-2">
+                          <input
+                            name="plannedAmount"
+                            inputMode="decimal"
+                            defaultValue={toInputAmount(row.plannedAmountCents)}
+                            placeholder="z. B. 120.00"
+                            className="w-full rounded-lg border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
+                          />
+                          <button
+                            type="submit"
+                            className="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-xs font-semibold text-sky-800 transition hover:bg-sky-200"
+                          >
+                            Speichern
+                          </button>
+                        </div>
+                        <p className="text-xs leading-5 text-[color:var(--month-ink-soft)]">
+                          Wirkt nur fuer dieses Sonderbudget in {month.label}.
+                        </p>
+                      </form>
+                    </td>
                     <td>{formatEuro(row.actualExpenseCents)}</td>
                     <td>{formatEuro(row.remainingAmountCents)}</td>
                     <td>
@@ -340,6 +368,31 @@ export default async function MonthDetailPage({
                       >
                         {specialBudgetStatusLabel(row)}
                       </span>
+                    </td>
+                    <td>
+                      <form action={updateMonthlySpecialBudgetStateAction}>
+                        <input type="hidden" name="monthKey" value={month.monthKey} />
+                        <input type="hidden" name="specialBudgetId" value={row.id} />
+                        {row.isActive ? (
+                          <button
+                            type="submit"
+                            name="intent"
+                            value="deactivate"
+                            className="rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                          >
+                            Deaktivieren
+                          </button>
+                        ) : (
+                          <button
+                            type="submit"
+                            name="intent"
+                            value="reactivate"
+                            className="rounded-lg border border-emerald-300 bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-200"
+                          >
+                            Reaktivieren
+                          </button>
+                        )}
+                      </form>
                     </td>
                   </tr>
                 ))
