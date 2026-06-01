@@ -78,7 +78,26 @@ describe("schema migrations", () => {
     expect(sql).toContain("idx_transactions_effective_month_key");
   });
 
+  it("contains migration for global category default budgets", () => {
+    const sql = migrations.find((migration) => migration.id === "0006_fin_038")
+      ?.sql ?? "";
+
+    expect(sql).toContain("ALTER TABLE categories");
+    expect(sql).toContain("default_budget_amount_cents INTEGER");
+    expect(sql).toContain("default_budget_amount_cents >= 0");
+  });
+
+  it("contains migration that backfills global defaults from latest monthly budgets", () => {
+    const sql = migrations.find((migration) => migration.id === "0007_fin_038b")
+      ?.sql ?? "";
+
+    expect(sql).toContain("UPDATE categories");
+    expect(sql).toContain("FROM monthly_category_budgets");
+    expect(sql).toContain("ORDER BY mb.month_key DESC");
+    expect(sql).toContain("default_budget_amount_cents IS NULL");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0005_fin_030");
+    expect(getLatestSchemaVersion()).toBe("0007_fin_038b");
   });
 });

@@ -6,9 +6,19 @@ export type MonthlyBudgetCategoryRow = {
   categoryId: number;
   categoryName: string;
   isCategoryActive: boolean;
+  defaultBudgetAmountCents: number | null;
+  monthOverrideAmountCents: number | null;
   budgetAmountCents: number | null;
   spentAmountCents: number;
   remainingAmountCents: number | null;
+};
+
+export type CategoryBudgetDefaultRow = {
+  categoryId: number;
+  categoryName: string;
+  isCategoryActive: boolean;
+  defaultBudgetAmountCents: number | null;
+  monthlyOverrideCount: number;
 };
 
 const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -47,10 +57,62 @@ function mapSqliteBoolean(value: number): boolean {
   return value === 1;
 }
 
+function assertCategoryExists(categoryId: number): void {
+  const category = getDb()
+    .prepare("SELECT id FROM categories WHERE id = ? LIMIT 1")
+    .get(categoryId) as { id: number } | undefined;
+
+  if (!category) {
+    throw new Error("Kategorie wurde nicht gefunden.");
+  }
+}
+
 export function getCurrentMonthKey(today: Date = new Date()): string {
   const year = today.getFullYear();
   const month = String(today.getMonth() + 1).padStart(2, "0");
   return `${year}-${month}`;
+}
+
+export function listCategoryBudgetDefaults(): CategoryBudgetDefaultRow[] {
+  const rows = getDb()
+    .prepare(
+      `
+        SELECT
+          c.id AS categoryId,
+          c.name AS categoryName,
+          c.is_active AS isCategoryActive,
+          c.default_budget_amount_cents AS defaultBudgetAmountCents,
+          (
+            SELECT COUNT(*)
+            FROM monthly_category_budgets mb
+            WHERE mb.category_id = c.id
+          ) AS monthlyOverrideCount
+        FROM categories c
+        WHERE c.is_active = 1
+           OR c.default_budget_amount_cents IS NOT NULL
+           OR EXISTS (
+             SELECT 1
+             FROM monthly_category_budgets mb
+             WHERE mb.category_id = c.id
+           )
+        ORDER BY c.is_active DESC, c.name COLLATE NOCASE ASC
+      `,
+    )
+    .all() as Array<{
+    categoryId: number;
+    categoryName: string;
+    isCategoryActive: number;
+    defaultBudgetAmountCents: number | null;
+    monthlyOverrideCount: number;
+  }>;
+
+  return rows.map((row) => ({
+    categoryId: row.categoryId,
+    categoryName: row.categoryName,
+    isCategoryActive: mapSqliteBoolean(row.isCategoryActive),
+    defaultBudgetAmountCents: row.defaultBudgetAmountCents,
+    monthlyOverrideCount: row.monthlyOverrideCount,
+  }));
 }
 
 export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCategoryRow[] {
@@ -63,12 +125,14 @@ export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCate
           c.id AS categoryId,
           c.name AS categoryName,
           c.is_active AS isCategoryActive,
-          mb.budget_amount_cents AS budgetAmountCents,
+          c.default_budget_amount_cents AS defaultBudgetAmountCents,
+          mb.budget_amount_cents AS monthOverrideAmountCents,
+          COALESCE(mb.budget_amount_cents, c.default_budget_amount_cents) AS budgetAmountCents,
           COALESCE((
             SELECT SUM(-t.amount_cents)
-              FROM transactions t
-              WHERE t.transaction_type = 'expense'
-                AND t.category_id = c.id
+            FROM transactions t
+            WHERE t.transaction_type = 'expense'
+              AND t.category_id = c.id
               AND t.effective_month_key = ?
           ), 0) AS spentAmountCents
         FROM categories c
@@ -76,6 +140,7 @@ export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCate
           ON mb.category_id = c.id
          AND mb.month_key = ?
         WHERE c.is_active = 1
+           OR c.default_budget_amount_cents IS NOT NULL
            OR mb.id IS NOT NULL
         ORDER BY c.is_active DESC, c.name COLLATE NOCASE ASC
       `,
@@ -84,6 +149,8 @@ export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCate
     categoryId: number;
     categoryName: string;
     isCategoryActive: number;
+    defaultBudgetAmountCents: number | null;
+    monthOverrideAmountCents: number | null;
     budgetAmountCents: number | null;
     spentAmountCents: number;
   }>;
@@ -92,13 +159,30 @@ export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCate
     categoryId: row.categoryId,
     categoryName: row.categoryName,
     isCategoryActive: mapSqliteBoolean(row.isCategoryActive),
+    defaultBudgetAmountCents: row.defaultBudgetAmountCents,
+    monthOverrideAmountCents: row.monthOverrideAmountCents,
     budgetAmountCents: row.budgetAmountCents,
     spentAmountCents: row.spentAmountCents,
     remainingAmountCents:
-      row.budgetAmountCents === null
-        ? null
-        : row.budgetAmountCents - row.spentAmountCents,
+      row.budgetAmountCents === null ? null : row.budgetAmountCents - row.spentAmountCents,
   }));
+}
+
+export function setCategoryDefaultBudget(categoryId: number, budgetAmount: string): void {
+  assertCategoryExists(categoryId);
+  const normalizedAmountCents = normalizeBudgetAmountCents(budgetAmount);
+
+  getDb()
+    .prepare(
+      `
+        UPDATE categories
+        SET
+          default_budget_amount_cents = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+    )
+    .run(normalizedAmountCents, categoryId);
 }
 
 export function setMonthlyCategoryBudget(
@@ -109,13 +193,7 @@ export function setMonthlyCategoryBudget(
   const normalizedMonthKey = normalizeMonthKey(monthKey);
   const normalizedAmountCents = normalizeBudgetAmountCents(budgetAmount);
 
-  const category = getDb()
-    .prepare("SELECT id FROM categories WHERE id = ? LIMIT 1")
-    .get(categoryId) as { id: number } | undefined;
-
-  if (!category) {
-    throw new Error("Kategorie wurde nicht gefunden.");
-  }
+  assertCategoryExists(categoryId);
 
   if (normalizedAmountCents === null) {
     getDb()

@@ -247,6 +247,16 @@ describe("database migrations runtime behavior", () => {
     expect(effectiveMonthColumn?.notnull).toBe(1);
   });
 
+  it("adds global default budget column on categories", () => {
+    const columns = db
+      .prepare("PRAGMA table_info(categories)")
+      .all() as Array<{ name: string }>;
+
+    expect(
+      columns.some((column) => column.name === "default_budget_amount_cents"),
+    ).toBe(true);
+  });
+
   it("backfills effective month key when migrating legacy transaction rows", () => {
     const legacyDb = new Database(":memory:");
     legacyDb.exec("PRAGMA foreign_keys = ON;");
@@ -313,6 +323,62 @@ describe("database migrations runtime behavior", () => {
       .get() as { effectiveMonthKey: string } | undefined;
 
     expect(migratedRow?.effectiveMonthKey).toBe("2026-04");
+
+    legacyDb.close();
+  });
+
+  it("backfills global default category budgets from the latest existing monthly value", () => {
+    const legacyDb = new Database(":memory:");
+    legacyDb.exec("PRAGMA foreign_keys = ON;");
+    legacyDb.exec(
+      `
+        CREATE TABLE app_meta (
+          key TEXT PRIMARY KEY,
+          value TEXT NOT NULL
+        );
+        CREATE TABLE schema_migrations (
+          id TEXT PRIMARY KEY,
+          name TEXT NOT NULL,
+          applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        );
+      `,
+    );
+
+    for (const migration of migrations) {
+      if (migration.id === "0007_fin_038b") {
+        continue;
+      }
+
+      legacyDb.exec(migration.sql);
+      legacyDb
+        .prepare("INSERT INTO schema_migrations (id, name) VALUES (?, ?)")
+        .run(migration.id, migration.name);
+    }
+
+    const einkauf = legacyDb
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as CategoryRow;
+
+    legacyDb.prepare(
+      `
+        INSERT INTO monthly_category_budgets (month_key, category_id, budget_amount_cents)
+        VALUES
+          ('2026-05', ?, 18000),
+          ('2026-06', ?, 24000)
+      `,
+    ).run(einkauf.id, einkauf.id);
+
+    applyMigrations(legacyDb);
+
+    const categoryRow = legacyDb.prepare(
+      `
+        SELECT default_budget_amount_cents AS defaultBudgetAmountCents
+        FROM categories
+        WHERE id = ?
+      `,
+    ).get(einkauf.id) as { defaultBudgetAmountCents: number | null };
+
+    expect(categoryRow.defaultBudgetAmountCents).toBe(24000);
 
     legacyDb.close();
   });
