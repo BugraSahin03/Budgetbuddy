@@ -4,8 +4,6 @@ export const NAV_ITEMS = [
   { href: "/budgets", label: "Budgets" },
   { href: "/transaktionen", label: "Transaktionen" },
   { href: "/import", label: "Import" },
-  { href: "/kategorien", label: "Kategorien" },
-  { href: "/sonderbudgets", label: "Sonderbudgets" },
   { href: "/fixkosten", label: "Fixkosten" },
   { href: "/einstellungen", label: "Einstellungen" },
 ] as const;

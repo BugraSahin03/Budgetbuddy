@@ -7,6 +7,11 @@ describe("navigation config", () => {
     expect(NAV_ITEMS).toContainEqual({ href: "/budgets", label: "Budgets" });
   });
 
+  it("does not keep duplicate admin tabs for categories and special budgets", () => {
+    expect(NAV_ITEMS.some((item) => item.href === "/kategorien")).toBe(false);
+    expect(NAV_ITEMS.some((item) => item.href === "/sonderbudgets")).toBe(false);
+  });
+
   it("contains the months tab", () => {
     expect(NAV_ITEMS).toContainEqual({ href: "/monate", label: "Monate" });
   });

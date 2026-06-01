@@ -820,3 +820,24 @@ Auswirkung:
 Folgeaktion:
 
 - Ein spaeteres Ticket kann entscheiden, ob offene importierte Ausgaben auf der Monatsseite noch staerker gefiltert oder priorisiert hervorgehoben werden sollen.
+
+## 2026-06-01 - FIN-042 buendelt Kategorien, Standardbudgets und Sonderbudgets unter einem Verwaltungsbereich
+
+Quelle/Ticket: `FIN-042`
+
+Erkenntnis/Entscheidung:
+
+- Der bestehende Haupttab `Budgets` wird zur gemeinsamen Verwaltungsseite fuer Kategorien, globale Standardbudgets und Sonderbudgets ausgebaut.
+- Die separaten Haupttabs `Kategorien` und `Sonderbudgets` entfallen aus der Navigation, um die Oberflaeche fuer den MVP ruhiger und kompakter zu machen.
+- Die bisherigen Einzelrouten `/kategorien` und `/sonderbudgets` bleiben technisch erhalten, leiten aber auf den gemeinsamen Verwaltungsbereich weiter.
+- Die Fachlogik, Persistenz und bestehenden Server-Actions bleiben erhalten; geaendert wird bewusst nur die UI- und Navigationsstruktur.
+
+Auswirkung:
+
+- Nutzer pflegen die drei nah verwandten Verwaltungsbereiche an einer Stelle statt verteilt ueber mehrere Hauptseiten.
+- Die Navigation reduziert sich, ohne dass Monatslogik, Datenmodell oder Zuordnungsregeln still geaendert werden.
+- Die Budgets-Sektion zeigt in der Hauptoberflaeche nur noch die Kernpflege des globalen Standardwerts; Monats-Overrides bleiben weiterhin Aufgabe der Monatsansicht.
+
+Folgeaktion:
+
+- Spaetere Tickets koennen separat pruefen, ob aus der gebuendelten Verwaltungsoberflaeche spaeter auch fachliche oder logische Vereinfachungen folgen sollen, ohne FIN-042 im Nachhinein zu ueberladen.

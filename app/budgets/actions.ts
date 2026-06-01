@@ -39,6 +39,8 @@ export async function setCategoryDefaultBudgetAction(formData: FormData): Promis
 
     setCategoryDefaultBudget(categoryId, budgetAmount);
     revalidatePath("/budgets");
+    revalidatePath("/kategorien");
+    revalidatePath("/sonderbudgets");
     revalidatePath("/");
     revalidatePath("/monate");
     revalidatePath("/auswertungen");

@@ -45,10 +45,11 @@ export async function createCategoryAction(formData: FormData): Promise<never> {
       isDefault: formData.get("isDefault") === "on",
     });
 
+    revalidatePath("/budgets");
     revalidatePath("/kategorien");
-    redirect("/kategorien?notice=" + encodeMessage("Kategorie erstellt."));
+    redirect("/budgets?notice=" + encodeMessage("Kategorie erstellt."));
   } catch (error) {
-    redirect("/kategorien?error=" + encodeMessage(toErrorMessage(error)));
+    redirect("/budgets?error=" + encodeMessage(toErrorMessage(error)));
   }
 }
 
@@ -59,14 +60,16 @@ export async function updateCategoryAction(formData: FormData): Promise<never> {
 
     if (intent === "deactivate") {
       setCategoryActive(categoryId, false);
+      revalidatePath("/budgets");
       revalidatePath("/kategorien");
-      redirect("/kategorien?notice=" + encodeMessage("Kategorie deaktiviert."));
+      redirect("/budgets?notice=" + encodeMessage("Kategorie deaktiviert."));
     }
 
     if (intent === "reactivate") {
       setCategoryActive(categoryId, true);
+      revalidatePath("/budgets");
       revalidatePath("/kategorien");
-      redirect("/kategorien?notice=" + encodeMessage("Kategorie reaktiviert."));
+      redirect("/budgets?notice=" + encodeMessage("Kategorie reaktiviert."));
     }
 
     updateCategory(categoryId, {
@@ -76,9 +79,10 @@ export async function updateCategoryAction(formData: FormData): Promise<never> {
       isDefault: formData.get("isDefault") === "on",
     });
 
+    revalidatePath("/budgets");
     revalidatePath("/kategorien");
-    redirect("/kategorien?notice=" + encodeMessage("Kategorie gespeichert."));
+    redirect("/budgets?notice=" + encodeMessage("Kategorie gespeichert."));
   } catch (error) {
-    redirect("/kategorien?error=" + encodeMessage(toErrorMessage(error)));
+    redirect("/budgets?error=" + encodeMessage(toErrorMessage(error)));
   }
 }

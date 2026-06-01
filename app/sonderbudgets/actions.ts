@@ -47,10 +47,11 @@ export async function createSpecialBudgetAction(formData: FormData): Promise<nev
       note: toSingleString(formData.get("note")),
     });
 
+    revalidatePath("/budgets");
     revalidatePath("/sonderbudgets");
-    redirect("/sonderbudgets?notice=" + encodeMessage("Sonderbudget erstellt."));
+    redirect("/budgets?notice=" + encodeMessage("Sonderbudget erstellt."));
   } catch (error) {
-    redirect("/sonderbudgets?error=" + encodeMessage(toErrorMessage(error)));
+    redirect("/budgets?error=" + encodeMessage(toErrorMessage(error)));
   }
 }
 
@@ -61,18 +62,20 @@ export async function updateSpecialBudgetStateAction(formData: FormData): Promis
 
     if (intent === "deactivate") {
       setSpecialBudgetActive(specialBudgetId, false);
+      revalidatePath("/budgets");
       revalidatePath("/sonderbudgets");
-      redirect("/sonderbudgets?notice=" + encodeMessage("Sonderbudget deaktiviert."));
+      redirect("/budgets?notice=" + encodeMessage("Sonderbudget deaktiviert."));
     }
 
     if (intent === "reactivate") {
       setSpecialBudgetActive(specialBudgetId, true);
+      revalidatePath("/budgets");
       revalidatePath("/sonderbudgets");
-      redirect("/sonderbudgets?notice=" + encodeMessage("Sonderbudget reaktiviert."));
+      redirect("/budgets?notice=" + encodeMessage("Sonderbudget reaktiviert."));
     }
 
     throw new Error("Unbekannte Aktion.");
   } catch (error) {
-    redirect("/sonderbudgets?error=" + encodeMessage(toErrorMessage(error)));
+    redirect("/budgets?error=" + encodeMessage(toErrorMessage(error)));
   }
 }
