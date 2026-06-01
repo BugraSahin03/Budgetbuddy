@@ -55,6 +55,28 @@ function normalizeMonthKey(monthKey: string): string {
   return normalized;
 }
 
+function assertSpecialBudgetBelongsToMonth(
+  specialBudgetId: number,
+  monthKey: string,
+): void {
+  const normalizedMonthKey = normalizeMonthKey(monthKey);
+  const row = getDb()
+    .prepare(
+      `
+        SELECT id
+        FROM special_budgets
+        WHERE id = ?
+          AND month_key = ?
+        LIMIT 1
+      `,
+    )
+    .get(specialBudgetId, normalizedMonthKey) as { id: number } | undefined;
+
+  if (!row) {
+    throw new Error("Sonderbudget passt nicht zum ausgewaehlten Monat.");
+  }
+}
+
 function normalizePlannedAmountCents(plannedAmountCents: number): number {
   if (!Number.isInteger(plannedAmountCents) || plannedAmountCents < 0) {
     throw new Error("Geplanter Betrag muss 0 oder groesser sein.");
@@ -221,6 +243,24 @@ export function updateSpecialBudgetPlannedAmount(
   if (result.changes === 0) {
     throw new Error("Sonderbudget wurde nicht gefunden.");
   }
+}
+
+export function updateSpecialBudgetPlannedAmountForMonth(
+  specialBudgetId: number,
+  monthKey: string,
+  plannedAmountCents: number,
+): void {
+  assertSpecialBudgetBelongsToMonth(specialBudgetId, monthKey);
+  updateSpecialBudgetPlannedAmount(specialBudgetId, plannedAmountCents);
+}
+
+export function setSpecialBudgetActiveForMonth(
+  specialBudgetId: number,
+  monthKey: string,
+  isActive: boolean,
+): void {
+  assertSpecialBudgetBelongsToMonth(specialBudgetId, monthKey);
+  setSpecialBudgetActive(specialBudgetId, isActive);
 }
 
 export function listActiveSpecialBudgetOptions(monthKey: string): ActiveSpecialBudgetOption[] {

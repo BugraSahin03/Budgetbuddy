@@ -6,8 +6,8 @@ import { redirect } from "next/navigation";
 import { setMonthlyCategoryBudget } from "@/src/budgets/repository";
 import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
-  setSpecialBudgetActive,
-  updateSpecialBudgetPlannedAmount,
+  setSpecialBudgetActiveForMonth,
+  updateSpecialBudgetPlannedAmountForMonth,
 } from "@/src/special-budgets/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
@@ -78,8 +78,9 @@ export async function updateMonthlySpecialBudgetAction(formData: FormData): Prom
     const specialBudgetId = parseSpecialBudgetId(formData.get("specialBudgetId"));
     const plannedAmount = toSingleString(formData.get("plannedAmount"));
 
-    updateSpecialBudgetPlannedAmount(
+    updateSpecialBudgetPlannedAmountForMonth(
       specialBudgetId,
+      monthKey,
       parsePlannedAmountCents(plannedAmount),
     );
 
@@ -109,7 +110,7 @@ export async function updateMonthlySpecialBudgetStateAction(
     const intent = toSingleString(formData.get("intent"));
 
     if (intent === "deactivate") {
-      setSpecialBudgetActive(specialBudgetId, false);
+      setSpecialBudgetActiveForMonth(specialBudgetId, monthKey, false);
       revalidatePath("/");
       revalidatePath("/monate");
       revalidatePath(`/monate/${monthKey}`);
@@ -120,7 +121,7 @@ export async function updateMonthlySpecialBudgetStateAction(
     }
 
     if (intent === "reactivate") {
-      setSpecialBudgetActive(specialBudgetId, true);
+      setSpecialBudgetActiveForMonth(specialBudgetId, monthKey, true);
       revalidatePath("/");
       revalidatePath("/monate");
       revalidatePath(`/monate/${monthKey}`);
