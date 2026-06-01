@@ -586,7 +586,9 @@ export function updateExpenseAssignmentForMonth(
         SELECT
           id,
           source_type AS sourceType,
-          transaction_type AS transactionType
+          transaction_type AS transactionType,
+          category_id AS categoryId,
+          special_budget_id AS specialBudgetId
         FROM transactions
         WHERE id = ?
           AND effective_month_key = ?
@@ -597,6 +599,8 @@ export function updateExpenseAssignmentForMonth(
         id: number;
         sourceType: "manual" | "import";
         transactionType: TransactionType;
+        categoryId: number | null;
+        specialBudgetId: number | null;
       }
     | undefined;
 
@@ -609,7 +613,10 @@ export function updateExpenseAssignmentForMonth(
   }
 
   const assignment = validateExpenseAssignment(input, effectiveMonthKey, {
-    allowUnassigned: existing.sourceType === "import",
+    allowUnassigned:
+      existing.sourceType === "import" &&
+      existing.categoryId === null &&
+      existing.specialBudgetId === null,
   });
 
   try {
