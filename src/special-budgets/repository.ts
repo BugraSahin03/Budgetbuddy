@@ -200,6 +200,29 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
   }
 }
 
+export function updateSpecialBudgetPlannedAmount(
+  specialBudgetId: number,
+  plannedAmountCents: number,
+): void {
+  const normalizedPlannedAmountCents = normalizePlannedAmountCents(plannedAmountCents);
+
+  const result = getDb()
+    .prepare(
+      `
+        UPDATE special_budgets
+        SET
+          planned_amount_cents = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+    )
+    .run(normalizedPlannedAmountCents, specialBudgetId);
+
+  if (result.changes === 0) {
+    throw new Error("Sonderbudget wurde nicht gefunden.");
+  }
+}
+
 export function listActiveSpecialBudgetOptions(monthKey: string): ActiveSpecialBudgetOption[] {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
 

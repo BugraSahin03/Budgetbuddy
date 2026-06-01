@@ -232,4 +232,39 @@ describe("months repository", () => {
     expect(einkauf?.monthOverrideAmountCents).toBe(17500);
     expect(einkauf?.budgetAmountCents).toBe(17500);
   });
+
+  it("reflects special budget amount and active-state changes inside the month snapshot", () => {
+    const specialBudgetId = Number(
+      db
+        .prepare(
+          `
+            INSERT INTO special_budgets (name, month_key, planned_amount_cents, note, is_active)
+            VALUES ('TEST-FIN-039 Reise', '2031-07', 12000, 'Test', 1)
+          `,
+        )
+        .run().lastInsertRowid,
+    );
+
+    let snapshot = getMonthSnapshot("2031-07");
+    let specialBudget = snapshot.specialBudgetRows.find((row) => row.id === specialBudgetId);
+
+    expect(specialBudget?.plannedAmountCents).toBe(12000);
+    expect(specialBudget?.isActive).toBe(true);
+
+    db.prepare(
+      `
+        UPDATE special_budgets
+        SET planned_amount_cents = 18500,
+            is_active = 0
+        WHERE id = ?
+      `,
+    ).run(specialBudgetId);
+
+    snapshot = getMonthSnapshot("2031-07");
+    specialBudget = snapshot.specialBudgetRows.find((row) => row.id === specialBudgetId);
+
+    expect(specialBudget?.plannedAmountCents).toBe(18500);
+    expect(specialBudget?.remainingAmountCents).toBe(18500);
+    expect(specialBudget?.isActive).toBe(false);
+  });
 });

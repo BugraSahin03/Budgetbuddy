@@ -103,6 +103,12 @@ Sonderbudgets sind direkte Ausgabeziele. Wenn eine Zahlung fuer den Zweck existi
 
 Sonderbudgets koennen wiederkehrend manuell in mehreren Monaten angelegt werden, sind aber fachlich keine globale feste Kategorie.
 
+Seit FIN-039 gilt fuer bestehende Sonderbudgets im Monatskontext:
+
+- der geplante Betrag bleibt direkt auf dem konkreten Sonderbudget des Monats editierbar
+- Aktiv/Inaktiv bleibt eine Eigenschaft dieses konkreten Monatseintrags
+- es entstehen dadurch keine globalen Sonderbudget-Vorlagen
+
 ### Fixkosten
 
 Fixkosten sind ein monatlicher Planungsblock aus der Fixkostenliste.

@@ -112,4 +112,34 @@ describe("special budgets repository", () => {
     expect(months[0]).toBe("2026-04");
     expect(months[11]).toBe("2027-03");
   });
+
+  it("updates the planned amount of an existing special budget", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudget({
+      name: `${TEST_NAME_PREFIX}Monitor`,
+      monthKey: "2026-09",
+      plannedAmountCents: 15000,
+      note: "",
+    });
+
+    const created = repository
+      .listSpecialBudgets()
+      .find((budget) => budget.name === `${TEST_NAME_PREFIX}Monitor`);
+
+    expect(created).toBeDefined();
+
+    if (!created) {
+      return;
+    }
+
+    repository.updateSpecialBudgetPlannedAmount(created.id, 27500);
+
+    const updated = repository
+      .listSpecialBudgets()
+      .find((budget) => budget.id === created.id);
+
+    expect(updated?.plannedAmountCents).toBe(27500);
+    expect(updated?.monthKey).toBe("2026-09");
+  });
 });

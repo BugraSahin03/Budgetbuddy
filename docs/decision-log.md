@@ -780,3 +780,22 @@ Auswirkung:
 Folgeaktion:
 
 - FIN-039 kann dieselbe Interaktionsidee fuer Sonderbudgets im Monatskontext weiterziehen.
+
+## 2026-06-01 - FIN-039 macht bestehende Sonderbudgets direkt im Monatskontext bearbeitbar
+
+Quelle/Ticket: `FIN-039`
+
+Erkenntnis/Entscheidung:
+
+- Auf `/monate/[monthKey]` koennen bestehende Sonderbudgets jetzt direkt pro Monatszeile angepasst werden.
+- Bearbeitet werden nur Eigenschaften des konkreten Monatseintrags: geplanter Betrag sowie Aktiv/Inaktiv.
+- Es werden dadurch keine globalen Sonderbudget-Vorlagen eingefuehrt; die Sonderbudget-Seite bleibt die Stelle fuer Neuanlage und Gesamtuebersicht.
+
+Auswirkung:
+
+- Die Monatsdetailseite wird weiter zu einer echten Monatsarbeitsoberflaeche ausgebaut.
+- Plan / Ist / Rest und Status aktualisieren sich im selben Monatskontext, ohne Wechsel auf eine andere Verwaltungsseite.
+
+Folgeaktion:
+
+- Spaetere Tickets koennen entscheiden, ob auch die Neuanlage aus der Monatsseite heraus sinnvoll ist oder bewusst getrennt bleiben soll.
