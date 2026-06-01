@@ -9,6 +9,7 @@ import {
   setSpecialBudgetActiveForMonth,
   updateSpecialBudgetPlannedAmountForMonth,
 } from "@/src/special-budgets/repository";
+import { updateExpenseAssignmentForMonth } from "@/src/transactions/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
@@ -34,6 +35,33 @@ function parseSpecialBudgetId(rawValue: FormDataEntryValue | null): number {
   }
 
   return specialBudgetId;
+}
+
+function parseTransactionId(rawValue: FormDataEntryValue | null): number {
+  const value = toSingleString(rawValue).trim();
+  const transactionId = Number.parseInt(value, 10);
+
+  if (!Number.isInteger(transactionId) || transactionId <= 0) {
+    throw new Error("Transaktions-ID ist ungueltig.");
+  }
+
+  return transactionId;
+}
+
+function parseOptionalPositiveInt(rawValue: FormDataEntryValue | null): number | null {
+  const value = toSingleString(rawValue).trim();
+
+  if (value.length === 0) {
+    return null;
+  }
+
+  const parsed = Number.parseInt(value, 10);
+
+  if (!Number.isInteger(parsed) || parsed <= 0) {
+    throw new Error("Auswahl ist ungueltig.");
+  }
+
+  return parsed;
 }
 
 function toErrorMessage(error: unknown): string {
@@ -132,6 +160,38 @@ export async function updateMonthlySpecialBudgetStateAction(
     }
 
     throw new Error("Unbekannte Aktion.");
+  } catch (error) {
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
+    );
+  }
+}
+
+export async function updateMonthlyTransactionAssignmentAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+
+  try {
+    const transactionId = parseTransactionId(formData.get("transactionId"));
+    const categoryId = parseOptionalPositiveInt(formData.get("categoryId"));
+    const specialBudgetId = parseOptionalPositiveInt(formData.get("specialBudgetId"));
+
+    updateExpenseAssignmentForMonth(transactionId, monthKey, {
+      categoryId,
+      specialBudgetId,
+    });
+
+    revalidatePath("/");
+    revalidatePath("/monate");
+    revalidatePath(`/monate/${monthKey}`);
+    revalidatePath("/transaktionen");
+    revalidatePath("/sonderbudgets");
+    revalidatePath("/auswertungen");
+
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Zuordnung gespeichert.")}`,
+    );
   } catch (error) {
     redirect(
       `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,

@@ -39,7 +39,9 @@ export type MonthDetailTransactionRow = {
   accountName: string;
   destinationAccountName: string | null;
   counterpartyName: string | null;
+  categoryId: number | null;
   categoryName: string | null;
+  specialBudgetId: number | null;
   specialBudgetName: string | null;
   importRunId: number | null;
 };
@@ -355,7 +357,9 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
           source.name AS accountName,
           destination.name AS destinationAccountName,
           t.counterparty_name AS counterpartyName,
+          t.category_id AS categoryId,
           c.name AS categoryName,
+          t.special_budget_id AS specialBudgetId,
           sb.name AS specialBudgetName,
           t.import_run_id AS importRunId
         FROM transactions t

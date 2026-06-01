@@ -4,6 +4,7 @@ import {
   setMonthlyBudgetOverrideAction,
   updateMonthlySpecialBudgetAction,
   updateMonthlySpecialBudgetStateAction,
+  updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
 import {
   MonthChip,
@@ -23,6 +24,10 @@ import {
   specialBudgetStatusTone,
 } from "@/src/dashboard/ui";
 import { getMonthDetail } from "@/src/months/repository";
+import {
+  listActiveCategoryOptions,
+  listActiveSpecialBudgetOptionsForMonth,
+} from "@/src/transactions/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -156,6 +161,8 @@ export default async function MonthDetailPage({
   const notice = toSingleParam(resolvedSearchParams.notice);
   const error = toSingleParam(resolvedSearchParams.error);
   const month = getMonthDetail(monthKey);
+  const categoryOptions = listActiveCategoryOptions();
+  const specialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(month.monthKey);
   const kpis = buildDashboardKpis(month.dashboard);
   const warningCount = countOverBudgetWarnings(month.dashboard);
 
@@ -469,7 +476,54 @@ export default async function MonthDetailPage({
                         {transactionTypeLabel(transaction.transactionType)}
                       </span>
                     </td>
-                    <td>{assignmentLabel(transaction)}</td>
+                    <td>
+                      {transaction.transactionType === "expense" ? (
+                        <form
+                          action={updateMonthlyTransactionAssignmentAction}
+                          className="grid min-w-[18rem] gap-2"
+                        >
+                          <input type="hidden" name="monthKey" value={month.monthKey} />
+                          <input type="hidden" name="transactionId" value={transaction.id} />
+                          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                            <select
+                              name="categoryId"
+                              defaultValue={String(transaction.categoryId ?? "")}
+                              className="rounded-lg border border-[color:var(--month-line)] bg-white px-3 py-2 text-xs text-[color:var(--month-ink)]"
+                            >
+                              <option value="">Kategorie</option>
+                              {categoryOptions.map((category) => (
+                                <option key={category.id} value={category.id}>
+                                  {category.name}
+                                </option>
+                              ))}
+                            </select>
+                            <select
+                              name="specialBudgetId"
+                              defaultValue={String(transaction.specialBudgetId ?? "")}
+                              className="rounded-lg border border-[color:var(--month-line)] bg-white px-3 py-2 text-xs text-[color:var(--month-ink)]"
+                            >
+                              <option value="">Sonderbudget</option>
+                              {specialBudgetOptions.map((budget) => (
+                                <option key={budget.id} value={budget.id}>
+                                  {budget.name}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="submit"
+                              className="rounded-lg border border-[color:var(--month-line-strong)] bg-[color:var(--month-accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--month-ink)] transition hover:-translate-y-0.5"
+                            >
+                              Speichern
+                            </button>
+                          </div>
+                          <p className="text-xs text-[color:var(--month-ink-soft)]">
+                            {assignmentLabel(transaction)}
+                          </p>
+                        </form>
+                      ) : (
+                        assignmentLabel(transaction)
+                      )}
+                    </td>
                     <td>
                       {transaction.sourceType === "import"
                         ? `Import${transaction.importRunId ? ` #${transaction.importRunId}` : ""}`

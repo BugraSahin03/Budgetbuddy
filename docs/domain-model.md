@@ -54,6 +54,9 @@ Regel:
 - `expense` muss genau eine feste Kategorie oder genau ein Sonderbudget haben.
 - `transfer` darf keine Ausgabe-Kategorie haben und muss ein Zielkonto haben.
 - `income` und `refund` haben keine Ausgabenkategorie.
+- Importierte `expense`-Buchungen duerfen temporaer noch offen sein, bis sie fachlich zugeordnet wurden.
+- Sobald eine importierte Ausgabe zugeordnet wird, gelten dieselben Fachregeln wie bei manuellen Ausgaben:
+  genau eine Kategorie oder genau ein Sonderbudget des `effective_month_key`.
 
 ### Feste Kategorie
 
@@ -256,6 +259,12 @@ Sie zeigt in einer zusammenhaengenden Ansicht:
 - komplette Buchungsliste des Monats aus manuellen und importierten Transaktionen
 
 Die Buchungsliste wird fachlich ueber `effective_month_key` bestimmt und nicht kuenstlich begrenzt.
+
+Seit FIN-040 gilt fuer die Monatsarbeitsweise zusaetzlich:
+
+- Ausgaben koennen direkt in `/monate/[monthKey]` einer Kategorie oder einem aktiven Sonderbudget dieses Monats zugewiesen oder umzugewiesen werden.
+- Einkommen, Transfers und Rueckerstattungen bleiben in dieser Tabelle read-only.
+- Die Monatsseite ist damit nicht nur Lesesicht, sondern auch die zentrale Arbeitsflaeche fuer fachliche Ausgaben-Zuordnung im Monatskontext.
 
 ### Zentrales Monats-Readmodel (FIN-034)
 

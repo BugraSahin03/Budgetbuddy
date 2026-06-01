@@ -141,6 +141,12 @@ describe("months repository", () => {
     expect(detail.transactions[0]?.bookingDate).toBe("2031-03-14");
     expect(detail.transactions.some((row) => row.sourceType === "import")).toBe(true);
     expect(detail.transactions.some((row) => row.specialBudgetName === "Test Special")).toBe(true);
+    expect(detail.transactions.find((row) => row.description === "Manual Category")?.categoryId).toBe(
+      einkaufId,
+    );
+    expect(
+      detail.transactions.find((row) => row.description === "Manual Special")?.specialBudgetId,
+    ).toBe(specialBudgetId);
   });
 
   it("builds one shared month snapshot for totals, budgets and transactions", () => {

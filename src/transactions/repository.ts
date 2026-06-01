@@ -54,6 +54,11 @@ export type ManualTransactionInput = {
   specialBudgetId: number | null;
 };
 
+export type ExpenseAssignmentInput = {
+  categoryId: number | null;
+  specialBudgetId: number | null;
+};
+
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 const AMOUNT_PATTERN = /^\d+(?:[.,]\d{1,2})?$/;
@@ -196,6 +201,56 @@ function getActiveSpecialBudgetById(
   return specialBudget;
 }
 
+function validateExpenseAssignment(
+  input: ExpenseAssignmentInput,
+  effectiveMonthKey: string,
+  options?: { allowUnassigned?: boolean },
+): {
+  categoryId: number | null;
+  specialBudgetId: number | null;
+} {
+  const hasCategory = Number.isInteger(input.categoryId) && (input.categoryId ?? 0) > 0;
+  const hasSpecialBudget =
+    Number.isInteger(input.specialBudgetId) && (input.specialBudgetId ?? 0) > 0;
+
+  if (hasCategory && hasSpecialBudget) {
+    throw new Error("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
+  }
+
+  if (!hasCategory && !hasSpecialBudget) {
+    if (options?.allowUnassigned) {
+      return {
+        categoryId: null,
+        specialBudgetId: null,
+      };
+    }
+
+    throw new Error("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
+  }
+
+  if (hasCategory) {
+    const categoryId = ensurePositiveInt(input.categoryId ?? -1, "Kategorie");
+    getActiveCategoryById(categoryId);
+
+    return {
+      categoryId,
+      specialBudgetId: null,
+    };
+  }
+
+  const specialBudgetId = ensurePositiveInt(input.specialBudgetId ?? -1, "Sonderbudget");
+  const specialBudget = getActiveSpecialBudgetById(specialBudgetId);
+
+  if (specialBudget.monthKey !== effectiveMonthKey) {
+    throw new Error("Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.");
+  }
+
+  return {
+    categoryId: null,
+    specialBudgetId,
+  };
+}
+
 function resolveSignedAmount(transactionType: TransactionType, absoluteCents: number): number {
   if (transactionType === "expense" || transactionType === "transfer") {
     return -absoluteCents;
@@ -254,37 +309,13 @@ function validateAndShapeInput(input: ManualTransactionInput): {
   }
 
   if (transactionType === "expense") {
-    const hasCategory = Number.isInteger(input.categoryId) && (input.categoryId ?? 0) > 0;
-    const hasSpecialBudget =
-      Number.isInteger(input.specialBudgetId) && (input.specialBudgetId ?? 0) > 0;
-
-    if ((hasCategory && hasSpecialBudget) || (!hasCategory && !hasSpecialBudget)) {
-      throw new Error("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
-    }
-
-    if (hasCategory) {
-      const categoryId = ensurePositiveInt(input.categoryId ?? -1, "Kategorie");
-      getActiveCategoryById(categoryId);
-
-      return {
-        bookingDate,
-        effectiveMonthKey,
-        description,
-        transactionType,
-        amountCents,
-        accountId,
-        destinationAccountId: null,
-        categoryId,
-        specialBudgetId: null,
-      };
-    }
-
-    const specialBudgetId = ensurePositiveInt(input.specialBudgetId ?? -1, "Sonderbudget");
-    const specialBudget = getActiveSpecialBudgetById(specialBudgetId);
-
-    if (specialBudget.monthKey !== effectiveMonthKey) {
-      throw new Error("Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.");
-    }
+    const assignment = validateExpenseAssignment(
+      {
+        categoryId: input.categoryId,
+        specialBudgetId: input.specialBudgetId,
+      },
+      effectiveMonthKey,
+    );
 
     return {
       bookingDate,
@@ -294,8 +325,8 @@ function validateAndShapeInput(input: ManualTransactionInput): {
       amountCents,
       accountId,
       destinationAccountId: null,
-      categoryId: null,
-      specialBudgetId,
+      categoryId: assignment.categoryId,
+      specialBudgetId: assignment.specialBudgetId,
     };
   }
 
@@ -538,5 +569,69 @@ export function deleteManualTransaction(transactionId: number): void {
 
   if (result.changes === 0) {
     throw new Error("Transaktion wurde nicht gefunden.");
+  }
+}
+
+export function updateExpenseAssignmentForMonth(
+  transactionId: number,
+  monthKey: string,
+  input: ExpenseAssignmentInput,
+): void {
+  const id = ensurePositiveInt(transactionId, "Transaktion");
+  const effectiveMonthKey = normalizeEffectiveMonthKey(monthKey, monthKey);
+
+  const existing = getDb()
+    .prepare(
+      `
+        SELECT
+          id,
+          source_type AS sourceType,
+          transaction_type AS transactionType
+        FROM transactions
+        WHERE id = ?
+          AND effective_month_key = ?
+      `,
+    )
+    .get(id, effectiveMonthKey) as
+    | {
+        id: number;
+        sourceType: "manual" | "import";
+        transactionType: TransactionType;
+      }
+    | undefined;
+
+  if (!existing) {
+    throw new Error("Buchung passt nicht zum ausgewaehlten Monat.");
+  }
+
+  if (existing.transactionType !== "expense") {
+    throw new Error("Nur Ausgaben koennen direkt zugeordnet werden.");
+  }
+
+  const assignment = validateExpenseAssignment(input, effectiveMonthKey, {
+    allowUnassigned: existing.sourceType === "import",
+  });
+
+  try {
+    const result = getDb()
+      .prepare(
+        `
+          UPDATE transactions
+          SET
+            category_id = ?,
+            special_budget_id = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+            AND effective_month_key = ?
+            AND transaction_type = 'expense'
+        `,
+      )
+      .run(assignment.categoryId, assignment.specialBudgetId, id, effectiveMonthKey);
+
+    if (result.changes === 0) {
+      throw new Error("Buchung konnte nicht aktualisiert werden.");
+    }
+  } catch (error) {
+    throw mapError(error);
   }
 }
