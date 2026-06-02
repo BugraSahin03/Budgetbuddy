@@ -17,6 +17,14 @@ Aktueller Navigationsfokus:
 - Die Monatsdetailseite unter `/monate/[monthKey]` ist die zentrale Vollsicht fuer einen einzelnen Monat.
 - Die Verwaltungslogik fuer Kategorien, Standardbudgets und Sonderbudgets wird unter dem Haupttab `Budgets` gebuendelt, damit die Navigation ruhiger und kompakter bleibt.
 
+Aktuelles UI-Leitbild:
+
+- BudgetBuddy soll wie ein ruhiges, helles Premium-Finanzprodukt wirken, nicht wie ein internes Admin-Tool.
+- Die Oberflaeche priorisiert Monatsfokus, starke Primaerzahlen, klare Blickfuehrung und wenige eindeutige Hauptwege.
+- Dashboard und Monatsansicht sind beide prioritaer; die Monatsansicht bleibt der wichtigste Arbeitsort fuer Budgetpflege, Zuordnung und Monatskontrolle.
+- Karten, Listen und Tabellen sollen reduziert, elegant und gut lesbar sein. Tabellen bleiben erlaubt, wenn sie fuer dichte Monatsarbeit effizienter sind.
+- Visuelle Modernisierung darf keine Fachlogik zu Budgets, Sonderbudgets, Fixkosten, Transfers oder `effective_month_key` stillschweigend aendern.
+
 ## Einstieg fuer neue Codex-Instanzen
 
 Neue Instanzen sollen zuerst dieses Dokument lesen. Danach je nach Aufgabe:

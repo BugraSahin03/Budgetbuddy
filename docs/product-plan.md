@@ -32,6 +32,34 @@ Eine private Finanz-App, die den Excel-Planer ersetzt und langfristig erweitert:
 - Budgets sind Orientierung, keine harten Sperren.
 - Der erste MVP muss nuetzlich sein, auch bevor Bankanbindung, Offline-Sync und Raspberry-Pi-Betrieb fertig sind.
 
+## UI-Leitbild: ruhige Premium-Finanzoberflaeche
+
+BudgetBuddy soll sich wie ein fokussiertes, hochwertiges Finanzprodukt anfuehlen: ruhig, hell, vertrauenswuerdig und alltagstauglich. Die App darf deutlich eleganter werden als ein internes Werkzeug, muss aber die Monatsarbeit schneller und klarer machen, nicht nur schoener.
+
+Das Zielbild ist kein Marketing-Screen und keine 1:1-Kopie einer Referenz. Uebernommen werden sollen Ruhe, Luft, starke Primaerzahlen, klare Hierarchie, helle Blau-/Navy-Akzente und reduzierte Oberflaechen. Nicht uebernommen werden duerfen dekorative Elemente, die echte Finanzarbeit verstecken, fachliche Begriffe verwaessern oder dichte Arbeitsbereiche unnoetig aufblaehen.
+
+### Designprinzipien
+
+- Hierarchie: Jede Seite braucht einen klaren Primaerfokus. Pro Screen soll sofort sichtbar sein, welcher Monat, welche Hauptkennzahl oder welche Arbeitsaufgabe gerade fuehrt.
+- Typografie: Grosse Zahlen und Seitentitel duerfen praesent sein; Hilfstexte, Labels und Metadaten bleiben leise. Typografie soll fuehren, nicht dekorieren.
+- Karten und Flaechen: Karten sollen weich, luftig und hochwertig wirken. Zu viele gleich laute Boxen werden vermieden; wichtige Flaechen bekommen mehr Gewicht als Nebeninformationen.
+- Navigation: Die Hauptnavigation bleibt kompakt und fuehrt ueber wenige klare Wege: Dashboard, Monate, Budgets, Import, Transaktionen, Auswertungen und Einstellungen. Verwaltung wird gebuendelt statt breit aufgefaechert.
+- Tabellen und Listen: Klassische Tabellen werden dort durch Karten, Zeilenlisten oder gruppierte Surfaces ersetzt, wo es die Lesbarkeit verbessert. Fuer dichte Buchungs- und Monatsarbeit bleiben tabellarische Strukturen erlaubt, sollen aber visuell leichter und besser gefuehrt sein.
+- Farben: Die Grundstimmung ist hell, ruhig und finanznah mit Navy-/Blau-Akzenten, warmen neutralen Flaechen und sehr bewusst eingesetzten Warnfarben. Rot bleibt echten Budget- oder Validierungsproblemen vorbehalten.
+- States: Status, Warnungen und offene Arbeit muessen eindeutig bleiben. Gruen, Amber und Rot werden funktional verwendet; Premium-Ruhe darf kritische Zustande nicht verstecken.
+- Effizienz: Dashboard und Monatsansicht duerfen hochwertiger aussehen, muessen aber schneller scannbar und bedienbar bleiben als vorher.
+
+### Umsetzungsreihenfolge
+
+Die neue UI-Sprache wird bewusst in kleine Pakete geschnitten:
+
+1. Dashboard als erster Referenzscreen fuer Hero, Primaerzahlen, ruhige KPI-Karten und reduzierte Listen.
+2. App-Shell und Navigation, damit die neue Sprache nicht nur innerhalb einzelner Seiten sichtbar ist.
+3. Monatsansicht als Hauptarbeitsort fuer Budgetpflege, Sonderbudgets, Fixkostenkontrolle und Zuordnung.
+4. Verwaltungsseiten, insbesondere `Budgets`, damit Kategorien, Standardbudgets und Sonderbudgets nicht wie ein abgekoppelter Admin-Bereich wirken.
+
+Dashboard und Monatsansicht sind beide prioritaer. Das Dashboard setzt die visuelle Referenz; die Monatsansicht beweist, dass dieselbe Sprache auch bei hoher Informationsdichte und echter Arbeitslast funktioniert.
+
 ## Fachliche Regeln
 
 ### Transaktionen
