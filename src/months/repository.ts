@@ -22,6 +22,15 @@ export type MonthTimelinePreview = {
   availableCents: number;
 };
 
+export type MonthComparisonRow = {
+  monthKey: string;
+  label: string;
+  detailHref: string;
+  incomeCents: number;
+  expenseCents: number;
+  savedCents: number;
+};
+
 export type MonthDetailNavigationLink = {
   monthKey: string;
   label: string;
@@ -328,6 +337,19 @@ function getFirstStoredMonthKey(): string | null {
   return row.firstMonthKey;
 }
 
+function getFirstTransactionMonthKey(): string | null {
+  const row = getDb()
+    .prepare(
+      `
+        SELECT MIN(effective_month_key) AS firstMonthKey
+        FROM transactions
+      `,
+    )
+    .get() as { firstMonthKey: string | null };
+
+  return row.firstMonthKey;
+}
+
 function buildMonthDetailHref(monthKey: string): string {
   return `/monate/${monthKey}`;
 }
@@ -433,6 +455,30 @@ export function listMonthTimeline(currentMonthKey = getCurrentMonthKey()): Month
       variableExpenseCents: snapshot.totals.expenseCents,
       plannedFixedCostsCents: snapshot.totals.plannedFixedCostsCents,
       availableCents: snapshot.totals.availableCents,
+    };
+  });
+}
+
+export function listMonthComparison(currentMonthKey = getCurrentMonthKey()): MonthComparisonRow[] {
+  const normalizedCurrentMonthKey = normalizeMonthKey(currentMonthKey);
+  const firstStoredMonthKey = getFirstTransactionMonthKey() ?? normalizedCurrentMonthKey;
+  const firstMonthKey =
+    toComparableMonthValue(firstStoredMonthKey) <= toComparableMonthValue(normalizedCurrentMonthKey)
+      ? firstStoredMonthKey
+      : normalizedCurrentMonthKey;
+
+  return buildMonthRange(firstMonthKey, normalizedCurrentMonthKey).map((monthKey) => {
+    const snapshot = getMonthSnapshot(monthKey);
+    const incomeCents = snapshot.totals.incomeCents;
+    const expenseCents = snapshot.totals.expenseCents;
+
+    return {
+      monthKey,
+      label: formatMonthLabel(monthKey),
+      detailHref: buildMonthDetailHref(monthKey),
+      incomeCents,
+      expenseCents,
+      savedCents: incomeCents - expenseCents,
     };
   });
 }

@@ -15,6 +15,7 @@ Aktueller Navigationsfokus:
 - Das Dashboard bleibt die monatliche Detailansicht fuer KPIs.
 - Die Monatsarbeit bekommt zusaetzlich einen eigenen Haupttab `Monate` als lueckenlosen Einstieg ueber alle verfuegbaren Monate.
 - Die Monatsdetailseite unter `/monate/[monthKey]` ist die zentrale Vollsicht fuer einen einzelnen Monat.
+- Der Haupttab `Monatsvergleich` zeigt eine kompakte Vergleichsliste aller Monate seit der ersten Buchung bis zum aktuellen Monat.
 - Die Verwaltungslogik fuer Kategorien, Standardbudgets und Sonderbudgets wird unter dem Haupttab `Budgets` gebuendelt, damit die Navigation ruhiger und kompakter bleibt.
 
 Aktuelles UI-Leitbild:
@@ -117,6 +118,8 @@ Gewuenschtes Verhalten:
 ### Kennzahl "gesparter Betrag"
 
 Im MVP gibt es keine separate Kennzahl `gesparter Betrag`.
+
+Der Monatsvergleich zeigt fuer Version 1 trotzdem eine einfache Spalte `Gespart` als Ueberschussrechnung `Einnahmen - Ausgaben`. Das ist keine echte Sparlogik und keine eigene Sparkategorie; die fachliche Ausarbeitung aktiven Sparens bleibt separater Folgearbeit vorbehalten.
 
 ### Feste Kategorien
 
