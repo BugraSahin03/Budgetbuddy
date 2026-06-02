@@ -55,6 +55,28 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-06-02 - FIN-044 legt UI-Leitbild fuer ruhige Premium-Finanzoberflaeche fest
+
+Quelle/Ticket: `FIN-044`
+
+Erkenntnis/Entscheidung:
+
+- BudgetBuddy soll in Richtung eines ruhigen, hellen Premium-Finanzprodukts weiterentwickelt werden.
+- Die neue UI-Sprache priorisiert Monatsfokus, starke Primaerzahlen, klare Hierarchie, kompakte Navigation und reduzierte Karten-/Listenflaechen.
+- Dashboard und Monatsansicht sind beide prioritaer; die Monatsansicht bleibt wegen Budgetpflege, Zuordnung und Monatskontrolle der zentrale Arbeitsort.
+- Referenznahe Gestaltung ist erwuenscht, aber keine 1:1-Kopie und keine dekorative Ueberdeckung fachlicher Arbeit.
+- Tabellen duerfen ersetzt oder leichter gestaltet werden, bleiben aber erlaubt, wenn sie fuer dichte Finanzarbeit die effizientere Form sind.
+
+Auswirkung:
+
+- UI-Folgetickets koennen Dashboard, Shell, Monatsansicht und Verwaltungsseiten getrennt umsetzen, ohne die Richtung neu zu verhandeln.
+- Redesign-Arbeit darf keine Fachlogik zu Budgets, Sonderbudgets, Fixkosten, Transfers oder `effective_month_key` stillschweigend veraendern.
+
+Folgeaktion:
+
+- Vorhandene Folge-Issues fuer Dashboard (#92), Navigation/Shell (#93) und Monatsansicht (#94) an diesem Leitbild ausrichten.
+- Verwaltungsseiten-Folgeissue #96 (`FIN-048`) baut auf diesem Leitbild auf.
+
 ## 2026-05-25 - FIN-027 entkoppelt Monatslogik von alter Fixkosten-Linktabelle
 
 Quelle/Ticket: `FIN-027`
