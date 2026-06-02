@@ -98,6 +98,27 @@ Folgeaktion:
 
 - Echte aktive Sparlogik bleibt separat in #98 (`FIN-049`) zu klaeren.
 
+## 2026-06-02 - FIN-045 macht Dashboard zum ersten Premium-UI-Referenzscreen
+
+Quelle/Ticket: `FIN-045`
+
+Erkenntnis/Entscheidung:
+
+- Das Dashboard wird als erster konkreter Referenzscreen fuer die ruhige Premium-Finanzsprache umgesetzt.
+- Der Primaerfokus liegt auf einer dominanten Hero-Flaeche mit Monatskontext und `Verfuegbar` als Hauptzahl.
+- Kategorien und Sonderbudgets werden auf dem Dashboard als Karten-/Listenflaechen statt als klassische Tabellen dargestellt.
+- Die fachliche Dashboard-Berechnung bleibt unveraendert; geaendert wird bewusst nur die visuelle Struktur und Blickfuehrung.
+- Transfers bleiben sichtbar markiert und werden weiterhin nicht als Budgetausgaben interpretiert.
+
+Auswirkung:
+
+- Folge-Tickets fuer Shell, Monatsansicht und Verwaltungsseiten koennen visuell auf dieser Dashboard-Sprache aufbauen.
+- Das Dashboard bleibt fachlich nutzbar, wirkt aber weniger wie ein internes Admin-Tool.
+
+Folgeaktion:
+
+- FIN-046 kann App-Shell und Navigation an die neue Dashboard-Sprache angleichen.
+
 ## 2026-05-25 - FIN-027 entkoppelt Monatslogik von alter Fixkosten-Linktabelle
 
 Quelle/Ticket: `FIN-027`
