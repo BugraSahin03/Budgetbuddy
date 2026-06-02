@@ -11,9 +11,13 @@ vi.mock("@/src/db/client", () => ({
   getDb: () => db,
 }));
 
-const { buildMonthRange, getMonthDetail, getMonthSnapshot, listMonthTimeline } = await import(
-  "@/src/months/repository"
-);
+const {
+  buildMonthRange,
+  getMonthDetail,
+  getMonthSnapshot,
+  listMonthComparison,
+  listMonthTimeline,
+} = await import("@/src/months/repository");
 
 describe("months repository", () => {
   beforeEach(() => {
@@ -71,6 +75,75 @@ describe("months repository", () => {
     expect(months.find((month) => month.monthKey === "2031-03")?.variableExpenseCents).toBe(
       1200,
     );
+  });
+
+  it("builds simple month comparison values and excludes transfers from expenses", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const bargeldId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Bargeld'").get() as { id: number }
+    ).id;
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+
+    db.prepare(
+      `
+        INSERT INTO monthly_category_budgets (month_key, category_id, budget_amount_cents)
+        VALUES ('2031-12', ?, 25000)
+      `,
+    ).run(einkaufId);
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, currency_code, description, source_type, category_id, special_budget_id
+        ) VALUES
+          (?, NULL, 'income', '2032-01-05', '2032-01', 300000, 'EUR', 'Comparison Salary', 'manual', NULL, NULL),
+          (?, NULL, 'refund', '2032-01-06', '2032-01', 2000, 'EUR', 'Comparison Refund', 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2032-01-10', '2032-01', -8500, 'EUR', 'Comparison Grocery', 'manual', ?, NULL),
+          (?, ?, 'transfer', '2032-01-12', '2032-01', -50000, 'EUR', 'Comparison Cash Transfer', 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2032-03-03', '2032-03', -12000, 'EUR', 'Comparison March Expense', 'manual', ?, NULL)
+      `,
+    ).run(
+      sparkasseId,
+      sparkasseId,
+      sparkasseId,
+      einkaufId,
+      sparkasseId,
+      bargeldId,
+      sparkasseId,
+      einkaufId,
+    );
+
+    const comparison = listMonthComparison("2032-03");
+
+    expect(comparison.map((month) => month.monthKey)).toEqual([
+      "2032-03",
+      "2032-02",
+      "2032-01",
+    ]);
+    expect(comparison.some((month) => month.monthKey === "2031-12")).toBe(false);
+
+    const january = comparison.find((month) => month.monthKey === "2032-01");
+    expect(january).toMatchObject({
+      incomeCents: 302000,
+      expenseCents: 8500,
+      savedCents: 293500,
+      detailHref: "/monate/2032-01",
+    });
+
+    const february = comparison.find((month) => month.monthKey === "2032-02");
+    expect(february).toMatchObject({
+      incomeCents: 0,
+      expenseCents: 0,
+      savedCents: 0,
+    });
+
+    const march = comparison.find((month) => month.monthKey === "2032-03");
+    expect(march?.savedCents).toBe(-12000);
   });
 
   it("builds month detail with previous/next navigation and full transaction list", () => {

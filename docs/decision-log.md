@@ -77,6 +77,27 @@ Folgeaktion:
 - Vorhandene Folge-Issues fuer Dashboard (#92), Navigation/Shell (#93) und Monatsansicht (#94) an diesem Leitbild ausrichten.
 - Verwaltungsseiten-Folgeissue #96 (`FIN-048`) baut auf diesem Leitbild auf.
 
+## 2026-06-02 - FIN-041 fuehrt einfachen Monatsvergleich ein
+
+Quelle/Ticket: `FIN-041`
+
+Erkenntnis/Entscheidung:
+
+- Der Monatsvergleich ist ein eigener Hauptnavigationspunkt unter `/monatsvergleich`.
+- Die Vergleichsreihe nutzt alle Monate seit der ersten vorhandenen Buchung bis zum aktuellen Monat und bleibt lueckenlos.
+- Pro Monat werden Einnahmen, Ausgaben und `Gespart` angezeigt.
+- `Gespart` ist in Version 1 bewusst nur der einfache Ueberschuss `Einnahmen - Ausgaben`.
+- Transfers zaehlen nicht als Ausgaben in der Vergleichsrechnung.
+
+Auswirkung:
+
+- Nutzer koennen mehrere Monate schnell miteinander vergleichen, ohne in einzelne Monatsdetails springen zu muessen.
+- Es entsteht keine neue Sparfachlogik und keine stille Umdeutung von Kategorien, Sonderbudgets oder Transfers.
+
+Folgeaktion:
+
+- Echte aktive Sparlogik bleibt separat in #98 (`FIN-049`) zu klaeren.
+
 ## 2026-05-25 - FIN-027 entkoppelt Monatslogik von alter Fixkosten-Linktabelle
 
 Quelle/Ticket: `FIN-027`
