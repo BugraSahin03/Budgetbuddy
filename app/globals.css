@@ -406,3 +406,185 @@ body {
   color: #ffffff;
   transform: rotate(90deg);
 }
+
+/* FIN-052: monthly create/import work happens in one generous month overlay. */
+.month-action-primary {
+  align-items: center;
+  background: #071b46;
+  border: 1px solid rgba(7, 27, 70, 0.1);
+  border-radius: 999px;
+  box-shadow: 0 18px 38px rgba(7, 27, 70, 0.18);
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 900;
+  justify-content: center;
+  letter-spacing: 0.12em;
+  padding: 0.78rem 1.08rem;
+  text-transform: uppercase;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.month-action-primary:hover {
+  background: #0d2b68;
+  box-shadow: 0 22px 44px rgba(7, 27, 70, 0.22);
+  transform: translateY(-1px);
+}
+
+.month-action-dialog {
+  background: transparent;
+  border: 0;
+  margin: auto;
+  max-width: min(78rem, calc(100vw - 1.5rem));
+  padding: 0;
+  width: 100%;
+}
+
+.month-action-dialog::backdrop {
+  background: rgba(7, 27, 70, 0.42);
+  backdrop-filter: blur(9px);
+}
+
+.month-action-surface {
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  border-radius: 2.35rem;
+  background:
+    radial-gradient(circle at 88% 8%, rgba(134, 239, 222, 0.18), transparent 28rem),
+    linear-gradient(180deg, rgba(248, 252, 255, 0.99), rgba(239, 248, 253, 0.98));
+  box-shadow: 0 38px 96px rgba(7, 27, 70, 0.28);
+  max-height: min(92vh, 58rem);
+  overflow-y: auto;
+  padding: clamp(1.15rem, 3vw, 2.1rem);
+}
+
+.month-action-header {
+  align-items: flex-start;
+  border-bottom: 1px solid var(--month-line);
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  padding-bottom: 1.25rem;
+}
+
+.month-action-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.4rem;
+}
+
+.month-action-tabs > input {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.month-action-tabs > label {
+  border: 1px solid rgba(7, 27, 70, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--month-ink-soft);
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  padding: 0.7rem 1rem;
+  text-transform: uppercase;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.month-action-tabs > label:hover {
+  transform: translateY(-1px);
+}
+
+.month-action-tab-panel {
+  display: none;
+  flex-basis: 100%;
+  margin-top: 0.75rem;
+}
+
+.month-action-tabs > input:nth-of-type(1):checked ~ label:nth-of-type(1),
+.month-action-tabs > input:nth-of-type(2):checked ~ label:nth-of-type(2),
+.month-action-tabs > input:nth-of-type(3):checked ~ label:nth-of-type(3) {
+  background: #071b46;
+  color: #ffffff;
+}
+
+.month-action-tabs > input:nth-of-type(1):checked ~ .month-action-tab-expense,
+.month-action-tabs > input:nth-of-type(2):checked ~ .month-action-tab-income,
+.month-action-tabs > input:nth-of-type(3):checked ~ .month-action-tab-import {
+  display: block;
+}
+
+.month-action-form {
+  display: grid;
+  gap: 1.1rem;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 1.7rem;
+  background: rgba(255, 255, 255, 0.78);
+  padding: clamp(1rem, 2.5vw, 1.4rem);
+}
+
+.month-action-label {
+  color: var(--month-ink-muted);
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  margin-bottom: 0.45rem;
+  text-transform: uppercase;
+}
+
+.month-action-input {
+  border: 1px solid var(--month-line-strong);
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--month-ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 0.82rem 0.9rem;
+  width: 100%;
+}
+
+.month-action-tile-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.month-action-choice {
+  align-items: center;
+  border: 1px solid rgba(125, 211, 252, 0.42);
+  border-radius: 1.25rem;
+  background: rgba(238, 248, 253, 0.9);
+  color: var(--month-ink);
+  cursor: pointer;
+  display: flex;
+  gap: 0.7rem;
+  font-size: 0.9rem;
+  font-weight: 900;
+  padding: 0.9rem;
+}
+
+.month-action-choice-warn {
+  border-color: rgba(251, 191, 36, 0.42);
+  background: rgba(255, 251, 235, 0.92);
+}
+
+.month-action-choice input {
+  accent-color: #071b46;
+  height: 1rem;
+  width: 1rem;
+}
+
+.month-action-submit {
+  border-radius: 1rem;
+  background: #071b46;
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 900;
+  justify-self: start;
+  letter-spacing: 0.14em;
+  padding: 0.9rem 1.15rem;
+  text-transform: uppercase;
+}

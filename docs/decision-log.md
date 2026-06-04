@@ -974,3 +974,19 @@ Auswirkung:
 
 - Die App-Shell und Monatsansicht wirken ruhiger und naeher an der FIN-047-Premium-UI.
 - Es werden keine Fachlogik, Navigationseintraege, Budget-, Fixkosten-, Transaktions- oder Importregeln geaendert.
+
+## 2026-06-04 - FIN-052 buendelt manuelle Buchungen und Import im Monats-Overlay
+
+Quelle/Ticket: `FIN-052`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsdetailseite erhaelt eine zentrale Aktion `Hinzufuegen`, die ein grosses Overlay im Monatskontext oeffnet.
+- Das Overlay bietet getrennte Modi fuer Ausgabe, Einnahme und Import, nutzt aber die bestehenden Repository- und Importpfade weiter.
+- Manuelle Ausgaben waehlen Kategorie oder Sonderbudget als gemeinsame Kachel-Auswahl, damit weiterhin genau eine Ausgabezuordnung entsteht.
+- Der Importbereich bettet die bestehende Sparkassen-Importvorschau ein und belegt den Zielmonat mit dem aktuell geoeffneten Monat vor.
+
+Auswirkung:
+
+- `/transaktionen` und `/import` bleiben technisch und funktional erhalten, werden aber fuer die Monatsarbeit nicht mehr als primaere Einstiege benoetigt.
+- Es werden keine neuen Import-, Kategorie-, Sonderbudget- oder Persistenzregeln eingefuehrt; die Monatsseite wird nur als zentraler Einstieg gestärkt.
