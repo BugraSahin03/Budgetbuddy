@@ -925,3 +925,22 @@ Auswirkung:
 Folgeaktion:
 
 - Weitere UI-Tickets sollten diese Monatsansicht als Massstab nehmen und Dashboard/Shell nicht mehr automatisch als alleinige visuelle Referenz behandeln.
+
+## 2026-06-04 - FIN-050 beruhigt die Monatsansicht durch Dialoge und einklappbare Details
+
+Quelle/Ticket: `FIN-050`
+
+Erkenntnis/Entscheidung:
+
+- Budgetpflege, Sonderbudgetpflege und Fixkostenkontrolle bleiben direkt auf der Monatsdetailseite erreichbar, werden aber aus der dauerhaft sichtbaren Seitenstruktur in Dialoge verschoben.
+- Normale Kategorienbudgets und Sonderbudgets werden im selben Budgetpflege-Dialog angeboten, bleiben dort aber visuell und fachlich getrennt; Sonderbudgets erhalten einen hellen gelben Akzent.
+- Die vollstaendige Monatsbuchungsliste bleibt erhalten, wird aber als einklappbarer Bereich umgesetzt, damit die letzten fuenf Ausgaben die ruhige Hauptansicht nicht verlieren.
+
+Auswirkung:
+
+- Die Monatsuebersicht bleibt kompakter und staerker an der FIN-047-Referenzsprache orientiert.
+- Es werden keine Budget-, Sonderbudget-, Fixkosten- oder Zuordnungsregeln geaendert; die bestehenden Server-Actions bleiben die fachlichen Grenzen.
+
+Folgeaktion:
+
+- Spaetere UI-Tickets koennen pruefen, ob Dialog- und Disclosure-Muster als wiederverwendbare Komponenten fuer weitere Seiten formalisiert werden sollen.
