@@ -262,3 +262,111 @@ body {
   box-shadow: 0 16px 34px rgba(7, 27, 70, 0.05);
   padding: 1rem;
 }
+
+/* FIN-050: keep the reference screen compact while monthly care remains close by. */
+.month-dialog-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(7, 27, 70, 0.12);
+  border-radius: 999px;
+  background: #071b46;
+  color: #ffffff;
+  box-shadow: 0 14px 30px rgba(7, 27, 70, 0.16);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 0.72rem 1rem;
+  text-transform: uppercase;
+  transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease;
+}
+
+.month-dialog-trigger:hover {
+  background: #0d2b68;
+  box-shadow: 0 18px 38px rgba(7, 27, 70, 0.2);
+  transform: translateY(-1px);
+}
+
+.month-dialog-trigger-subtle {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: rgba(7, 27, 70, 0.14);
+  box-shadow: none;
+  color: var(--month-ink);
+  padding: 0.56rem 0.82rem;
+}
+
+.month-dialog-trigger-subtle:hover {
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 12px 28px rgba(7, 27, 70, 0.08);
+}
+
+.month-dialog {
+  background: transparent;
+  border: 0;
+  margin: auto;
+  max-width: min(70rem, calc(100vw - 2rem));
+  padding: 0;
+  width: 100%;
+}
+
+.month-dialog::backdrop {
+  background: rgba(7, 27, 70, 0.36);
+  backdrop-filter: blur(7px);
+}
+
+.month-dialog-surface {
+  border: 1px solid rgba(255, 255, 255, 0.84);
+  border-radius: 2rem;
+  background:
+    radial-gradient(circle at 88% 10%, rgba(134, 239, 222, 0.14), transparent 26rem),
+    rgba(248, 252, 255, 0.98);
+  box-shadow: 0 34px 90px rgba(7, 27, 70, 0.24);
+  padding: clamp(1.1rem, 3vw, 2rem);
+}
+
+.month-dialog-close {
+  border: 1px solid var(--month-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--month-ink-soft);
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 0.62rem 0.9rem;
+  text-transform: uppercase;
+}
+
+.month-disclosure {
+  display: block;
+}
+
+.month-disclosure-summary {
+  align-items: flex-start;
+  cursor: pointer;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  list-style: none;
+}
+
+.month-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.month-disclosure-pill {
+  border: 1px solid rgba(7, 27, 70, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: var(--month-ink);
+  display: inline-flex;
+  font-size: 0.73rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 0.55rem 0.82rem;
+  text-transform: uppercase;
+}
+
+.month-disclosure[open] .month-disclosure-pill {
+  background: #071b46;
+  color: #ffffff;
+}

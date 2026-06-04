@@ -7,6 +7,7 @@ import {
   updateMonthlySpecialBudgetStateAction,
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
+import { MonthDialog } from "@/app/monate/month-dialog";
 import { MonthChip, MonthPageShell } from "@/app/monate/months-ui";
 import {
   categoryStatusLabel,
@@ -153,12 +154,14 @@ function ReferenceMetricCard({
   copy,
   tone,
   marker,
+  action,
 }: {
   label: string;
   value: string;
   copy: string;
   tone: "income" | "expense";
   marker: string;
+  action?: ReactNode;
 }) {
   const toneClasses =
     tone === "income"
@@ -177,6 +180,7 @@ function ReferenceMetricCard({
         {value}
       </p>
       <p className="mt-2 text-xs font-medium text-[color:var(--month-ink-muted)]">{copy}</p>
+      {action ? <div className="mt-4">{action}</div> : null}
     </article>
   );
 }
@@ -322,6 +326,38 @@ export default async function MonthDetailPage({
           copy="Variable Ausgaben ohne separaten Fixkosten-Kontrollblock."
           tone="expense"
           marker="↗"
+          action={
+            <MonthDialog
+              eyebrow="Fixkostenkontrolle"
+              title="Plan und Ist-Kontrolle"
+              description="Die Kontrolle bleibt im Monatskontext erreichbar, nimmt aber keinen dauerhaften Platz in der Uebersicht ein."
+              triggerLabel="Fixkostenkontrolle"
+              triggerClassName="month-dialog-trigger month-dialog-trigger-subtle"
+            >
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
+                  <p className="month-eyebrow">Fixkosten (Plan)</p>
+                  <p className="mt-3 text-3xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
+                    {formatEuro(month.dashboard.totals.plannedFixedCostsCents)}
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
+                    Stabiler Planblock fuer die Verfuegbarkeit dieses Monats.
+                  </p>
+                </div>
+                <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
+                  <p className="month-eyebrow">Ist-Kontrolle</p>
+                  <p className="mt-3 text-3xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
+                    {formatEuro(month.dashboard.totals.actualFixedCostsCents)}
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
+                    {month.dashboard.totals.actualFixedCostsCents > 0
+                      ? "Importierte Fixkosten-Kontrolltreffer wurden erkannt."
+                      : "Aktuell kein importierter Fixkosten-Kontrollhinweis."}
+                  </p>
+                </div>
+              </div>
+            </MonthDialog>
+          }
         />
       </section>
 
@@ -331,7 +367,132 @@ export default async function MonthDetailPage({
             eyebrow="Budget Breakdown"
             title="Kategorien"
             description="Budgetverbrauch pro Kategorie als ruhige Fortschrittsliste statt klassischer Tabelle."
-            aside={<MonthChip tone="accent">{month.dashboard.categoryRows.length} Kategorien</MonthChip>}
+            aside={
+              <div className="flex flex-wrap items-center gap-3">
+                <MonthChip tone="accent">{month.dashboard.categoryRows.length} Kategorien</MonthChip>
+                <MonthDialog
+                  eyebrow="Monatsarbeit"
+                  title="Budgetpflege"
+                  description="Normale Kategorienbudgets und Sonderbudgets bleiben fachlich getrennt, werden aber gemeinsam im Monatskontext gepflegt."
+                  triggerLabel="Budgetpflege"
+                >
+                  <div className="grid gap-5">
+                    <section>
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                          <p className="month-eyebrow">Kategorien</p>
+                          <h3 className="mt-2 text-xl font-black tracking-[-0.04em] text-[color:var(--month-ink)]">
+                            Normale Kategorienbudgets
+                          </h3>
+                        </div>
+                        <MonthChip tone="accent">{month.dashboard.categoryRows.length} Kategorien</MonthChip>
+                      </div>
+                      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+                        {month.dashboard.categoryRows.map((row) => (
+                          <article key={row.categoryId} className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-5 shadow-[0_14px_30px_rgba(7,27,70,0.045)]">
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <h4 className="text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
+                                  {row.categoryName}
+                                </h4>
+                                <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
+                                  Ist {formatEuro(row.spentAmountCents)} · Rest {row.remainingAmountCents === null ? "-" : formatEuro(row.remainingAmountCents)}
+                                </p>
+                              </div>
+                              <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${categoryStatusTone(row)}`}>
+                                {categoryStatusLabel(row)}
+                              </span>
+                            </div>
+                            <form action={setMonthlyBudgetOverrideAction} className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                              <input type="hidden" name="monthKey" value={month.monthKey} />
+                              <input type="hidden" name="categoryId" value={row.categoryId} />
+                              <input
+                                name="budgetAmount"
+                                inputMode="decimal"
+                                defaultValue={toInputAmount(row.monthOverrideAmountCents ?? row.budgetAmountCents)}
+                                placeholder={row.defaultBudgetAmountCents === null ? "z. B. 250.00" : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`}
+                                className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
+                              />
+                              <button type="submit" className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5">
+                                Speichern
+                              </button>
+                            </form>
+                            <p className="mt-3 text-xs leading-5 text-[color:var(--month-ink-soft)]">
+                              Leerer Wert entfernt nur den Monats-Override fuer {month.label}.
+                            </p>
+                          </article>
+                        ))}
+                      </div>
+                    </section>
+
+                    <section className="rounded-[1.7rem] border border-amber-200 bg-amber-50/70 p-5">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                        <div>
+                          <p className="month-eyebrow text-amber-700">Sonderbudgets</p>
+                          <h3 className="mt-2 text-xl font-black tracking-[-0.04em] text-amber-950">
+                            Monatsspezifische Ausgabenziele
+                          </h3>
+                          <p className="mt-2 text-sm leading-6 text-amber-900/80">
+                            Hell markiert, damit Sonderbudgets gemeinsam erreichbar bleiben, aber nicht mit normalen Kategorien verschmelzen.
+                          </p>
+                        </div>
+                        <MonthChip tone="warn">{month.dashboard.specialBudgetRows.length} Eintraege</MonthChip>
+                      </div>
+                      <div className="mt-5 space-y-4">
+                        {month.dashboard.specialBudgetRows.length === 0 ? (
+                          <EmptyReferenceCard>Keine Sonderbudgets fuer diesen Monat vorhanden.</EmptyReferenceCard>
+                        ) : (
+                          month.dashboard.specialBudgetRows.map((row) => (
+                            <article key={row.id} className="rounded-[1.4rem] border border-amber-200 bg-white/88 p-5 shadow-[0_14px_30px_rgba(146,64,14,0.06)]">
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div>
+                                  <h4 className="text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
+                                    {row.name}
+                                  </h4>
+                                  <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
+                                    Ist {formatEuro(row.actualExpenseCents)} · Rest {formatEuro(row.remainingAmountCents)}
+                                  </p>
+                                </div>
+                                <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${specialBudgetStatusTone(row)}`}>
+                                  {specialBudgetStatusLabel(row)}
+                                </span>
+                              </div>
+                              <form action={updateMonthlySpecialBudgetAction} className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                                <input type="hidden" name="monthKey" value={month.monthKey} />
+                                <input type="hidden" name="specialBudgetId" value={row.id} />
+                                <input
+                                  name="plannedAmount"
+                                  inputMode="decimal"
+                                  defaultValue={toInputAmount(row.plannedAmountCents)}
+                                  placeholder="z. B. 120.00"
+                                  className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-amber-400 focus:outline-none"
+                                />
+                                <button type="submit" className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5">
+                                  Speichern
+                                </button>
+                              </form>
+                              <form action={updateMonthlySpecialBudgetStateAction} className="mt-3">
+                                <input type="hidden" name="monthKey" value={month.monthKey} />
+                                <input type="hidden" name="specialBudgetId" value={row.id} />
+                                {row.isActive ? (
+                                  <button type="submit" name="intent" value="deactivate" className="text-xs font-bold text-amber-800 underline decoration-amber-300 underline-offset-4">
+                                    Sonderbudget deaktivieren
+                                  </button>
+                                ) : (
+                                  <button type="submit" name="intent" value="reactivate" className="text-xs font-bold text-emerald-700 underline decoration-emerald-200 underline-offset-4">
+                                    Sonderbudget reaktivieren
+                                  </button>
+                                )}
+                              </form>
+                            </article>
+                          ))
+                        )}
+                      </div>
+                    </section>
+                  </div>
+                </MonthDialog>
+              </div>
+            }
           />
 
           <div className="mt-7 space-y-5">
@@ -410,147 +571,22 @@ export default async function MonthDetailPage({
         </article>
       </section>
 
-      <section className="month-reference-panel bg-white/74">
-        <SectionHeader
-          eyebrow="Monatsarbeit"
-          title="Budgetwerte pflegen"
-          description="Die Referenzansicht bleibt leicht, die fachliche Pflege bleibt direkt darunter im selben Monatskontext moeglich."
-        />
-        <div className="mt-7 grid gap-4 lg:grid-cols-2">
-          {month.dashboard.categoryRows.map((row) => (
-            <article key={row.categoryId} className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-5 shadow-[0_14px_30px_rgba(7,27,70,0.045)]">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div>
-                  <h3 className="text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
-                    {row.categoryName}
-                  </h3>
-                  <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
-                    Ist {formatEuro(row.spentAmountCents)} · Rest {row.remainingAmountCents === null ? "-" : formatEuro(row.remainingAmountCents)}
-                  </p>
-                </div>
-                <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${categoryStatusTone(row)}`}>
-                  {categoryStatusLabel(row)}
-                </span>
-              </div>
-              <form action={setMonthlyBudgetOverrideAction} className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                <input type="hidden" name="monthKey" value={month.monthKey} />
-                <input type="hidden" name="categoryId" value={row.categoryId} />
-                <input
-                  name="budgetAmount"
-                  inputMode="decimal"
-                  defaultValue={toInputAmount(row.monthOverrideAmountCents ?? row.budgetAmountCents)}
-                  placeholder={row.defaultBudgetAmountCents === null ? "z. B. 250.00" : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`}
-                  className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
-                />
-                <button type="submit" className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5">
-                  Speichern
-                </button>
-              </form>
-              <p className="mt-3 text-xs leading-5 text-[color:var(--month-ink-soft)]">
-                Leerer Wert entfernt nur den Monats-Override fuer {month.label}.
-              </p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="grid gap-7 xl:grid-cols-2">
-        <article className="month-reference-panel bg-white/76">
-          <SectionHeader
-            eyebrow="Sonderbudgets"
-            title="Monatsspezifische Ausgabenziele"
-            aside={<MonthChip tone="neutral">{month.dashboard.specialBudgetRows.length} Eintraege</MonthChip>}
-          />
-          <div className="mt-7 space-y-4">
-            {month.dashboard.specialBudgetRows.length === 0 ? (
-              <EmptyReferenceCard>Keine Sonderbudgets fuer diesen Monat vorhanden.</EmptyReferenceCard>
-            ) : (
-              month.dashboard.specialBudgetRows.map((row) => (
-                <article key={row.id} className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-5">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <h3 className="text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
-                        {row.name}
-                      </h3>
-                      <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
-                        Ist {formatEuro(row.actualExpenseCents)} · Rest {formatEuro(row.remainingAmountCents)}
-                      </p>
-                    </div>
-                    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${specialBudgetStatusTone(row)}`}>
-                      {specialBudgetStatusLabel(row)}
-                    </span>
-                  </div>
-                  <form action={updateMonthlySpecialBudgetAction} className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-                    <input type="hidden" name="monthKey" value={month.monthKey} />
-                    <input type="hidden" name="specialBudgetId" value={row.id} />
-                    <input
-                      name="plannedAmount"
-                      inputMode="decimal"
-                      defaultValue={toInputAmount(row.plannedAmountCents)}
-                      placeholder="z. B. 120.00"
-                      className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
-                    />
-                    <button type="submit" className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5">
-                      Speichern
-                    </button>
-                  </form>
-                  <form action={updateMonthlySpecialBudgetStateAction} className="mt-3">
-                    <input type="hidden" name="monthKey" value={month.monthKey} />
-                    <input type="hidden" name="specialBudgetId" value={row.id} />
-                    {row.isActive ? (
-                      <button type="submit" name="intent" value="deactivate" className="text-xs font-bold text-[color:var(--month-ink-soft)] underline decoration-[color:var(--month-line-strong)] underline-offset-4">
-                        Sonderbudget deaktivieren
-                      </button>
-                    ) : (
-                      <button type="submit" name="intent" value="reactivate" className="text-xs font-bold text-emerald-700 underline decoration-emerald-200 underline-offset-4">
-                        Sonderbudget reaktivieren
-                      </button>
-                    )}
-                  </form>
-                </article>
-              ))
-            )}
-          </div>
-        </article>
-
-        <article className="month-reference-panel bg-white/76">
-          <SectionHeader
-            eyebrow="Fixkostenblock"
-            title="Plan und Kontrolle"
-            aside={<MonthChip tone="violet">Kontrollsicht</MonthChip>}
-          />
-          <div className="mt-7 grid gap-4 sm:grid-cols-2">
-            <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
-              <p className="month-eyebrow">Fixkosten (Plan)</p>
-              <p className="mt-3 text-3xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
-                {formatEuro(month.dashboard.totals.plannedFixedCostsCents)}
-              </p>
-              <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
-                Stabiler Planblock fuer die Verfuegbarkeit dieses Monats.
-              </p>
-            </div>
-            <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
-              <p className="month-eyebrow">Ist-Kontrolle</p>
-              <p className="mt-3 text-3xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
-                {formatEuro(month.dashboard.totals.actualFixedCostsCents)}
-              </p>
-              <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
-                {month.dashboard.totals.actualFixedCostsCents > 0
-                  ? "Importierte Fixkosten-Kontrolltreffer wurden erkannt."
-                  : "Aktuell kein importierter Fixkosten-Kontrollhinweis."}
-              </p>
-            </div>
-          </div>
-        </article>
-      </section>
-
-      <section className="month-reference-panel bg-white/78">
-        <SectionHeader
-          eyebrow="Alle Monatsbuchungen"
-          title="Zuordnung und Herkunft pruefen"
-          description="Die vollstaendige Buchungsliste bleibt fuer die fachliche Monatsarbeit erhalten, aber ohne schwere Tabellenoptik."
-          aside={<MonthChip tone="neutral">{month.transactions.length} Eintraege</MonthChip>}
-        />
+      <details className="month-reference-panel month-disclosure bg-white/78">
+        <summary className="month-disclosure-summary">
+          <span>
+            <span className="month-eyebrow">Alle Monatsbuchungen</span>
+            <span className="mt-2 block text-2xl font-extrabold tracking-[-0.045em] text-[color:var(--month-ink)]">
+              Zuordnung und Herkunft pruefen
+            </span>
+            <span className="mt-2 block max-w-2xl text-sm leading-6 text-[color:var(--month-ink-soft)]">
+              Die vollstaendige Buchungsliste bleibt erhalten, ist aber nur bei Bedarf ausgeklappt.
+            </span>
+          </span>
+          <span className="flex flex-wrap items-center gap-3">
+            <MonthChip tone="neutral">{month.transactions.length} Eintraege</MonthChip>
+            <span className="month-disclosure-pill">Ein-/ausklappen</span>
+          </span>
+        </summary>
         <div className="mt-7 space-y-4">
           {month.transactions.length === 0 ? (
             <EmptyReferenceCard>Keine Buchungen fuer diesen Monat vorhanden.</EmptyReferenceCard>
@@ -623,7 +659,7 @@ export default async function MonthDetailPage({
             ))
           )}
         </div>
-      </section>
+      </details>
     </MonthPageShell>
   );
 }
