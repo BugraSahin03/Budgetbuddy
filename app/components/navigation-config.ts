@@ -3,8 +3,6 @@ export const NAV_ITEMS = [
   { href: "/monate", label: "Monate" },
   { href: "/monatsvergleich", label: "Monatsvergleich" },
   { href: "/budgets", label: "Budgets" },
-  { href: "/transaktionen", label: "Transaktionen" },
-  { href: "/import", label: "Import" },
   { href: "/fixkosten", label: "Fixkosten" },
   { href: "/einstellungen", label: "Einstellungen" },
 ] as const;

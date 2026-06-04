@@ -20,6 +20,13 @@ describe("navigation config", () => {
     expect(NAV_ITEMS).toContainEqual({ href: "/monatsvergleich", label: "Monatsvergleich" });
   });
 
+  it("does not expose transaction and import as main navigation tabs", () => {
+    expect(NAV_ITEMS.some((item) => item.href === "/transaktionen")).toBe(false);
+    expect(NAV_ITEMS.some((item) => item.href === "/import")).toBe(false);
+    expect(NAV_ITEMS.some((item) => item.label === "Transaktionen")).toBe(false);
+    expect(NAV_ITEMS.some((item) => item.label === "Import")).toBe(false);
+  });
+
   it("matches top-level budgets path as active", () => {
     expect(isActivePath("/budgets", "/budgets")).toBe(true);
     expect(isActivePath("/", "/budgets")).toBe(false);
