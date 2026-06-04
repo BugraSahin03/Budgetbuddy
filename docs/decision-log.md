@@ -959,3 +959,18 @@ Auswirkung:
 
 - Fachliche Monatsinformationen bleiben auf der Monatsdetailseite; `/monate` wird zu einer ruhigen Navigationsflaeche.
 - Es werden keine Monatslogik, Readmodels oder Budget-/Transaktionsregeln geaendert.
+
+## 2026-06-04 - FIN-054 entfernt globale Kopfzeile und reduziert Monats-Hilfstexte
+
+Quelle/Ticket: `FIN-054`
+
+Erkenntnis/Entscheidung:
+
+- Die globale Kopfzeile mit Monatsfokus und statischen Status-Badges wird entfernt, weil sie fuer die aktuelle MVP-Navigation keinen fachlichen Mehrwert bietet.
+- In der Monatsdetailseite werden technische Monatslabels, `Aktuellster Monat` und erklaerende Hilfstexte weiter reduziert.
+- Monatsaktionen bleiben erreichbar, werden aber praeziser als kleine Aktionsbuttons rechts oben in ihren Karten platziert; die Buchungsliste nutzt ein Chevron als Disclosure-Steuerung.
+
+Auswirkung:
+
+- Die App-Shell und Monatsansicht wirken ruhiger und naeher an der FIN-047-Premium-UI.
+- Es werden keine Fachlogik, Navigationseintraege, Budget-, Fixkosten-, Transaktions- oder Importregeln geaendert.

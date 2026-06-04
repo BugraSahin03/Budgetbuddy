@@ -155,6 +155,7 @@ function ReferenceMetricCard({
   tone,
   marker,
   action,
+  actionClassName,
 }: {
   label: string;
   value: string;
@@ -162,6 +163,7 @@ function ReferenceMetricCard({
   tone: "income" | "expense";
   marker: string;
   action?: ReactNode;
+  actionClassName?: string;
 }) {
   const toneClasses =
     tone === "income"
@@ -171,7 +173,7 @@ function ReferenceMetricCard({
   const valueClass = tone === "income" ? "text-[#08766b]" : "text-[#f17680]";
 
   return (
-    <article className="month-reference-card min-h-[10rem] p-6">
+    <article className="month-reference-card relative min-h-[10rem] p-6">
       <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${toneClasses}`}>
         <span className="text-lg font-bold leading-none">{marker}</span>
       </div>
@@ -180,7 +182,7 @@ function ReferenceMetricCard({
         {value}
       </p>
       <p className="mt-2 text-xs font-medium text-[color:var(--month-ink-muted)]">{copy}</p>
-      {action ? <div className="mt-4">{action}</div> : null}
+      {action ? <div className={actionClassName ?? "mt-4"}>{action}</div> : null}
     </article>
   );
 }
@@ -272,12 +274,7 @@ export default async function MonthDetailPage({
             />
             {month.nextMonth ? (
               <MonthNavLink href={month.nextMonth.href} label={month.nextMonth.label} direction="next" />
-            ) : (
-              <span className="inline-flex items-center rounded-full border border-dashed border-[color:var(--month-line-strong)] bg-white/45 px-4 py-2 text-sm font-semibold text-[color:var(--month-ink-muted)]">
-                Aktuellster Monat
-              </span>
-            )}
-            <MonthChip tone="neutral">{month.monthKey}</MonthChip>
+            ) : null}
           </div>
         </div>
       </section>
@@ -326,13 +323,14 @@ export default async function MonthDetailPage({
           copy="Variable Ausgaben ohne separaten Fixkosten-Kontrollblock."
           tone="expense"
           marker="↗"
+          actionClassName="absolute right-6 top-6"
           action={
             <MonthDialog
               eyebrow="Fixkostenkontrolle"
               title="Plan und Ist-Kontrolle"
               description="Die Kontrolle bleibt im Monatskontext erreichbar, nimmt aber keinen dauerhaften Platz in der Uebersicht ein."
               triggerLabel="Fixkostenkontrolle"
-              triggerClassName="month-dialog-trigger month-dialog-trigger-subtle"
+              triggerClassName="month-dialog-trigger month-dialog-trigger-rose"
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
@@ -366,7 +364,6 @@ export default async function MonthDetailPage({
           <SectionHeader
             eyebrow="Budget Breakdown"
             title="Kategorien"
-            description="Budgetverbrauch pro Kategorie als ruhige Fortschrittsliste statt klassischer Tabelle."
             aside={
               <div className="flex flex-wrap items-center gap-3">
                 <MonthChip tone="accent">{month.dashboard.categoryRows.length} Kategorien</MonthChip>
@@ -573,18 +570,12 @@ export default async function MonthDetailPage({
 
       <details className="month-reference-panel month-disclosure bg-white/78">
         <summary className="month-disclosure-summary">
-          <span>
-            <span className="month-eyebrow">Alle Monatsbuchungen</span>
-            <span className="mt-2 block text-2xl font-extrabold tracking-[-0.045em] text-[color:var(--month-ink)]">
-              Zuordnung und Herkunft pruefen
-            </span>
-            <span className="mt-2 block max-w-2xl text-sm leading-6 text-[color:var(--month-ink-soft)]">
-              Die vollstaendige Buchungsliste bleibt erhalten, ist aber nur bei Bedarf ausgeklappt.
-            </span>
+          <span className="mt-2 block text-2xl font-extrabold tracking-[-0.045em] text-[color:var(--month-ink)]">
+            Alle Monatsbuchungen
           </span>
           <span className="flex flex-wrap items-center gap-3">
             <MonthChip tone="neutral">{month.transactions.length} Eintraege</MonthChip>
-            <span className="month-disclosure-pill">Ein-/ausklappen</span>
+            <span className="month-disclosure-chevron" aria-hidden="true">›</span>
           </span>
         </summary>
         <div className="mt-7 space-y-4">

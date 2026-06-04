@@ -370,3 +370,39 @@ body {
   background: #071b46;
   color: #ffffff;
 }
+
+/* FIN-054: lighter monthly actions and icon-only disclosure affordance. */
+.month-dialog-trigger-rose {
+  background: rgba(255, 241, 242, 0.82);
+  border-color: rgba(251, 113, 133, 0.22);
+  box-shadow: none;
+  color: #9f1239;
+  padding: 0.52rem 0.76rem;
+}
+
+.month-dialog-trigger-rose:hover {
+  background: rgba(255, 228, 230, 0.96);
+  box-shadow: 0 12px 28px rgba(159, 18, 57, 0.08);
+}
+
+.month-disclosure-chevron {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(7, 27, 70, 0.12);
+  border-radius: 999px;
+  color: var(--month-ink);
+  display: inline-flex;
+  font-size: 1.35rem;
+  font-weight: 900;
+  height: 2.35rem;
+  justify-content: center;
+  line-height: 1;
+  transition: transform 160ms ease, background 160ms ease;
+  width: 2.35rem;
+}
+
+.month-disclosure[open] .month-disclosure-chevron {
+  background: #071b46;
+  color: #ffffff;
+  transform: rotate(90deg);
+}
