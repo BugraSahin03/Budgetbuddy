@@ -944,3 +944,18 @@ Auswirkung:
 Folgeaktion:
 
 - Spaetere UI-Tickets koennen pruefen, ob Dialog- und Disclosure-Muster als wiederverwendbare Komponenten fuer weitere Seiten formalisiert werden sollen.
+
+## 2026-06-04 - FIN-051 reduziert `/monate` auf reine Monatsauswahl
+
+Quelle/Ticket: `FIN-051`
+
+Erkenntnis/Entscheidung:
+
+- Die Uebersichtsseite `/monate` dient ab jetzt nur noch der schnellen Auswahl verfuegbarer Monate.
+- Pro Monat wird nur noch der lesbare Monatsname mit Jahr angezeigt; technische Monatskeys und KPI-Vorschauwerte entfallen bewusst.
+- Der neueste Monat bleibt visuell leicht hervorgehoben, ohne daraus eine inhaltliche Monatsvorschau zu machen.
+
+Auswirkung:
+
+- Fachliche Monatsinformationen bleiben auf der Monatsdetailseite; `/monate` wird zu einer ruhigen Navigationsflaeche.
+- Es werden keine Monatslogik, Readmodels oder Budget-/Transaktionsregeln geaendert.
