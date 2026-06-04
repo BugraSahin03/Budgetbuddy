@@ -905,3 +905,23 @@ Auswirkung:
 Folgeaktion:
 
 - Spaetere Tickets koennen separat pruefen, ob aus der gebuendelten Verwaltungsoberflaeche spaeter auch fachliche oder logische Vereinfachungen folgen sollen, ohne FIN-042 im Nachhinein zu ueberladen.
+
+## 2026-06-04 - FIN-047 macht die Monatsansicht zum konkreten UI-Referenzscreen
+
+Quelle/Ticket: `FIN-047`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsdetailseite orientiert sich ab jetzt am gelieferten hellen Finanz-Referenzscreen und wird als erste konkrete visuelle Leitseite fuer weitere UI-Arbeit genutzt.
+- Der sichtbare Einstieg bleibt fachlich knapp: Monatskopf, prominente KPI-Karten fuer Einnahmen und Ausgaben, Budget-Breakdown nach Kategorien und die letzten fuenf Ausgaben.
+- Ein grosser Balance-Hero sowie ein `Budget Utilized`-KPI werden bewusst nicht uebernommen, weil diese Elemente fachlich nicht zur aktuellen BudgetBuddy-Monatsarbeit gehoeren.
+- Die bestehende Monatsarbeit fuer Budgetwerte, Sonderbudgets, Fixkostenkontrolle und Buchungszuordnung bleibt darunter erhalten, aber ruhiger und kartiger statt als schwere Tabellenflaeche.
+
+Auswirkung:
+
+- Die Monatsseite kann als konkrete Referenz fuer kommende UI-Tickets dienen, ohne Monatslogik, Budgetlogik oder Import-/Zuordnungsregeln zu veraendern.
+- Die neue visuelle Richtung priorisiert helle Flaechen, Navy-Typografie, weiche Karten, dezente Akzente und klare Finanzhierarchie.
+
+Folgeaktion:
+
+- Weitere UI-Tickets sollten diese Monatsansicht als Massstab nehmen und Dashboard/Shell nicht mehr automatisch als alleinige visuelle Referenz behandeln.

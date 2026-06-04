@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import Link from "next/link";
 
 import {
@@ -6,16 +7,8 @@ import {
   updateMonthlySpecialBudgetStateAction,
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
+import { MonthChip, MonthPageShell } from "@/app/monate/months-ui";
 import {
-  MonthChip,
-  MonthHero,
-  MonthPageShell,
-  MonthSection,
-  MonthStatCard,
-  MonthTableShell,
-} from "@/app/monate/months-ui";
-import {
-  buildDashboardKpis,
   categoryStatusLabel,
   categoryStatusTone,
   countOverBudgetWarnings,
@@ -23,7 +16,7 @@ import {
   specialBudgetStatusLabel,
   specialBudgetStatusTone,
 } from "@/src/dashboard/ui";
-import { getMonthDetail } from "@/src/months/repository";
+import { getMonthDetail, type MonthDetailTransactionRow } from "@/src/months/repository";
 import {
   listActiveCategoryOptions,
   listActiveSpecialBudgetOptionsForMonth,
@@ -35,6 +28,15 @@ type MonthDetailPageProps = {
   params: Promise<{ monthKey: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
+
+const categoryAccents = [
+  "from-emerald-400 to-teal-300 text-emerald-950 bg-emerald-100",
+  "from-blue-500 to-sky-400 text-blue-950 bg-blue-100",
+  "from-amber-400 to-orange-300 text-amber-950 bg-amber-100",
+  "from-violet-500 to-fuchsia-400 text-violet-950 bg-violet-100",
+  "from-cyan-400 to-blue-300 text-cyan-950 bg-cyan-100",
+  "from-rose-400 to-red-300 text-rose-950 bg-rose-100",
+] as const;
 
 function toSingleParam(value: string | string[] | undefined): string | null {
   if (typeof value === "string") {
@@ -65,7 +67,7 @@ function transactionTypeTone(type: string): string {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
 
-  return "border-slate-200 bg-slate-100 text-slate-700";
+  return "border-red-200 bg-red-50 text-red-700";
 }
 
 function transactionTypeLabel(type: string): string {
@@ -100,6 +102,25 @@ function assignmentLabel(row: {
   return "Keine Zuordnung noetig";
 }
 
+function transactionSubtitle(transaction: MonthDetailTransactionRow): string {
+  const account = transaction.destinationAccountName
+    ? `${transaction.accountName} -> ${transaction.destinationAccountName}`
+    : transaction.accountName;
+
+  return [transaction.bookingDate, account, assignmentLabel(transaction)].filter(Boolean).join(" · ");
+}
+
+function categoryUsagePercent(row: {
+  budgetAmountCents: number | null;
+  spentAmountCents: number;
+}): number {
+  if (row.budgetAmountCents === null || row.budgetAmountCents <= 0) {
+    return 0;
+  }
+
+  return Math.min(100, Math.round((row.spentAmountCents / row.budgetAmountCents) * 100));
+}
+
 function MonthNavLink({
   href,
   label,
@@ -115,40 +136,85 @@ function MonthNavLink({
   return (
     <Link
       href={href}
-      className="group flex min-w-[12rem] items-center justify-between rounded-[1.25rem] border border-[color:var(--month-line)] bg-white/80 px-4 py-3 text-left shadow-[0_12px_30px_rgba(15,23,42,0.05)] transition hover:-translate-y-0.5 hover:border-[color:var(--month-line-strong)]"
+      className="group inline-flex items-center gap-3 rounded-full border border-white/70 bg-white/72 px-4 py-2 text-sm font-semibold text-[color:var(--month-ink)] shadow-[0_12px_28px_rgba(7,27,70,0.07)] backdrop-blur transition hover:-translate-y-0.5 hover:bg-white"
     >
-      <div>
-        <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
-          {description}
-        </p>
-        <p className="mt-1 text-sm font-semibold text-[color:var(--month-ink)]">{label}</p>
-      </div>
-      <span className="text-lg text-[color:var(--month-ink-soft)] transition group-hover:text-[color:var(--month-ink)]">
-        {arrow}
+      <span className="text-[color:var(--month-ink-soft)]">{arrow}</span>
+      <span>
+        <span className="sr-only">{description}: </span>
+        {label}
       </span>
     </Link>
   );
 }
 
-function MonthMutedCard({
+function ReferenceMetricCard({
   label,
   value,
   copy,
+  tone,
+  marker,
 }: {
   label: string;
-  value?: string;
+  value: string;
   copy: string;
+  tone: "income" | "expense";
+  marker: string;
+}) {
+  const toneClasses =
+    tone === "income"
+      ? "bg-[#8bf0df] text-[#055c52]"
+      : "bg-[#74171d] text-white";
+
+  const valueClass = tone === "income" ? "text-[#08766b]" : "text-[#f17680]";
+
+  return (
+    <article className="month-reference-card min-h-[10rem] p-6">
+      <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${toneClasses}`}>
+        <span className="text-lg font-bold leading-none">{marker}</span>
+      </div>
+      <p className="mt-5 text-sm font-semibold text-[color:var(--month-ink-soft)]">{label}</p>
+      <p className={`mt-2 text-[2rem] font-extrabold tracking-[-0.055em] ${valueClass}`}>
+        {value}
+      </p>
+      <p className="mt-2 text-xs font-medium text-[color:var(--month-ink-muted)]">{copy}</p>
+    </article>
+  );
+}
+
+function EmptyReferenceCard({ children }: { children: ReactNode }) {
+  return (
+    <div className="rounded-[1.4rem] border border-dashed border-[color:var(--month-line-strong)] bg-white/54 px-5 py-8 text-center text-sm leading-6 text-[color:var(--month-ink-soft)]">
+      {children}
+    </div>
+  );
+}
+
+function SectionHeader({
+  eyebrow,
+  title,
+  description,
+  aside,
+}: {
+  eyebrow: string;
+  title: string;
+  description?: string;
+  aside?: ReactNode;
 }) {
   return (
-    <article className="rounded-[1.35rem] border border-[color:var(--month-line)] bg-[color:var(--month-surface-muted)] p-5">
-      <p className="month-eyebrow">{label}</p>
-      {value ? (
-        <p className="mt-3 text-[1.7rem] font-semibold tracking-[-0.04em] text-[color:var(--month-ink)]">
-          {value}
-        </p>
-      ) : null}
-      <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">{copy}</p>
-    </article>
+    <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div>
+        <p className="month-eyebrow">{eyebrow}</p>
+        <h2 className="mt-2 text-2xl font-extrabold tracking-[-0.045em] text-[color:var(--month-ink)]">
+          {title}
+        </h2>
+        {description ? (
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-[color:var(--month-ink-soft)]">
+            {description}
+          </p>
+        ) : null}
+      </div>
+      {aside}
+    </div>
   );
 }
 
@@ -163,55 +229,53 @@ export default async function MonthDetailPage({
   const month = getMonthDetail(monthKey);
   const categoryOptions = listActiveCategoryOptions();
   const specialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(month.monthKey);
-  const kpis = buildDashboardKpis(month.dashboard);
   const warningCount = countOverBudgetWarnings(month.dashboard);
+  const recentExpenses = month.transactions
+    .filter((transaction) => transaction.transactionType === "expense")
+    .slice(0, 5);
 
   return (
     <MonthPageShell>
-      <MonthHero
-        eyebrow="Monatsdetail"
-        title={month.label}
-        description="Ein Monat, eine vollstaendige Sicht: Kennzahlen, Budgets, Fixkostenblock und Buchungen in einer klaren Lesereihenfolge."
-        aside={
-          <div className="flex flex-col gap-3 md:items-end">
-            <MonthChip tone="neutral">{month.monthKey}</MonthChip>
-            <div className="flex flex-wrap gap-3">
-              <MonthNavLink
-                href={month.previousMonth.href}
-                label={month.previousMonth.label}
-                direction="previous"
-              />
-              {month.nextMonth ? (
-                <MonthNavLink
-                  href={month.nextMonth.href}
-                  label={month.nextMonth.label}
-                  direction="next"
-                />
-              ) : (
-                <div className="flex min-w-[12rem] items-center justify-between rounded-[1.25rem] border border-dashed border-[color:var(--month-line)] bg-white/55 px-4 py-3 text-left text-[color:var(--month-ink-muted)]">
-                  <div>
-                    <p className="text-[0.72rem] font-semibold uppercase tracking-[0.16em]">
-                      Naechster Monat
-                    </p>
-                    <p className="mt-1 text-sm font-semibold">Aktuellster Monat</p>
-                  </div>
-                  <span className="text-lg">→</span>
-                </div>
-              )}
+      <section className="month-reference-hero">
+        <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--month-ink)] text-lg font-bold text-white shadow-[0_16px_32px_rgba(7,27,70,0.18)]">
+              BB
             </div>
+            <p className="text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
+              BudgetBuddy
+            </p>
           </div>
-        }
-      />
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-lg font-bold text-[color:var(--month-ink)] shadow-[0_10px_24px_rgba(7,27,70,0.06)]">
+            /
+          </div>
+        </div>
 
-      <section className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-        {kpis.map((card) => (
-          <MonthStatCard
-            key={card.label}
-            label={card.label}
-            value={card.value}
-            tone={card.label === "Verfuegbar" && month.dashboard.totals.availableCents < 0 ? "danger" : "default"}
-          />
-        ))}
+        <div className="mt-8 max-w-3xl md:ml-16 md:mt-10">
+          <p className="month-eyebrow">Monatsueberblick</p>
+          <h1 className="mt-1 text-[clamp(2.5rem,8vw,4.6rem)] font-black leading-[0.92] tracking-[-0.085em] text-[color:var(--month-ink)]">
+            {month.label}
+          </h1>
+          <p className="mt-5 flex items-center gap-2 text-sm font-extrabold text-[#14766e]">
+            <span aria-hidden="true">↗</span>
+            Einnahmen, Ausgaben und Budgetarbeit in einer ruhigen Finanzsicht.
+          </p>
+          <div className="mt-7 flex flex-wrap gap-3">
+            <MonthNavLink
+              href={month.previousMonth.href}
+              label={month.previousMonth.label}
+              direction="previous"
+            />
+            {month.nextMonth ? (
+              <MonthNavLink href={month.nextMonth.href} label={month.nextMonth.label} direction="next" />
+            ) : (
+              <span className="inline-flex items-center rounded-full border border-dashed border-[color:var(--month-line-strong)] bg-white/45 px-4 py-2 text-sm font-semibold text-[color:var(--month-ink-muted)]">
+                Aktuellster Monat
+              </span>
+            )}
+            <MonthChip tone="neutral">{month.monthKey}</MonthChip>
+          </div>
+        </div>
       </section>
 
       {warningCount > 0 ? (
@@ -227,7 +291,6 @@ export default async function MonthDetailPage({
                 auf Monatsseite geprueft werden.
               </p>
             </div>
-
             <MonthChip tone="warn">Bitte zuerst pruefen</MonthChip>
           </div>
         </section>
@@ -245,297 +308,322 @@ export default async function MonthDetailPage({
         </section>
       ) : null}
 
-      <MonthSection
-        eyebrow="Budgets"
-        title="Kategorien im Monatskontext"
-        description="Hier wird der Monatswert pro Kategorie gepflegt. Ohne Monats-Override greift automatisch der globale Standardwert aus /budgets."
-        aside={<MonthChip tone="accent">Kategorien {month.dashboard.categoryRows.length}</MonthChip>}
-      >
-        <MonthTableShell>
-          <table className="month-table min-w-full">
-            <thead>
-              <tr>
-                <th>Kategorie</th>
-                <th>Budget</th>
-                <th>Ist</th>
-                <th>Rest</th>
-                <th>Status</th>
-                <th>Quelle</th>
-              </tr>
-            </thead>
-            <tbody>
-              {month.dashboard.categoryRows.map((row) => (
-                <tr key={row.categoryId}>
-                  <td className="font-semibold text-[color:var(--month-ink)]">{row.categoryName}</td>
-                  <td>
-                    <form action={setMonthlyBudgetOverrideAction} className="flex min-w-[15rem] flex-col gap-2 md:min-w-[17rem]">
-                      <input type="hidden" name="monthKey" value={month.monthKey} />
-                      <input type="hidden" name="categoryId" value={row.categoryId} />
-                      <div className="flex items-center gap-2">
-                        <input
-                          name="budgetAmount"
-                          inputMode="decimal"
-                          defaultValue={toInputAmount(row.monthOverrideAmountCents ?? row.budgetAmountCents)}
-                          placeholder={row.defaultBudgetAmountCents === null ? "z. B. 250.00" : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`}
-                          className="w-full rounded-lg border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
-                        />
-                        <button
-                          type="submit"
-                          className="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-xs font-semibold text-sky-800 transition hover:bg-sky-200"
-                        >
-                          Speichern
-                        </button>
+      <section className="grid gap-6 md:grid-cols-2">
+        <ReferenceMetricCard
+          label="Einnahmen"
+          value={formatEuro(month.dashboard.totals.incomeCents)}
+          copy="Alle Einkommen und Rueckerstattungen dieses Monats."
+          tone="income"
+          marker="↙"
+        />
+        <ReferenceMetricCard
+          label="Ausgaben"
+          value={formatEuro(month.dashboard.totals.expenseCents)}
+          copy="Variable Ausgaben ohne separaten Fixkosten-Kontrollblock."
+          tone="expense"
+          marker="↗"
+        />
+      </section>
+
+      <section className="grid gap-7 xl:grid-cols-[1.08fr_1fr]">
+        <article className="month-reference-panel bg-[#dff4fd]">
+          <SectionHeader
+            eyebrow="Budget Breakdown"
+            title="Kategorien"
+            description="Budgetverbrauch pro Kategorie als ruhige Fortschrittsliste statt klassischer Tabelle."
+            aside={<MonthChip tone="accent">{month.dashboard.categoryRows.length} Kategorien</MonthChip>}
+          />
+
+          <div className="mt-7 space-y-5">
+            {month.dashboard.categoryRows.length === 0 ? (
+              <EmptyReferenceCard>Noch keine Kategorien fuer diesen Monat vorhanden.</EmptyReferenceCard>
+            ) : (
+              month.dashboard.categoryRows.map((row, index) => {
+                const accent = categoryAccents[index % categoryAccents.length];
+                const usagePercent = categoryUsagePercent(row);
+
+                return (
+                  <div key={row.categoryId} className="grid gap-3">
+                    <div className="flex items-center gap-4">
+                      <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${accent}`}>
+                        <span className="text-sm font-black">{row.categoryName.slice(0, 2).toUpperCase()}</span>
                       </div>
-                      <p className="text-xs leading-5 text-[color:var(--month-ink-soft)]">
-                        Leerer Wert entfernt nur den Monats-Override fuer {month.label}.
-                      </p>
-                    </form>
-                  </td>
-                  <td>{formatEuro(row.spentAmountCents)}</td>
-                  <td>{row.remainingAmountCents === null ? "-" : formatEuro(row.remainingAmountCents)}</td>
-                  <td>
-                    <span
-                      className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${categoryStatusTone(row)}`}
-                    >
-                      {categoryStatusLabel(row)}
-                    </span>
-                  </td>
-                  <td className="text-xs text-[color:var(--month-ink-soft)]">
-                    {row.monthOverrideAmountCents !== null
-                      ? "Monats-Override aktiv"
-                      : row.defaultBudgetAmountCents !== null
-                        ? "Globaler Standard"
-                        : "Noch kein Budgetwert"}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </MonthTableShell>
-      </MonthSection>
-
-      <MonthSection
-        eyebrow="Sonderbudgets"
-        title="Monatsspezifische Ausgabenziele"
-        description="Sonderbudgets stehen sichtbar neben den regulären Kategorien und bleiben als eigene Monatsentscheidung lesbar."
-        aside={<MonthChip tone="neutral">{month.dashboard.specialBudgetRows.length} Eintraege</MonthChip>}
-      >
-        <MonthTableShell>
-          <table className="month-table min-w-full">
-            <thead>
-              <tr>
-                <th>Sonderbudget</th>
-                <th>Geplant</th>
-                <th>Ist</th>
-                <th>Rest</th>
-                <th>Status</th>
-                <th>Aktion</th>
-              </tr>
-            </thead>
-            <tbody>
-              {month.dashboard.specialBudgetRows.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="py-8 text-center text-sm text-[color:var(--month-ink-soft)]">
-                    Keine Sonderbudgets fuer diesen Monat vorhanden.
-                  </td>
-                </tr>
-              ) : (
-                month.dashboard.specialBudgetRows.map((row) => (
-                  <tr key={row.id}>
-                    <td className="font-semibold text-[color:var(--month-ink)]">{row.name}</td>
-                    <td>
-                      <form action={updateMonthlySpecialBudgetAction} className="flex min-w-[15rem] flex-col gap-2 md:min-w-[17rem]">
-                        <input type="hidden" name="monthKey" value={month.monthKey} />
-                        <input type="hidden" name="specialBudgetId" value={row.id} />
-                        <div className="flex items-center gap-2">
-                          <input
-                            name="plannedAmount"
-                            inputMode="decimal"
-                            defaultValue={toInputAmount(row.plannedAmountCents)}
-                            placeholder="z. B. 120.00"
-                            className="w-full rounded-lg border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
-                          />
-                          <button
-                            type="submit"
-                            className="rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-xs font-semibold text-sky-800 transition hover:bg-sky-200"
-                          >
-                            Speichern
-                          </button>
-                        </div>
-                        <p className="text-xs leading-5 text-[color:var(--month-ink-soft)]">
-                          Wirkt nur fuer dieses Sonderbudget in {month.label}.
-                        </p>
-                      </form>
-                    </td>
-                    <td>{formatEuro(row.actualExpenseCents)}</td>
-                    <td>{formatEuro(row.remainingAmountCents)}</td>
-                    <td>
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${specialBudgetStatusTone(row)}`}
-                      >
-                        {specialBudgetStatusLabel(row)}
-                      </span>
-                    </td>
-                    <td>
-                      <form action={updateMonthlySpecialBudgetStateAction}>
-                        <input type="hidden" name="monthKey" value={month.monthKey} />
-                        <input type="hidden" name="specialBudgetId" value={row.id} />
-                        {row.isActive ? (
-                          <button
-                            type="submit"
-                            name="intent"
-                            value="deactivate"
-                            className="rounded-lg border border-slate-300 bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
-                          >
-                            Deaktivieren
-                          </button>
-                        ) : (
-                          <button
-                            type="submit"
-                            name="intent"
-                            value="reactivate"
-                            className="rounded-lg border border-emerald-300 bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-200"
-                          >
-                            Reaktivieren
-                          </button>
-                        )}
-                      </form>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </MonthTableShell>
-      </MonthSection>
-
-      <MonthSection
-        eyebrow="Fixkostenblock"
-        title="Plan und Kontrollsicht nebeneinander"
-        description="Der Planbetrag bleibt sichtbar, waehrend erkannte Importtreffer als ruhige Kontrollinformation danebenstehen."
-        aside={<MonthChip tone="violet">Ist-Kontrolle {formatEuro(month.dashboard.totals.actualFixedCostsCents)}</MonthChip>}
-      >
-        <div className="grid gap-4 lg:grid-cols-2">
-          <MonthMutedCard
-            label="Fixkosten (Plan)"
-            value={formatEuro(month.dashboard.totals.plannedFixedCostsCents)}
-            copy="Der monatliche Planblock reduziert den verfuegbaren Betrag direkt und bleibt als stabile Leitplanke sichtbar."
-          />
-          <MonthMutedCard
-            label="Kontrollsicht"
-            copy={
-              month.dashboard.totals.actualFixedCostsCents > 0
-                ? "Es wurden importierte Fixkosten-Kontrolltreffer in diesem Monat erkannt."
-                : "Fuer diesen Monat gibt es aktuell keinen importierten Fixkosten-Kontrollhinweis."
-            }
-          />
-        </div>
-      </MonthSection>
-
-      <MonthSection
-        eyebrow="Buchungen"
-        title="Komplette Buchungsliste des Monats"
-        description="Alle Monatsbuchungen bleiben in einer konsistenten Tabelle lesbar, inklusive Typ, Zuordnung und Quelle."
-        aside={<MonthChip tone="neutral">{month.transactions.length} Eintraege</MonthChip>}
-      >
-        <MonthTableShell>
-          <table className="month-table min-w-full">
-            <thead>
-              <tr>
-                <th>Datum</th>
-                <th>Buchung</th>
-                <th>Konto</th>
-                <th>Betrag</th>
-                <th>Typ</th>
-                <th>Zuordnung</th>
-                <th>Quelle</th>
-              </tr>
-            </thead>
-            <tbody>
-              {month.transactions.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="py-8 text-center text-sm text-[color:var(--month-ink-soft)]">
-                    Keine Buchungen fuer diesen Monat vorhanden.
-                  </td>
-                </tr>
-              ) : (
-                month.transactions.map((transaction) => (
-                  <tr key={`${transaction.sourceType}-${transaction.id}`}>
-                    <td>{transaction.bookingDate}</td>
-                    <td className="font-semibold text-[color:var(--month-ink)]">{transaction.description}</td>
-                    <td>
-                      {transaction.destinationAccountName
-                        ? `${transaction.accountName} -> ${transaction.destinationAccountName}`
-                        : transaction.accountName}
-                    </td>
-                    <td>{formatEuro(transaction.amountCents)}</td>
-                    <td>
-                      <span
-                        className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${transactionTypeTone(transaction.transactionType)}`}
-                      >
-                        {transactionTypeLabel(transaction.transactionType)}
-                      </span>
-                    </td>
-                    <td>
-                      {transaction.transactionType === "expense" ? (
-                        <form
-                          action={updateMonthlyTransactionAssignmentAction}
-                          className="grid min-w-[18rem] gap-2"
-                        >
-                          <input type="hidden" name="monthKey" value={month.monthKey} />
-                          <input type="hidden" name="transactionId" value={transaction.id} />
-                          <div className="grid gap-2 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-                            <select
-                              name="categoryId"
-                              defaultValue={String(transaction.categoryId ?? "")}
-                              className="rounded-lg border border-[color:var(--month-line)] bg-white px-3 py-2 text-xs text-[color:var(--month-ink)]"
-                            >
-                              <option value="">Kategorie</option>
-                              {categoryOptions.map((category) => (
-                                <option key={category.id} value={category.id}>
-                                  {category.name}
-                                </option>
-                              ))}
-                            </select>
-                            <select
-                              name="specialBudgetId"
-                              defaultValue={String(transaction.specialBudgetId ?? "")}
-                              className="rounded-lg border border-[color:var(--month-line)] bg-white px-3 py-2 text-xs text-[color:var(--month-ink)]"
-                            >
-                              <option value="">Sonderbudget</option>
-                              {specialBudgetOptions.map((budget) => (
-                                <option key={budget.id} value={budget.id}>
-                                  {budget.name}
-                                </option>
-                              ))}
-                            </select>
-                            <button
-                              type="submit"
-                              className="rounded-lg border border-[color:var(--month-line-strong)] bg-[color:var(--month-accent-soft)] px-3 py-2 text-xs font-semibold text-[color:var(--month-ink)] transition hover:-translate-y-0.5"
-                            >
-                              Speichern
-                            </button>
-                          </div>
-                          <p className="text-xs text-[color:var(--month-ink-soft)]">
-                            {assignmentLabel(transaction)}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center justify-between gap-3">
+                          <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
+                            {row.categoryName}
                           </p>
-                        </form>
-                      ) : (
-                        assignmentLabel(transaction)
-                      )}
-                    </td>
-                    <td>
-                      {transaction.sourceType === "import"
-                        ? `Import${transaction.importRunId ? ` #${transaction.importRunId}` : ""}`
-                        : "Manuell"}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </MonthTableShell>
-      </MonthSection>
+                          <p className="shrink-0 text-sm font-extrabold text-[color:var(--month-ink)]">
+                            {formatEuro(row.spentAmountCents)}
+                          </p>
+                        </div>
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/85">
+                          <div
+                            className={`h-full rounded-full bg-gradient-to-r ${accent.split(" ").slice(0, 2).join(" ")}`}
+                            style={{ width: `${usagePercent}%` }}
+                          />
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
+                          <span>{row.budgetAmountCents === null ? "Budget fehlt" : `${usagePercent}% genutzt`}</span>
+                          <span>{row.budgetAmountCents === null ? "Kein Planwert" : `Plan ${formatEuro(row.budgetAmountCents)}`}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </article>
+
+        <article className="month-reference-panel bg-white/82">
+          <SectionHeader
+            eyebrow="Letzte Bewegung"
+            title="Letzte Ausgaben"
+            aside={<span className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--month-ink)]">Top 5</span>}
+          />
+
+          <div className="mt-7 space-y-4">
+            {recentExpenses.length === 0 ? (
+              <EmptyReferenceCard>Keine Ausgaben fuer diesen Monat vorhanden.</EmptyReferenceCard>
+            ) : (
+              recentExpenses.map((transaction, index) => (
+                <div key={`${transaction.sourceType}-${transaction.id}`} className="month-expense-row">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#d8eef9] text-sm font-black text-[color:var(--month-ink)]">
+                    {String(index + 1).padStart(2, "0")}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
+                      {transaction.description}
+                    </p>
+                    <p className="mt-1 truncate text-xs font-semibold text-[color:var(--month-ink-soft)]">
+                      {transactionSubtitle(transaction)}
+                    </p>
+                  </div>
+                  <p className="shrink-0 text-base font-black tracking-[-0.035em] text-[#f17680]">
+                    {formatEuro(transaction.amountCents)}
+                  </p>
+                </div>
+              ))
+            )}
+          </div>
+        </article>
+      </section>
+
+      <section className="month-reference-panel bg-white/74">
+        <SectionHeader
+          eyebrow="Monatsarbeit"
+          title="Budgetwerte pflegen"
+          description="Die Referenzansicht bleibt leicht, die fachliche Pflege bleibt direkt darunter im selben Monatskontext moeglich."
+        />
+        <div className="mt-7 grid gap-4 lg:grid-cols-2">
+          {month.dashboard.categoryRows.map((row) => (
+            <article key={row.categoryId} className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-5 shadow-[0_14px_30px_rgba(7,27,70,0.045)]">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h3 className="text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
+                    {row.categoryName}
+                  </h3>
+                  <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
+                    Ist {formatEuro(row.spentAmountCents)} · Rest {row.remainingAmountCents === null ? "-" : formatEuro(row.remainingAmountCents)}
+                  </p>
+                </div>
+                <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${categoryStatusTone(row)}`}>
+                  {categoryStatusLabel(row)}
+                </span>
+              </div>
+              <form action={setMonthlyBudgetOverrideAction} className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                <input type="hidden" name="monthKey" value={month.monthKey} />
+                <input type="hidden" name="categoryId" value={row.categoryId} />
+                <input
+                  name="budgetAmount"
+                  inputMode="decimal"
+                  defaultValue={toInputAmount(row.monthOverrideAmountCents ?? row.budgetAmountCents)}
+                  placeholder={row.defaultBudgetAmountCents === null ? "z. B. 250.00" : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`}
+                  className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
+                />
+                <button type="submit" className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5">
+                  Speichern
+                </button>
+              </form>
+              <p className="mt-3 text-xs leading-5 text-[color:var(--month-ink-soft)]">
+                Leerer Wert entfernt nur den Monats-Override fuer {month.label}.
+              </p>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section className="grid gap-7 xl:grid-cols-2">
+        <article className="month-reference-panel bg-white/76">
+          <SectionHeader
+            eyebrow="Sonderbudgets"
+            title="Monatsspezifische Ausgabenziele"
+            aside={<MonthChip tone="neutral">{month.dashboard.specialBudgetRows.length} Eintraege</MonthChip>}
+          />
+          <div className="mt-7 space-y-4">
+            {month.dashboard.specialBudgetRows.length === 0 ? (
+              <EmptyReferenceCard>Keine Sonderbudgets fuer diesen Monat vorhanden.</EmptyReferenceCard>
+            ) : (
+              month.dashboard.specialBudgetRows.map((row) => (
+                <article key={row.id} className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-5">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <h3 className="text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
+                        {row.name}
+                      </h3>
+                      <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
+                        Ist {formatEuro(row.actualExpenseCents)} · Rest {formatEuro(row.remainingAmountCents)}
+                      </p>
+                    </div>
+                    <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${specialBudgetStatusTone(row)}`}>
+                      {specialBudgetStatusLabel(row)}
+                    </span>
+                  </div>
+                  <form action={updateMonthlySpecialBudgetAction} className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
+                    <input type="hidden" name="monthKey" value={month.monthKey} />
+                    <input type="hidden" name="specialBudgetId" value={row.id} />
+                    <input
+                      name="plannedAmount"
+                      inputMode="decimal"
+                      defaultValue={toInputAmount(row.plannedAmountCents)}
+                      placeholder="z. B. 120.00"
+                      className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
+                    />
+                    <button type="submit" className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5">
+                      Speichern
+                    </button>
+                  </form>
+                  <form action={updateMonthlySpecialBudgetStateAction} className="mt-3">
+                    <input type="hidden" name="monthKey" value={month.monthKey} />
+                    <input type="hidden" name="specialBudgetId" value={row.id} />
+                    {row.isActive ? (
+                      <button type="submit" name="intent" value="deactivate" className="text-xs font-bold text-[color:var(--month-ink-soft)] underline decoration-[color:var(--month-line-strong)] underline-offset-4">
+                        Sonderbudget deaktivieren
+                      </button>
+                    ) : (
+                      <button type="submit" name="intent" value="reactivate" className="text-xs font-bold text-emerald-700 underline decoration-emerald-200 underline-offset-4">
+                        Sonderbudget reaktivieren
+                      </button>
+                    )}
+                  </form>
+                </article>
+              ))
+            )}
+          </div>
+        </article>
+
+        <article className="month-reference-panel bg-white/76">
+          <SectionHeader
+            eyebrow="Fixkostenblock"
+            title="Plan und Kontrolle"
+            aside={<MonthChip tone="violet">Kontrollsicht</MonthChip>}
+          />
+          <div className="mt-7 grid gap-4 sm:grid-cols-2">
+            <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
+              <p className="month-eyebrow">Fixkosten (Plan)</p>
+              <p className="mt-3 text-3xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
+                {formatEuro(month.dashboard.totals.plannedFixedCostsCents)}
+              </p>
+              <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
+                Stabiler Planblock fuer die Verfuegbarkeit dieses Monats.
+              </p>
+            </div>
+            <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
+              <p className="month-eyebrow">Ist-Kontrolle</p>
+              <p className="mt-3 text-3xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
+                {formatEuro(month.dashboard.totals.actualFixedCostsCents)}
+              </p>
+              <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
+                {month.dashboard.totals.actualFixedCostsCents > 0
+                  ? "Importierte Fixkosten-Kontrolltreffer wurden erkannt."
+                  : "Aktuell kein importierter Fixkosten-Kontrollhinweis."}
+              </p>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section className="month-reference-panel bg-white/78">
+        <SectionHeader
+          eyebrow="Alle Monatsbuchungen"
+          title="Zuordnung und Herkunft pruefen"
+          description="Die vollstaendige Buchungsliste bleibt fuer die fachliche Monatsarbeit erhalten, aber ohne schwere Tabellenoptik."
+          aside={<MonthChip tone="neutral">{month.transactions.length} Eintraege</MonthChip>}
+        />
+        <div className="mt-7 space-y-4">
+          {month.transactions.length === 0 ? (
+            <EmptyReferenceCard>Keine Buchungen fuer diesen Monat vorhanden.</EmptyReferenceCard>
+          ) : (
+            month.transactions.map((transaction) => (
+              <article key={`${transaction.sourceType}-${transaction.id}`} className="rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/86 p-5 shadow-[0_12px_28px_rgba(7,27,70,0.04)]">
+                <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-start">
+                  <div className="flex min-w-0 gap-4">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#d8eef9] text-xs font-black text-[color:var(--month-ink)]">
+                      {transaction.bookingDate.slice(5)}
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="truncate text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
+                        {transaction.description}
+                      </h3>
+                      <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
+                        {transactionSubtitle(transaction)}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        <span className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${transactionTypeTone(transaction.transactionType)}`}>
+                          {transactionTypeLabel(transaction.transactionType)}
+                        </span>
+                        <span className="inline-flex rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-medium text-[color:var(--month-ink-soft)]">
+                          {transaction.sourceType === "import"
+                            ? `Import${transaction.importRunId ? ` #${transaction.importRunId}` : ""}`
+                            : "Manuell"}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-right text-xl font-black tracking-[-0.045em] text-[color:var(--month-ink)]">
+                    {formatEuro(transaction.amountCents)}
+                  </p>
+                </div>
+
+                {transaction.transactionType === "expense" ? (
+                  <form action={updateMonthlyTransactionAssignmentAction} className="mt-5 grid gap-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                    <input type="hidden" name="monthKey" value={month.monthKey} />
+                    <input type="hidden" name="transactionId" value={transaction.id} />
+                    <select
+                      name="categoryId"
+                      defaultValue={String(transaction.categoryId ?? "")}
+                      className="rounded-xl border border-[color:var(--month-line)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)]"
+                    >
+                      <option value="">Kategorie</option>
+                      {categoryOptions.map((category) => (
+                        <option key={category.id} value={category.id}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      name="specialBudgetId"
+                      defaultValue={String(transaction.specialBudgetId ?? "")}
+                      className="rounded-xl border border-[color:var(--month-line)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)]"
+                    >
+                      <option value="">Sonderbudget</option>
+                      {specialBudgetOptions.map((budget) => (
+                        <option key={budget.id} value={budget.id}>
+                          {budget.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button type="submit" className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5">
+                      Speichern
+                    </button>
+                  </form>
+                ) : null}
+              </article>
+            ))
+          )}
+        </div>
+      </section>
     </MonthPageShell>
   );
 }
