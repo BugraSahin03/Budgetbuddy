@@ -22,20 +22,51 @@ function isFixedCostControlLabel(label: string): boolean {
   return label.startsWith("Fixkosten-Kontrolle:");
 }
 
-export function ImportForm() {
+export function resolveEffectiveMonthDefault(params: {
+  detectedMonthKey: string | null;
+  defaultEffectiveMonthKey?: string;
+  fallbackMonthKey: string;
+  surface?: "default" | "embedded";
+}): string {
+  if (params.surface === "embedded" && params.defaultEffectiveMonthKey) {
+    return params.defaultEffectiveMonthKey;
+  }
+
+  return params.detectedMonthKey ?? params.defaultEffectiveMonthKey ?? params.fallbackMonthKey;
+}
+
+export function ImportForm({
+  defaultEffectiveMonthKey,
+  returnMonthKey,
+  surface = "default",
+}: {
+  defaultEffectiveMonthKey?: string;
+  returnMonthKey?: string;
+  surface?: "default" | "embedded";
+}) {
   const [state, formAction, isPending] = useActionState(
     parseSparkasseCsvAction,
     importPreviewInitialState,
   );
   const fallbackMonthKey = new Date().toISOString().slice(0, 7);
-  const effectiveMonthDefault = state.detectedMonthKey ?? fallbackMonthKey;
+  const effectiveMonthDefault = resolveEffectiveMonthDefault({
+    detectedMonthKey: state.detectedMonthKey,
+    defaultEffectiveMonthKey,
+    fallbackMonthKey,
+    surface,
+  });
   const fixedCostControls = state.suggestions.filter((item) =>
     isFixedCostControlLabel(item.label),
   );
+  const formSurfaceClass =
+    surface === "embedded"
+      ? "space-y-3 rounded-[1.5rem] border border-[color:var(--month-line)] bg-white/78 p-5"
+      : "space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm";
 
   return (
     <div className="space-y-4">
-      <form action={formAction} className="space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+      <form action={formAction} className={formSurfaceClass}>
+        {returnMonthKey ? <input type="hidden" name="returnMonthKey" value={returnMonthKey} /> : null}
         <div>
           <label htmlFor="sparkasseCsv" className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
             Sparkassen-CSV Datei

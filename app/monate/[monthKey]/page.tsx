@@ -7,6 +7,7 @@ import {
   updateMonthlySpecialBudgetStateAction,
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
+import { MonthActionOverlay } from "@/app/monate/month-action-overlay";
 import { MonthDialog } from "@/app/monate/month-dialog";
 import { MonthChip, MonthPageShell } from "@/app/monate/months-ui";
 import {
@@ -19,6 +20,7 @@ import {
 } from "@/src/dashboard/ui";
 import { getMonthDetail, type MonthDetailTransactionRow } from "@/src/months/repository";
 import {
+  listActiveAccountOptions,
   listActiveCategoryOptions,
   listActiveSpecialBudgetOptionsForMonth,
 } from "@/src/transactions/repository";
@@ -233,8 +235,13 @@ export default async function MonthDetailPage({
   const notice = toSingleParam(resolvedSearchParams.notice);
   const error = toSingleParam(resolvedSearchParams.error);
   const month = getMonthDetail(monthKey);
+  const accountOptions = listActiveAccountOptions();
   const categoryOptions = listActiveCategoryOptions();
   const specialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(month.monthKey);
+  const defaultAccountId =
+    accountOptions.find((account) => account.name === "Sparkasse")?.id ??
+    accountOptions[0]?.id ??
+    null;
   const warningCount = countOverBudgetWarnings(month.dashboard);
   const recentExpenses = month.transactions
     .filter((transaction) => transaction.transactionType === "expense")
@@ -252,8 +259,15 @@ export default async function MonthDetailPage({
               BudgetBuddy
             </p>
           </div>
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/70 text-lg font-bold text-[color:var(--month-ink)] shadow-[0_10px_24px_rgba(7,27,70,0.06)]">
-            /
+          <div className="flex justify-end">
+            <MonthActionOverlay
+              monthKey={month.monthKey}
+              monthLabel={month.label}
+              accountOptions={accountOptions}
+              categoryOptions={categoryOptions}
+              specialBudgetOptions={specialBudgetOptions}
+              defaultAccountId={defaultAccountId}
+            />
           </div>
         </div>
 

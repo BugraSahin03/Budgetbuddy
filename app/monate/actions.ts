@@ -9,7 +9,12 @@ import {
   setSpecialBudgetActiveForMonth,
   updateSpecialBudgetPlannedAmountForMonth,
 } from "@/src/special-budgets/repository";
-import { updateExpenseAssignmentForMonth } from "@/src/transactions/repository";
+import {
+  createManualTransaction,
+  type ManualTransactionInput,
+  type TransactionType,
+  updateExpenseAssignmentForMonth,
+} from "@/src/transactions/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
@@ -62,6 +67,45 @@ function parseOptionalPositiveInt(rawValue: FormDataEntryValue | null): number |
   }
 
   return parsed;
+}
+
+function parseTransactionType(rawValue: FormDataEntryValue | null): TransactionType {
+  const value = toSingleString(rawValue).trim();
+
+  if (value === "expense" || value === "income" || value === "transfer" || value === "refund") {
+    return value;
+  }
+
+  throw new Error("Transaktionstyp ist ungueltig.");
+}
+
+function parseAccountId(rawValue: FormDataEntryValue | null): number {
+  const value = toSingleString(rawValue).trim();
+  const accountId = Number.parseInt(value, 10);
+
+  if (!Number.isInteger(accountId) || accountId <= 0) {
+    throw new Error("Konto ist ungueltig.");
+  }
+
+  return accountId;
+}
+
+function parseMonthlyManualTransactionInput(formData: FormData): ManualTransactionInput {
+  const assignment = toSingleString(formData.get("assignment")).trim();
+  const categoryMatch = assignment.match(/^category:(\d+)$/);
+  const specialBudgetMatch = assignment.match(/^specialBudget:(\d+)$/);
+
+  return {
+    bookingDate: toSingleString(formData.get("bookingDate")),
+    effectiveMonthKey: toSingleString(formData.get("effectiveMonthKey")),
+    description: toSingleString(formData.get("description")),
+    transactionType: parseTransactionType(formData.get("transactionType")),
+    amountInput: toSingleString(formData.get("amount")),
+    accountId: parseAccountId(formData.get("accountId")),
+    destinationAccountId: null,
+    categoryId: categoryMatch ? Number.parseInt(categoryMatch[1], 10) : null,
+    specialBudgetId: specialBudgetMatch ? Number.parseInt(specialBudgetMatch[1], 10) : null,
+  };
 }
 
 function toErrorMessage(error: unknown): string {
@@ -191,6 +235,28 @@ export async function updateMonthlyTransactionAssignmentAction(
 
     redirect(
       `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Zuordnung gespeichert.")}`,
+    );
+  } catch (error) {
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
+    );
+  }
+}
+
+export async function createMonthlyManualTransactionAction(formData: FormData): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+
+  try {
+    createManualTransaction(parseMonthlyManualTransactionInput(formData));
+
+    revalidatePath("/");
+    revalidatePath("/monate");
+    revalidatePath(`/monate/${monthKey}`);
+    revalidatePath("/transaktionen");
+    revalidatePath("/auswertungen");
+
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monatsbuchung erstellt.")}`,
     );
   } catch (error) {
     redirect(

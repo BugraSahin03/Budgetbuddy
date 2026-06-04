@@ -30,6 +30,7 @@ export async function parseSparkasseCsvAction(
   const file = formData.get("sparkasseCsv");
   const intent = toSingleString(formData.get("intent"));
   const effectiveMonthKey = toSingleString(formData.get("effectiveMonthKey"));
+  const returnMonthKey = toSingleString(formData.get("returnMonthKey")).trim();
 
   if (!(file instanceof File)) {
     return {
@@ -62,6 +63,9 @@ export async function parseSparkasseCsvAction(
 
       revalidatePath("/transaktionen");
       revalidatePath("/import");
+      if (returnMonthKey.length > 0) {
+        revalidatePath(`/monate/${returnMonthKey}`);
+      }
 
       return {
         result: parsed,
