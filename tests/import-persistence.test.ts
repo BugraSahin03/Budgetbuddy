@@ -103,6 +103,27 @@ describe("import persistence and dedupe", () => {
     expect(importCount.count).toBe(3);
   });
 
+  it("treats existing transaction fingerprints as duplicates even without metadata row", () => {
+    persistSparkasseCsvImport({
+      sourceFilename: "sparkasse.csv",
+      fileContent: SAMPLE_CSV,
+    });
+    db.prepare("DELETE FROM imported_transactions").run();
+
+    const second = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse.csv",
+      fileContent: SAMPLE_CSV,
+    });
+
+    expect(second.importedRows).toBe(0);
+    expect(second.duplicateRows).toBe(3);
+
+    const transactionCount = db
+      .prepare("SELECT COUNT(*) AS count FROM transactions WHERE source_type = 'import'")
+      .get() as { count: number };
+    expect(transactionCount.count).toBe(3);
+  });
+
   it("applies explicit target month to all imported rows", () => {
     const result = persistSparkasseCsvImport({
       sourceFilename: "sparkasse.csv",

@@ -153,6 +153,7 @@ function ManualTransactionForm({
   return (
     <form action={createMonthlyManualTransactionAction} className="month-action-form">
       <input type="hidden" name="monthKey" value={monthKey} />
+      <input type="hidden" name="effectiveMonthKey" value={monthKey} />
       <input type="hidden" name="transactionType" value={mode} />
       {!isExpense ? (
         <>
@@ -172,15 +173,12 @@ function ManualTransactionForm({
           />
         </div>
         <div>
-          <FieldLabel htmlFor={`${id}-month`}>Zielmonat</FieldLabel>
-          <TextInput
-            id={`${id}-month`}
-            name="effectiveMonthKey"
-            type="month"
-            defaultValue={monthKey}
-          />
+          <p className="month-action-label">Zielmonat</p>
+          <p className="rounded-[1rem] border border-[color:var(--month-line-strong)] bg-white/72 px-3 py-3 text-sm font-black text-[color:var(--month-ink)]">
+            {monthKey}
+          </p>
           <p className="mt-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-            Wird als Monatskontext fuer diese Buchung verwendet.
+            Der geoeffnete Monat wird automatisch verwendet.
           </p>
         </div>
         <div>

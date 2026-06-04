@@ -1,5 +1,7 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
+
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -19,47 +21,74 @@ import {
 
 import { type ImportPreviewState, importPreviewInitialState } from "@/app/import/state";
 
+type CachedPreviewFile = {
+  fileContent: string;
+  filename: string;
+};
+
+const previewFileCache = new Map<string, CachedPreviewFile>();
+
 function toSingleString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
 }
 
+async function resolveImportFile(
+  previousState: ImportPreviewState,
+  formData: FormData,
+): Promise<CachedPreviewFile | { error: string }> {
+  const file = formData.get("sparkasseCsv");
+
+  if (file instanceof File && file.size > 0) {
+    return {
+      fileContent: await file.text(),
+      filename: file.name || "sparkasse.csv",
+    };
+  }
+
+  const previewFileToken = previousState.previewFileToken;
+  if (previewFileToken) {
+    const cached = previewFileCache.get(previewFileToken);
+
+    if (cached) {
+      return cached;
+    }
+  }
+
+  return { error: "Bitte eine CSV-Datei auswaehlen." };
+}
+
 export async function parseSparkasseCsvAction(
-  _previousState: ImportPreviewState,
+  previousState: ImportPreviewState,
   formData: FormData,
 ): Promise<ImportPreviewState> {
-  const file = formData.get("sparkasseCsv");
   const intent = toSingleString(formData.get("intent"));
   const effectiveMonthKey = toSingleString(formData.get("effectiveMonthKey"));
   const returnMonthKey = toSingleString(formData.get("returnMonthKey")).trim();
+  const resolvedFile = await resolveImportFile(previousState, formData);
 
-  if (!(file instanceof File)) {
+  if ("error" in resolvedFile) {
     return {
       ...importPreviewInitialState,
-      fatalError: "Bitte eine CSV-Datei auswaehlen.",
+      fatalError: resolvedFile.error,
     };
   }
-
-  if (file.size === 0) {
-    return {
-      ...importPreviewInitialState,
-      fatalError: "Die ausgewaehlte Datei ist leer.",
-    };
-  }
-
-  const fileContent = await file.text();
 
   try {
-    const parsed = parseSparkasseCsvToPreview(fileContent);
+    const parsed = parseSparkasseCsvToPreview(resolvedFile.fileContent);
     const detectedMonthKey = detectDefaultImportMonthKey(parsed.rows);
     const activeFixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
 
     if (intent === "confirm") {
       const activeRules = listActiveImportRules();
       const persisted = persistSparkasseCsvImport({
-        sourceFilename: file.name || "sparkasse.csv",
-        fileContent,
+        sourceFilename: resolvedFile.filename,
+        fileContent: resolvedFile.fileContent,
         effectiveMonthKey,
       });
+
+      if (previousState.previewFileToken) {
+        previewFileCache.delete(previousState.previewFileToken);
+      }
 
       revalidatePath("/transaktionen");
       revalidatePath("/import");
@@ -77,6 +106,8 @@ export async function parseSparkasseCsvAction(
           fixedCosts: activeFixedCosts,
         }),
         detectedMonthKey,
+        previewFileToken: null,
+        previewFilename: null,
       };
     }
 
@@ -87,12 +118,21 @@ export async function parseSparkasseCsvAction(
       fixedCosts: activeFixedCosts,
     });
 
+    if (previousState.previewFileToken) {
+      previewFileCache.delete(previousState.previewFileToken);
+    }
+
+    const previewFileToken = randomUUID();
+    previewFileCache.set(previewFileToken, resolvedFile);
+
     return {
       result: parsed,
       fatalError: null,
       persisted: null,
       suggestions,
       detectedMonthKey,
+      previewFileToken,
+      previewFilename: resolvedFile.filename,
     };
   } catch (error) {
     const message =

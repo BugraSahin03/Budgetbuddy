@@ -73,4 +73,14 @@ describe("FIN-052 month action overlay", () => {
       }),
     ).toBe("2033-04");
   });
+
+  it("does not render editable target month fields in the month overlay", () => {
+    const overlay = readProjectFile("app/monate/month-action-overlay.tsx");
+    const importForm = readProjectFile("app/import/import-form.tsx");
+
+    expect(overlay).not.toContain('type="month"');
+    expect(overlay).toContain('type="hidden" name="effectiveMonthKey" value={monthKey}');
+    expect(importForm).toContain('surface === "embedded"');
+    expect(importForm).toContain('name="effectiveMonthKey" type="hidden"');
+  });
 });

@@ -72,6 +72,71 @@ describe("import workflow finalization", () => {
     expect(importedMonths).toEqual([{ effectiveMonthKey: "2026-05" }]);
   });
 
+  it("confirms a loaded preview without selecting the file again", async () => {
+    const previewFormData = new FormData();
+    previewFormData.set("intent", "preview");
+    previewFormData.set("effectiveMonthKey", "2026-05");
+    previewFormData.set(
+      "sparkasseCsv",
+      new File([SAMPLE_CSV], "sparkasse.csv", { type: "text/csv" }),
+    );
+
+    const previewState = await parseSparkasseCsvAction(
+      importPreviewInitialState,
+      previewFormData,
+    );
+
+    expect(previewState.fatalError).toBeNull();
+    expect(previewState.result?.rows).toHaveLength(3);
+    expect(previewState.previewFileToken).toEqual(expect.any(String));
+    expect(previewState.previewFilename).toBe("sparkasse.csv");
+
+    const confirmFormData = new FormData();
+    confirmFormData.set("intent", "confirm");
+    confirmFormData.set("effectiveMonthKey", "2026-05");
+
+    const confirmedState = await parseSparkasseCsvAction(previewState, confirmFormData);
+
+    expect(confirmedState.fatalError).toBeNull();
+    expect(confirmedState.persisted?.importedRows).toBe(3);
+    expect(confirmedState.persisted?.duplicateRows).toBe(0);
+    expect(confirmedState.previewFileToken).toBeNull();
+  });
+
+  it("counts preview-confirm re-imports as duplicates without raw constraint error", async () => {
+    const firstFormData = new FormData();
+    firstFormData.set("intent", "confirm");
+    firstFormData.set("effectiveMonthKey", "2026-05");
+    firstFormData.set(
+      "sparkasseCsv",
+      new File([SAMPLE_CSV], "sparkasse.csv", { type: "text/csv" }),
+    );
+
+    await parseSparkasseCsvAction(importPreviewInitialState, firstFormData);
+
+    const previewFormData = new FormData();
+    previewFormData.set("intent", "preview");
+    previewFormData.set("effectiveMonthKey", "2026-05");
+    previewFormData.set(
+      "sparkasseCsv",
+      new File([SAMPLE_CSV], "sparkasse.csv", { type: "text/csv" }),
+    );
+
+    const previewState = await parseSparkasseCsvAction(
+      importPreviewInitialState,
+      previewFormData,
+    );
+    const confirmFormData = new FormData();
+    confirmFormData.set("intent", "confirm");
+    confirmFormData.set("effectiveMonthKey", "2026-05");
+
+    const confirmedState = await parseSparkasseCsvAction(previewState, confirmFormData);
+
+    expect(confirmedState.fatalError).toBeNull();
+    expect(confirmedState.persisted?.importedRows).toBe(0);
+    expect(confirmedState.persisted?.duplicateRows).toBe(3);
+  });
+
   it("shows validation error for invalid explicit target month", async () => {
     const formData = new FormData();
     formData.set("intent", "confirm");

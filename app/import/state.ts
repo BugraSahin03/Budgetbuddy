@@ -8,6 +8,8 @@ export type ImportPreviewState = {
   persisted: ImportPersistenceResult | null;
   suggestions: ImportRuleSuggestion[];
   detectedMonthKey: string | null;
+  previewFileToken: string | null;
+  previewFilename: string | null;
 };
 
 export const importPreviewInitialState: ImportPreviewState = {
@@ -16,4 +18,6 @@ export const importPreviewInitialState: ImportPreviewState = {
   persisted: null,
   suggestions: [],
   detectedMonthKey: null,
+  previewFileToken: null,
+  previewFilename: null,
 };
