@@ -37,7 +37,7 @@ export default function RootLayout({
               </p>
               <h1 className="mt-2 text-lg font-semibold">Private Finanzen</h1>
               <p className="mt-2 text-sm text-slate-300">
-                Desktop-first Uebersicht fuer Budget, Import und Zuordnung.
+                Desktop-first Uebersicht fuer Budget, Monate und Zuordnung.
               </p>
             </div>
 

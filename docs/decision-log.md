@@ -990,3 +990,18 @@ Auswirkung:
 
 - `/transaktionen` und `/import` bleiben technisch und funktional erhalten, werden aber fuer die Monatsarbeit nicht mehr als primaere Einstiege benoetigt.
 - Es werden keine neuen Import-, Kategorie-, Sonderbudget- oder Persistenzregeln eingefuehrt; die Monatsseite wird nur als zentraler Einstieg gestärkt.
+
+## 2026-06-04 - FIN-053 entfernt Transaktionen und Import aus der Hauptnavigation
+
+Quelle/Ticket: `FIN-053`
+
+Erkenntnis/Entscheidung:
+
+- Die Hauptnavigation zeigt `Transaktionen` und `Import` nicht mehr als sichtbare Haupttabs.
+- Manuelle Einnahmen, manuelle Ausgaben und Sparkassen-Import bleiben ueber die Monatsdetailseite und das FIN-052-Monatsaktions-Overlay erreichbar.
+- Die bestehenden Routen `/transaktionen` und `/import` bleiben technisch erhalten, damit bestehende Logik, Fallbacks und interne Pruefpfade nicht destruktiv entfernt werden.
+
+Auswirkung:
+
+- Die Navigation fuehrt staerker in die Monatsansicht als zentralen Arbeitsort.
+- Es werden keine Transaktions-, Import-, Kategorie-, Sonderbudget- oder Zielmonat-Regeln geaendert.
