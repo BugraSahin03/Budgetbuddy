@@ -1,13 +1,22 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
-import { describe, expect, it } from "vitest";
+import { beforeAll, describe, expect, it, vi } from "vitest";
+
+vi.mock("server-only", () => ({}));
+
+type ImportFormModule = typeof import("@/app/import/import-form");
 
 const ROOT = process.cwd();
+let importFormModule: ImportFormModule;
 
 function readProjectFile(path: string): string {
   return readFileSync(join(ROOT, path), "utf8");
 }
+
+beforeAll(async () => {
+  importFormModule = await import("@/app/import/import-form");
+});
 
 describe("FIN-052 month action overlay", () => {
   it("offers one central month action with expense, income and import modes", () => {
@@ -43,5 +52,25 @@ describe("FIN-052 month action overlay", () => {
     expect(overlay).toContain("returnMonthKey={monthKey}");
     expect(importForm).toContain("defaultEffectiveMonthKey");
     expect(importActions).toContain("revalidatePath(`/monate/${returnMonthKey}`)");
+  });
+
+  it("keeps the opened month as import default inside the embedded overlay after preview", () => {
+    expect(
+      importFormModule.resolveEffectiveMonthDefault({
+        detectedMonthKey: "2033-04",
+        defaultEffectiveMonthKey: "2033-03",
+        fallbackMonthKey: "2033-06",
+        surface: "embedded",
+      }),
+    ).toBe("2033-03");
+
+    expect(
+      importFormModule.resolveEffectiveMonthDefault({
+        detectedMonthKey: "2033-04",
+        defaultEffectiveMonthKey: "2033-03",
+        fallbackMonthKey: "2033-06",
+        surface: "default",
+      }),
+    ).toBe("2033-04");
   });
 });

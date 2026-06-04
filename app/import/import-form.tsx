@@ -22,6 +22,19 @@ function isFixedCostControlLabel(label: string): boolean {
   return label.startsWith("Fixkosten-Kontrolle:");
 }
 
+export function resolveEffectiveMonthDefault(params: {
+  detectedMonthKey: string | null;
+  defaultEffectiveMonthKey?: string;
+  fallbackMonthKey: string;
+  surface?: "default" | "embedded";
+}): string {
+  if (params.surface === "embedded" && params.defaultEffectiveMonthKey) {
+    return params.defaultEffectiveMonthKey;
+  }
+
+  return params.detectedMonthKey ?? params.defaultEffectiveMonthKey ?? params.fallbackMonthKey;
+}
+
 export function ImportForm({
   defaultEffectiveMonthKey,
   returnMonthKey,
@@ -36,8 +49,12 @@ export function ImportForm({
     importPreviewInitialState,
   );
   const fallbackMonthKey = new Date().toISOString().slice(0, 7);
-  const effectiveMonthDefault =
-    state.detectedMonthKey ?? defaultEffectiveMonthKey ?? fallbackMonthKey;
+  const effectiveMonthDefault = resolveEffectiveMonthDefault({
+    detectedMonthKey: state.detectedMonthKey,
+    defaultEffectiveMonthKey,
+    fallbackMonthKey,
+    surface,
+  });
   const fixedCostControls = state.suggestions.filter((item) =>
     isFixedCostControlLabel(item.label),
   );
