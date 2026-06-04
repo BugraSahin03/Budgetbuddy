@@ -49,29 +49,6 @@ export default function RootLayout({
           </aside>
 
           <div className="flex min-h-screen flex-col">
-            <header className="border-b border-slate-200 bg-white/90 backdrop-blur">
-              <div className="mx-auto flex w-full max-w-7xl flex-wrap items-center justify-between gap-3 px-5 py-4">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-[0.14em] text-slate-500">
-                    Monatsfokus
-                  </p>
-                  <p className="text-base font-semibold text-slate-900">April 2026</p>
-                </div>
-
-                <div className="flex flex-wrap gap-2 text-xs font-medium">
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-emerald-700">
-                    Zuordnung stabil
-                  </span>
-                  <span className="rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-amber-700">
-                    1 Budgetwarnung
-                  </span>
-                  <span className="rounded-full border border-slate-200 bg-slate-100 px-2.5 py-1 text-slate-600">
-                    Import bereit
-                  </span>
-                </div>
-              </div>
-            </header>
-
             <main className="mx-auto w-full max-w-7xl flex-1 px-5 py-6">{children}</main>
           </div>
         </div>
