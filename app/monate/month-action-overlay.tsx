@@ -173,15 +173,6 @@ function ManualTransactionForm({
           />
         </div>
         <div>
-          <p className="month-action-label">Zielmonat</p>
-          <p className="rounded-[1rem] border border-[color:var(--month-line-strong)] bg-white/72 px-3 py-3 text-sm font-black text-[color:var(--month-ink)]">
-            {monthKey}
-          </p>
-          <p className="mt-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-            Der geoeffnete Monat wird automatisch verwendet.
-          </p>
-        </div>
-        <div>
           <FieldLabel htmlFor={`${id}-amount`}>Betrag</FieldLabel>
           <TextInput id={`${id}-amount`} name="amount" placeholder="12,50" />
         </div>
@@ -220,7 +211,6 @@ function ManualTransactionForm({
 
 export function MonthActionOverlay({
   monthKey,
-  monthLabel,
   accountOptions,
   categoryOptions,
   specialBudgetOptions,
@@ -247,8 +237,7 @@ export function MonthActionOverlay({
                 Buchung hinzufuegen
               </h2>
               <p className="mt-3 text-sm font-semibold leading-6 text-[color:var(--month-ink-soft)]">
-                {monthLabel} ist als Zielmonat vorbelegt. Ausgabe, Einnahme und Import bleiben
-                im Monatskontext gebuendelt.
+                Ausgabe, Einnahme und Import bleiben im Monatskontext gebuendelt.
               </p>
             </div>
             <form method="dialog">
@@ -293,7 +282,7 @@ export function MonthActionOverlay({
                 <p className="month-eyebrow">Sparkassen-Import</p>
                 <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--month-ink-soft)]">
                   Die bestehende Import-Vorschau, Duplikaterkennung und Bestaetigung laufen
-                  unveraendert weiter. Der Zielmonat ist auf {monthKey} gesetzt.
+                  unveraendert im geoeffneten Monat weiter.
                 </p>
               </div>
               <div className="mt-5">

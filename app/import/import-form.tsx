@@ -95,15 +95,6 @@ export function ImportForm({
           {surface === "embedded" ? (
             <>
               <input name="effectiveMonthKey" type="hidden" defaultValue={effectiveMonthDefault} />
-              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-                Zielmonat
-              </p>
-              <p className="mt-1 rounded-lg border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-900">
-                {effectiveMonthDefault}
-              </p>
-              <p className="mt-1 text-xs text-slate-500">
-                Der geoeffnete Monat wird automatisch fuer diesen Import verwendet.
-              </p>
             </>
           ) : (
             <>

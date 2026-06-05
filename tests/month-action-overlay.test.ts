@@ -79,8 +79,11 @@ describe("FIN-052 month action overlay", () => {
     const importForm = readProjectFile("app/import/import-form.tsx");
 
     expect(overlay).not.toContain('type="month"');
+    expect(overlay).not.toContain("Zielmonat");
+    expect(overlay).not.toContain("Der Zielmonat ist auf");
     expect(overlay).toContain('type="hidden" name="effectiveMonthKey" value={monthKey}');
     expect(importForm).toContain('surface === "embedded"');
     expect(importForm).toContain('name="effectiveMonthKey" type="hidden"');
+    expect(importForm).not.toContain("Der geoeffnete Monat wird automatisch fuer diesen Import verwendet.");
   });
 });
