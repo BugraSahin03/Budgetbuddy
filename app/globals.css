@@ -435,7 +435,7 @@ body {
   background: transparent;
   border: 0;
   margin: auto;
-  max-width: min(78rem, calc(100vw - 1.5rem));
+  max-width: min(86rem, calc(100vw - 1rem));
   padding: 0;
   width: 100%;
 }
@@ -447,14 +447,15 @@ body {
 
 .month-action-surface {
   border: 1px solid rgba(255, 255, 255, 0.86);
-  border-radius: 2.35rem;
+  border-radius: 2.8rem;
   background:
-    radial-gradient(circle at 88% 8%, rgba(134, 239, 222, 0.18), transparent 28rem),
-    linear-gradient(180deg, rgba(248, 252, 255, 0.99), rgba(239, 248, 253, 0.98));
+    radial-gradient(circle at 12% 4%, rgba(125, 211, 252, 0.24), transparent 30rem),
+    radial-gradient(circle at 88% 8%, rgba(134, 239, 222, 0.2), transparent 28rem),
+    linear-gradient(180deg, rgba(248, 252, 255, 0.99), rgba(238, 247, 252, 0.98));
   box-shadow: 0 38px 96px rgba(7, 27, 70, 0.28);
-  max-height: min(92vh, 58rem);
+  max-height: min(94vh, 62rem);
   overflow-y: auto;
-  padding: clamp(1.15rem, 3vw, 2.1rem);
+  padding: clamp(1.2rem, 3vw, 2.4rem);
 }
 
 .month-action-header {
@@ -466,11 +467,31 @@ body {
   padding-bottom: 1.25rem;
 }
 
+.month-dialog-back {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(7, 27, 70, 0.1);
+  border-radius: 999px;
+  color: var(--month-ink);
+  display: inline-flex;
+  font-size: 0.7rem;
+  font-weight: 900;
+  height: 2.8rem;
+  justify-content: center;
+  letter-spacing: 0.12em;
+  padding: 0 0.9rem;
+  text-transform: uppercase;
+}
+
 .month-action-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
+  background: rgba(255, 255, 255, 0.56);
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 2rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin-top: 1.4rem;
+  padding: 0.55rem;
 }
 
 .month-action-tabs > input {
@@ -481,14 +502,16 @@ body {
 
 .month-action-tabs > label {
   border: 1px solid rgba(7, 27, 70, 0.12);
-  border-radius: 999px;
+  border-radius: 1.45rem;
   background: rgba(255, 255, 255, 0.72);
   color: var(--month-ink-soft);
   cursor: pointer;
+  display: flex;
   font-size: 0.76rem;
   font-weight: 900;
+  justify-content: center;
   letter-spacing: 0.12em;
-  padding: 0.7rem 1rem;
+  padding: 0.86rem 1rem;
   text-transform: uppercase;
   transition: background 160ms ease, color 160ms ease, transform 160ms ease;
 }
@@ -499,7 +522,7 @@ body {
 
 .month-action-tab-panel {
   display: none;
-  flex-basis: 100%;
+  grid-column: 1 / -1;
   margin-top: 0.75rem;
 }
 
@@ -507,6 +530,7 @@ body {
 .month-action-tabs > input:nth-of-type(2):checked ~ label:nth-of-type(2),
 .month-action-tabs > input:nth-of-type(3):checked ~ label:nth-of-type(3) {
   background: #071b46;
+  box-shadow: 0 16px 32px rgba(7, 27, 70, 0.16);
   color: #ffffff;
 }
 
@@ -518,11 +542,65 @@ body {
 
 .month-action-form {
   display: grid;
-  gap: 1.1rem;
+  gap: 1rem;
   border: 1px solid rgba(255, 255, 255, 0.82);
-  border-radius: 1.7rem;
-  background: rgba(255, 255, 255, 0.78);
-  padding: clamp(1rem, 2.5vw, 1.4rem);
+  border-radius: 2rem;
+  background: rgba(255, 255, 255, 0.72);
+  padding: clamp(1rem, 2.5vw, 1.6rem);
+}
+
+.month-action-form-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.85fr);
+}
+
+.month-action-amount-card,
+.month-action-field-card,
+.month-action-import-shell {
+  border: 1px solid rgba(226, 232, 240, 0.88);
+  border-radius: 1.65rem;
+  background: rgba(255, 255, 255, 0.82);
+  box-shadow: 0 18px 44px rgba(7, 27, 70, 0.06);
+  padding: 1rem;
+}
+
+.month-action-amount-card {
+  background:
+    radial-gradient(circle at 92% 16%, rgba(125, 211, 252, 0.28), transparent 13rem),
+    #ffffff;
+  grid-row: span 3;
+  min-height: 22rem;
+}
+
+.month-action-amount-field {
+  align-items: center;
+  color: #071b46;
+  display: flex;
+  gap: 1rem;
+  margin-top: clamp(2.2rem, 6vw, 5.5rem);
+}
+
+.month-action-amount-field span {
+  font-size: clamp(2rem, 5vw, 4rem);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+}
+
+.month-action-amount-field input {
+  background: transparent;
+  border: 0;
+  color: #071b46;
+  font-size: clamp(3.4rem, 10vw, 7.6rem);
+  font-weight: 950;
+  letter-spacing: -0.1em;
+  min-width: 0;
+  outline: 0;
+  width: 100%;
+}
+
+.month-action-amount-field input::placeholder {
+  color: rgba(7, 27, 70, 0.22);
 }
 
 .month-action-label {
@@ -546,16 +624,57 @@ body {
   width: 100%;
 }
 
+.month-action-cash-toggle {
+  align-items: center;
+  border: 1px solid rgba(7, 27, 70, 0.12);
+  border-radius: 999px;
+  background: rgba(248, 250, 252, 0.9);
+  color: var(--month-ink-soft);
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.74rem;
+  font-weight: 900;
+  gap: 0.48rem;
+  letter-spacing: 0.08em;
+  padding: 0.48rem 0.7rem;
+  text-transform: uppercase;
+  transition: background 160ms ease, color 160ms ease, transform 160ms ease;
+}
+
+.month-action-cash-toggle input {
+  opacity: 0;
+  pointer-events: none;
+  position: absolute;
+}
+
+.month-action-cash-knob {
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.35);
+  box-shadow: inset 0 0 0 4px rgba(255, 255, 255, 0.85);
+  height: 1rem;
+  width: 1rem;
+}
+
+.month-action-cash-toggle:has(input:checked) {
+  background: #071b46;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.month-action-cash-toggle:has(input:checked) .month-action-cash-knob {
+  background: #7dd3fc;
+}
+
 .month-action-tile-grid {
   display: grid;
   gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
 }
 
 .month-action-choice {
   align-items: center;
   border: 1px solid rgba(125, 211, 252, 0.42);
-  border-radius: 1.25rem;
+  border-radius: 1.45rem;
   background: rgba(238, 248, 253, 0.9);
   color: var(--month-ink);
   cursor: pointer;
@@ -563,7 +682,13 @@ body {
   gap: 0.7rem;
   font-size: 0.9rem;
   font-weight: 900;
-  padding: 0.9rem;
+  min-height: 4.6rem;
+  padding: 0.95rem;
+  transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.month-action-choice:hover {
+  transform: translateY(-1px);
 }
 
 .month-action-choice-warn {
@@ -577,6 +702,25 @@ body {
   width: 1rem;
 }
 
+.month-action-choice:has(input:checked) {
+  background: #071b46;
+  border-color: #071b46;
+  color: #ffffff;
+}
+
+.month-action-choice-icon {
+  align-items: center;
+  border-radius: 1rem;
+  background: rgba(255, 255, 255, 0.72);
+  color: #071b46;
+  display: inline-flex;
+  font-size: 0.78rem;
+  font-weight: 950;
+  height: 2.35rem;
+  justify-content: center;
+  width: 2.35rem;
+}
+
 .month-action-submit {
   border-radius: 1rem;
   background: #071b46;
@@ -587,4 +731,32 @@ body {
   letter-spacing: 0.14em;
   padding: 0.9rem 1.15rem;
   text-transform: uppercase;
+}
+
+.month-action-import-shell {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (max-width: 860px) {
+  .month-action-header {
+    flex-direction: column;
+  }
+
+  .month-action-header .text-right {
+    text-align: left;
+  }
+
+  .month-action-tabs {
+    grid-template-columns: 1fr;
+  }
+
+  .month-action-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .month-action-amount-card {
+    grid-row: auto;
+    min-height: 16rem;
+  }
 }

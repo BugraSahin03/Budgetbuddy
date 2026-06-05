@@ -1022,3 +1022,19 @@ Auswirkung:
 - Der normale Importbereich und das eingebettete Monatsaktions-Overlay nutzen weiterhin dieselbe Importlogik.
 - Abgelaufene Preview-Tokens werden fachlich als erneute Dateiauswahl behandelt; sensible CSV-Inhalte bleiben nicht unbegrenzt im Prozessspeicher.
 - Es werden keine neuen Bank-, Kategorie-, Sonderbudget- oder Zielmonat-Fachregeln eingefuehrt.
+
+## 2026-06-05 - FIN-057 macht Bargeld im Monatsdialog zum Konto-Override
+
+Quelle/Ticket: `FIN-057`
+
+Erkenntnis/Entscheidung:
+
+- Der neue `Bargeld`-Schalter im Hinzufuegen-Dialog aendert keine Bargeld-Architektur, sondern ersetzt bei manueller Ausgabe/Einnahme serverseitig das gewaehlte Konto durch das aktive Bargeldkonto.
+- Ist `Bargeld` nicht aktiv, bleibt die bestehende Kontoauswahl bzw. Standardkonto-Logik unveraendert.
+- Der Dialog wird visuell groesser und referenznaeher gestaltet; Ausgabe, Einnahme und Import bleiben weiter im gleichen Monatsoverlay.
+
+Auswirkung:
+
+- Barzahlungen lassen sich im Monatskontext schneller erfassen, ohne das Datenmodell oder bestehende Transaktionsregeln zu erweitern.
+- Der geoeffnete Monat bleibt technisch hidden gesetzt; kein sichtbares Zielmonat-Feld wird wieder eingefuehrt.
+- Die bestehende Importlogik bleibt unveraendert eingebettet.
