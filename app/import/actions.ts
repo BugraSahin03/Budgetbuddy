@@ -23,8 +23,17 @@ import { type ImportPreviewState, importPreviewInitialState } from "@/app/import
 
 type CachedPreviewFile = {
   fileContent: string;
+  expiresAt: number;
   filename: string;
 };
+
+type ResolvedImportFile = {
+  fileContent: string;
+  filename: string;
+};
+
+const PREVIEW_FILE_TTL_MS = 10 * 60 * 1000;
+const MAX_PREVIEW_FILE_BYTES = 2 * 1024 * 1024;
 
 const previewFileCache = new Map<string, CachedPreviewFile>();
 
@@ -35,10 +44,17 @@ function toSingleString(value: FormDataEntryValue | null): string {
 async function resolveImportFile(
   previousState: ImportPreviewState,
   formData: FormData,
-): Promise<CachedPreviewFile | { error: string }> {
+): Promise<ResolvedImportFile | { error: string }> {
   const file = formData.get("sparkasseCsv");
+  const now = Date.now();
+
+  purgeExpiredPreviewFiles(now);
 
   if (file instanceof File && file.size > 0) {
+    if (file.size > MAX_PREVIEW_FILE_BYTES) {
+      return { error: "Die CSV-Datei ist zu gross fuer die Vorschau." };
+    }
+
     return {
       fileContent: await file.text(),
       filename: file.name || "sparkasse.csv",
@@ -50,11 +66,30 @@ async function resolveImportFile(
     const cached = previewFileCache.get(previewFileToken);
 
     if (cached) {
-      return cached;
+      if (cached.expiresAt > now) {
+        return {
+          fileContent: cached.fileContent,
+          filename: cached.filename,
+        };
+      }
+
+      previewFileCache.delete(previewFileToken);
     }
+
+    return {
+      error: "Die geladene Vorschau ist abgelaufen. Bitte die CSV-Datei erneut auswaehlen.",
+    };
   }
 
   return { error: "Bitte eine CSV-Datei auswaehlen." };
+}
+
+function purgeExpiredPreviewFiles(now: number): void {
+  for (const [token, cached] of previewFileCache.entries()) {
+    if (cached.expiresAt <= now) {
+      previewFileCache.delete(token);
+    }
+  }
 }
 
 export async function parseSparkasseCsvAction(
@@ -80,15 +115,15 @@ export async function parseSparkasseCsvAction(
 
     if (intent === "confirm") {
       const activeRules = listActiveImportRules();
+      if (previousState.previewFileToken) {
+        previewFileCache.delete(previousState.previewFileToken);
+      }
+
       const persisted = persistSparkasseCsvImport({
         sourceFilename: resolvedFile.filename,
         fileContent: resolvedFile.fileContent,
         effectiveMonthKey,
       });
-
-      if (previousState.previewFileToken) {
-        previewFileCache.delete(previousState.previewFileToken);
-      }
 
       revalidatePath("/transaktionen");
       revalidatePath("/import");
@@ -123,7 +158,10 @@ export async function parseSparkasseCsvAction(
     }
 
     const previewFileToken = randomUUID();
-    previewFileCache.set(previewFileToken, resolvedFile);
+    previewFileCache.set(previewFileToken, {
+      ...resolvedFile,
+      expiresAt: Date.now() + PREVIEW_FILE_TTL_MS,
+    });
 
     return {
       result: parsed,

@@ -30,6 +30,7 @@ describe("import workflow finalization", () => {
   });
 
   afterEach(() => {
+    vi.useRealTimers();
     db.close();
   });
 
@@ -135,6 +136,41 @@ describe("import workflow finalization", () => {
     expect(confirmedState.fatalError).toBeNull();
     expect(confirmedState.persisted?.importedRows).toBe(0);
     expect(confirmedState.persisted?.duplicateRows).toBe(3);
+  });
+
+  it("expires cached preview files and asks for a fresh CSV without raw errors", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-05-01T10:00:00Z"));
+
+    const previewFormData = new FormData();
+    previewFormData.set("intent", "preview");
+    previewFormData.set("effectiveMonthKey", "2026-05");
+    previewFormData.set(
+      "sparkasseCsv",
+      new File([SAMPLE_CSV], "sparkasse.csv", { type: "text/csv" }),
+    );
+
+    const previewState = await parseSparkasseCsvAction(
+      importPreviewInitialState,
+      previewFormData,
+    );
+
+    expect(previewState.fatalError).toBeNull();
+    expect(previewState.previewFileToken).toEqual(expect.any(String));
+
+    vi.setSystemTime(new Date("2026-05-01T10:11:00Z"));
+
+    const confirmFormData = new FormData();
+    confirmFormData.set("intent", "confirm");
+    confirmFormData.set("effectiveMonthKey", "2026-05");
+
+    const expiredState = await parseSparkasseCsvAction(previewState, confirmFormData);
+
+    expect(expiredState.persisted).toBeNull();
+    expect(expiredState.previewFileToken).toBeNull();
+    expect(expiredState.fatalError).toBe(
+      "Die geladene Vorschau ist abgelaufen. Bitte die CSV-Datei erneut auswaehlen.",
+    );
   });
 
   it("shows validation error for invalid explicit target month", async () => {
