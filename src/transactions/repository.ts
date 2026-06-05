@@ -421,6 +421,26 @@ export function listActiveSpecialBudgetOptionsForMonth(
     .all(monthKey) as SpecialBudgetOption[];
 }
 
+export function getActiveCashAccountId(): number {
+  const account = getDb()
+    .prepare(
+      `
+        SELECT id
+        FROM accounts
+        WHERE account_type = 'cash'
+          AND is_active = 1
+        LIMIT 1
+      `,
+    )
+    .get() as { id: number } | undefined;
+
+  if (!account) {
+    throw new Error("Aktives Bargeldkonto wurde nicht gefunden.");
+  }
+
+  return account.id;
+}
+
 export function getCashAccountSnapshot(): CashAccountSnapshot {
   const account = getDb()
     .prepare(

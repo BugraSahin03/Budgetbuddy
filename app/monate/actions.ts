@@ -11,6 +11,7 @@ import {
 } from "@/src/special-budgets/repository";
 import {
   createManualTransaction,
+  getActiveCashAccountId,
   type ManualTransactionInput,
   type TransactionType,
   updateExpenseAssignmentForMonth,
@@ -90,10 +91,17 @@ function parseAccountId(rawValue: FormDataEntryValue | null): number {
   return accountId;
 }
 
+function parseCashToggle(rawValue: FormDataEntryValue | null): boolean {
+  return toSingleString(rawValue).trim() === "on";
+}
+
 function parseMonthlyManualTransactionInput(formData: FormData): ManualTransactionInput {
   const assignment = toSingleString(formData.get("assignment")).trim();
   const categoryMatch = assignment.match(/^category:(\d+)$/);
   const specialBudgetMatch = assignment.match(/^specialBudget:(\d+)$/);
+  const accountId = parseCashToggle(formData.get("useCashAccount"))
+    ? getActiveCashAccountId()
+    : parseAccountId(formData.get("accountId"));
 
   return {
     bookingDate: toSingleString(formData.get("bookingDate")),
@@ -101,7 +109,7 @@ function parseMonthlyManualTransactionInput(formData: FormData): ManualTransacti
     description: toSingleString(formData.get("description")),
     transactionType: parseTransactionType(formData.get("transactionType")),
     amountInput: toSingleString(formData.get("amount")),
-    accountId: parseAccountId(formData.get("accountId")),
+    accountId,
     destinationAccountId: null,
     categoryId: categoryMatch ? Number.parseInt(categoryMatch[1], 10) : null,
     specialBudgetId: specialBudgetMatch ? Number.parseInt(specialBudgetMatch[1], 10) : null,

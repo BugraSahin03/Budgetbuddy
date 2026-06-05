@@ -29,6 +29,8 @@ describe("FIN-052 month action overlay", () => {
     expect(overlay).toContain(">Einnahme<");
     expect(overlay).toContain(">Import<");
     expect(overlay).toContain("month-action-dialog");
+    expect(overlay).toContain("month-action-amount-card");
+    expect(overlay).toContain("month-action-cash-toggle");
   });
 
   it("keeps expense assignment as a single category-or-special-budget tile choice", () => {
@@ -38,8 +40,19 @@ describe("FIN-052 month action overlay", () => {
     expect(overlay).toContain('name="assignment"');
     expect(overlay).toContain("category:${category.id}");
     expect(overlay).toContain("specialBudget:${budget.id}");
+    expect(overlay).toContain("month-action-choice-icon");
     expect(actions).toContain("categoryMatch");
     expect(actions).toContain("specialBudgetMatch");
+  });
+
+  it("offers a cash toggle and keeps it wired into the month action", () => {
+    const overlay = readProjectFile("app/monate/month-action-overlay.tsx");
+    const actions = readProjectFile("app/monate/actions.ts");
+
+    expect(overlay).toContain("Bargeld");
+    expect(overlay).toContain('name="useCashAccount"');
+    expect(actions).toContain("getActiveCashAccountId()");
+    expect(actions).toContain('formData.get("useCashAccount")');
   });
 
   it("embeds existing import flow with the current month preselected", () => {
