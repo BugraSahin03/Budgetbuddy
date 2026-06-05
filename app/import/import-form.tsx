@@ -58,10 +58,14 @@ export function ImportForm({
   const fixedCostControls = state.suggestions.filter((item) =>
     isFixedCostControlLabel(item.label),
   );
+  const hasPreviewFile = state.previewFileToken !== null;
   const formSurfaceClass =
     surface === "embedded"
       ? "space-y-3 rounded-[1.5rem] border border-[color:var(--month-line)] bg-white/78 p-5"
       : "space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm";
+  const targetMonthHint = state.detectedMonthKey
+    ? `Automatisch erkannt: ${state.detectedMonthKey}. Du kannst bei Bedarf ueberschreiben.`
+    : "Ohne Eingabe wird der Zielmonat aus den Buchungen automatisch erkannt.";
 
   return (
     <div className="space-y-4">
@@ -77,30 +81,49 @@ export function ImportForm({
             type="file"
             accept=".csv,.CSV,text/csv"
             className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-            required
+            required={!hasPreviewFile}
           />
+          {hasPreviewFile ? (
+            <p className="mt-1 text-xs text-slate-500">
+              Vorschau geladen: {state.previewFilename}. Du kannst direkt bestaetigen oder eine
+              neue Datei auswaehlen.
+            </p>
+          ) : null}
         </div>
 
         <div>
-          <label
-            htmlFor="effectiveMonthKey"
-            className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500"
-          >
-            Zielmonat
-          </label>
-          <input
-            key={effectiveMonthDefault}
-            id="effectiveMonthKey"
-            name="effectiveMonthKey"
-            type="month"
-            defaultValue={effectiveMonthDefault}
-            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
-          />
-          <p className="mt-1 text-xs text-slate-500">
-            {state.detectedMonthKey
-              ? `Automatisch erkannt: ${state.detectedMonthKey}. Du kannst bei Bedarf ueberschreiben.`
-              : "Ohne Eingabe wird der Zielmonat aus den Buchungen automatisch erkannt."}
-          </p>
+          {surface === "embedded" ? (
+            <>
+              <input name="effectiveMonthKey" type="hidden" defaultValue={effectiveMonthDefault} />
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+                Zielmonat
+              </p>
+              <p className="mt-1 rounded-lg border border-slate-200 bg-white/70 px-3 py-2 text-sm font-semibold text-slate-900">
+                {effectiveMonthDefault}
+              </p>
+              <p className="mt-1 text-xs text-slate-500">
+                Der geoeffnete Monat wird automatisch fuer diesen Import verwendet.
+              </p>
+            </>
+          ) : (
+            <>
+              <label
+                htmlFor="effectiveMonthKey"
+                className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500"
+              >
+                Zielmonat
+              </label>
+              <input
+                key={effectiveMonthDefault}
+                id="effectiveMonthKey"
+                name="effectiveMonthKey"
+                type="month"
+                defaultValue={effectiveMonthDefault}
+                className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+              />
+              <p className="mt-1 text-xs text-slate-500">{targetMonthHint}</p>
+            </>
+          )}
         </div>
 
         <div className="flex flex-wrap gap-2">

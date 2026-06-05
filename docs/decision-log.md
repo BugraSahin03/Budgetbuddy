@@ -1005,3 +1005,20 @@ Auswirkung:
 
 - Die Navigation fuehrt staerker in die Monatsansicht als zentralen Arbeitsort.
 - Es werden keine Transaktions-, Import-, Kategorie-, Sonderbudget- oder Zielmonat-Regeln geaendert.
+
+## 2026-06-04 - FIN-056 stabilisiert Monatsimport nach Vorschau und Re-Import
+
+Quelle/Ticket: `FIN-056`
+
+Erkenntnis/Entscheidung:
+
+- Der Sparkassen-Import behandelt eine Buchung als Duplikat, wenn entweder `imported_transactions.dedupe_fingerprint` oder `transactions.import_fingerprint` bereits existiert.
+- Die Import-Vorschau speichert die geladene Datei serverseitig ueber einen kurzlebigen Preview-Token mit Ablaufzeit und Groessenbegrenzung, damit `Import bestaetigen` nach `Vorschau laden` ohne erneute Dateiauswahl funktioniert.
+- Im Monatsaktions-Overlay bleibt der geoeffnete Monat technisch als hidden Zielmonat erhalten, wird aber nicht mehr als bearbeitbares Feld angezeigt.
+
+Auswirkung:
+
+- Re-Importe landen in der fachlichen Duplikatzaehlung statt in einer rohen SQLite-Unique-Fehlermeldung.
+- Der normale Importbereich und das eingebettete Monatsaktions-Overlay nutzen weiterhin dieselbe Importlogik.
+- Abgelaufene Preview-Tokens werden fachlich als erneute Dateiauswahl behandelt; sensible CSV-Inhalte bleiben nicht unbegrenzt im Prozessspeicher.
+- Es werden keine neuen Bank-, Kategorie-, Sonderbudget- oder Zielmonat-Fachregeln eingefuehrt.

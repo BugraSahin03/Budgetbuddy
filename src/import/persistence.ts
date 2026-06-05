@@ -224,7 +224,18 @@ export function persistSparkasseCsvImport(params: {
         )
         .get(dedupeFingerprint) as { id: number } | undefined;
 
-      if (alreadyImported) {
+      const alreadyPersistedTransaction = db
+        .prepare(
+          `
+            SELECT id
+            FROM transactions
+            WHERE import_fingerprint = ?
+            LIMIT 1
+          `,
+        )
+        .get(dedupeFingerprint) as { id: number } | undefined;
+
+      if (alreadyImported || alreadyPersistedTransaction) {
         duplicateRows += 1;
         continue;
       }
