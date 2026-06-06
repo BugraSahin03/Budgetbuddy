@@ -437,6 +437,7 @@ body {
   height: min(96vh, 64rem);
   margin: auto;
   max-width: min(88rem, calc(100vw - 1rem));
+  overscroll-behavior: contain;
   padding: 0;
   width: 100%;
 }
@@ -455,6 +456,7 @@ body {
   border-radius: 1.1rem;
   box-shadow: 0 38px 96px rgba(7, 27, 70, 0.24);
   height: 100%;
+  overscroll-behavior: contain;
   overflow-y: auto;
   position: relative;
 }
@@ -631,23 +633,6 @@ body {
 
 .month-action-amount-field input::placeholder {
   color: rgba(7, 27, 70, 0.08);
-}
-
-.month-action-stepper {
-  background: rgba(226, 232, 240, 0.72);
-  border-radius: 1.1rem;
-  display: grid;
-  overflow: hidden;
-  width: 3rem;
-}
-
-.month-action-stepper button {
-  background: transparent;
-  border: 0;
-  color: #071b46;
-  font-size: 1.2rem;
-  font-weight: 950;
-  height: 2rem;
 }
 
 .month-action-budget-pill {
