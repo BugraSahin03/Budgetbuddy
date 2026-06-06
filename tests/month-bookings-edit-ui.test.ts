@@ -14,10 +14,11 @@ describe("FIN-060 month bookings edit UI", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
 
     expect(page).toContain("bookingEdit");
-    expect(page).toContain("Read-only Ansicht fuer schnelles Pruefen");
+    expect(page).not.toContain("Read-only Ansicht fuer schnelles Pruefen");
     expect(page).toContain("Editiermodus fuer Monatsbuchungen aktivieren");
-    expect(page).toContain("Bearbeiten");
-    expect(page).toContain("Fertig");
+    expect(page).toContain('id="monatsbuchungen"');
+    expect(page).toContain("#monatsbuchungen");
+    expect(page).toContain('title={isBookingEditMode ? "Fertig" : "Bearbeiten"}');
     expect(page).toContain("isBookingEditMode ? (");
   });
 
@@ -29,7 +30,9 @@ describe("FIN-060 month bookings edit UI", () => {
     expect(page).toContain('optgroup label="Sonderbudgets"');
     expect(page).toContain("Sonderbudget · {budget.name}");
     expect(page).toContain("deleteMonthlyManualTransactionAction");
+    expect(page).toContain("deleteMonthlyImportedTransactionAction");
     expect(page).toContain('name="confirmDelete"');
+    expect(page).toContain("Import-Buchung loeschen");
   });
 
   it("renders quiet read-only chips and semantic symbol tiles instead of permanent type/source fields", () => {
@@ -39,6 +42,9 @@ describe("FIN-060 month bookings edit UI", () => {
     expect(page).toContain("CategoryVisualMark");
     expect(page).toContain("function assignmentChipLabel");
     expect(page).toContain("Zuordnen");
+    expect(page).toContain("Titel");
+    expect(page).toContain("Datum");
+    expect(page).toContain("Zuordnung");
     expect(page).toContain("border-amber-200 bg-amber-100");
     expect(page).toContain("border-red-200 bg-red-100");
   });

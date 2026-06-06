@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   createManualTransaction: vi.fn(),
+  deleteImportedTransactionForMonth: vi.fn(),
   deleteManualTransaction: vi.fn(),
   getActiveCashAccountId: vi.fn(() => 22),
   redirect: vi.fn((url: string) => {
@@ -31,6 +32,7 @@ vi.mock("@/src/special-budgets/repository", () => ({
 }));
 vi.mock("@/src/transactions/repository", () => ({
   createManualTransaction: mocks.createManualTransaction,
+  deleteImportedTransactionForMonth: mocks.deleteImportedTransactionForMonth,
   deleteManualTransaction: mocks.deleteManualTransaction,
   getActiveCashAccountId: mocks.getActiveCashAccountId,
   updateExpenseAssignmentForMonth: mocks.updateExpenseAssignmentForMonth,
@@ -39,6 +41,7 @@ vi.mock("@/src/transactions/repository", () => ({
 
 const {
   createMonthlyManualTransactionAction,
+  deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
   updateMonthlyTransactionAssignmentAction,
 } = await import("@/app/monate/actions");
@@ -104,6 +107,9 @@ describe("FIN-060 monthly booking edit actions", () => {
       updateMonthlyTransactionAssignmentAction(formData),
     ).rejects.toThrow("redirect:");
 
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      "/monate/2026-06?notice=Zuordnung+gespeichert.#monatsbuchungen",
+    );
     expect(mocks.updateExpenseAssignmentForMonth).toHaveBeenCalledWith(
       44,
       "2026-06",
@@ -152,5 +158,30 @@ describe("FIN-060 monthly booking edit actions", () => {
     ).rejects.toThrow("redirect:");
 
     expect(mocks.deleteManualTransaction).toHaveBeenCalledWith(46);
+  });
+
+  it("requires explicit delete confirmation for imported monthly bookings", async () => {
+    const formData = new FormData();
+    formData.set("monthKey", "2026-06");
+    formData.set("transactionId", "47");
+
+    await expect(
+      deleteMonthlyImportedTransactionAction(formData),
+    ).rejects.toThrow("redirect:");
+
+    expect(mocks.deleteImportedTransactionForMonth).not.toHaveBeenCalled();
+
+    formData.set("confirmDelete", "on");
+    await expect(
+      deleteMonthlyImportedTransactionAction(formData),
+    ).rejects.toThrow("redirect:");
+
+    expect(mocks.deleteImportedTransactionForMonth).toHaveBeenCalledWith(
+      47,
+      "2026-06",
+    );
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      "/monate/2026-06?bookingEdit=1&notice=Import-Buchung+geloescht.#monatsbuchungen",
+    );
   });
 });

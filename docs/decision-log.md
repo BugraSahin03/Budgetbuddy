@@ -1119,3 +1119,20 @@ Auswirkung:
 - Die Monatsbuchungsliste wirkt im Normalmodus ruhiger und transportiert Zuordnungen als Chips statt als Formularfelder.
 - Die bestehende Fachregel `Kategorie oder Sonderbudget, nicht beides` bleibt die zentrale Validierung und wird nur UI-seitig eindeutiger abgebildet.
 - Es werden keine Import-Fingerprints, Import-Persistenz oder automatische Kategorisierungsregeln geaendert.
+
+## 2026-06-06 - FIN-060 Feinschliff fuer Monatsbuchungen
+
+Quelle/Ticket: `FIN-060`
+
+Erkenntnis/Entscheidung:
+
+- Die Read-only-Liste nutzt die breite Monatsflaeche staerker aus: Titel, Datum, Budgetzuordnung und Betrag werden als eigene Blickpunkte dargestellt.
+- Der erklaerende Read-only-Hinweis entfaellt; Editiermodus wird nur noch ueber ein Icon im Kopf aktiviert bzw. beendet.
+- Wechsel in und aus dem Editiermodus sowie Monatsbuchungs-Actions springen per `#monatsbuchungen` wieder in den Buchungsbereich zurueck.
+- Importierte Buchungen koennen im Editiermodus nach bewusster Bestaetigung geloescht werden.
+
+Auswirkung:
+
+- Die Monatsbuchungsliste wird schneller scanbar und reduziert erklaerenden UI-Text.
+- Import-Loeschen entfernt die sichtbare Transaktion. Aufgrund der bestehenden `ON DELETE CASCADE`-Beziehung wird dabei auch der zugehoerige `imported_transactions`-Nachweis entfernt; derselbe Bankumsatz kann bei einem spaeteren Re-Import wieder als neu erkannt werden.
+- Es wird keine Soft-Delete- oder Import-Archiv-Struktur eingefuehrt; falls geloeschte Importbuchungen dauerhaft vom Re-Import ausgeschlossen werden sollen, braucht das ein eigenes Importstrategie-Ticket.

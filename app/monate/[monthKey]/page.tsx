@@ -7,6 +7,7 @@ import {
   categorySoftStyle,
 } from "@/app/components/category-visual";
 import {
+  deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
   setMonthlyBudgetOverrideAction,
   updateMonthlyManualTransactionAction,
@@ -235,6 +236,12 @@ function categoryUsagePercent(row: {
     100,
     Math.round((row.spentAmountCents / row.budgetAmountCents) * 100),
   );
+}
+
+function bookingEditHref(monthKey: string, isBookingEditMode: boolean): string {
+  return isBookingEditMode
+    ? `/monate/${monthKey}#monatsbuchungen`
+    : `/monate/${monthKey}?bookingEdit=1#monatsbuchungen`;
 }
 
 function MonthNavLink({
@@ -850,6 +857,7 @@ export default async function MonthDetailPage({
       </section>
 
       <details
+        id="monatsbuchungen"
         className="month-reference-panel month-disclosure min-w-0 overflow-hidden bg-white/78"
         open={isBookingEditMode || undefined}
       >
@@ -862,34 +870,22 @@ export default async function MonthDetailPage({
               {month.transactions.length} Eintraege
             </MonthChip>
             <Link
-              href={
-                isBookingEditMode
-                  ? `/monate/${month.monthKey}`
-                  : `/monate/${month.monthKey}?bookingEdit=1`
-              }
-              className="inline-flex items-center gap-2 rounded-full border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink)] shadow-[0_10px_22px_rgba(7,27,70,0.06)] transition hover:-translate-y-0.5"
+              href={bookingEditHref(month.monthKey, isBookingEditMode)}
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--month-line-strong)] bg-white text-lg font-black text-[color:var(--month-ink)] shadow-[0_10px_22px_rgba(7,27,70,0.06)] transition hover:-translate-y-0.5"
               aria-label={
                 isBookingEditMode
                   ? "Editiermodus fuer Monatsbuchungen beenden"
                   : "Editiermodus fuer Monatsbuchungen aktivieren"
               }
+              title={isBookingEditMode ? "Fertig" : "Bearbeiten"}
             >
               <span aria-hidden="true">{isBookingEditMode ? "✓" : "✎"}</span>
-              {isBookingEditMode ? "Fertig" : "Bearbeiten"}
             </Link>
             <span className="month-disclosure-chevron" aria-hidden="true">
               ›
             </span>
           </span>
         </summary>
-
-        <div className="mt-5 rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/64 px-4 py-3">
-          <p className="text-sm font-semibold text-[color:var(--month-ink-soft)]">
-            {isBookingEditMode
-              ? "Editiermodus: Manuelle Buchungen koennen voll bearbeitet werden, Import-Ausgaben nur in ihrer Budgetzuordnung."
-              : "Read-only Ansicht fuer schnelles Pruefen. Bearbeitung erscheint erst bewusst im Editiermodus."}
-          </p>
-        </div>
 
         <div className="mt-7 space-y-4">
           {month.transactions.length === 0 ? (
@@ -910,32 +906,39 @@ export default async function MonthDetailPage({
               return (
                 <article
                   key={`${transaction.sourceType}-${transaction.id}`}
-                  className="min-w-0 overflow-hidden rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/86 p-5 shadow-[0_12px_28px_rgba(7,27,70,0.04)]"
+                  className="min-w-0 overflow-hidden rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/88 p-4 shadow-[0_12px_28px_rgba(7,27,70,0.04)] sm:p-5"
                 >
-                  <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
-                    <div className="flex min-w-0 gap-4">
+                  <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                    <div className="grid min-w-0 gap-4 md:grid-cols-[auto_minmax(0,1.25fr)_minmax(8.5rem,auto)_minmax(9.5rem,auto)] md:items-center">
                       <TransactionVisualMark
                         transaction={transaction}
                         categoryVisuals={categoryVisuals}
                       />
-                      <div className="min-w-0 flex-1">
-                        <h3 className="truncate text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
+                      <div className="min-w-0">
+                        <p className="month-eyebrow">Titel</p>
+                        <h3 className="mt-1 truncate text-lg font-black tracking-[-0.04em] text-[color:var(--month-ink)]">
                           {transaction.description}
                         </h3>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <span className="inline-flex rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-                            {transaction.bookingDate}
-                          </span>
-                          <span
-                            className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-bold ${assignmentTone(transaction)}`}
-                          >
+                      </div>
+                      <div className="rounded-2xl border border-[color:var(--month-line)] bg-white/78 px-3 py-2">
+                        <p className="month-eyebrow">Datum</p>
+                        <p className="mt-1 text-sm font-black text-[color:var(--month-ink)]">
+                          {transaction.bookingDate}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="month-eyebrow">Zuordnung</p>
+                        <span
+                          className={`mt-1 inline-flex max-w-full rounded-full border px-3 py-1.5 text-xs font-black ${assignmentTone(transaction)}`}
+                        >
+                          <span className="truncate">
                             {assignmentChipLabel(transaction)}
                           </span>
-                        </div>
+                        </span>
                       </div>
                     </div>
                     <p
-                      className={`shrink-0 text-right text-xl font-black tracking-[-0.045em] ${amountTone(transaction.amountCents)}`}
+                      className={`shrink-0 text-left text-2xl font-black tracking-[-0.055em] xl:text-right ${amountTone(transaction.amountCents)}`}
                     >
                       {formatEuro(transaction.amountCents)}
                     </p>
@@ -951,9 +954,6 @@ export default async function MonthDetailPage({
                           {transaction.destinationAccountName
                             ? `${transaction.accountName} -> ${transaction.destinationAccountName}`
                             : transaction.accountName}
-                        </span>
-                        <span className="inline-flex rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-                          {transactionTypeLabel(transaction.transactionType)}
                         </span>
                       </div>
 
@@ -1165,6 +1165,36 @@ export default async function MonthDetailPage({
                             className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-red-700 transition hover:-translate-y-0.5"
                           >
                             Buchung loeschen
+                          </button>
+                        </form>
+                      ) : transaction.sourceType === "import" ? (
+                        <form
+                          action={deleteMonthlyImportedTransactionAction}
+                          className="flex flex-wrap items-center gap-3 border-t border-[color:var(--month-line)] pt-3"
+                        >
+                          <input
+                            type="hidden"
+                            name="monthKey"
+                            value={month.monthKey}
+                          />
+                          <input
+                            type="hidden"
+                            name="transactionId"
+                            value={transaction.id}
+                          />
+                          <label className="flex items-center gap-2 text-xs font-semibold text-red-800">
+                            <input
+                              type="checkbox"
+                              name="confirmDelete"
+                              className="h-4 w-4 rounded border-red-300"
+                            />
+                            Import-Loeschen bestaetigen
+                          </label>
+                          <button
+                            type="submit"
+                            className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-red-700 transition hover:-translate-y-0.5"
+                          >
+                            Import-Buchung loeschen
                           </button>
                         </form>
                       ) : null}
