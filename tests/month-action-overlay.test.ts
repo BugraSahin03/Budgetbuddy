@@ -27,10 +27,15 @@ describe("FIN-052 month action overlay", () => {
     expect(overlay).toContain("Hinzufuegen");
     expect(overlay).toContain(">Ausgabe<");
     expect(overlay).toContain(">Einnahme<");
-    expect(overlay).toContain(">Import<");
+    expect(overlay).toContain(">Import CSV<");
     expect(overlay).toContain("month-action-dialog");
-    expect(overlay).toContain("month-action-amount-card");
+    expect(overlay).toContain("month-action-amount-stage");
     expect(overlay).toContain("month-action-cash-toggle");
+    expect(overlay).toContain("month-action-topbar");
+    expect(overlay).toContain("month-action-page");
+    expect(overlay).toContain("month-action-budget-pill");
+    expect(overlay).toContain("month-action-save-dock");
+    expect(overlay).toContain("Buchung hinzufuegen");
   });
 
   it("keeps expense assignment as a single category-or-special-budget tile choice", () => {

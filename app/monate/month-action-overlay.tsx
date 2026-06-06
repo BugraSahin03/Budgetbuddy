@@ -114,25 +114,29 @@ function AssignmentTiles({
   specialBudgetOptions: SpecialBudgetOption[];
 }) {
   return (
-    <div className="space-y-4">
-      <div>
+    <section className="month-action-category-panel">
+      <div className="month-action-panel-title-row">
         <p className="month-action-label">Kategorie</p>
-        <div className="month-action-tile-grid">
-          {categoryOptions.map((category) => (
-            <label key={category.id} className="month-action-choice">
-              <input type="radio" name="assignment" value={`category:${category.id}`} />
-              <span aria-hidden="true" className="month-action-choice-icon">
-                {categoryMarker(category.name)}
-              </span>
-              <span>{category.name}</span>
-            </label>
-          ))}
-        </div>
+        <span>Alle verwalten</span>
+      </div>
+      <div className="month-action-tile-grid">
+        {categoryOptions.map((category) => (
+          <label key={category.id} className="month-action-choice">
+            <input type="radio" name="assignment" value={`category:${category.id}`} />
+            <span aria-hidden="true" className="month-action-choice-icon">
+              {categoryMarker(category.name)}
+            </span>
+            <span>{category.name}</span>
+          </label>
+        ))}
       </div>
 
       {specialBudgetOptions.length > 0 ? (
-        <div>
-          <p className="month-action-label text-amber-700">Sonderbudget</p>
+        <div className="mt-6">
+          <div className="month-action-panel-title-row">
+            <p className="month-action-label text-amber-700">Sonderbudget</p>
+            <span>Monatlich</span>
+          </div>
           <div className="month-action-tile-grid">
             {specialBudgetOptions.map((budget) => (
               <label key={budget.id} className="month-action-choice month-action-choice-warn">
@@ -148,7 +152,7 @@ function AssignmentTiles({
       ) : (
         <input type="hidden" name="specialBudgetId" value="" />
       )}
-    </div>
+    </section>
   );
 }
 
@@ -182,19 +186,14 @@ function ManualTransactionForm({
         </>
       ) : null}
 
-      <div className="month-action-form-grid">
-        <section className="month-action-amount-card">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="month-action-label">Betrag</p>
-              <p className="text-xs font-semibold text-[color:var(--month-ink-soft)]">
-                {isExpense ? "Was wurde ausgegeben?" : "Was ist eingegangen?"}
-              </p>
-            </div>
-            <CashToggle id={`${id}-cash`} />
-          </div>
+      <section className="month-action-amount-stage">
+        <div className="flex justify-center">
+          <CashToggle id={`${id}-cash`} />
+        </div>
+        <p className="month-action-label text-center">Betrag</p>
+        <div className="month-action-amount-row">
           <label className="month-action-amount-field" htmlFor={`${id}-amount`}>
-            <span aria-hidden="true">€</span>
+            <span aria-hidden="true">EUR</span>
             <input
               id={`${id}-amount`}
               name="amount"
@@ -203,8 +202,27 @@ function ManualTransactionForm({
               inputMode="decimal"
             />
           </label>
-        </section>
+          <div className="month-action-stepper" aria-hidden="true">
+            <button type="button" tabIndex={-1}>
+              +
+            </button>
+            <button type="button" tabIndex={-1}>
+              -
+            </button>
+          </div>
+        </div>
+        <p
+          className={
+            isExpense
+              ? "month-action-budget-pill"
+              : "month-action-budget-pill month-action-budget-pill-positive"
+          }
+        >
+          {isExpense ? "Wird vom Monatsbudget abgezogen" : "Wird als Einnahme erfasst"}
+        </p>
+      </section>
 
+      <div className="month-action-field-grid">
         <section className="month-action-field-card">
           <FieldLabel htmlFor={`${id}-date`}>Datum</FieldLabel>
           <TextInput
@@ -223,19 +241,21 @@ function ManualTransactionForm({
             placeholder={isExpense ? "z. B. Rewe Einkauf" : "z. B. Gehalt"}
           />
         </section>
-
-        <section className="month-action-field-card">
-          <FieldLabel htmlFor={`${id}-account`}>Konto</FieldLabel>
-          <AccountSelect
-            id={`${id}-account`}
-            accountOptions={accountOptions}
-            defaultAccountId={defaultAccountId}
-          />
-          <p className="mt-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-            Mit aktivem Bargeld-Schalter wird automatisch das Bargeldkonto verwendet.
-          </p>
-        </section>
       </div>
+
+      <section className="month-action-field-card month-action-account-card">
+        <div>
+          <FieldLabel htmlFor={`${id}-account`}>Konto</FieldLabel>
+          <p className="text-xs font-semibold text-[color:var(--month-ink-soft)]">
+            Mit aktivem Bargeld-Schalter wird automatisch Bargeld verwendet.
+          </p>
+        </div>
+        <AccountSelect
+          id={`${id}-account`}
+          accountOptions={accountOptions}
+          defaultAccountId={defaultAccountId}
+        />
+      </section>
 
       {isExpense ? (
         <AssignmentTiles
@@ -244,10 +264,33 @@ function ManualTransactionForm({
         />
       ) : null}
 
-      <button type="submit" className="month-action-submit">
-        {isExpense ? "Ausgabe speichern" : "Einnahme speichern"}
-      </button>
+      <div className="month-action-save-dock">
+        <button type="submit" className="month-action-submit">
+          {isExpense ? "Ausgabe speichern" : "Einnahme speichern"}
+          <span aria-hidden="true">OK</span>
+        </button>
+      </div>
     </form>
+  );
+}
+
+function ImportPanel({ monthKey }: { monthKey: string }) {
+  return (
+    <div className="month-action-import-shell">
+      <div className="month-action-import-intro">
+        <p className="month-action-label">Import</p>
+        <h3>CSV pruefen und uebernehmen</h3>
+        <p>
+          Sparkassen-Import bleibt im selben Dialog verfuegbar. Der geoeffnete Monat wird hidden
+          uebernommen, ohne zusaetzliche Monatsauswahl.
+        </p>
+      </div>
+      <ImportForm
+        defaultEffectiveMonthKey={monthKey}
+        returnMonthKey={monthKey}
+        surface="embedded"
+      />
+    </div>
   );
 }
 
@@ -272,81 +315,51 @@ export function MonthActionOverlay({
       </button>
       <dialog ref={dialogRef} className="month-action-dialog">
         <div className="month-action-surface">
-          <header className="month-action-header">
-            <div className="flex min-w-0 items-start gap-4">
-              <form method="dialog">
-                <button type="submit" className="month-dialog-back" aria-label="Overlay schliessen">
-                  Zurueck
-                </button>
-              </form>
-              <div>
-                <p className="month-eyebrow">Monatsaktion</p>
-                <h2 className="mt-2 text-4xl font-black tracking-[-0.065em] text-[color:var(--month-ink)]">
-                  Buchung hinzufuegen
-                </h2>
-              </div>
-            </div>
-            <div className="max-w-md text-right">
-              <p className="mt-3 text-sm font-semibold leading-6 text-[color:var(--month-ink-soft)]">
-                Grosszuegige Erfassung fuer Ausgabe, Einnahme und Import im geoeffneten Monat.
-              </p>
-              <form method="dialog" className="mt-3">
-                <button type="submit" className="month-dialog-close" aria-label="Overlay schliessen">
-                  Schliessen
-                </button>
-              </form>
-            </div>
+          <header className="month-action-topbar">
+            <form method="dialog">
+              <button type="submit" className="month-action-back" aria-label="Overlay schliessen">
+                Zurueck
+              </button>
+            </form>
+            <h2>Buchung hinzufuegen</h2>
+            <p>BudgetBuddy</p>
           </header>
 
-          <div className="month-action-tabs">
-            <input id={`${tabId}-expense`} type="radio" name={`${tabId}-tabs`} defaultChecked />
-            <label htmlFor={`${tabId}-expense`}>Ausgabe</label>
-            <input id={`${tabId}-income`} type="radio" name={`${tabId}-tabs`} />
-            <label htmlFor={`${tabId}-income`}>Einnahme</label>
-            <input id={`${tabId}-import`} type="radio" name={`${tabId}-tabs`} />
-            <label htmlFor={`${tabId}-import`}>Import</label>
+          <div className="month-action-page">
+            <div className="month-action-tabs">
+              <input id={`${tabId}-expense`} type="radio" name={`${tabId}-tabs`} defaultChecked />
+              <label htmlFor={`${tabId}-expense`}>Ausgabe</label>
+              <input id={`${tabId}-income`} type="radio" name={`${tabId}-tabs`} />
+              <label htmlFor={`${tabId}-income`}>Einnahme</label>
+              <input id={`${tabId}-import`} type="radio" name={`${tabId}-tabs`} />
+              <label htmlFor={`${tabId}-import`}>Import CSV</label>
 
-            <section className="month-action-tab-panel month-action-tab-expense">
-              <ManualTransactionForm
-                mode="expense"
-                monthKey={monthKey}
-                accountOptions={accountOptions}
-                categoryOptions={categoryOptions}
-                specialBudgetOptions={specialBudgetOptions}
-                defaultAccountId={defaultAccountId}
-              />
-            </section>
-
-            <section className="month-action-tab-panel month-action-tab-income">
-              <ManualTransactionForm
-                mode="income"
-                monthKey={monthKey}
-                accountOptions={accountOptions}
-                categoryOptions={categoryOptions}
-                specialBudgetOptions={specialBudgetOptions}
-                defaultAccountId={defaultAccountId}
-              />
-            </section>
-
-            <section className="month-action-tab-panel month-action-tab-import">
-              <div className="month-action-import-shell">
-                <div className="rounded-[1.5rem] bg-[#eef8fd] p-5">
-                  <p className="month-eyebrow">Sparkassen-Import</p>
-                  <h3 className="mt-2 text-2xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
-                    CSV pruefen und uebernehmen
-                  </h3>
-                  <p className="mt-2 text-sm font-semibold leading-6 text-[color:var(--month-ink-soft)]">
-                    Die bestehende Import-Vorschau, Duplikaterkennung und Bestaetigung laufen
-                    unveraendert im geoeffneten Monat weiter.
-                  </p>
-                </div>
-                <ImportForm
-                  defaultEffectiveMonthKey={monthKey}
-                  returnMonthKey={monthKey}
-                  surface="embedded"
+              <section className="month-action-tab-panel month-action-tab-expense">
+                <ManualTransactionForm
+                  mode="expense"
+                  monthKey={monthKey}
+                  accountOptions={accountOptions}
+                  categoryOptions={categoryOptions}
+                  specialBudgetOptions={specialBudgetOptions}
+                  defaultAccountId={defaultAccountId}
                 />
-              </div>
-            </section>
+              </section>
+
+              <section className="month-action-tab-panel month-action-tab-income">
+                <ManualTransactionForm
+                  mode="income"
+                  monthKey={monthKey}
+                  accountOptions={accountOptions}
+                  categoryOptions={categoryOptions}
+                  specialBudgetOptions={specialBudgetOptions}
+                  defaultAccountId={defaultAccountId}
+                />
+              </section>
+
+              <section className="month-action-tab-panel month-action-tab-import">
+                <ImportPanel monthKey={monthKey} />
+              </section>
+            </div>
           </div>
         </div>
       </dialog>

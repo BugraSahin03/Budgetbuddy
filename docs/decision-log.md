@@ -1038,3 +1038,19 @@ Auswirkung:
 - Barzahlungen lassen sich im Monatskontext schneller erfassen, ohne das Datenmodell oder bestehende Transaktionsregeln zu erweitern.
 - Der geoeffnete Monat bleibt technisch hidden gesetzt; kein sichtbares Zielmonat-Feld wird wieder eingefuehrt.
 - Die bestehende Importlogik bleibt unveraendert eingebettet.
+
+## 2026-06-06 - FIN-057 richtet den Hinzufuegen-Dialog am Referenzscreen aus
+
+Quelle/Ticket: `FIN-057`
+
+Erkenntnis/Entscheidung:
+
+- Der wiedereroeffnete Hinzufuegen-Dialog orientiert sich staerker am bereitgestellten Add-Transaction-Referenzscreen: Topbar, grosser Amount-Fokus, zweispaltige Eingabekarten, Kategorie-Kachelbereich und Sticky-Speichern.
+- Ausgabe und Einnahme bleiben die primaeren Modi; der bestehende CSV-Import bleibt im selben Overlay als separater Modus erreichbar.
+- Der `Bargeld`-Schalter bleibt eine reine Konto-Override-Entscheidung im bestehenden Formularfluss und fuehrt weiterhin keine neue Bargeld-Fachlogik ein.
+- Der geoeffnete Monat bleibt nur hidden gesetzt; ein sichtbares Zielmonat-Feld wird nicht wieder eingefuehrt.
+
+Auswirkung:
+
+- Die Monatsaktion fuehlt sich weniger wie ein technischer Dialog und mehr wie eine fokussierte Transaktionsseite im Overlay an.
+- Bestehende Import-, Konto-, Kategorie-, Sonderbudget- und Transaktionsregeln bleiben unveraendert.
