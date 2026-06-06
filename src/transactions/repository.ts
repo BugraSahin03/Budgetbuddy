@@ -27,6 +27,7 @@ export type AccountOption = {
 export type CategoryOption = {
   id: number;
   name: string;
+  iconName: string | null;
 };
 
 export type SpecialBudgetOption = {
@@ -103,7 +104,10 @@ function normalizeBookingDate(bookingDate: string): string {
   return normalized;
 }
 
-function normalizeEffectiveMonthKey(effectiveMonthKey: string, fallback: string): string {
+function normalizeEffectiveMonthKey(
+  effectiveMonthKey: string,
+  fallback: string,
+): string {
   const normalized = effectiveMonthKey.trim();
 
   if (normalized.length === 0) {
@@ -179,9 +183,11 @@ function getActiveCategoryById(categoryId: number): { id: number } {
   return category;
 }
 
-function getActiveSpecialBudgetById(
-  specialBudgetId: number,
-): { id: number; monthKey: string; isActive: number } {
+function getActiveSpecialBudgetById(specialBudgetId: number): {
+  id: number;
+  monthKey: string;
+  isActive: number;
+} {
   const specialBudget = getDb()
     .prepare(
       "SELECT id, month_key AS monthKey, is_active AS isActive FROM special_budgets WHERE id = ?",
@@ -209,12 +215,15 @@ function validateExpenseAssignment(
   categoryId: number | null;
   specialBudgetId: number | null;
 } {
-  const hasCategory = Number.isInteger(input.categoryId) && (input.categoryId ?? 0) > 0;
+  const hasCategory =
+    Number.isInteger(input.categoryId) && (input.categoryId ?? 0) > 0;
   const hasSpecialBudget =
     Number.isInteger(input.specialBudgetId) && (input.specialBudgetId ?? 0) > 0;
 
   if (hasCategory && hasSpecialBudget) {
-    throw new Error("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
+    throw new Error(
+      "Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.",
+    );
   }
 
   if (!hasCategory && !hasSpecialBudget) {
@@ -225,7 +234,9 @@ function validateExpenseAssignment(
       };
     }
 
-    throw new Error("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
+    throw new Error(
+      "Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.",
+    );
   }
 
   if (hasCategory) {
@@ -238,11 +249,16 @@ function validateExpenseAssignment(
     };
   }
 
-  const specialBudgetId = ensurePositiveInt(input.specialBudgetId ?? -1, "Sonderbudget");
+  const specialBudgetId = ensurePositiveInt(
+    input.specialBudgetId ?? -1,
+    "Sonderbudget",
+  );
   const specialBudget = getActiveSpecialBudgetById(specialBudgetId);
 
   if (specialBudget.monthKey !== effectiveMonthKey) {
-    throw new Error("Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.");
+    throw new Error(
+      "Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.",
+    );
   }
 
   return {
@@ -251,7 +267,10 @@ function validateExpenseAssignment(
   };
 }
 
-function resolveSignedAmount(transactionType: TransactionType, absoluteCents: number): number {
+function resolveSignedAmount(
+  transactionType: TransactionType,
+  absoluteCents: number,
+): number {
   if (transactionType === "expense" || transactionType === "transfer") {
     return -absoluteCents;
   }
@@ -393,7 +412,10 @@ export function listActiveCategoryOptions(): CategoryOption[] {
   return getDb()
     .prepare(
       `
-        SELECT id, name
+        SELECT
+          id,
+          name,
+          icon_name AS iconName
         FROM categories
         WHERE is_active = 1
         ORDER BY name COLLATE NOCASE ASC
@@ -485,7 +507,9 @@ export function getCashAccountSnapshot(): CashAccountSnapshot {
     .get(account.id) as { total: number };
 
   const currentBalanceCents =
-    account.openingBalanceCents + cashOutgoing.total + cashIncomingTransfers.total;
+    account.openingBalanceCents +
+    cashOutgoing.total +
+    cashIncomingTransfers.total;
 
   return {
     accountId: account.id,
@@ -535,7 +559,10 @@ export function createManualTransaction(input: ManualTransactionInput): void {
   }
 }
 
-export function updateManualTransaction(transactionId: number, input: ManualTransactionInput): void {
+export function updateManualTransaction(
+  transactionId: number,
+  input: ManualTransactionInput,
+): void {
   const shaped = validateAndShapeInput(input);
   const id = ensurePositiveInt(transactionId, "Transaktion");
 
@@ -653,7 +680,12 @@ export function updateExpenseAssignmentForMonth(
             AND transaction_type = 'expense'
         `,
       )
-      .run(assignment.categoryId, assignment.specialBudgetId, id, effectiveMonthKey);
+      .run(
+        assignment.categoryId,
+        assignment.specialBudgetId,
+        id,
+        effectiveMonthKey,
+      );
 
     if (result.changes === 0) {
       throw new Error("Buchung konnte nicht aktualisiert werden.");

@@ -1101,3 +1101,21 @@ Auswirkung:
 
 - Betrag, Datum/Metadaten und vorhandene Zuordnungen bleiben sichtbar, waehrend lange Titel die Monatsansicht nicht mehr aus dem Viewport druecken.
 - Es werden keine Import-, Persistenz-, Fingerprint- oder Transaktionsregeln geaendert.
+
+## 2026-06-06 - FIN-060 macht Monatsbuchungen standardmaessig read-only
+
+Quelle/Ticket: `FIN-060`
+
+Erkenntnis/Entscheidung:
+
+- `Alle Monatsbuchungen` bleibt einklappbar, zeigt im Normalmodus aber keine dauerhaften Formularfelder mehr pro Buchung.
+- Bearbeitung wird ueber einen expliziten Editiermodus im Monatskontext aktiviert.
+- Ausgaben erhalten genau ein UI-Feld `Budgetzuordnung`, das Kategorien und aktive Sonderbudgets des Monats gemeinsam anbietet.
+- Manuelle Buchungen koennen im Monatskontext mit Name, Datum, Betrag und Budgetzuordnung bearbeitet sowie mit bewusster Bestaetigung geloescht werden.
+- Importierte Ausgaben behalten ihre Importdaten unveraendert; im Monatskontext wird nur die Budgetzuordnung bearbeitet.
+
+Auswirkung:
+
+- Die Monatsbuchungsliste wirkt im Normalmodus ruhiger und transportiert Zuordnungen als Chips statt als Formularfelder.
+- Die bestehende Fachregel `Kategorie oder Sonderbudget, nicht beides` bleibt die zentrale Validierung und wird nur UI-seitig eindeutiger abgebildet.
+- Es werden keine Import-Fingerprints, Import-Persistenz oder automatische Kategorisierungsregeln geaendert.
