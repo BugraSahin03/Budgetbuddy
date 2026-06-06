@@ -548,7 +548,7 @@ export default async function MonthDetailPage({
           </div>
         </article>
 
-        <article className="month-reference-panel bg-white/82">
+        <article className="month-reference-panel min-w-0 overflow-hidden bg-white/82">
           <SectionHeader
             eyebrow="Letzte Bewegung"
             title="Letzte Ausgaben"
@@ -582,7 +582,7 @@ export default async function MonthDetailPage({
         </article>
       </section>
 
-      <details className="month-reference-panel month-disclosure bg-white/78">
+      <details className="month-reference-panel month-disclosure min-w-0 overflow-hidden bg-white/78">
         <summary className="month-disclosure-summary">
           <span className="mt-2 block text-2xl font-extrabold tracking-[-0.045em] text-[color:var(--month-ink)]">
             Alle Monatsbuchungen
@@ -597,17 +597,17 @@ export default async function MonthDetailPage({
             <EmptyReferenceCard>Keine Buchungen fuer diesen Monat vorhanden.</EmptyReferenceCard>
           ) : (
             month.transactions.map((transaction) => (
-              <article key={`${transaction.sourceType}-${transaction.id}`} className="rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/86 p-5 shadow-[0_12px_28px_rgba(7,27,70,0.04)]">
-                <div className="grid gap-4 xl:grid-cols-[1fr_auto] xl:items-start">
+              <article key={`${transaction.sourceType}-${transaction.id}`} className="min-w-0 overflow-hidden rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/86 p-5 shadow-[0_12px_28px_rgba(7,27,70,0.04)]">
+                <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
                   <div className="flex min-w-0 gap-4">
                     <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#d8eef9] text-xs font-black text-[color:var(--month-ink)]">
                       {transaction.bookingDate.slice(5)}
                     </div>
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <h3 className="truncate text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
                         {transaction.description}
                       </h3>
-                      <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
+                      <p className="mt-1 truncate text-sm text-[color:var(--month-ink-soft)]">
                         {transactionSubtitle(transaction)}
                       </p>
                       <div className="mt-3 flex flex-wrap gap-2">
@@ -622,7 +622,7 @@ export default async function MonthDetailPage({
                       </div>
                     </div>
                   </div>
-                  <p className="text-right text-xl font-black tracking-[-0.045em] text-[color:var(--month-ink)]">
+                  <p className="shrink-0 text-right text-xl font-black tracking-[-0.045em] text-[color:var(--month-ink)]">
                     {formatEuro(transaction.amountCents)}
                   </p>
                 </div>

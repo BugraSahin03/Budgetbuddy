@@ -243,6 +243,7 @@ body {
   border-radius: 1.75rem;
   box-shadow: 0 24px 58px rgba(7, 27, 70, 0.07);
   backdrop-filter: blur(18px);
+  min-width: 0;
 }
 
 .month-reference-card {
@@ -254,12 +255,15 @@ body {
 }
 
 .month-expense-row {
-  display: flex;
   align-items: center;
-  gap: 1rem;
-  border-radius: 1.35rem;
   background: rgba(255, 255, 255, 0.9);
+  border-radius: 1.35rem;
   box-shadow: 0 16px 34px rgba(7, 27, 70, 0.05);
+  display: flex;
+  gap: 1rem;
+  max-width: 100%;
+  min-width: 0;
+  overflow: hidden;
   padding: 1rem;
 }
 
