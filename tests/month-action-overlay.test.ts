@@ -36,6 +36,7 @@ describe("FIN-052 month action overlay", () => {
     expect(overlay).toContain("month-action-budget-pill");
     expect(overlay).toContain("month-action-save-dock");
     expect(overlay).toContain("Buchung hinzufuegen");
+    expect(overlay).not.toContain("<p>BudgetBuddy</p>");
   });
 
   it("keeps expense assignment as a single category-or-special-budget tile choice", () => {
@@ -56,6 +57,9 @@ describe("FIN-052 month action overlay", () => {
 
     expect(overlay).toContain("Bargeld");
     expect(overlay).toContain('name="useCashAccount"');
+    expect(overlay).toContain('name="accountId"');
+    expect(overlay).toContain("HiddenAccountInput");
+    expect(overlay).not.toContain("month-action-account-card");
     expect(actions).toContain("getActiveCashAccountId()");
     expect(actions).toContain('formData.get("useCashAccount")');
   });
