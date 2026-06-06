@@ -619,6 +619,29 @@ export function deleteManualTransaction(transactionId: number): void {
   }
 }
 
+export function deleteImportedTransactionForMonth(
+  transactionId: number,
+  monthKey: string,
+): void {
+  const id = ensurePositiveInt(transactionId, "Transaktion");
+  const effectiveMonthKey = normalizeEffectiveMonthKey(monthKey, monthKey);
+
+  const result = getDb()
+    .prepare(
+      `
+        DELETE FROM transactions
+        WHERE id = ?
+          AND source_type = 'import'
+          AND effective_month_key = ?
+      `,
+    )
+    .run(id, effectiveMonthKey);
+
+  if (result.changes === 0) {
+    throw new Error("Import-Buchung wurde nicht gefunden.");
+  }
+}
+
 export function updateExpenseAssignmentForMonth(
   transactionId: number,
   monthKey: string,

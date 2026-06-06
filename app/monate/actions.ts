@@ -11,6 +11,7 @@ import {
 } from "@/src/special-budgets/repository";
 import {
   createManualTransaction,
+  deleteImportedTransactionForMonth,
   deleteManualTransaction,
   getActiveCashAccountId,
   type ManualTransactionInput,
@@ -173,6 +174,16 @@ function encodeMessage(message: string): string {
   return encodeURIComponent(message);
 }
 
+function monthBookingHref(
+  monthKey: string,
+  params: Record<string, string>,
+): string {
+  const searchParams = new URLSearchParams(params);
+  const query = searchParams.toString();
+
+  return `/monate/${encodeMessage(monthKey)}${query.length > 0 ? `?${query}` : ""}#monatsbuchungen`;
+}
+
 export async function setMonthlyBudgetOverrideAction(
   formData: FormData,
 ): Promise<never> {
@@ -276,7 +287,7 @@ export async function updateMonthlyTransactionAssignmentAction(
   formData: FormData,
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
-  const bookingEditQuery = formData.has("bookingEdit") ? "bookingEdit=1&" : "";
+  const keepBookingEdit = formData.has("bookingEdit");
 
   try {
     const transactionId = parseTransactionId(formData.get("transactionId"));
@@ -299,11 +310,17 @@ export async function updateMonthlyTransactionAssignmentAction(
     revalidatePath("/auswertungen");
 
     redirect(
-      `/monate/${encodeMessage(monthKey)}?${bookingEditQuery}notice=${encodeMessage("Zuordnung gespeichert.")}`,
+      monthBookingHref(monthKey, {
+        ...(keepBookingEdit ? { bookingEdit: "1" } : {}),
+        notice: "Zuordnung gespeichert.",
+      }),
     );
   } catch (error) {
     redirect(
-      `/monate/${encodeMessage(monthKey)}?${bookingEditQuery}error=${encodeMessage(toErrorMessage(error))}`,
+      monthBookingHref(monthKey, {
+        ...(keepBookingEdit ? { bookingEdit: "1" } : {}),
+        error: toErrorMessage(error),
+      }),
     );
   }
 }
@@ -329,11 +346,17 @@ export async function updateMonthlyManualTransactionAction(
     revalidatePath("/auswertungen");
 
     redirect(
-      `/monate/${encodeMessage(monthKey)}?bookingEdit=1&notice=${encodeMessage("Buchung gespeichert.")}`,
+      monthBookingHref(monthKey, {
+        bookingEdit: "1",
+        notice: "Buchung gespeichert.",
+      }),
     );
   } catch (error) {
     redirect(
-      `/monate/${encodeMessage(monthKey)}?bookingEdit=1&error=${encodeMessage(toErrorMessage(error))}`,
+      monthBookingHref(monthKey, {
+        bookingEdit: "1",
+        error: toErrorMessage(error),
+      }),
     );
   }
 }
@@ -360,11 +383,54 @@ export async function deleteMonthlyManualTransactionAction(
     revalidatePath("/auswertungen");
 
     redirect(
-      `/monate/${encodeMessage(monthKey)}?bookingEdit=1&notice=${encodeMessage("Buchung geloescht.")}`,
+      monthBookingHref(monthKey, {
+        bookingEdit: "1",
+        notice: "Buchung geloescht.",
+      }),
     );
   } catch (error) {
     redirect(
-      `/monate/${encodeMessage(monthKey)}?bookingEdit=1&error=${encodeMessage(toErrorMessage(error))}`,
+      monthBookingHref(monthKey, {
+        bookingEdit: "1",
+        error: toErrorMessage(error),
+      }),
+    );
+  }
+}
+
+export async function deleteMonthlyImportedTransactionAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+
+  try {
+    const transactionId = parseTransactionId(formData.get("transactionId"));
+    const confirmDelete = toSingleString(formData.get("confirmDelete")).trim();
+
+    if (confirmDelete !== "on") {
+      throw new Error("Loeschen muss bewusst bestaetigt werden.");
+    }
+
+    deleteImportedTransactionForMonth(transactionId, monthKey);
+
+    revalidatePath("/");
+    revalidatePath("/monate");
+    revalidatePath(`/monate/${monthKey}`);
+    revalidatePath("/transaktionen");
+    revalidatePath("/auswertungen");
+
+    redirect(
+      monthBookingHref(monthKey, {
+        bookingEdit: "1",
+        notice: "Import-Buchung geloescht.",
+      }),
+    );
+  } catch (error) {
+    redirect(
+      monthBookingHref(monthKey, {
+        bookingEdit: "1",
+        error: toErrorMessage(error),
+      }),
     );
   }
 }

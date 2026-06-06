@@ -519,6 +519,109 @@ describe("transactions repository", () => {
     ).toThrow("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
   });
 
+  it("deletes imported transactions only inside the selected month", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+
+    const importedMay = dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id,
+            transaction_type,
+            booking_date,
+            effective_month_key,
+            amount_cents,
+            currency_code,
+            description,
+            source_type,
+            category_id,
+            special_budget_id
+          )
+          VALUES (?, 'expense', '2026-05-18', '2026-05', -1099, 'EUR', ?, 'import', NULL, NULL)
+        `,
+      )
+      .run(accountId, `${PREFIX}DeleteImportedMay`);
+
+    const importedJune = dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id,
+            transaction_type,
+            booking_date,
+            effective_month_key,
+            amount_cents,
+            currency_code,
+            description,
+            source_type,
+            category_id,
+            special_budget_id
+          )
+          VALUES (?, 'expense', '2026-06-18', '2026-06', -1299, 'EUR', ?, 'import', NULL, NULL)
+        `,
+      )
+      .run(accountId, `${PREFIX}DeleteImportedJune`);
+
+    const manual = dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id,
+            transaction_type,
+            booking_date,
+            effective_month_key,
+            amount_cents,
+            currency_code,
+            description,
+            source_type,
+            category_id,
+            special_budget_id
+          )
+          VALUES (?, 'income', '2026-05-19', '2026-05', 1399, 'EUR', ?, 'manual', NULL, NULL)
+        `,
+      )
+      .run(accountId, `${PREFIX}DeleteImportedManualGuard`);
+
+    const mayId = Number(importedMay.lastInsertRowid);
+    const juneId = Number(importedJune.lastInsertRowid);
+    const manualId = Number(manual.lastInsertRowid);
+
+    expect(() =>
+      transactions.deleteImportedTransactionForMonth(juneId, "2026-05"),
+    ).toThrow("Import-Buchung wurde nicht gefunden.");
+
+    expect(() =>
+      transactions.deleteImportedTransactionForMonth(manualId, "2026-05"),
+    ).toThrow("Import-Buchung wurde nicht gefunden.");
+
+    transactions.deleteImportedTransactionForMonth(mayId, "2026-05");
+
+    const remaining = dbClient
+      .getDb()
+      .prepare(
+        `
+          SELECT description
+          FROM transactions
+          WHERE description LIKE ?
+          ORDER BY description ASC
+        `,
+      )
+      .all(`${PREFIX}DeleteImported%`) as Array<{ description: string }>;
+
+    expect(remaining).toEqual([
+      { description: `${PREFIX}DeleteImportedJune` },
+      { description: `${PREFIX}DeleteImportedManualGuard` },
+    ]);
+  });
+
   it("validates special budget month against explicit target month", () => {
     cleanupTestTransactions();
 
