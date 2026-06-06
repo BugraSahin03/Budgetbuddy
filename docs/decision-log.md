@@ -1086,3 +1086,18 @@ Auswirkung:
 
 - Manuelle Buchungen starten mit dem realistischen Buchungstag, ohne Zielmonat-, Import- oder Transaktionslogik zu veraendern.
 - Das Overlay verhaelt sich beim Scrollen abgeschlossener und vermeidet ungewollte Hintergrundbewegung.
+
+## 2026-06-06 - FIN-058 begrenzt lange Buchungstexte in Monatslisten
+
+Quelle/Ticket: `FIN-058`
+
+Erkenntnis/Entscheidung:
+
+- Lange importierte Bank-/Verwendungszwecktexte werden in `Letzte Ausgaben` und `Alle Monatsbuchungen` rein visuell begrenzt, damit sie keine horizontalen Layout-Overflows mehr erzeugen.
+- Die Begrenzung erfolgt ueber `min-width: 0`, `overflow: hidden` und `truncate` an den betroffenen Panel-, Grid- und Textcontainern.
+- Originalbeschreibungen bleiben unveraendert erhalten; eine fachliche Normalisierung oder Umbenennung importierter Buchungen bleibt FIN-059 vorbehalten.
+
+Auswirkung:
+
+- Betrag, Datum/Metadaten und vorhandene Zuordnungen bleiben sichtbar, waehrend lange Titel die Monatsansicht nicht mehr aus dem Viewport druecken.
+- Es werden keine Import-, Persistenz-, Fingerprint- oder Transaktionsregeln geaendert.
