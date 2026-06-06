@@ -1071,3 +1071,18 @@ Auswirkung:
 
 - Der Dialog reduziert eine doppelte Konto-Entscheidung, ohne Konto-, Bargeld-, Import- oder Transaktionsfachlogik zu veraendern.
 - Die UI folgt staerker dem gewuenschten Add-Transaction-Flow und bleibt im bestehenden FIN-057 Write-Scope.
+
+## 2026-06-06 - FIN-057 korrigiert Datum und Dialog-Scroll
+
+Quelle/Ticket: `FIN-057`
+
+Erkenntnis/Entscheidung:
+
+- Das Datumsfeld im Hinzufuegen-Dialog wird nicht mehr auf den ersten Tag des geoeffneten Monats vorbelegt, sondern clientseitig auf den aktuellen Ausfuehrungstag.
+- Der Dialog begrenzt sein Overscroll-Verhalten, damit Scrollen am Ende des Overlays nicht auf die dahinterliegende Monatsseite durchgereicht wird.
+- Die dekorativen Plus-/Minus-Controls neben dem Betrag werden entfernt, weil sie keine Funktion ausfuehren und deshalb eine falsche Interaktionserwartung erzeugen.
+
+Auswirkung:
+
+- Manuelle Buchungen starten mit dem realistischen Buchungstag, ohne Zielmonat-, Import- oder Transaktionslogik zu veraendern.
+- Das Overlay verhaelt sich beim Scrollen abgeschlossener und vermeidet ungewollte Hintergrundbewegung.

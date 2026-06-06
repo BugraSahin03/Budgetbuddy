@@ -36,7 +36,16 @@ describe("FIN-052 month action overlay", () => {
     expect(overlay).toContain("month-action-budget-pill");
     expect(overlay).toContain("month-action-save-dock");
     expect(overlay).toContain("Buchung hinzufuegen");
+    expect(overlay).toContain("toLocaleDateString");
+    expect(overlay).not.toContain("month-action-stepper");
     expect(overlay).not.toContain("<p>BudgetBuddy</p>");
+  });
+
+  it("contains dialog scrolling inside the overlay surface", () => {
+    const globals = readProjectFile("app/globals.css");
+
+    expect(globals).toContain("overscroll-behavior: contain");
+    expect(globals).not.toContain(".month-action-stepper");
   });
 
   it("keeps expense assignment as a single category-or-special-budget tile choice", () => {

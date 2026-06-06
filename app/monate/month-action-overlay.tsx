@@ -20,8 +20,8 @@ type MonthActionOverlayProps = {
   defaultAccountId: number | null;
 };
 
-function toDefaultBookingDate(monthKey: string): string {
-  return `${monthKey}-01`;
+function toDefaultBookingDate(): string {
+  return new Date().toLocaleDateString("en-CA");
 }
 
 function categoryMarker(name: string): string {
@@ -195,14 +195,6 @@ function ManualTransactionForm({
               inputMode="decimal"
             />
           </label>
-          <div className="month-action-stepper" aria-hidden="true">
-            <button type="button" tabIndex={-1}>
-              +
-            </button>
-            <button type="button" tabIndex={-1}>
-              -
-            </button>
-          </div>
         </div>
         <p
           className={
@@ -222,7 +214,7 @@ function ManualTransactionForm({
             id={`${id}-date`}
             name="bookingDate"
             type="date"
-            defaultValue={toDefaultBookingDate(monthKey)}
+            defaultValue={toDefaultBookingDate()}
           />
         </section>
 
