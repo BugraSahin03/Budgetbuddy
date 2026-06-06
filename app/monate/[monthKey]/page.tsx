@@ -819,29 +819,34 @@ export default async function MonthDetailPage({
             <MonthChip tone="neutral">
               {month.transactions.length} Eintraege
             </MonthChip>
+            <Link
+              href={
+                isBookingEditMode
+                  ? `/monate/${month.monthKey}`
+                  : `/monate/${month.monthKey}?bookingEdit=1`
+              }
+              className="inline-flex items-center gap-2 rounded-full border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink)] shadow-[0_10px_22px_rgba(7,27,70,0.06)] transition hover:-translate-y-0.5"
+              aria-label={
+                isBookingEditMode
+                  ? "Editiermodus fuer Monatsbuchungen beenden"
+                  : "Editiermodus fuer Monatsbuchungen aktivieren"
+              }
+            >
+              <span aria-hidden="true">{isBookingEditMode ? "✓" : "✎"}</span>
+              {isBookingEditMode ? "Fertig" : "Bearbeiten"}
+            </Link>
             <span className="month-disclosure-chevron" aria-hidden="true">
               ›
             </span>
           </span>
         </summary>
 
-        <div className="mt-5 flex flex-wrap items-center justify-between gap-3 rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/64 px-4 py-3">
+        <div className="mt-5 rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/64 px-4 py-3">
           <p className="text-sm font-semibold text-[color:var(--month-ink-soft)]">
             {isBookingEditMode
               ? "Editiermodus: Manuelle Buchungen koennen voll bearbeitet werden, Import-Ausgaben nur in ihrer Budgetzuordnung."
               : "Read-only Ansicht fuer schnelles Pruefen. Bearbeitung erscheint erst bewusst im Editiermodus."}
           </p>
-          <Link
-            href={
-              isBookingEditMode
-                ? `/monate/${month.monthKey}`
-                : `/monate/${month.monthKey}?bookingEdit=1`
-            }
-            className="inline-flex items-center gap-2 rounded-full border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink)] shadow-[0_10px_22px_rgba(7,27,70,0.06)] transition hover:-translate-y-0.5"
-          >
-            <span aria-hidden="true">{isBookingEditMode ? "✓" : "✎"}</span>
-            {isBookingEditMode ? "Fertig" : "Bearbeiten"}
-          </Link>
         </div>
 
         <div className="mt-7 space-y-4">

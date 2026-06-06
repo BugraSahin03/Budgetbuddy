@@ -15,6 +15,7 @@ describe("FIN-060 month bookings edit UI", () => {
 
     expect(page).toContain("bookingEdit");
     expect(page).toContain("Read-only Ansicht fuer schnelles Pruefen");
+    expect(page).toContain("Editiermodus fuer Monatsbuchungen aktivieren");
     expect(page).toContain("Bearbeiten");
     expect(page).toContain("Fertig");
     expect(page).toContain("isBookingEditMode ? (");
