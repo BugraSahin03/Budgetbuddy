@@ -11,9 +11,11 @@ import {
 } from "@/src/special-budgets/repository";
 import {
   createManualTransaction,
+  deleteManualTransaction,
   getActiveCashAccountId,
   type ManualTransactionInput,
   type TransactionType,
+  updateManualTransaction,
   updateExpenseAssignmentForMonth,
 } from "@/src/transactions/repository";
 
@@ -54,7 +56,9 @@ function parseTransactionId(rawValue: FormDataEntryValue | null): number {
   return transactionId;
 }
 
-function parseOptionalPositiveInt(rawValue: FormDataEntryValue | null): number | null {
+function parseOptionalPositiveInt(
+  rawValue: FormDataEntryValue | null,
+): number | null {
   const value = toSingleString(rawValue).trim();
 
   if (value.length === 0) {
@@ -70,10 +74,49 @@ function parseOptionalPositiveInt(rawValue: FormDataEntryValue | null): number |
   return parsed;
 }
 
-function parseTransactionType(rawValue: FormDataEntryValue | null): TransactionType {
+function parseBudgetAssignment(rawValue: FormDataEntryValue | null): {
+  categoryId: number | null;
+  specialBudgetId: number | null;
+} {
+  const assignment = toSingleString(rawValue).trim();
+
+  if (assignment.length === 0) {
+    return {
+      categoryId: null,
+      specialBudgetId: null,
+    };
+  }
+
+  const categoryMatch = assignment.match(/^category:(\d+)$/);
+  if (categoryMatch) {
+    return {
+      categoryId: Number.parseInt(categoryMatch[1], 10),
+      specialBudgetId: null,
+    };
+  }
+
+  const specialBudgetMatch = assignment.match(/^specialBudget:(\d+)$/);
+  if (specialBudgetMatch) {
+    return {
+      categoryId: null,
+      specialBudgetId: Number.parseInt(specialBudgetMatch[1], 10),
+    };
+  }
+
+  throw new Error("Budgetzuordnung ist ungueltig.");
+}
+
+function parseTransactionType(
+  rawValue: FormDataEntryValue | null,
+): TransactionType {
   const value = toSingleString(rawValue).trim();
 
-  if (value === "expense" || value === "income" || value === "transfer" || value === "refund") {
+  if (
+    value === "expense" ||
+    value === "income" ||
+    value === "transfer" ||
+    value === "refund"
+  ) {
     return value;
   }
 
@@ -95,10 +138,10 @@ function parseCashToggle(rawValue: FormDataEntryValue | null): boolean {
   return toSingleString(rawValue).trim() === "on";
 }
 
-function parseMonthlyManualTransactionInput(formData: FormData): ManualTransactionInput {
-  const assignment = toSingleString(formData.get("assignment")).trim();
-  const categoryMatch = assignment.match(/^category:(\d+)$/);
-  const specialBudgetMatch = assignment.match(/^specialBudget:(\d+)$/);
+function parseMonthlyManualTransactionInput(
+  formData: FormData,
+): ManualTransactionInput {
+  const assignment = parseBudgetAssignment(formData.get("assignment"));
   const accountId = parseCashToggle(formData.get("useCashAccount"))
     ? getActiveCashAccountId()
     : parseAccountId(formData.get("accountId"));
@@ -110,9 +153,11 @@ function parseMonthlyManualTransactionInput(formData: FormData): ManualTransacti
     transactionType: parseTransactionType(formData.get("transactionType")),
     amountInput: toSingleString(formData.get("amount")),
     accountId,
-    destinationAccountId: null,
-    categoryId: categoryMatch ? Number.parseInt(categoryMatch[1], 10) : null,
-    specialBudgetId: specialBudgetMatch ? Number.parseInt(specialBudgetMatch[1], 10) : null,
+    destinationAccountId: parseOptionalPositiveInt(
+      formData.get("destinationAccountId"),
+    ),
+    categoryId: assignment.categoryId,
+    specialBudgetId: assignment.specialBudgetId,
   };
 }
 
@@ -128,7 +173,9 @@ function encodeMessage(message: string): string {
   return encodeURIComponent(message);
 }
 
-export async function setMonthlyBudgetOverrideAction(formData: FormData): Promise<never> {
+export async function setMonthlyBudgetOverrideAction(
+  formData: FormData,
+): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
 
   try {
@@ -151,11 +198,15 @@ export async function setMonthlyBudgetOverrideAction(formData: FormData): Promis
   }
 }
 
-export async function updateMonthlySpecialBudgetAction(formData: FormData): Promise<never> {
+export async function updateMonthlySpecialBudgetAction(
+  formData: FormData,
+): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
 
   try {
-    const specialBudgetId = parseSpecialBudgetId(formData.get("specialBudgetId"));
+    const specialBudgetId = parseSpecialBudgetId(
+      formData.get("specialBudgetId"),
+    );
     const plannedAmount = toSingleString(formData.get("plannedAmount"));
 
     updateSpecialBudgetPlannedAmountForMonth(
@@ -186,7 +237,9 @@ export async function updateMonthlySpecialBudgetStateAction(
   const monthKey = toSingleString(formData.get("monthKey")).trim();
 
   try {
-    const specialBudgetId = parseSpecialBudgetId(formData.get("specialBudgetId"));
+    const specialBudgetId = parseSpecialBudgetId(
+      formData.get("specialBudgetId"),
+    );
     const intent = toSingleString(formData.get("intent"));
 
     if (intent === "deactivate") {
@@ -223,16 +276,20 @@ export async function updateMonthlyTransactionAssignmentAction(
   formData: FormData,
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  const bookingEditQuery = formData.has("bookingEdit") ? "bookingEdit=1&" : "";
 
   try {
     const transactionId = parseTransactionId(formData.get("transactionId"));
-    const categoryId = parseOptionalPositiveInt(formData.get("categoryId"));
-    const specialBudgetId = parseOptionalPositiveInt(formData.get("specialBudgetId"));
+    const assignment = formData.has("assignment")
+      ? parseBudgetAssignment(formData.get("assignment"))
+      : {
+          categoryId: parseOptionalPositiveInt(formData.get("categoryId")),
+          specialBudgetId: parseOptionalPositiveInt(
+            formData.get("specialBudgetId"),
+          ),
+        };
 
-    updateExpenseAssignmentForMonth(transactionId, monthKey, {
-      categoryId,
-      specialBudgetId,
-    });
+    updateExpenseAssignmentForMonth(transactionId, monthKey, assignment);
 
     revalidatePath("/");
     revalidatePath("/monate");
@@ -242,16 +299,79 @@ export async function updateMonthlyTransactionAssignmentAction(
     revalidatePath("/auswertungen");
 
     redirect(
-      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Zuordnung gespeichert.")}`,
+      `/monate/${encodeMessage(monthKey)}?${bookingEditQuery}notice=${encodeMessage("Zuordnung gespeichert.")}`,
     );
   } catch (error) {
     redirect(
-      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
+      `/monate/${encodeMessage(monthKey)}?${bookingEditQuery}error=${encodeMessage(toErrorMessage(error))}`,
     );
   }
 }
 
-export async function createMonthlyManualTransactionAction(formData: FormData): Promise<never> {
+export async function updateMonthlyManualTransactionAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+
+  try {
+    const transactionId = parseTransactionId(formData.get("transactionId"));
+
+    updateManualTransaction(
+      transactionId,
+      parseMonthlyManualTransactionInput(formData),
+    );
+
+    revalidatePath("/");
+    revalidatePath("/monate");
+    revalidatePath(`/monate/${monthKey}`);
+    revalidatePath("/transaktionen");
+    revalidatePath("/sonderbudgets");
+    revalidatePath("/auswertungen");
+
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?bookingEdit=1&notice=${encodeMessage("Buchung gespeichert.")}`,
+    );
+  } catch (error) {
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?bookingEdit=1&error=${encodeMessage(toErrorMessage(error))}`,
+    );
+  }
+}
+
+export async function deleteMonthlyManualTransactionAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+
+  try {
+    const transactionId = parseTransactionId(formData.get("transactionId"));
+    const confirmDelete = toSingleString(formData.get("confirmDelete")).trim();
+
+    if (confirmDelete !== "on") {
+      throw new Error("Loeschen muss bewusst bestaetigt werden.");
+    }
+
+    deleteManualTransaction(transactionId);
+
+    revalidatePath("/");
+    revalidatePath("/monate");
+    revalidatePath(`/monate/${monthKey}`);
+    revalidatePath("/transaktionen");
+    revalidatePath("/auswertungen");
+
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?bookingEdit=1&notice=${encodeMessage("Buchung geloescht.")}`,
+    );
+  } catch (error) {
+    redirect(
+      `/monate/${encodeMessage(monthKey)}?bookingEdit=1&error=${encodeMessage(toErrorMessage(error))}`,
+    );
+  }
+}
+
+export async function createMonthlyManualTransactionAction(
+  formData: FormData,
+): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
 
   try {

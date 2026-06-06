@@ -45,11 +45,14 @@ export type MonthDetailTransactionRow = {
   description: string;
   transactionType: TransactionType;
   amountCents: number;
+  accountId: number;
   accountName: string;
+  destinationAccountId: number | null;
   destinationAccountName: string | null;
   counterpartyName: string | null;
   categoryId: number | null;
   categoryName: string | null;
+  categoryIconName: string | null;
   specialBudgetId: number | null;
   specialBudgetName: string | null;
   importRunId: number | null;
@@ -120,7 +123,9 @@ export function normalizeMonthKey(monthKey: string): string {
 
 function toComparableMonthValue(monthKey: string): number {
   const normalized = normalizeMonthKey(monthKey);
-  const [year, month] = normalized.split("-").map((value) => Number.parseInt(value, 10));
+  const [year, month] = normalized
+    .split("-")
+    .map((value) => Number.parseInt(value, 10));
   return year * 12 + month;
 }
 
@@ -229,7 +234,9 @@ function buildImportedFixedCostControlCents(monthKey: string): number {
 
   const controlledIndices = new Set(
     suggestions
-      .filter((suggestion) => suggestion.label.startsWith("Fixkosten-Kontrolle:"))
+      .filter((suggestion) =>
+        suggestion.label.startsWith("Fixkosten-Kontrolle:"),
+      )
       .map((suggestion) => suggestion.rowIndex),
   );
 
@@ -245,7 +252,10 @@ function buildImportedFixedCostControlCents(monthKey: string): number {
   return total;
 }
 
-function getExpenseCents(monthKey: string, fixedCostControlCents: number): number {
+function getExpenseCents(
+  monthKey: string,
+  fixedCostControlCents: number,
+): number {
   const row = getDb()
     .prepare(
       `
@@ -376,11 +386,14 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
           t.description,
           t.transaction_type AS transactionType,
           t.amount_cents AS amountCents,
+          t.account_id AS accountId,
           source.name AS accountName,
+          t.destination_account_id AS destinationAccountId,
           destination.name AS destinationAccountName,
           t.counterparty_name AS counterpartyName,
           t.category_id AS categoryId,
           c.name AS categoryName,
+          c.icon_name AS categoryIconName,
           t.special_budget_id AS specialBudgetId,
           sb.name AS specialBudgetName,
           t.import_run_id AS importRunId
@@ -398,9 +411,13 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
 
 export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
-  const actualFixedCostsCents = buildImportedFixedCostControlCents(normalizedMonthKey);
+  const actualFixedCostsCents =
+    buildImportedFixedCostControlCents(normalizedMonthKey);
   const incomeCents = getIncomeCents(normalizedMonthKey);
-  const expenseCents = getExpenseCents(normalizedMonthKey, actualFixedCostsCents);
+  const expenseCents = getExpenseCents(
+    normalizedMonthKey,
+    actualFixedCostsCents,
+  );
   const plannedFixedCostsCents = getPlannedFixedCostsCents();
   const cashBalanceCents = getCashAccountSnapshot().currentBalanceCents;
 
@@ -420,7 +437,10 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   };
 }
 
-export function buildMonthRange(firstMonthKey: string, lastMonthKey: string): string[] {
+export function buildMonthRange(
+  firstMonthKey: string,
+  lastMonthKey: string,
+): string[] {
   const startValue = toComparableMonthValue(firstMonthKey);
   const endValue = toComparableMonthValue(lastMonthKey);
 
@@ -429,58 +449,74 @@ export function buildMonthRange(firstMonthKey: string, lastMonthKey: string): st
   }
 
   const monthKeys: string[] = [];
-  for (let currentValue = endValue; currentValue >= startValue; currentValue -= 1) {
+  for (
+    let currentValue = endValue;
+    currentValue >= startValue;
+    currentValue -= 1
+  ) {
     monthKeys.push(fromComparableMonthValue(currentValue));
   }
 
   return monthKeys;
 }
 
-export function listMonthTimeline(currentMonthKey = getCurrentMonthKey()): MonthTimelinePreview[] {
+export function listMonthTimeline(
+  currentMonthKey = getCurrentMonthKey(),
+): MonthTimelinePreview[] {
   const normalizedCurrentMonthKey = normalizeMonthKey(currentMonthKey);
-  const firstStoredMonthKey = getFirstStoredMonthKey() ?? normalizedCurrentMonthKey;
+  const firstStoredMonthKey =
+    getFirstStoredMonthKey() ?? normalizedCurrentMonthKey;
   const firstMonthKey =
-    toComparableMonthValue(firstStoredMonthKey) <= toComparableMonthValue(normalizedCurrentMonthKey)
+    toComparableMonthValue(firstStoredMonthKey) <=
+    toComparableMonthValue(normalizedCurrentMonthKey)
       ? firstStoredMonthKey
       : normalizedCurrentMonthKey;
 
-  return buildMonthRange(firstMonthKey, normalizedCurrentMonthKey).map((monthKey) => {
-    const snapshot = getMonthSnapshot(monthKey);
+  return buildMonthRange(firstMonthKey, normalizedCurrentMonthKey).map(
+    (monthKey) => {
+      const snapshot = getMonthSnapshot(monthKey);
 
-    return {
-      monthKey,
-      label: formatMonthLabel(monthKey),
-      detailHref: buildMonthDetailHref(monthKey),
-      incomeCents: snapshot.totals.incomeCents,
-      variableExpenseCents: snapshot.totals.expenseCents,
-      plannedFixedCostsCents: snapshot.totals.plannedFixedCostsCents,
-      availableCents: snapshot.totals.availableCents,
-    };
-  });
+      return {
+        monthKey,
+        label: formatMonthLabel(monthKey),
+        detailHref: buildMonthDetailHref(monthKey),
+        incomeCents: snapshot.totals.incomeCents,
+        variableExpenseCents: snapshot.totals.expenseCents,
+        plannedFixedCostsCents: snapshot.totals.plannedFixedCostsCents,
+        availableCents: snapshot.totals.availableCents,
+      };
+    },
+  );
 }
 
-export function listMonthComparison(currentMonthKey = getCurrentMonthKey()): MonthComparisonRow[] {
+export function listMonthComparison(
+  currentMonthKey = getCurrentMonthKey(),
+): MonthComparisonRow[] {
   const normalizedCurrentMonthKey = normalizeMonthKey(currentMonthKey);
-  const firstStoredMonthKey = getFirstTransactionMonthKey() ?? normalizedCurrentMonthKey;
+  const firstStoredMonthKey =
+    getFirstTransactionMonthKey() ?? normalizedCurrentMonthKey;
   const firstMonthKey =
-    toComparableMonthValue(firstStoredMonthKey) <= toComparableMonthValue(normalizedCurrentMonthKey)
+    toComparableMonthValue(firstStoredMonthKey) <=
+    toComparableMonthValue(normalizedCurrentMonthKey)
       ? firstStoredMonthKey
       : normalizedCurrentMonthKey;
 
-  return buildMonthRange(firstMonthKey, normalizedCurrentMonthKey).map((monthKey) => {
-    const snapshot = getMonthSnapshot(monthKey);
-    const incomeCents = snapshot.totals.incomeCents;
-    const expenseCents = snapshot.totals.expenseCents;
+  return buildMonthRange(firstMonthKey, normalizedCurrentMonthKey).map(
+    (monthKey) => {
+      const snapshot = getMonthSnapshot(monthKey);
+      const incomeCents = snapshot.totals.incomeCents;
+      const expenseCents = snapshot.totals.expenseCents;
 
-    return {
-      monthKey,
-      label: formatMonthLabel(monthKey),
-      detailHref: buildMonthDetailHref(monthKey),
-      incomeCents,
-      expenseCents,
-      savedCents: incomeCents - expenseCents,
-    };
-  });
+      return {
+        monthKey,
+        label: formatMonthLabel(monthKey),
+        detailHref: buildMonthDetailHref(monthKey),
+        incomeCents,
+        expenseCents,
+        savedCents: incomeCents - expenseCents,
+      };
+    },
+  );
 }
 
 export function getMonthDetail(
@@ -493,7 +529,8 @@ export function getMonthDetail(
   const currentValue = toComparableMonthValue(normalizedCurrentMonthKey);
 
   const previousMonthKey = fromComparableMonthValue(monthValue - 1);
-  const nextMonthKey = monthValue < currentValue ? fromComparableMonthValue(monthValue + 1) : null;
+  const nextMonthKey =
+    monthValue < currentValue ? fromComparableMonthValue(monthValue + 1) : null;
 
   const snapshot = getMonthSnapshot(normalizedMonthKey);
 
