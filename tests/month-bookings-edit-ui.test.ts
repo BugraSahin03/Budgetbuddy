@@ -35,11 +35,11 @@ describe("FIN-060 month bookings edit UI", () => {
   it("renders quiet read-only chips and semantic symbol tiles instead of permanent type/source fields", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
 
-    expect(page).toContain("function transactionTile");
+    expect(page).toContain("function TransactionVisualMark");
+    expect(page).toContain("CategoryVisualMark");
     expect(page).toContain("function assignmentChipLabel");
     expect(page).toContain("Zuordnen");
-    expect(page).toContain("Kategorie zugeordnet");
-    expect(page).toContain("Sonderbudget zugeordnet");
-    expect(page).toContain("Zuordnung erforderlich");
+    expect(page).toContain("border-amber-200 bg-amber-100");
+    expect(page).toContain("border-red-200 bg-red-100");
   });
 });

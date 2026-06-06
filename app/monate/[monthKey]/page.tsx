@@ -2,6 +2,11 @@ import type { ReactNode } from "react";
 import Link from "next/link";
 
 import {
+  CategoryVisualMark,
+  categoryProgressStyle,
+  categorySoftStyle,
+} from "@/app/components/category-visual";
+import {
   deleteMonthlyManualTransactionAction,
   setMonthlyBudgetOverrideAction,
   updateMonthlyManualTransactionAction,
@@ -20,6 +25,7 @@ import {
   specialBudgetStatusLabel,
   specialBudgetStatusTone,
 } from "@/src/dashboard/ui";
+import { listCategories } from "@/src/categories/repository";
 import {
   getMonthDetail,
   type MonthDetailTransactionRow,
@@ -37,14 +43,26 @@ type MonthDetailPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-const categoryAccents = [
-  "from-emerald-400 to-teal-300 text-emerald-950 bg-emerald-100",
-  "from-blue-500 to-sky-400 text-blue-950 bg-blue-100",
-  "from-amber-400 to-orange-300 text-amber-950 bg-amber-100",
-  "from-violet-500 to-fuchsia-400 text-violet-950 bg-violet-100",
-  "from-cyan-400 to-blue-300 text-cyan-950 bg-cyan-100",
-  "from-rose-400 to-red-300 text-rose-950 bg-rose-100",
-] as const;
+type CategoryVisual = {
+  name: string;
+  iconName: string | null;
+  colorHex: string | null;
+};
+
+function categoryVisualById(
+  categories: ReturnType<typeof listCategories>,
+): Map<number, CategoryVisual> {
+  return new Map(
+    categories.map((category) => [
+      category.id,
+      {
+        name: category.name,
+        iconName: category.iconName,
+        colorHex: category.colorHex,
+      },
+    ]),
+  );
+}
 
 function toSingleParam(value: string | string[] | undefined): string | null {
   if (typeof value === "string") {
@@ -152,52 +170,6 @@ function assignmentChipLabel(row: MonthDetailTransactionRow): string {
   return "Zuordnen";
 }
 
-function transactionTile(row: MonthDetailTransactionRow): {
-  label: string;
-  className: string;
-  title: string;
-} {
-  if (row.transactionType === "expense") {
-    if (row.specialBudgetId !== null) {
-      return {
-        label: "SB",
-        className: "border-amber-200 bg-amber-100 text-amber-900",
-        title: "Sonderbudget zugeordnet",
-      };
-    }
-
-    if (row.categoryId !== null) {
-      const icon = row.categoryIconName?.trim();
-
-      return {
-        label: icon && icon.length <= 4 ? icon : "✓",
-        className: "border-emerald-200 bg-emerald-100 text-emerald-900",
-        title: icon ? "Kategorie mit Icon zugeordnet" : "Kategorie zugeordnet",
-      };
-    }
-
-    return {
-      label: "?",
-      className: "border-red-200 bg-red-100 text-red-800",
-      title: "Zuordnung erforderlich",
-    };
-  }
-
-  if (row.transactionType === "transfer") {
-    return {
-      label: "↔",
-      className: "border-sky-200 bg-sky-100 text-sky-800",
-      title: "Transfer",
-    };
-  }
-
-  return {
-    label: "↙",
-    className: "border-emerald-200 bg-emerald-100 text-emerald-900",
-    title: transactionTypeLabel(row.transactionType),
-  };
-}
-
 function transactionSubtitle(transaction: MonthDetailTransactionRow): string {
   const account = transaction.destinationAccountName
     ? `${transaction.accountName} -> ${transaction.destinationAccountName}`
@@ -206,6 +178,49 @@ function transactionSubtitle(transaction: MonthDetailTransactionRow): string {
   return [transaction.bookingDate, account, assignmentLabel(transaction)]
     .filter(Boolean)
     .join(" · ");
+}
+
+function TransactionVisualMark({
+  transaction,
+  categoryVisuals,
+}: {
+  transaction: MonthDetailTransactionRow;
+  categoryVisuals: Map<number, CategoryVisual>;
+}) {
+  if (transaction.categoryId) {
+    const category = categoryVisuals.get(transaction.categoryId);
+
+    return (
+      <CategoryVisualMark
+        name={category?.name ?? transaction.categoryName ?? "Kategorie"}
+        iconName={category?.iconName}
+        colorHex={category?.colorHex}
+        className="h-12 w-12 text-sm"
+      />
+    );
+  }
+
+  if (transaction.specialBudgetId) {
+    return (
+      <span className="category-visual-mark h-12 w-12 border-amber-200 bg-amber-100 text-sm text-amber-900">
+        SB
+      </span>
+    );
+  }
+
+  if (transaction.transactionType === "expense") {
+    return (
+      <span className="category-visual-mark h-12 w-12 border-red-200 bg-red-100 text-lg text-red-700">
+        ?
+      </span>
+    );
+  }
+
+  return (
+    <span className="category-visual-mark h-12 w-12 border-sky-200 bg-sky-100 text-sm text-sky-800">
+      {transaction.transactionType === "transfer" ? "TR" : "+"}
+    </span>
+  );
 }
 
 function categoryUsagePercent(row: {
@@ -346,6 +361,16 @@ export default async function MonthDetailPage({
   const isBookingEditMode =
     toSingleParam(resolvedSearchParams.bookingEdit) === "1";
   const month = getMonthDetail(monthKey);
+  const allCategories = listCategories();
+  const categoryVisuals = categoryVisualById(allCategories);
+  const visualCategoryOptions = allCategories
+    .filter((category) => category.isActive)
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      iconName: category.iconName,
+      colorHex: category.colorHex,
+    }));
   const accountOptions = listActiveAccountOptions();
   const categoryOptions = listActiveCategoryOptions();
   const specialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(
@@ -377,7 +402,7 @@ export default async function MonthDetailPage({
               monthKey={month.monthKey}
               monthLabel={month.label}
               accountOptions={accountOptions}
-              categoryOptions={categoryOptions}
+              categoryOptions={visualCategoryOptions}
               specialBudgetOptions={specialBudgetOptions}
               defaultAccountId={defaultAccountId}
             />
@@ -520,70 +545,84 @@ export default async function MonthDetailPage({
                         </MonthChip>
                       </div>
                       <div className="mt-5 grid gap-4 lg:grid-cols-2">
-                        {month.dashboard.categoryRows.map((row) => (
-                          <article
-                            key={row.categoryId}
-                            className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-5 shadow-[0_14px_30px_rgba(7,27,70,0.045)]"
-                          >
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                              <div>
-                                <h4 className="text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
-                                  {row.categoryName}
-                                </h4>
-                                <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
-                                  Ist {formatEuro(row.spentAmountCents)} · Rest{" "}
-                                  {row.remainingAmountCents === null
-                                    ? "-"
-                                    : formatEuro(row.remainingAmountCents)}
-                                </p>
-                              </div>
-                              <span
-                                className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${categoryStatusTone(row)}`}
-                              >
-                                {categoryStatusLabel(row)}
-                              </span>
-                            </div>
-                            <form
-                              action={setMonthlyBudgetOverrideAction}
-                              className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
+                        {month.dashboard.categoryRows.map((row) => {
+                          const category = categoryVisuals.get(row.categoryId);
+
+                          return (
+                            <article
+                              key={row.categoryId}
+                              className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-5 shadow-[0_14px_30px_rgba(7,27,70,0.045)]"
+                              style={categorySoftStyle(category?.colorHex)}
                             >
-                              <input
-                                type="hidden"
-                                name="monthKey"
-                                value={month.monthKey}
-                              />
-                              <input
-                                type="hidden"
-                                name="categoryId"
-                                value={row.categoryId}
-                              />
-                              <input
-                                name="budgetAmount"
-                                inputMode="decimal"
-                                defaultValue={toInputAmount(
-                                  row.monthOverrideAmountCents ??
-                                    row.budgetAmountCents,
-                                )}
-                                placeholder={
-                                  row.defaultBudgetAmountCents === null
-                                    ? "z. B. 250.00"
-                                    : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`
-                                }
-                                className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
-                              />
-                              <button
-                                type="submit"
-                                className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                                <div className="flex min-w-0 gap-3">
+                                  <CategoryVisualMark
+                                    name={category?.name ?? row.categoryName}
+                                    iconName={category?.iconName}
+                                    colorHex={category?.colorHex}
+                                    className="h-11 w-11 text-sm"
+                                  />
+                                  <div className="min-w-0">
+                                    <h4 className="truncate text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
+                                      {row.categoryName}
+                                    </h4>
+                                    <p className="mt-1 text-sm text-[color:var(--month-ink-soft)]">
+                                      Ist {formatEuro(row.spentAmountCents)} ·
+                                      Rest{" "}
+                                      {row.remainingAmountCents === null
+                                        ? "-"
+                                        : formatEuro(row.remainingAmountCents)}
+                                    </p>
+                                  </div>
+                                </div>
+                                <span
+                                  className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${categoryStatusTone(row)}`}
+                                >
+                                  {categoryStatusLabel(row)}
+                                </span>
+                              </div>
+                              <form
+                                action={setMonthlyBudgetOverrideAction}
+                                className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
                               >
-                                Speichern
-                              </button>
-                            </form>
-                            <p className="mt-3 text-xs leading-5 text-[color:var(--month-ink-soft)]">
-                              Leerer Wert entfernt nur den Monats-Override fuer{" "}
-                              {month.label}.
-                            </p>
-                          </article>
-                        ))}
+                                <input
+                                  type="hidden"
+                                  name="monthKey"
+                                  value={month.monthKey}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="categoryId"
+                                  value={row.categoryId}
+                                />
+                                <input
+                                  name="budgetAmount"
+                                  inputMode="decimal"
+                                  defaultValue={toInputAmount(
+                                    row.monthOverrideAmountCents ??
+                                      row.budgetAmountCents,
+                                  )}
+                                  placeholder={
+                                    row.defaultBudgetAmountCents === null
+                                      ? "z. B. 250.00"
+                                      : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`
+                                  }
+                                  className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
+                                />
+                                <button
+                                  type="submit"
+                                  className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                                >
+                                  Speichern
+                                </button>
+                              </form>
+                              <p className="mt-3 text-xs leading-5 text-[color:var(--month-ink-soft)]">
+                                Leerer Wert entfernt nur den Monats-Override fuer{" "}
+                                {month.label}.
+                              </p>
+                            </article>
+                          );
+                        })}
                       </div>
                     </section>
 
@@ -714,20 +753,19 @@ export default async function MonthDetailPage({
                 Noch keine Kategorien fuer diesen Monat vorhanden.
               </EmptyReferenceCard>
             ) : (
-              month.dashboard.categoryRows.map((row, index) => {
-                const accent = categoryAccents[index % categoryAccents.length];
+              month.dashboard.categoryRows.map((row) => {
+                const category = categoryVisuals.get(row.categoryId);
                 const usagePercent = categoryUsagePercent(row);
 
                 return (
                   <div key={row.categoryId} className="grid gap-3">
                     <div className="flex items-center gap-4">
-                      <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl ${accent}`}
-                      >
-                        <span className="text-sm font-black">
-                          {row.categoryName.slice(0, 2).toUpperCase()}
-                        </span>
-                      </div>
+                      <CategoryVisualMark
+                        name={category?.name ?? row.categoryName}
+                        iconName={category?.iconName}
+                        colorHex={category?.colorHex}
+                        className="h-12 w-12 text-sm"
+                      />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center justify-between gap-3">
                           <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
@@ -739,8 +777,11 @@ export default async function MonthDetailPage({
                         </div>
                         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/85">
                           <div
-                            className={`h-full rounded-full bg-gradient-to-r ${accent.split(" ").slice(0, 2).join(" ")}`}
-                            style={{ width: `${usagePercent}%` }}
+                            className="h-full rounded-full"
+                            style={{
+                              width: `${usagePercent}%`,
+                              ...categoryProgressStyle(category?.colorHex),
+                            }}
                           />
                         </div>
                         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
@@ -781,14 +822,15 @@ export default async function MonthDetailPage({
                 Keine Ausgaben fuer diesen Monat vorhanden.
               </EmptyReferenceCard>
             ) : (
-              recentExpenses.map((transaction, index) => (
+              recentExpenses.map((transaction) => (
                 <div
                   key={`${transaction.sourceType}-${transaction.id}`}
                   className="month-expense-row"
                 >
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#d8eef9] text-sm font-black text-[color:var(--month-ink)]">
-                    {String(index + 1).padStart(2, "0")}
-                  </div>
+                  <TransactionVisualMark
+                    transaction={transaction}
+                    categoryVisuals={categoryVisuals}
+                  />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
                       {transaction.description}
@@ -856,7 +898,6 @@ export default async function MonthDetailPage({
             </EmptyReferenceCard>
           ) : (
             month.transactions.map((transaction) => {
-              const tile = transactionTile(transaction);
               const currentAssignment = transaction.categoryId
                 ? `category:${transaction.categoryId}`
                 : transaction.specialBudgetId
@@ -873,13 +914,10 @@ export default async function MonthDetailPage({
                 >
                   <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-start">
                     <div className="flex min-w-0 gap-4">
-                      <div
-                        className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border text-sm font-black ${tile.className}`}
-                        title={tile.title}
-                        aria-label={tile.title}
-                      >
-                        {tile.label}
-                      </div>
+                      <TransactionVisualMark
+                        transaction={transaction}
+                        categoryVisuals={categoryVisuals}
+                      />
                       <div className="min-w-0 flex-1">
                         <h3 className="truncate text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
                           {transaction.description}
