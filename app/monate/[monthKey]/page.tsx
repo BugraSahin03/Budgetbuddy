@@ -908,37 +908,28 @@ export default async function MonthDetailPage({
                   key={`${transaction.sourceType}-${transaction.id}`}
                   className="min-w-0 overflow-hidden rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/88 p-4 shadow-[0_12px_28px_rgba(7,27,70,0.04)] sm:p-5"
                 >
-                  <div className="grid min-w-0 gap-4 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
-                    <div className="grid min-w-0 gap-4 md:grid-cols-[auto_minmax(0,1.25fr)_minmax(8.5rem,auto)_minmax(9.5rem,auto)] md:items-center">
+                  <div className="grid min-w-0 gap-4 lg:grid-cols-[auto_minmax(0,1.25fr)_minmax(8.5rem,auto)_minmax(9.5rem,auto)_auto] lg:items-center">
+                    <div className="flex min-w-0 items-center gap-4">
                       <TransactionVisualMark
                         transaction={transaction}
                         categoryVisuals={categoryVisuals}
                       />
-                      <div className="min-w-0">
-                        <p className="month-eyebrow">Titel</p>
-                        <h3 className="mt-1 truncate text-lg font-black tracking-[-0.04em] text-[color:var(--month-ink)]">
-                          {transaction.description}
-                        </h3>
-                      </div>
-                      <div className="rounded-2xl border border-[color:var(--month-line)] bg-white/78 px-3 py-2">
-                        <p className="month-eyebrow">Datum</p>
-                        <p className="mt-1 text-sm font-black text-[color:var(--month-ink)]">
-                          {transaction.bookingDate}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="month-eyebrow">Zuordnung</p>
-                        <span
-                          className={`mt-1 inline-flex max-w-full rounded-full border px-3 py-1.5 text-xs font-black ${assignmentTone(transaction)}`}
-                        >
-                          <span className="truncate">
-                            {assignmentChipLabel(transaction)}
-                          </span>
-                        </span>
-                      </div>
                     </div>
+                    <h3 className="min-w-0 truncate text-2xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
+                      {transaction.description}
+                    </h3>
+                    <p className="text-base font-black tracking-[-0.025em] text-[color:var(--month-ink)]">
+                      {transaction.bookingDate}
+                    </p>
+                    <span
+                      className={`inline-flex max-w-full rounded-full border px-3 py-1.5 text-sm font-black ${assignmentTone(transaction)}`}
+                    >
+                      <span className="truncate">
+                        {assignmentChipLabel(transaction)}
+                      </span>
+                    </span>
                     <p
-                      className={`shrink-0 text-left text-2xl font-black tracking-[-0.055em] xl:text-right ${amountTone(transaction.amountCents)}`}
+                      className={`shrink-0 text-left text-2xl font-black tracking-[-0.055em] lg:text-right ${amountTone(transaction.amountCents)}`}
                     >
                       {formatEuro(transaction.amountCents)}
                     </p>
