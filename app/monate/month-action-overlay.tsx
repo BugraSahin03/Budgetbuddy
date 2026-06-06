@@ -4,6 +4,10 @@ import type { ReactNode } from "react";
 import { useId, useRef } from "react";
 
 import { ImportForm } from "@/app/import/import-form";
+import {
+  CategoryVisualMark,
+  categorySoftStyle,
+} from "@/app/components/category-visual";
 import { createMonthlyManualTransactionAction } from "@/app/monate/actions";
 import type {
   AccountOption,
@@ -11,21 +15,22 @@ import type {
   SpecialBudgetOption,
 } from "@/src/transactions/repository";
 
+type CategoryVisualOption = CategoryOption & {
+  iconName?: string | null;
+  colorHex?: string | null;
+};
+
 type MonthActionOverlayProps = {
   monthKey: string;
   monthLabel: string;
   accountOptions: AccountOption[];
-  categoryOptions: CategoryOption[];
+  categoryOptions: CategoryVisualOption[];
   specialBudgetOptions: SpecialBudgetOption[];
   defaultAccountId: number | null;
 };
 
 function toDefaultBookingDate(): string {
   return new Date().toLocaleDateString("en-CA");
-}
-
-function categoryMarker(name: string): string {
-  return name.trim().slice(0, 1).toUpperCase() || "#";
 }
 
 function FieldLabel({
@@ -102,7 +107,7 @@ function AssignmentTiles({
   categoryOptions,
   specialBudgetOptions,
 }: {
-  categoryOptions: CategoryOption[];
+  categoryOptions: CategoryVisualOption[];
   specialBudgetOptions: SpecialBudgetOption[];
 }) {
   return (
@@ -113,11 +118,18 @@ function AssignmentTiles({
       </div>
       <div className="month-action-tile-grid">
         {categoryOptions.map((category) => (
-          <label key={category.id} className="month-action-choice">
+          <label
+            key={category.id}
+            className="month-action-choice"
+            style={categorySoftStyle(category.colorHex)}
+          >
             <input type="radio" name="assignment" value={`category:${category.id}`} />
-            <span aria-hidden="true" className="month-action-choice-icon">
-              {categoryMarker(category.name)}
-            </span>
+            <CategoryVisualMark
+              name={category.name}
+              iconName={category.iconName}
+              colorHex={category.colorHex}
+              className="month-action-choice-icon"
+            />
             <span>{category.name}</span>
           </label>
         ))}
@@ -134,7 +146,7 @@ function AssignmentTiles({
               <label key={budget.id} className="month-action-choice month-action-choice-warn">
                 <input type="radio" name="assignment" value={`specialBudget:${budget.id}`} />
                 <span aria-hidden="true" className="month-action-choice-icon">
-                  {categoryMarker(budget.name)}
+                  {budget.name.trim().slice(0, 1).toUpperCase() || "#"}
                 </span>
                 <span>{budget.name}</span>
               </label>
@@ -159,7 +171,7 @@ function ManualTransactionForm({
   mode: "expense" | "income";
   monthKey: string;
   accountOptions: AccountOption[];
-  categoryOptions: CategoryOption[];
+  categoryOptions: CategoryVisualOption[];
   specialBudgetOptions: SpecialBudgetOption[];
   defaultAccountId: number | null;
 }) {

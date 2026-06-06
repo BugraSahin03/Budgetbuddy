@@ -27,6 +27,24 @@ body {
   font-family: var(--font-geist-sans), "Segoe UI", sans-serif;
 }
 
+.category-visual-mark {
+  align-items: center;
+  border: 1px solid rgba(20, 33, 61, 0.12);
+  border-radius: 1rem;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-weight: 900;
+  justify-content: center;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  min-height: 2rem;
+  min-width: 2rem;
+  overflow: hidden;
+  padding: 0.15rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
 .month-page-shell {
   position: relative;
 }
