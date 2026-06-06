@@ -9,6 +9,9 @@ export type CategoryVisualInput = {
 const HEX_COLOR_PATTERN = /^#[0-9A-F]{6}$/i;
 const FALLBACK_COLOR = "#DDF7ED";
 const FALLBACK_TEXT_COLOR = "#14532D";
+const NEUTRAL_MARK_BACKGROUND = "rgba(223, 244, 253, 0.92)";
+const NEUTRAL_MARK_BORDER = "rgba(20, 33, 61, 0.24)";
+const NEUTRAL_MARK_TEXT = "#14213D";
 
 export function categoryFallbackIcon(name: string): string {
   const normalized = name.trim();
@@ -100,21 +103,32 @@ export function categoryProgressStyle(colorHex?: string | null): CSSProperties {
   };
 }
 
+export function categoryNeutralMarkStyle(): CSSProperties {
+  return {
+    backgroundColor: NEUTRAL_MARK_BACKGROUND,
+    borderColor: NEUTRAL_MARK_BORDER,
+    borderWidth: "2px",
+    color: NEUTRAL_MARK_TEXT,
+  };
+}
+
 export function CategoryVisualMark({
   name,
   iconName,
   colorHex,
   className = "",
   title,
+  variant = "accent",
 }: CategoryVisualInput & {
   className?: string;
   title?: string;
+  variant?: "accent" | "neutral";
 }) {
   return (
     <span
       aria-label={title ?? `${name} Icon`}
       className={`category-visual-mark ${className}`.trim()}
-      style={categoryAccentStyle(colorHex)}
+      style={variant === "neutral" ? categoryNeutralMarkStyle() : categoryAccentStyle(colorHex)}
       title={title ?? name}
     >
       {categoryDisplayIcon({ name, iconName })}
