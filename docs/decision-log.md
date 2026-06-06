@@ -1054,3 +1054,20 @@ Auswirkung:
 
 - Die Monatsaktion fuehlt sich weniger wie ein technischer Dialog und mehr wie eine fokussierte Transaktionsseite im Overlay an.
 - Bestehende Import-, Konto-, Kategorie-, Sonderbudget- und Transaktionsregeln bleiben unveraendert.
+
+## 2026-06-06 - FIN-057 reduziert die Kontoauswahl im Hinzufuegen-Dialog
+
+Quelle/Ticket: `FIN-057`
+
+Erkenntnis/Entscheidung:
+
+- Die sichtbare Konto-Kachel wird aus Ausgabe und Einnahme entfernt, weil der `Bargeld`-Schalter die relevante Entscheidung im Dialog bereits abbildet.
+- Das Formular sendet weiterhin ein hidden Standardkonto, damit bestehende Servervalidierung und Standardkonto-Logik unveraendert bleiben; bei aktivem `Bargeld` ueberschreibt die bestehende Serverlogik dieses Konto weiterhin mit dem aktiven Bargeldkonto.
+- Der rechte `BudgetBuddy`-Text in der Dialog-Kopfzeile entfaellt, damit die Topbar ruhiger wirkt.
+- Aktive Tabs erhalten eine fachliche Farbkennung: Ausgabe rot, Einnahme gruen, Import dunkelblau.
+- Der Speichern-Button ist nicht mehr sticky, sondern bleibt als zentrierter Abschluss unter dem jeweiligen Formularinhalt.
+
+Auswirkung:
+
+- Der Dialog reduziert eine doppelte Konto-Entscheidung, ohne Konto-, Bargeld-, Import- oder Transaktionsfachlogik zu veraendern.
+- Die UI folgt staerker dem gewuenschten Add-Transaction-Flow und bleibt im bestehenden FIN-057 Write-Scope.

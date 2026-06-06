@@ -70,29 +70,21 @@ function TextInput({
   );
 }
 
-function AccountSelect({
-  id,
+function HiddenAccountInput({
   accountOptions,
   defaultAccountId,
 }: {
-  id: string;
   accountOptions: AccountOption[];
   defaultAccountId: number | null;
 }) {
+  const fallbackAccountId = defaultAccountId ?? accountOptions[0]?.id ?? "";
+
   return (
-    <select
-      id={id}
+    <input
+      type="hidden"
       name="accountId"
-      defaultValue={defaultAccountId ? String(defaultAccountId) : ""}
-      className="month-action-input"
-      required
-    >
-      {accountOptions.map((account) => (
-        <option key={account.id} value={account.id}>
-          {account.name}
-        </option>
-      ))}
-    </select>
+      value={fallbackAccountId ? String(fallbackAccountId) : ""}
+    />
   );
 }
 
@@ -179,6 +171,7 @@ function ManualTransactionForm({
       <input type="hidden" name="monthKey" value={monthKey} />
       <input type="hidden" name="effectiveMonthKey" value={monthKey} />
       <input type="hidden" name="transactionType" value={mode} />
+      <HiddenAccountInput accountOptions={accountOptions} defaultAccountId={defaultAccountId} />
       {!isExpense ? (
         <>
           <input type="hidden" name="categoryId" value="" />
@@ -242,20 +235,6 @@ function ManualTransactionForm({
           />
         </section>
       </div>
-
-      <section className="month-action-field-card month-action-account-card">
-        <div>
-          <FieldLabel htmlFor={`${id}-account`}>Konto</FieldLabel>
-          <p className="text-xs font-semibold text-[color:var(--month-ink-soft)]">
-            Mit aktivem Bargeld-Schalter wird automatisch Bargeld verwendet.
-          </p>
-        </div>
-        <AccountSelect
-          id={`${id}-account`}
-          accountOptions={accountOptions}
-          defaultAccountId={defaultAccountId}
-        />
-      </section>
 
       {isExpense ? (
         <AssignmentTiles
@@ -322,7 +301,6 @@ export function MonthActionOverlay({
               </button>
             </form>
             <h2>Buchung hinzufuegen</h2>
-            <p>BudgetBuddy</p>
           </header>
 
           <div className="month-action-page">

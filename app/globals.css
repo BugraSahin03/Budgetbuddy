@@ -478,15 +478,6 @@ body {
   letter-spacing: -0.03em;
 }
 
-.month-action-topbar p {
-  color: rgba(7, 27, 70, 0.72);
-  font-size: 0.72rem;
-  font-weight: 900;
-  justify-self: end;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-}
-
 .month-action-back {
   align-items: center;
   background: transparent;
@@ -553,10 +544,23 @@ body {
   grid-column: 1 / -1;
 }
 
-.month-action-tabs > input:nth-of-type(1):checked ~ label:nth-of-type(1),
-.month-action-tabs > input:nth-of-type(2):checked ~ label:nth-of-type(2),
+.month-action-tabs > input:nth-of-type(1):checked ~ label:nth-of-type(1) {
+  background: #8b1e24;
+  border-color: rgba(139, 30, 36, 0.38);
+  box-shadow: 0 14px 24px rgba(139, 30, 36, 0.18);
+  color: #ffffff;
+}
+
+.month-action-tabs > input:nth-of-type(2):checked ~ label:nth-of-type(2) {
+  background: #0f766e;
+  border-color: rgba(15, 118, 110, 0.34);
+  box-shadow: 0 14px 24px rgba(15, 118, 110, 0.16);
+  color: #ecfeff;
+}
+
 .month-action-tabs > input:nth-of-type(3):checked ~ label:nth-of-type(3) {
   background: #071b46;
+  border-color: rgba(7, 27, 70, 0.28);
   box-shadow: 0 14px 24px rgba(7, 27, 70, 0.18);
   color: #ffffff;
 }
@@ -672,13 +676,6 @@ body {
   border-radius: 0.9rem;
   box-shadow: 0 18px 42px rgba(7, 27, 70, 0.04);
   padding: 1.35rem 1.4rem;
-}
-
-.month-action-account-card {
-  align-items: end;
-  display: grid;
-  gap: 1rem;
-  grid-template-columns: minmax(0, 1fr) minmax(11rem, 0.75fr);
 }
 
 .month-action-input {
@@ -815,14 +812,10 @@ select.month-action-input {
 }
 
 .month-action-save-dock {
-  bottom: 1.5rem;
-  left: 50%;
-  max-width: 39rem;
-  padding: 0 1rem;
-  position: sticky;
-  transform: translateX(-50%);
-  width: calc(100vw - 2rem);
-  z-index: 1;
+  display: flex;
+  justify-content: center;
+  margin-top: 0.4rem;
+  width: 100%;
 }
 
 .month-action-submit {
@@ -838,6 +831,7 @@ select.month-action-input {
   gap: 0.9rem;
   justify-content: center;
   min-height: 4.1rem;
+  max-width: 36rem;
   width: 100%;
 }
 
@@ -897,8 +891,7 @@ select.month-action-input {
   }
 
   .month-action-tabs,
-  .month-action-field-grid,
-  .month-action-account-card {
+  .month-action-field-grid {
     grid-template-columns: 1fr;
   }
 
