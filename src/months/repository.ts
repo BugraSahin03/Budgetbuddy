@@ -8,6 +8,8 @@ import {
 import { listFixedCosts } from "@/src/fixed-costs/repository";
 import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
 import { listActiveImportRules } from "@/src/import-rules/repository";
+import { resolveImportDisplayName } from "@/src/import/display-name";
+import { listImportDisplayAliases } from "@/src/settings/import-display-aliases/repository";
 import type { SparkasseCsvRow } from "@/src/import/sparkasse-csv";
 import { getCashAccountSnapshot } from "@/src/transactions/repository";
 import type { TransactionType } from "@/src/transactions/repository";
@@ -43,6 +45,7 @@ export type MonthDetailTransactionRow = {
   bookingDate: string;
   effectiveMonthKey: string;
   description: string;
+  displayName: string;
   transactionType: TransactionType;
   amountCents: number;
   accountId: number;
@@ -374,8 +377,9 @@ function buildNavigationLink(monthKey: string): MonthDetailNavigationLink {
 
 function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
+  const aliases = listImportDisplayAliases();
 
-  return getDb()
+  const rows = getDb()
     .prepare(
       `
         SELECT
@@ -406,7 +410,17 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
         ORDER BY t.booking_date DESC, t.id DESC
       `,
     )
-    .all(normalizedMonthKey) as MonthDetailTransactionRow[];
+    .all(normalizedMonthKey) as Array<Omit<MonthDetailTransactionRow, "displayName">>;
+
+  return rows.map((row) => ({
+    ...row,
+    displayName: resolveImportDisplayName({
+      sourceType: row.sourceType,
+      description: row.description,
+      counterpartyName: row.counterpartyName,
+      aliases,
+    }),
+  }));
 }
 
 export function getMonthSnapshot(monthKey: string): MonthSnapshot {

@@ -445,7 +445,9 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
                   return (
                     <tr key={`imported-main-${row.id}`}>
                       <td className="px-3 py-2">{row.bookingDate}</td>
-                      <td className="px-3 py-2 font-medium text-slate-900">{row.description}</td>
+                      <td className="px-3 py-2 font-medium text-slate-900" title={row.description}>
+                        {row.displayName}
+                      </td>
                       <td className="px-3 py-2 text-slate-700">{row.counterpartyName ?? "-"}</td>
                       <td className="px-3 py-2 text-slate-900">{formatEuro(row.amountCents)}</td>
                       <td className="px-3 py-2">
@@ -488,7 +490,9 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
                 importedTransfers.map((row) => (
                   <tr key={`imported-transfer-${row.id}`}>
                     <td className="px-3 py-2">{row.bookingDate}</td>
-                    <td className="px-3 py-2 font-medium text-slate-900">{row.description}</td>
+                    <td className="px-3 py-2 font-medium text-slate-900" title={row.description}>
+                      {row.displayName}
+                    </td>
                     <td className="px-3 py-2 text-slate-700">
                       {row.sourceAccountName}
                       {" -> "}
