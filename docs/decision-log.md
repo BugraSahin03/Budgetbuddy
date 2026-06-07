@@ -1173,3 +1173,24 @@ Auswirkung:
 
 - Monats- und Transaktionslisten koennen ruhige Anzeigenamen wie `Amazon` oder `IKEA` zeigen, ohne Import-Fingerprint, Duplikaterkennung, Budgetzuordnung oder Fixkosten-Kontrolllogik zu veraendern.
 - Wiederkehrende Haendler koennen als persoenliche globale Anzeige-Regeln gepflegt werden.
+
+## 2026-06-07 - FIN-064 nutzt Budgetverbrauch statt Kategorie-Farbe in der Monatsansicht
+
+Quelle/Ticket: `FIN-064`
+
+Erkenntnis/Entscheidung:
+
+- Kategorie-Farben in der Monatsansicht zeigen beim Budgetverbrauch kuenftig den Zustand, nicht mehr eine manuell gepflegte Kategorie-Dekoration.
+- Schwellenwerte fuer feste Kategorien:
+  - `0 bis <70%`: gruen / `Im Rahmen`
+  - `70 bis <90%`: gelb / `Beobachten`
+  - `90 bis 100%`: orange / `Nahe am Limit`
+  - `>100%`: rot / `Ueber Budget`
+- Fehlender oder nicht positiver Budgetwert bleibt neutral und wird als `Budget fehlt` behandelt.
+- Fortschrittsleisten werden optisch bei 100% begrenzt, waehrend der angezeigte Prozentwert echte Ueberschreitungen weiter sichtbar machen darf.
+
+Auswirkung:
+
+- Kategorie-Breakdown und Monats-Budgetpflege nutzen eine einheitliche dynamische Verbrauchsfarbe.
+- Manuell gepflegte Kategorie-Farben bleiben nicht die Hauptlogik fuer Monatsverbrauch.
+- Sonderbudgets behalten ihre eigene visuelle Logik und werden nicht in diese Kategorie-Farblogik gezwungen.

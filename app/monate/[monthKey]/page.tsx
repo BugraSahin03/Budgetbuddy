@@ -1,11 +1,7 @@
 import type { ReactNode } from "react";
 import Link from "next/link";
 
-import {
-  CategoryVisualMark,
-  categoryProgressStyle,
-  categorySoftStyle,
-} from "@/app/components/category-visual";
+import { CategoryVisualMark } from "@/app/components/category-visual";
 import {
   deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
@@ -19,8 +15,6 @@ import { MonthActionOverlay } from "@/app/monate/month-action-overlay";
 import { MonthDialog } from "@/app/monate/month-dialog";
 import { MonthChip, MonthPageShell } from "@/app/monate/months-ui";
 import {
-  categoryStatusLabel,
-  categoryStatusTone,
   countOverBudgetWarnings,
   formatEuro,
   specialBudgetStatusLabel,
@@ -31,6 +25,12 @@ import {
   getMonthDetail,
   type MonthDetailTransactionRow,
 } from "@/src/months/repository";
+import {
+  categoryUsageChipClassName,
+  categoryUsageProgressStyle,
+  categoryUsageSurfaceStyle,
+  getCategoryUsageState,
+} from "@/src/months/category-usage";
 import {
   listActiveAccountOptions,
   listActiveCategoryOptions,
@@ -230,20 +230,6 @@ function TransactionVisualMark({
     <span className="category-visual-mark h-10 w-10 border-sky-200 bg-sky-100 text-xs text-sky-800">
       {transaction.transactionType === "transfer" ? "TR" : "+"}
     </span>
-  );
-}
-
-function categoryUsagePercent(row: {
-  budgetAmountCents: number | null;
-  spentAmountCents: number;
-}): number {
-  if (row.budgetAmountCents === null || row.budgetAmountCents <= 0) {
-    return 0;
-  }
-
-  return Math.min(
-    100,
-    Math.round((row.spentAmountCents / row.budgetAmountCents) * 100),
   );
 }
 
@@ -561,20 +547,21 @@ export default async function MonthDetailPage({
                       <div className="mt-5 grid gap-4 lg:grid-cols-2">
                         {month.dashboard.categoryRows.map((row) => {
                           const category = categoryVisuals.get(row.categoryId);
+                          const usageState = getCategoryUsageState(row);
 
                           return (
                             <article
                               key={row.categoryId}
                               className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-5 shadow-[0_14px_30px_rgba(7,27,70,0.045)]"
-                              style={categorySoftStyle(category?.colorHex)}
+                              style={categoryUsageSurfaceStyle(usageState)}
                             >
                               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="flex min-w-0 gap-3">
                                   <CategoryVisualMark
                                     name={category?.name ?? row.categoryName}
                                     iconName={category?.iconName}
-                                    colorHex={category?.colorHex}
                                     className="h-11 w-11 text-sm"
+                                    variant="neutral"
                                   />
                                   <div className="min-w-0">
                                     <h4 className="truncate text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
@@ -590,9 +577,9 @@ export default async function MonthDetailPage({
                                   </div>
                                 </div>
                                 <span
-                                  className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${categoryStatusTone(row)}`}
+                                  className={`inline-flex rounded-full border px-2.5 py-1 text-xs font-medium ${categoryUsageChipClassName(usageState)}`}
                                 >
-                                  {categoryStatusLabel(row)}
+                                  {usageState.label}
                                 </span>
                               </div>
                               <form
@@ -769,7 +756,9 @@ export default async function MonthDetailPage({
             ) : (
               month.dashboard.categoryRows.map((row) => {
                 const category = categoryVisuals.get(row.categoryId);
-                const usagePercent = categoryUsagePercent(row);
+                const usageState = getCategoryUsageState(row);
+                const hasPlannedBudget =
+                  row.budgetAmountCents !== null && row.budgetAmountCents > 0;
 
                 return (
                   <div key={row.categoryId} className="grid gap-3">
@@ -794,21 +783,21 @@ export default async function MonthDetailPage({
                           <div
                             className="h-full rounded-full"
                             style={{
-                              width: `${usagePercent}%`,
-                              ...categoryProgressStyle(category?.colorHex),
+                              width: `${usageState.progressPercent}%`,
+                              ...categoryUsageProgressStyle(usageState),
                             }}
                           />
                         </div>
                         <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
                           <span>
-                            {row.budgetAmountCents === null
+                            {!hasPlannedBudget
                               ? "Budget fehlt"
-                              : `${usagePercent}% genutzt`}
+                              : `${usageState.percent}% genutzt`}
                           </span>
                           <span>
-                            {row.budgetAmountCents === null
+                            {!hasPlannedBudget
                               ? "Kein Planwert"
-                              : `Plan ${formatEuro(row.budgetAmountCents)}`}
+                              : `Plan ${formatEuro(row.budgetAmountCents ?? 0)}`}
                           </span>
                         </div>
                       </div>
