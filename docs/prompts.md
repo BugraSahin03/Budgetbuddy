@@ -57,7 +57,8 @@ Arbeitsregeln:
 - Pruefe am Ende alle Akzeptanzkriterien.
 - Fuehre passende Checks aus, z. B. Tests, Linting und Build.
 - Erstelle oder aktualisiere einen PR gegen `main` mit `Closes #XXX`.
-- Setze das Issue bei Review-Uebergabe auf `status:review`.
+- Bei UI-/UX-nahen Tickets oder wenn das Issue es verlangt: Starte eine Preview aus dem Ticket-Worktree auf einem separaten Port, nicht auf dem stabilen `localhost:3000`, dokumentiere Worktree/Branch/Port/Testpunkte und setze das Issue auf `status:visual-check`.
+- Erst nach `Visual Check OK` oder wenn kein Visual Check noetig ist: Setze das Issue bei Review-Uebergabe auf `status:review`.
 - Schliessen darfst du das Issue erst nach Reviewer-Entscheidung `APPROVED` und Merge.
 - Nach erfolgreichem Merge loeschst du den Ticket-Worktree sowie lokalen und Remote-Branch.
 
@@ -68,6 +69,7 @@ Liefere fuer den Reviewer am Ende:
 - erledigte Akzeptanzkriterien
 - ausgefuehrte Checks
 - Dokumentation: Decision Log ja/nein, ADR ja/nein
+- Visual Check: OK / nicht erforderlich / offen
 - bekannte Restpunkte oder Risiken
 ```
 

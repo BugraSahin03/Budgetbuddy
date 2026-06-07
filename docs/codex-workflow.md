@@ -27,10 +27,12 @@ Wenn eine Instanz an einem Ticket arbeitet:
 4. Nur Dateien im Write-Scope anfassen.
 5. Bei neuen Entscheidungen ein ADR oder eine Notiz im passenden Dokument ergaenzen.
 6. Nach Umsetzung Akzeptanzkriterien pruefen.
-7. PR gegen `main` mit `Closes #<issue>` erstellen und Aenderungen an Reviewer uebergeben.
-8. Reviewer setzt bei Freigabe das Issue auf `status:ready-to-merge`.
-9. Ticket erst nach Merge als `status:done` markieren und schliessen.
-10. Nach dem Merge raeumt der Implementer Worktree sowie lokalen und Remote-Branch auf.
+7. PR gegen `main` mit `Closes #<issue>` erstellen.
+8. Bei UI-/UX-nahen Tickets oder wenn das Issue es verlangt: laufende Preview aus dem Ticket-Worktree auf einem separaten Port bereitstellen und Issue auf `status:visual-check` setzen.
+9. Nach Nutzerfreigabe im Visual Check oder wenn kein Visual Check noetig ist: Aenderungen an Reviewer uebergeben und Issue auf `status:review` setzen.
+10. Reviewer setzt bei Freigabe das Issue auf `status:ready-to-merge`.
+11. Ticket erst nach Merge als `status:done` markieren und schliessen.
+12. Nach dem Merge raeumt der Implementer Worktree sowie lokalen und Remote-Branch auf.
 
 Auch kleine produktive Aenderungen folgen diesem Ablauf. Wenn zwei Tickets dieselben zentralen Dateien aendern muessen, werden sie standardmaessig nicht parallelisiert.
 
@@ -48,20 +50,41 @@ Empfohlener Ablauf:
 
 1. Implementer arbeitet im Ticket-Worktree.
 2. Implementer prueft Akzeptanzkriterien.
-3. Implementer erstellt PR gegen `main` und uebergibt Aenderungen an Reviewer.
-4. Reviewer liest `docs/review-workflow.md`, prueft den PR-Diff gegen `main` und dokumentiert seine Entscheidung als strukturierten PR-Kommentar:
+3. Implementer erstellt PR gegen `main`.
+4. Bei UI-/UX-nahen Tickets stellt der Implementer vor dem Review eine lokale Preview bereit und setzt das Issue auf `status:visual-check`.
+5. Der Nutzer prueft die laufende Preview produktlich im Browser. Bei Aenderungswuenschen bleibt das Issue in `status:visual-check` oder geht zurueck auf `status:doing`; bei Freigabe kommentiert der Nutzer sinngemaess `Visual Check OK`.
+6. Erst danach uebergibt der Implementer Aenderungen an Reviewer und setzt das Issue auf `status:review`.
+7. Reviewer liest `docs/review-workflow.md`, prueft den PR-Diff gegen `main` und dokumentiert seine Entscheidung als strukturierten PR-Kommentar:
    - `APPROVED` -> strukturierter Review-Kommentar im PR + Issue auf `status:ready-to-merge`
    - `CHANGES_REQUESTED` -> strukturierter PR-Kommentar mit konkreten Findings; Issue bleibt offen
    - `BLOCKED` -> Blocker im PR und Issue dokumentieren, keine Freigabe
-5. Vor Merge ist der Review-Gate-Check Pflicht:
+8. Vor Merge ist der Review-Gate-Check Pflicht:
    - letzte formale PR-Review-Entscheidung pruefen (`Approve` oder `Request changes`)
    - bei letzter Entscheidung `CHANGES_REQUESTED` kein Merge
-6. Nur bei `status:ready-to-merge`, letzter formaler Entscheidung `APPROVED` und gruener CI darf in `main` gemerged werden.
-7. Bei `CHANGES_REQUESTED` geht das konkrete Review-Feedback zurueck an den Implementer.
-8. Bei `BLOCKED` wird der Blocker im PR und Issue dokumentiert.
-9. Nach erfolgreichem Merge raeumt der Implementer Worktree und Branch auf.
+9. Nur bei `status:ready-to-merge`, letzter formaler Entscheidung `APPROVED` und gruener CI darf in `main` gemerged werden.
+10. Bei `CHANGES_REQUESTED` geht das konkrete Review-Feedback zurueck an den Implementer.
+11. Bei `BLOCKED` wird der Blocker im PR und Issue dokumentiert.
+12. Nach erfolgreichem Merge raeumt der Implementer Worktree und Branch auf.
 
 Der Reviewer soll kritisch sein und Findings priorisieren, aber keine neuen Features in den Review hineinziehen.
+
+## Visual Check fuer UI-/UX-Tickets
+
+Der Visual Check ist kein technischer Review und ersetzt nicht das Reviewer-Gate. Er ist ein vorgeschalteter Produktcheck durch den Nutzer.
+
+Er wird genutzt, wenn ein Ticket sichtbare UI, Bedienfluss, Layout, Textwirkung oder Produktgefuehl veraendert. Fuer reine Parser-, Datenbank-, Dokumentations- oder kleine technische Bugfix-Tickets ist er optional.
+
+Regeln:
+
+- Der Hauptordner `/Volumes/Intenso/Dev/Budgetbuddy` bleibt auf `main` und kann dauerhaft als stabile Produktansicht auf `localhost:3000` laufen.
+- Ticket-Previews laufen aus dem jeweiligen Ticket-Worktree auf einem anderen Port, z. B. `localhost:30121` fuer Issue `#121`.
+- Der Implementer dokumentiert im Issue oder PR:
+  - Worktree-Pfad
+  - Branch
+  - Preview-Port
+  - kurze Testanleitung fuer den Nutzer
+- Bei Nutzerfeedback arbeitet der Implementer im selben Ticket-Worktree nach.
+- Erst nach `Visual Check OK` wird das Issue auf `status:review` gesetzt und an den Reviewer uebergeben.
 
 ## Dokumentationspflicht
 

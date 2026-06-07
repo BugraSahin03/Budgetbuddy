@@ -17,6 +17,7 @@ Der Reviewer ist die letzte Qualitaetsinstanz. Er prueft, ob eine Implementer-In
 - implementiert die Aenderung
 - prueft Akzeptanzkriterien
 - dokumentiert Erkenntnisse und Entscheidungen
+- stellt bei UI-/UX-nahen Tickets vor dem Review eine laufende Preview fuer den Nutzer bereit und setzt das Issue auf `status:visual-check`
 - uebergibt die Aenderungen per PR an den Reviewer
 
 ### Reviewer
@@ -69,6 +70,7 @@ Der Reviewer prueft:
 - Gibt es offensichtliche Bugs, Datenverlust-Risiken oder falsche Finanzlogik?
 - Ist die UI ruhig, klar, desktop-first und passend fuer eine Finanz-App?
 - Werden Transfers, Kategorien und Sonderbudgets korrekt getrennt?
+- Bei UI-/UX-nahen Tickets: Wurde der vorgeschaltete Visual Check entweder freigegeben oder bewusst als nicht erforderlich dokumentiert?
 
 ## Diff-Grenze
 
@@ -135,12 +137,14 @@ Empfohlener Ablauf:
 
 1. Implementer legt Branch und Worktree an.
 2. Implementer setzt Issue auf `status:doing`.
-3. Nach Umsetzung setzt Implementer auf `status:review` und erstellt/aktualisiert den PR gegen `main`.
-4. Reviewer prueft und bildet die Entscheidung im GitHub-PR ab:
+3. Nach Umsetzung erstellt/aktualisiert Implementer den PR gegen `main`.
+4. Bei UI-/UX-nahen Tickets setzt Implementer das Issue auf `status:visual-check` und stellt eine Preview auf separatem Localhost-Port bereit.
+5. Nach Nutzerfreigabe (`Visual Check OK`) oder dokumentierter Nicht-Erforderlichkeit setzt Implementer das Issue auf `status:review`.
+6. Reviewer prueft und bildet die Entscheidung im GitHub-PR ab:
    - `APPROVED` -> strukturierter PR-Kommentar + Issue auf `status:ready-to-merge`
    - `CHANGES_REQUESTED` -> strukturierter PR-Kommentar mit konkreten Findings
    - `BLOCKED` -> Blocker im PR und Issue dokumentieren
-5. Bei `status:ready-to-merge` und gruener CI: Merge nach `main`, dann Issue auf `status:done` setzen und schliessen.
-6. Implementer loescht danach Worktree sowie lokalen und Remote-Branch.
-7. Bei `CHANGES_REQUESTED`: Issue bleibt offen und geht mit den im PR dokumentierten Findings zurueck an den Implementer.
-8. Bei `BLOCKED`: Issue auf `status:blocked` setzen oder Blocker im Issue dokumentieren; keine Freigabe.
+7. Bei `status:ready-to-merge` und gruener CI: Merge nach `main`, dann Issue auf `status:done` setzen und schliessen.
+8. Implementer loescht danach Worktree sowie lokalen und Remote-Branch.
+9. Bei `CHANGES_REQUESTED`: Issue bleibt offen und geht mit den im PR dokumentierten Findings zurueck an den Implementer.
+10. Bei `BLOCKED`: Issue auf `status:blocked` setzen oder Blocker im Issue dokumentieren; keine Freigabe.

@@ -1136,3 +1136,23 @@ Auswirkung:
 - Die Monatsbuchungsliste wird schneller scanbar und reduziert erklaerenden UI-Text.
 - Import-Loeschen entfernt die sichtbare Transaktion. Aufgrund der bestehenden `ON DELETE CASCADE`-Beziehung wird dabei auch der zugehoerige `imported_transactions`-Nachweis entfernt; derselbe Bankumsatz kann bei einem spaeteren Re-Import wieder als neu erkannt werden.
 - Es wird keine Soft-Delete- oder Import-Archiv-Struktur eingefuehrt; falls geloeschte Importbuchungen dauerhaft vom Re-Import ausgeschlossen werden sollen, braucht das ein eigenes Importstrategie-Ticket.
+
+## 2026-06-07 - Visual Check als optionales Produktgate vor Review
+
+Entscheidung:
+
+- Fuer UI-/UX-nahe Tickets wird ein optionales Status-Gate `status:visual-check` zwischen Implementierung und Review eingefuehrt.
+- Der Visual Check ist ein Produkt-/Bediengefuehl-Check durch den Nutzer und ersetzt nicht den formalen Reviewer.
+- Standardstatuslauf fuer sichtbare UI-Arbeit: `status:todo -> status:doing -> status:visual-check -> status:review -> status:ready-to-merge -> status:done`.
+- Der Hauptordner `/Volumes/Intenso/Dev/Budgetbuddy` bleibt auf `main`; `localhost:3000` kann als stabile lokale Produktansicht fuer den Nutzer laufen.
+- Ticket-Previews laufen aus dem jeweiligen Worktree auf einem separaten dokumentierten Port.
+
+Grund:
+
+- Bei UI-Feinschliff soll der Nutzer Zwischenergebnisse selbst im Browser pruefen koennen, bevor der Reviewer mit dem formalen Review beginnt.
+- Dadurch bleibt der Reviewer Qualitaetsgate und wird nicht zur Geschmacksschleife fuer Produkt-/Layoutfeedback.
+
+Folgen:
+
+- Workflow-Dokumente und Prompts wurden um `status:visual-check`, Preview-Port-Regeln und Visual-Check-Handoff erweitert.
+- Das GitHub-Label `status:visual-check` muss im Repository angelegt werden, sofern noch nicht vorhanden.

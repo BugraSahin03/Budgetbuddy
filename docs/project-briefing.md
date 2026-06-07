@@ -43,7 +43,8 @@ Neue Instanzen sollen zuerst dieses Dokument lesen. Danach je nach Aufgabe:
 Issue-Konventionen:
 
 - FIN-Referenz bleibt im Titel, z. B. `[FIN-003] Erste App-Navigation und Layout bauen`
-- Status wird ueber genau ein `status:*` Label gepflegt (`status:todo|doing|review|ready-to-merge|blocked|done`)
+- Status wird ueber genau ein `status:*` Label gepflegt (`status:todo|doing|visual-check|review|ready-to-merge|blocked|done`)
+- `status:visual-check` ist ein optionales Produkt-/UI-Pruefgate vor dem Reviewer. Es wird vor allem bei sichtbaren UI-/UX-Aenderungen genutzt, wenn der Nutzer die laufende Umsetzung zuerst im Browser testen soll.
 - Prioritaet wird ueber `priority:p0|p1|p2` gepflegt
 - MVP-Phasen laufen ueber Milestones (`MVP 0` bis `MVP 4`)
 - aktive Issues enthalten Write-Scope, Read-Scope, Nicht-Ziele und Abhaengigkeiten

@@ -107,7 +107,55 @@ Regeln:
 6. Akzeptanzkriterien pruefen.
 7. Tests/Build/Linting ausfuehren, soweit sinnvoll.
 8. PR gegen `main` mit `Closes #<issue>` erstellen.
-9. Handoff fuer Reviewer schreiben und Issue auf `status:review` setzen.
+9. Bei UI-/UX-nahen Tickets oder wenn das Issue es verlangt: Preview aus dem Ticket-Worktree auf separatem Port starten, Handoff fuer den Nutzer schreiben und Issue auf `status:visual-check` setzen.
+10. Nach `Visual Check OK` oder wenn kein Visual Check noetig ist: Handoff fuer Reviewer schreiben und Issue auf `status:review` setzen.
+
+## Visual Check vor Review
+
+Der Visual Check ist ein optionales Produkt-/UI-Gate zwischen Implementer und Reviewer.
+
+Ziel:
+
+- Der Nutzer kann sichtbare Aenderungen in einer echten laufenden App pruefen.
+- Geschmack, Bediengefuehl, Layout und Texte werden vor dem formalen Review korrigiert.
+- Der Reviewer bleibt Qualitaetsgate fuer Code, Scope, Tests, Sicherheit und fachliche Korrektheit.
+
+Wann nutzen:
+
+- standardmaessig fuer UI-/UX-nahe Tickets
+- fuer Monatsansicht, Dashboard, Navigation, Dialoge und sichtbare Produktflows
+- optional fuer technische Tickets nur auf expliziten Wunsch
+
+Statuslauf fuer solche Tickets:
+
+```text
+status:todo -> status:doing -> status:visual-check -> status:review -> status:ready-to-merge -> status:done
+```
+
+Preview-Port-Regel:
+
+- Der Hauptordner `/Volumes/Intenso/Dev/Budgetbuddy` bleibt auf `main`.
+- `localhost:3000` ist fuer die stabile lokale Produktansicht auf `main` reserviert, sofern der Nutzer sie laufen hat.
+- Ticket-Worktrees starten ihren Dev-Server auf einem anderen freien Port.
+- Empfohlenes Schema: `3000 + Issue-Nummer`, falls frei und sinnvoll, z. B. Issue `#121` -> `localhost:3121`; alternativ ein klar dokumentierter freier Port wie `localhost:30121`.
+- Der Port wird im Issue/PR-Handoff dokumentiert.
+
+Handoff fuer Visual Check:
+
+```md
+Issue: #121 ([FIN-060])
+Branch: issue/121-fin-060-monatsbuchungen-editiermodus
+Worktree: ../Budgetbuddy-issue-121
+Preview: http://localhost:3121
+
+Bitte pruefen:
+- ...
+
+Bekannte Restpunkte:
+- ...
+```
+
+Wenn der Nutzer Aenderungen wuenscht, bleibt das Issue in `status:visual-check` oder geht zurueck auf `status:doing`. Erst nach einem klaren `Visual Check OK` geht es an den Reviewer.
 
 ## Reviewer-Ablauf
 
@@ -159,6 +207,8 @@ Bekannte Restpunkte:
 ```
 
 Der Write-Scope wird im Issue gepflegt und im Handoff nur bei Abweichungen erneut erwaehnt.
+
+Bei Tickets mit Visual Check muss im Reviewer-Handoff zusaetzlich stehen, ob der Nutzer den Visual Check freigegeben hat.
 
 ## Integration und Cleanup nach Freigabe
 
