@@ -42,8 +42,10 @@ describe("FIN-060 month bookings edit UI", () => {
     expect(page).toContain("CategoryVisualMark");
     expect(page).toContain("function assignmentChipLabel");
     expect(page).toContain("Zuordnen");
-    expect(page).toContain("lg:grid-cols-[auto_minmax(0,1.25fr)_minmax(8.5rem,auto)_minmax(9.5rem,auto)_auto]");
-    expect(page).toContain("truncate text-2xl font-black");
+    expect(page).toContain("space-y-2.5");
+    expect(page).toContain("lg:grid-cols-[auto_minmax(0,1.2fr)_minmax(7.5rem,auto)_minmax(8.5rem,auto)_auto]");
+    expect(page).toContain("truncate text-base font-black");
+    expect(page).toContain("text-lg font-black tracking-[-0.045em]");
     expect(page).toContain("border-amber-200 bg-amber-100");
     expect(page).toContain("border-red-200 bg-red-100");
   });
