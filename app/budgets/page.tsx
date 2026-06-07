@@ -2,7 +2,6 @@ import { createBudgetCategoryAction, updateBudgetCategoriesAction } from "@/app/
 import { BudgetCareEditor } from "@/app/budgets/budget-care-editor";
 import { BudgetCreateTabs } from "@/app/budgets/budget-create-tabs";
 import { BudgetDialog } from "@/app/budgets/budget-dialog";
-import { CategoryVisualMark } from "@/app/components/category-visual";
 import {
   createSpecialBudgetAction,
   updateSpecialBudgetStateAction,
@@ -30,20 +29,6 @@ function toSingleParam(value: string | string[] | undefined): string | null {
   }
 
   return null;
-}
-
-function toInputAmount(amountCents: number | null): string {
-  if (amountCents === null) {
-    return "";
-  }
-
-  return (amountCents / 100).toFixed(2);
-}
-
-function statusBadgeTone(isActive: boolean): string {
-  return isActive
-    ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-    : "border-slate-300 bg-slate-100 text-slate-600";
 }
 
 function formatMonthLabel(monthKey: string): string {
@@ -121,6 +106,11 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
   const categoriesWithBudgetCount = budgetRows.filter(
     (row) => row.defaultBudgetAmountCents !== null,
   ).length;
+  const editorCategories = categories.map((category) => ({
+    ...category,
+    defaultBudgetAmountCents:
+      budgetByCategoryId.get(category.id)?.defaultBudgetAmountCents ?? null,
+  }));
   const activeSpecialBudgetCount = specialBudgets.filter((budget) => budget.isActive).length;
 
   return (
@@ -232,6 +222,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
       <section className="budget-care-shell">
         <BudgetCareEditor
           action={updateBudgetCategoriesAction}
+          categories={editorCategories}
           sidePanel={
             <aside className="budget-special-panel" aria-label="Sonderbudgets">
               <div className="budget-special-header">
@@ -270,99 +261,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
               </div>
             </aside>
           }
-        >
-          {categories.map((category) => {
-            const budgetRow = budgetByCategoryId.get(category.id);
-            const defaultBudgetAmountCents = budgetRow?.defaultBudgetAmountCents ?? null;
-            const defaultBudgetLabel = defaultBudgetAmountCents === null
-              ? "Kein Standardwert"
-              : formatEuro(defaultBudgetAmountCents);
-
-            return (
-              <article key={category.id} className="budget-pot-card">
-                <input type="hidden" name="categoryIds" value={category.id} />
-                <input type="hidden" name={`colorHex-${category.id}`} value={category.colorHex ?? ""} />
-                <div className="budget-pot-main">
-                  <CategoryVisualMark
-                    name={category.name}
-                    iconName={category.iconName}
-                    colorHex={category.colorHex}
-                    variant="neutral"
-                    className="budget-pot-icon"
-                  />
-                  <div className="budget-pot-copy">
-                    <div className="budget-pot-title-row">
-                      <h3>{category.name}</h3>
-                      <span className={`budget-badge ${statusBadgeTone(category.isActive)}`}>
-                        {category.isActive ? "Aktiv" : "Inaktiv"}
-                      </span>
-                      {category.isDefault ? (
-                        <span className="budget-badge border-sky-200 bg-sky-50 text-sky-700">
-                          Standard
-                        </span>
-                      ) : null}
-                    </div>
-                    <p>
-                      {category.transactionCount} Buchungen · {category.monthlyBudgetCount} Monatswerte
-                    </p>
-                  </div>
-                </div>
-
-                <div className="budget-pot-readonly-value">
-                  <span>Standardbudget</span>
-                  <strong>{defaultBudgetLabel}</strong>
-                </div>
-
-                <div className="budget-category-edit-panel">
-                  <label>
-                    Standardbudget
-                    <input
-                      name={`budgetAmount-${category.id}`}
-                      inputMode="decimal"
-                      defaultValue={toInputAmount(defaultBudgetAmountCents)}
-                      placeholder="0.00"
-                    />
-                  </label>
-                  <label>
-                    Name
-                    <input
-                      name={`name-${category.id}`}
-                      required
-                      maxLength={60}
-                      defaultValue={category.name}
-                    />
-                  </label>
-                  <label>
-                    Icon
-                    <input
-                      name={`iconName-${category.id}`}
-                      maxLength={24}
-                      defaultValue={category.iconName ?? ""}
-                    />
-                  </label>
-                  <div className="budget-category-edit-flags">
-                    <label className="budget-dialog-check">
-                      <input
-                        type="checkbox"
-                        name={`isDefault-${category.id}`}
-                        defaultChecked={category.isDefault}
-                      />
-                      Standard
-                    </label>
-                    <label className="budget-dialog-check">
-                      <input
-                        type="checkbox"
-                        name={`isActive-${category.id}`}
-                        defaultChecked={category.isActive}
-                      />
-                      Aktiv
-                    </label>
-                  </div>
-                </div>
-              </article>
-            );
-          })}
-        </BudgetCareEditor>
+        />
       </section>
     </section>
   );

@@ -1332,6 +1332,10 @@ select.month-action-input {
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.42fr);
 }
 
+.budget-side-slot {
+  display: contents;
+}
+
 .budget-category-editor-form,
 .budget-special-list {
   display: grid;

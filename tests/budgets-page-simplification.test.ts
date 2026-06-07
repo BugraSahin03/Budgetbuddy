@@ -26,8 +26,11 @@ describe("budgets page simplification", () => {
 
   it("uses one shared edit mode instead of per-category detail toggles", () => {
     expect(pageSource).toContain("BudgetCareEditor");
+    expect(pageSource).toContain("categories={editorCategories}");
     expect(pageSource).toContain("updateBudgetCategoriesAction");
-    expect(pageSource).toContain("budget-category-edit-panel");
+    expect(editorSource).toContain("isEditing ? (");
+    expect(editorSource).toContain("budget-category-edit-panel");
+    expect(editorSource).toContain("budget-pot-readonly-value");
     expect(dialogSource).toContain("showModal()");
     expect(cssSource).toContain(".budget-icon-action");
     expect(cssSource).toContain(".budget-care-editor.is-editing .budget-category-edit-panel");
@@ -56,7 +59,7 @@ describe("budgets page simplification", () => {
     expect(pageSource).not.toContain("Farbvorschau");
     expect(pageSource).not.toContain("categoryColorPreview");
     expect(pageSource).toContain('type="hidden" name="colorHex" value=""');
-    expect(pageSource).toContain('name={`colorHex-${category.id}`}');
+    expect(editorSource).toContain('name={`colorHex-${category.id}`}');
     expect(actionSource).toContain("colorHex: toOptionalString(formData.get(`colorHex-${categoryId}`))");
   });
 
