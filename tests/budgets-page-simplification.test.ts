@@ -38,6 +38,7 @@ describe("budgets page simplification", () => {
     expect(pageSource).toContain("BudgetDialog");
     expect(dialogSource).toContain("showModal()");
     expect(pageSource).toContain("Kategorie oder Sonderbudget anlegen");
+    expect(pageSource).toContain("budget-create-tabs");
     expect(pageSource).toContain("Kategorie erstellen");
     expect(pageSource).toContain("Sonderbudget erstellen");
     expect(pageSource).toContain("createBudgetCategoryAction");
@@ -67,7 +68,9 @@ describe("budgets page simplification", () => {
   it("adds dedicated styling for the simplified surface", () => {
     expect(cssSource).toContain(".budget-hero-panel");
     expect(cssSource).toContain(".budget-dialog-plus");
-    expect(cssSource).toContain(".budget-create-dialog-grid");
+    expect(cssSource).toContain(".budget-create-tabs");
+    expect(cssSource).toContain("left: 50%");
+    expect(cssSource).toContain("transform: translate(-50%, -50%)");
     expect(cssSource).toContain(".budget-special-panel");
   });
 });
