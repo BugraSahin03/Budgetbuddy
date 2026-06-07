@@ -126,7 +126,9 @@ describe("FIN-052 month action overlay", () => {
     expect(monthPage).toContain("Aktueller Budgetstand");
     expect(monthPage).toContain("month.dashboard.totals.availableCents");
     expect(monthPage).toContain("budgetStandTone");
-    expect(monthPage).toContain("Einnahmen abzueglich variabler Ausgaben und geplanter Fixkosten.");
+    expect(monthPage).not.toContain(
+      "Einnahmen abzueglich variabler Ausgaben und geplanter Fixkosten.",
+    );
     expect(monthPage).not.toContain(">BudgetBuddy<");
     expect(overlay).toContain('aria-label="Buchung hinzufuegen"');
     expect(overlay).toContain('<span aria-hidden="true">+</span>');

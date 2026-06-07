@@ -449,9 +449,6 @@ export default async function MonthDetailPage({
             >
               {formatEuro(month.dashboard.totals.availableCents)}
             </p>
-            <p className="mt-3 text-sm font-semibold leading-6 text-[color:var(--month-ink-soft)]">
-              Einnahmen abzueglich variabler Ausgaben und geplanter Fixkosten.
-            </p>
           </article>
         </div>
       </section>
