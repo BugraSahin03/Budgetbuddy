@@ -294,7 +294,7 @@ body {
 @media (min-width: 640px) {
   .month-booking-row-grid {
     align-items: center;
-    grid-template-columns: auto minmax(0, 1fr) 7.5rem minmax(8.5rem, auto) auto;
+    grid-template-columns: 2.5rem minmax(0, 1fr) 7.5rem 8.5rem 6rem;
   }
 }
 

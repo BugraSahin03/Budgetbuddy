@@ -23,7 +23,7 @@ describe("FIN-058 month transaction overflow protection", () => {
     expect(page).toContain("inline-flex max-w-full");
     expect(globals).toContain(".month-expense-row");
     expect(globals).toContain(".month-booking-row-grid");
-    expect(globals).toContain("grid-template-columns: auto minmax(0, 1fr) 7.5rem minmax(8.5rem, auto) auto;");
+    expect(globals).toContain("grid-template-columns: 2.5rem minmax(0, 1fr) 7.5rem 8.5rem 6rem;");
     expect(globals).toContain("max-width: 100%;");
     expect(globals).toContain("min-width: 0;");
     expect(globals).toContain("overflow: hidden;");
