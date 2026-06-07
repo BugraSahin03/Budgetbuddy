@@ -38,11 +38,11 @@ export default async function ImportAliasesPage({ searchParams }: ImportAliasPag
         <span className="month-hero-orb month-hero-orb-right" aria-hidden="true" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Link href="/einstellungen" className="month-chip month-chip-neutral mb-4 w-fit">
-              Zurueck zu Einstellungen
+            <Link href="/einstellungen" aria-label="Zurueck zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
+              &larr;
             </Link>
             <p className="month-eyebrow">Import-Aliasse</p>
-            <h2 className="month-hero-title mt-2">Anzeigenamen fuer importierte Buchungen</h2>
+            <h2 className="month-hero-title mt-2">Import-Aliasse</h2>
             <p className="month-hero-copy mt-4">
               Aliasse aendern nur den sichtbaren Namen in Listen. Der originale Banktext bleibt unveraendert gespeichert.
             </p>
@@ -50,7 +50,6 @@ export default async function ImportAliasesPage({ searchParams }: ImportAliasPag
           <div className="month-stat-card month-stat-card-calm min-w-64">
             <p className="month-stat-label">Aktive Aliasse</p>
             <p className="month-stat-value mt-2">{importAliases.length}</p>
-            <p className="mt-2 text-sm text-[color:var(--month-ink-soft)]">Global gueltig ueber alle Monate.</p>
           </div>
         </div>
       </section>
@@ -68,17 +67,11 @@ export default async function ImportAliasesPage({ searchParams }: ImportAliasPag
       ) : null}
 
       <section className="month-section-panel space-y-4">
-        <header className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)] lg:items-start">
+        <header>
           <div>
             <p className="month-eyebrow">Neue Regel</p>
             <h3 className="month-section-title mt-1">Alias anlegen</h3>
-            <p className="month-section-copy mt-2">
-              Wenn der originale oder bereinigte Importtext ein Muster enthaelt, wird der definierte Anzeigename verwendet.
-            </p>
           </div>
-          <p className="rounded-[1.2rem] border border-sky-100 bg-sky-50/90 px-4 py-3 text-xs font-semibold leading-5 text-sky-800">
-            Getrennt von Import-Regelvorschlaegen und Fixkosten-Kontrollen: keine Kategorie, kein Sonderbudget, keine Duplikaterkennung.
-          </p>
         </header>
 
         <form action={createImportDisplayAliasAction} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">

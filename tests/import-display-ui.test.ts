@@ -20,9 +20,13 @@ describe("FIN-059 import display alias UI", () => {
     expect(settingsPage).not.toContain('name="pattern"');
     expect(settingsPage).not.toContain('name="displayName"');
     expect(importAliasesPage).toContain("Import-Aliasse");
-    expect(importAliasesPage).toContain("Anzeigenamen fuer importierte Buchungen");
     expect(importAliasesPage).toContain("Aliasse aendern nur den sichtbaren Namen");
-    expect(importAliasesPage).toContain("Getrennt von Import-Regelvorschlaegen und Fixkosten-Kontrollen");
+    expect(importAliasesPage).toContain("Aktive Aliasse");
+    expect(importAliasesPage).toContain('aria-label="Zurueck zu Einstellungen"');
+    expect(importAliasesPage).not.toContain("Anzeigenamen fuer importierte Buchungen");
+    expect(importAliasesPage).not.toContain("Global gueltig ueber alle Monate");
+    expect(importAliasesPage).not.toContain("Getrennt von Import-Regelvorschlaegen");
+    expect(importAliasesPage).not.toContain("Wenn der originale oder bereinigte Importtext");
     expect(importAliasesPage).toContain('name="pattern"');
     expect(importAliasesPage).toContain('name="displayName"');
     expect(importAliasesPage).toContain("month-hero-panel");
