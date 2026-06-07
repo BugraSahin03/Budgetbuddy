@@ -1,5 +1,6 @@
 import { createBudgetCategoryAction, updateBudgetCategoriesAction } from "@/app/budgets/actions";
 import { BudgetCareEditor } from "@/app/budgets/budget-care-editor";
+import { BudgetCreateTabs } from "@/app/budgets/budget-create-tabs";
 import { BudgetDialog } from "@/app/budgets/budget-dialog";
 import { CategoryVisualMark } from "@/app/components/category-visual";
 import {
@@ -151,24 +152,8 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
             title="Kategorie oder Sonderbudget anlegen"
             description="Lege entweder einen dauerhaften Budgettopf oder einen besonderen Monatstopf an."
           >
-            <div className="budget-create-tabs">
-              <input
-                type="radio"
-                id="budget-create-category-tab"
-                name="budget-create-tab"
-                defaultChecked
-              />
-              <input
-                type="radio"
-                id="budget-create-special-tab"
-                name="budget-create-tab"
-              />
-              <label htmlFor="budget-create-category-tab">Kategorien</label>
-              <label htmlFor="budget-create-special-tab">Sonderbudgets</label>
-
-              <section className="budget-create-dialog-group budget-create-category-panel">
-                <h3>Kategorie erstellen</h3>
-                <p>Dauerhafter Budgettopf fuer regelmaessige Ausgaben.</p>
+            <BudgetCreateTabs
+              categoryForm={
                 <form action={createBudgetCategoryAction} className="budget-dialog-form">
                   <label>
                     Name
@@ -206,11 +191,8 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     Kategorie speichern
                   </button>
                 </form>
-              </section>
-
-              <section className="budget-create-dialog-group budget-create-special-panel">
-                <h3>Sonderbudget erstellen</h3>
-                <p>Monatstopf fuer einmalige oder besondere Ausgaben.</p>
+              }
+              specialBudgetForm={
                 <form action={createSpecialBudgetAction} className="budget-dialog-form">
                   <label>
                     Name
@@ -238,8 +220,8 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     Sonderbudget speichern
                   </button>
                 </form>
-              </section>
-            </div>
+              }
+            />
           </BudgetDialog>
         </div>
       </header>
