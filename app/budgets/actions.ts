@@ -10,6 +10,11 @@ import {
   setCategoryActive,
   updateCategory,
 } from "@/src/categories/repository";
+import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
+import {
+  createSpecialBudget,
+  setSpecialBudgetActive,
+} from "@/src/special-budgets/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
@@ -24,6 +29,17 @@ function parseCategoryId(rawValue: FormDataEntryValue | null): number {
   }
 
   return categoryId;
+}
+
+function parseSpecialBudgetId(rawValue: FormDataEntryValue | null): number {
+  const value = toSingleString(rawValue).trim();
+  const specialBudgetId = Number.parseInt(value, 10);
+
+  if (!Number.isInteger(specialBudgetId) || specialBudgetId <= 0) {
+    throw new Error("Sonderbudget-ID ist ungueltig.");
+  }
+
+  return specialBudgetId;
 }
 
 function toErrorMessage(error: unknown): string {
@@ -66,6 +82,8 @@ function refreshBudgetPaths(): void {
 }
 
 export async function createBudgetCategoryAction(formData: FormData): Promise<never> {
+  let redirectTarget = "/budgets";
+
   try {
     const name = toSingleString(formData.get("name"));
     const normalizedName = name.trim();
@@ -93,10 +111,34 @@ export async function createBudgetCategoryAction(formData: FormData): Promise<ne
     }
 
     refreshBudgetPaths();
-    redirect(`/budgets?notice=${encodeMessage("Budgettopf angelegt.")}`);
+    redirectTarget = `/budgets?notice=${encodeMessage("Budgettopf angelegt.")}`;
   } catch (error) {
-    redirect(`/budgets?error=${encodeMessage(toErrorMessage(error))}`);
+    redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }
+
+  redirect(redirectTarget);
+}
+
+export async function createBudgetSpecialBudgetAction(formData: FormData): Promise<never> {
+  let redirectTarget = "/budgets";
+
+  try {
+    createSpecialBudget({
+      name: toSingleString(formData.get("name")),
+      monthKey: toSingleString(formData.get("monthKey")),
+      plannedAmountCents: parsePlannedAmountCents(
+        toSingleString(formData.get("plannedAmount")),
+      ),
+      note: toSingleString(formData.get("note")),
+    });
+
+    refreshBudgetPaths();
+    redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget erstellt.")}`;
+  } catch (error) {
+    redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
+  }
+
+  redirect(redirectTarget);
 }
 
 function parseCategoryIds(formData: FormData): number[] {
@@ -107,6 +149,8 @@ function parseCategoryIds(formData: FormData): number[] {
 }
 
 export async function updateBudgetCategoriesAction(formData: FormData): Promise<never> {
+  let redirectTarget = "/budgets";
+
   try {
     const categoryIds = parseCategoryIds(formData);
 
@@ -129,13 +173,38 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
     }
 
     refreshBudgetPaths();
-    redirect(`/budgets?notice=${encodeMessage("Kategorien gespeichert.")}`);
+    redirectTarget = `/budgets?notice=${encodeMessage("Kategorien gespeichert.")}`;
   } catch (error) {
-    redirect(`/budgets?error=${encodeMessage(toErrorMessage(error))}`);
+    redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }
+
+  redirect(redirectTarget);
+}
+
+export async function updateBudgetSpecialBudgetStateAction(formData: FormData): Promise<never> {
+  let redirectTarget = "/budgets";
+
+  try {
+    const specialBudgetId = parseSpecialBudgetId(formData.get("specialBudgetId"));
+    const intent = toSingleString(formData.get("intent"));
+
+    if (intent !== "deactivate") {
+      throw new Error("Unbekannte Aktion.");
+    }
+
+    setSpecialBudgetActive(specialBudgetId, false);
+    refreshBudgetPaths();
+    redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget deaktiviert.")}`;
+  } catch (error) {
+    redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
+  }
+
+  redirect(redirectTarget);
 }
 
 export async function setCategoryDefaultBudgetAction(formData: FormData): Promise<never> {
+  let redirectTarget = "/budgets";
+
   try {
     const categoryId = parseCategoryId(formData.get("categoryId"));
     const budgetAmount = toSingleString(formData.get("budgetAmount"));
@@ -143,8 +212,10 @@ export async function setCategoryDefaultBudgetAction(formData: FormData): Promis
     setCategoryDefaultBudget(categoryId, budgetAmount);
     refreshBudgetPaths();
 
-    redirect(`/budgets?notice=${encodeMessage("Standardbudget gespeichert.")}`);
+    redirectTarget = `/budgets?notice=${encodeMessage("Standardbudget gespeichert.")}`;
   } catch (error) {
-    redirect(`/budgets?error=${encodeMessage(toErrorMessage(error))}`);
+    redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }
+
+  redirect(redirectTarget);
 }

@@ -37,13 +37,11 @@ export function BudgetCreateTabs({ categoryForm, specialBudgetForm }: BudgetCrea
         {activeTab === "category" ? (
           <>
             <h3>Kategorie erstellen</h3>
-            <p>Dauerhafter Budgettopf fuer regelmaessige Ausgaben.</p>
             {categoryForm}
           </>
         ) : (
           <>
             <h3>Sonderbudget erstellen</h3>
-            <p>Monatstopf fuer einmalige oder besondere Ausgaben.</p>
             {specialBudgetForm}
           </>
         )}

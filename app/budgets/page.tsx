@@ -1,11 +1,12 @@
-import { createBudgetCategoryAction, updateBudgetCategoriesAction } from "@/app/budgets/actions";
+import {
+  createBudgetCategoryAction,
+  createBudgetSpecialBudgetAction,
+  updateBudgetCategoriesAction,
+  updateBudgetSpecialBudgetStateAction,
+} from "@/app/budgets/actions";
 import { BudgetCareEditor } from "@/app/budgets/budget-care-editor";
 import { BudgetCreateTabs } from "@/app/budgets/budget-create-tabs";
 import { BudgetDialog } from "@/app/budgets/budget-dialog";
-import {
-  createSpecialBudgetAction,
-  updateSpecialBudgetStateAction,
-} from "@/app/sonderbudgets/actions";
 import { listCategoryBudgetDefaults } from "@/src/budgets/repository";
 import { listCategories } from "@/src/categories/repository";
 import {
@@ -49,51 +50,12 @@ function formatMonthLabel(monthKey: string): string {
   }).format(date);
 }
 
-function formatEuro(cents: number): string {
-  return new Intl.NumberFormat("de-DE", {
-    style: "currency",
-    currency: "EUR",
-  }).format(cents / 100);
-}
-
-function specialBudgetStatusTone(isActive: boolean, remainingCents: number): string {
-  if (!isActive) {
-    return "border-slate-300 bg-slate-100 text-slate-600";
-  }
-
-  if (remainingCents < 0) {
-    return "border-red-200 bg-red-50 text-red-700";
-  }
-
-  if (remainingCents === 0) {
-    return "border-amber-200 bg-amber-50 text-amber-700";
-  }
-
-  return "border-emerald-200 bg-emerald-50 text-emerald-700";
-}
-
-function specialBudgetStatusLabel(isActive: boolean, remainingCents: number): string {
-  if (!isActive) {
-    return "Inaktiv";
-  }
-
-  if (remainingCents < 0) {
-    return "Ueberschritten";
-  }
-
-  if (remainingCents === 0) {
-    return "Ausgereizt";
-  }
-
-  return "Im Rahmen";
-}
-
 export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
   const params = (await searchParams) ?? {};
   const notice = toSingleParam(params.notice);
   const error = toSingleParam(params.error);
 
-  const categories = listCategories();
+  const categories = listCategories().filter((category) => category.isActive);
   const budgetRows = listCategoryBudgetDefaults();
   const budgetByCategoryId = new Map(budgetRows.map((row) => [row.categoryId, row]));
   const selectableMonths = getSelectableMonthKeys();
@@ -101,46 +63,28 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
     toSingleParam(params.monthKey) ??
     selectableMonths[0] ??
     new Date().toISOString().slice(0, 7);
-  const specialBudgets = listSpecialBudgets();
-  const activeCategoryCount = categories.filter((category) => category.isActive).length;
-  const categoriesWithBudgetCount = budgetRows.filter(
-    (row) => row.defaultBudgetAmountCents !== null,
-  ).length;
+  const specialBudgets = listSpecialBudgets().filter((budget) => budget.isActive);
   const editorCategories = categories.map((category) => ({
     ...category,
     defaultBudgetAmountCents:
       budgetByCategoryId.get(category.id)?.defaultBudgetAmountCents ?? null,
   }));
-  const activeSpecialBudgetCount = specialBudgets.filter((budget) => budget.isActive).length;
 
   return (
     <section className="space-y-5">
       <header className="budget-hero-panel">
         <div className="budget-hero-copy">
           <p>Budgetpflege</p>
-          <h1>Budgettoepfe und Standardwerte</h1>
-          <span>
-            Kategorie = wofuer du Geld ausgibst. Budget = wie viel du dafuer einplanst.
-            Sonderbudgets bleiben eigene Monatstoepfe fuer besondere Zwecke.
-          </span>
+          <h1>Budgetpflege</h1>
         </div>
 
         <div className="budget-hero-actions">
-          <div className="budget-hero-stat">
-            <strong>{activeCategoryCount}</strong>
-            <span>aktive Budgettoepfe</span>
-          </div>
-          <div className="budget-hero-stat">
-            <strong>{categoriesWithBudgetCount}</strong>
-            <span>mit Standardwert</span>
-          </div>
           <BudgetDialog
             triggerLabel="+"
             triggerAriaLabel="Kategorie oder Sonderbudget anlegen"
             triggerClassName="budget-dialog-plus"
             eyebrow="Neuer Eintrag"
             title="Kategorie oder Sonderbudget anlegen"
-            description="Lege entweder einen dauerhaften Budgettopf oder einen besonderen Monatstopf an."
           >
             <BudgetCreateTabs
               categoryForm={
@@ -158,12 +102,12 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     Icon
                     <input
                       name="iconName"
-                      maxLength={24}
-                      placeholder="Zum Beispiel Einkaufswagen oder L"
+                      maxLength={2}
+                      placeholder="Zum Beispiel EI"
                     />
                   </label>
                   <label>
-                    Standardbudget
+                    Betrag
                     <input
                       name="budgetAmount"
                       inputMode="decimal"
@@ -173,17 +117,14 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     <span id="new-budget-help">Optionaler Betrag fuer neue Monate.</span>
                   </label>
                   <input type="hidden" name="colorHex" value="" />
-                  <label className="budget-dialog-check">
-                    <input type="checkbox" name="isDefault" defaultChecked />
-                    In Standardlisten anzeigen
-                  </label>
+                  <input type="hidden" name="isDefault" value="on" />
                   <button type="submit" className="budget-primary-button">
                     Kategorie speichern
                   </button>
                 </form>
               }
               specialBudgetForm={
-                <form action={createSpecialBudgetAction} className="budget-dialog-form">
+                <form action={createBudgetSpecialBudgetAction} className="budget-dialog-form">
                   <label>
                     Name
                     <input name="name" required maxLength={80} placeholder="Zum Beispiel Urlaub" />
@@ -199,7 +140,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     </select>
                   </label>
                   <label>
-                    Geplanter Betrag
+                    Betrag
                     <input name="plannedAmount" required inputMode="decimal" placeholder="500.00" />
                   </label>
                   <label>
@@ -223,44 +164,8 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
         <BudgetCareEditor
           action={updateBudgetCategoriesAction}
           categories={editorCategories}
-          sidePanel={
-            <aside className="budget-special-panel" aria-label="Sonderbudgets">
-              <div className="budget-special-header">
-                <p>Sonderbudgets</p>
-                <strong>{activeSpecialBudgetCount}</strong>
-                <span>aktive Monatstoepfe</span>
-              </div>
-
-              <div className="budget-special-list">
-                {specialBudgets.map((budget) => {
-                  const remainingCents = budget.plannedAmountCents - budget.actualExpenseCents;
-
-                  return (
-                    <article key={budget.id} className="budget-special-card">
-                      <div>
-                        <p>{formatMonthLabel(budget.monthKey)}</p>
-                        <h3>{budget.name}</h3>
-                        {budget.note ? <span>{budget.note}</span> : null}
-                      </div>
-                      <div className="budget-special-values">
-                        <span>{formatEuro(budget.actualExpenseCents)} genutzt</span>
-                        <strong>{formatEuro(budget.plannedAmountCents)}</strong>
-                        <small className={`budget-badge ${specialBudgetStatusTone(budget.isActive, remainingCents)}`}>
-                          {specialBudgetStatusLabel(budget.isActive, remainingCents)}
-                        </small>
-                      </div>
-                      <form action={updateSpecialBudgetStateAction}>
-                        <input type="hidden" name="specialBudgetId" value={budget.id} />
-                        <button type="submit" name="intent" value={budget.isActive ? "deactivate" : "reactivate"}>
-                          {budget.isActive ? "Deaktivieren" : "Reaktivieren"}
-                        </button>
-                      </form>
-                    </article>
-                  );
-                })}
-              </div>
-            </aside>
-          }
+          specialBudgetAction={updateBudgetSpecialBudgetStateAction}
+          specialBudgets={specialBudgets}
         />
       </section>
     </section>

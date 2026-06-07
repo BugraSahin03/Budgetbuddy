@@ -1210,3 +1210,19 @@ Auswirkung:
 
 - Es gibt keine Datenmodell-, Import-, Monatsbudget- oder Sonderbudget-Logik-Aenderung.
 - Die Farblogik bleibt fuer bestehende Darstellungen technisch verfuegbar, wird aber auf `/budgets` nicht mehr als Pflegeaufgabe angeboten.
+
+## 2026-06-07 - FIN-048 zeigt nur aktive Budgettoepfe in der Budgetpflege
+
+Quelle/Ticket: `FIN-048`
+
+Erkenntnis/Entscheidung:
+
+- Die Budgetpflege unter `/budgets` zeigt nur aktive Kategorien und aktive Sonderbudgets.
+- Deaktivieren ist eine bewusste Aktion im Editiermodus und wird im normalen Lesemodus nicht dauerhaft angeboten.
+- Deaktivierte Kategorien und Sonderbudgets bleiben historisch erhalten, werden aber aus dieser Pflegeansicht ausgeblendet und koennen spaeter in einer separaten Verwaltungs-/Archivsicht behandelt werden.
+
+Auswirkung:
+
+- Die Budgetpflege bleibt auf aktuell nutzbare Budgettoepfe fokussiert.
+- Es wird kein Datenmodell geaendert; bestehende `is_active`-Felder werden weiter genutzt.
+- Lokale Test-/Preview-Deaktivierungen veraendern nur die jeweilige lokale Datenbank und werden nicht mit dem Code-PR ausgeliefert.
