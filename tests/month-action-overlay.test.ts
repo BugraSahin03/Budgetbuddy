@@ -117,4 +117,29 @@ describe("FIN-052 month action overlay", () => {
     expect(importForm).toContain('name="effectiveMonthKey" type="hidden"');
     expect(importForm).not.toContain("Der geoeffnete Monat wird automatisch fuer diesen Import verwendet.");
   });
+
+  it("shows the monthly budget stand in the header and reduces the add action to a plus button", () => {
+    const monthPage = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const overlay = readProjectFile("app/monate/month-action-overlay.tsx");
+    const globals = readProjectFile("app/globals.css");
+
+    expect(monthPage).toContain("Aktueller Budgetstand");
+    expect(monthPage).toContain("month.dashboard.totals.availableCents");
+    expect(monthPage).toContain("budgetStandTone");
+    expect(monthPage).toContain('return "text-[#d24d5a]"');
+    expect(monthPage).not.toContain(
+      "Einnahmen abzueglich variabler Ausgaben und geplanter Fixkosten.",
+    );
+    expect(monthPage).not.toContain(
+      "Einnahmen, Ausgaben und Budgetarbeit in einer ruhigen Finanzsicht.",
+    );
+    expect(monthPage).not.toContain("md:ml-16");
+    expect(monthPage).not.toContain(">BudgetBuddy<");
+    expect(overlay).toContain('aria-label="Buchung hinzufuegen"');
+    expect(overlay).toContain('<span aria-hidden="true">+</span>');
+    expect(overlay).toContain("month-action-primary-label");
+    expect(globals).toContain(".month-budget-stand-card");
+    expect(globals).toContain('.month-action-primary > span[aria-hidden="true"]');
+    expect(globals).toContain(".month-action-primary-label");
+  });
 });
