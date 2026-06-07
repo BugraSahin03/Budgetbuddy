@@ -16,7 +16,7 @@ describe("FIN-058 month transaction overflow protection", () => {
 
     expect(page).toContain('month-reference-panel min-w-0 overflow-hidden bg-white/82');
     expect(page).toContain('month-reference-panel month-disclosure min-w-0 overflow-hidden bg-white/78');
-    expect(page).toContain('grid min-w-0 gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center lg:grid-cols-[auto_minmax(0,1.2fr)_minmax(7.5rem,auto)_minmax(8.5rem,auto)_auto]');
+    expect(page).toContain('grid min-w-0 gap-3 sm:grid-cols-[auto_minmax(0,1fr)_7.5rem_minmax(8.5rem,auto)_auto] sm:items-center');
     expect(page).toContain('className="flex min-w-0 items-center"');
     expect(page).toContain('className="min-w-0 flex-1"');
     expect(page).toContain("truncate text-base font-black");

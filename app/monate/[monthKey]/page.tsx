@@ -910,7 +910,7 @@ export default async function MonthDetailPage({
                   key={`${transaction.sourceType}-${transaction.id}`}
                   className="min-w-0 overflow-hidden rounded-[1rem] border border-[color:var(--month-line)] bg-white/82 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.025)] sm:px-4"
                 >
-                  <div className="grid min-w-0 gap-3 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:items-center lg:grid-cols-[auto_minmax(0,1.2fr)_minmax(7.5rem,auto)_minmax(8.5rem,auto)_auto]">
+                  <div className="grid min-w-0 gap-3 sm:grid-cols-[auto_minmax(0,1fr)_7.5rem_minmax(8.5rem,auto)_auto] sm:items-center">
                     <div className="flex min-w-0 items-center">
                       <TransactionVisualMark
                         transaction={transaction}
@@ -920,7 +920,7 @@ export default async function MonthDetailPage({
                     <h3 className="min-w-0 truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg">
                       {transaction.description}
                     </h3>
-                    <p className="text-sm font-extrabold tracking-[-0.015em] text-[color:var(--month-ink-soft)]">
+                    <p className="text-sm font-extrabold tracking-[-0.015em] text-[color:var(--month-ink-soft)] sm:text-left">
                       {transaction.bookingDate}
                     </p>
                     <span
