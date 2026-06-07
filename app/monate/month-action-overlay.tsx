@@ -292,9 +292,11 @@ export function MonthActionOverlay({
       <button
         type="button"
         className="month-action-primary"
+        aria-label="Buchung hinzufuegen"
         onClick={() => dialogRef.current?.showModal()}
       >
-        Hinzufuegen
+        <span aria-hidden="true">+</span>
+        <span className="month-action-primary-label">Hinzufuegen</span>
       </button>
       <dialog ref={dialogRef} className="month-action-dialog">
         <div className="month-action-surface">

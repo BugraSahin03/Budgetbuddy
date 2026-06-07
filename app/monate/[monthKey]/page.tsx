@@ -101,6 +101,14 @@ function amountTone(amountCents: number): string {
   return "text-[color:var(--month-ink)]";
 }
 
+function budgetStandTone(amountCents: number): string {
+  if (amountCents < 0) {
+    return "text-[#d24d5a]";
+  }
+
+  return "text-[#08766b]";
+}
+
 function transactionTypeLabel(type: string): string {
   if (type === "transfer") {
     return "Transfer";
@@ -397,14 +405,7 @@ export default async function MonthDetailPage({
     <MonthPageShell>
       <section className="month-reference-hero">
         <div className="flex items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-[color:var(--month-ink)] text-lg font-bold text-white shadow-[0_16px_32px_rgba(7,27,70,0.18)]">
-              BB
-            </div>
-            <p className="text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
-              BudgetBuddy
-            </p>
-          </div>
+          <p className="month-eyebrow">Monatsueberblick</p>
           <div className="flex justify-end">
             <MonthActionOverlay
               monthKey={month.monthKey}
@@ -417,29 +418,41 @@ export default async function MonthDetailPage({
           </div>
         </div>
 
-        <div className="mt-8 max-w-3xl md:ml-16 md:mt-10">
-          <p className="month-eyebrow">Monatsueberblick</p>
-          <h1 className="mt-1 text-[clamp(2.5rem,8vw,4.6rem)] font-black leading-[0.92] tracking-[-0.085em] text-[color:var(--month-ink)]">
-            {month.label}
-          </h1>
-          <p className="mt-5 flex items-center gap-2 text-sm font-extrabold text-[#14766e]">
-            <span aria-hidden="true">↗</span>
-            Einnahmen, Ausgaben und Budgetarbeit in einer ruhigen Finanzsicht.
-          </p>
-          <div className="mt-7 flex flex-wrap gap-3">
-            <MonthNavLink
-              href={month.previousMonth.href}
-              label={month.previousMonth.label}
-              direction="previous"
-            />
-            {month.nextMonth ? (
+        <div className="mt-8 grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.52fr)] lg:items-end">
+          <div className="max-w-3xl md:ml-16 md:mt-3">
+            <h1 className="text-[clamp(2.5rem,8vw,4.6rem)] font-black leading-[0.92] tracking-[-0.085em] text-[color:var(--month-ink)]">
+              {month.label}
+            </h1>
+            <p className="mt-5 flex items-center gap-2 text-sm font-extrabold text-[#14766e]">
+              <span aria-hidden="true">↗</span>
+              Einnahmen, Ausgaben und Budgetarbeit in einer ruhigen Finanzsicht.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
               <MonthNavLink
-                href={month.nextMonth.href}
-                label={month.nextMonth.label}
-                direction="next"
+                href={month.previousMonth.href}
+                label={month.previousMonth.label}
+                direction="previous"
               />
-            ) : null}
+              {month.nextMonth ? (
+                <MonthNavLink
+                  href={month.nextMonth.href}
+                  label={month.nextMonth.label}
+                  direction="next"
+                />
+              ) : null}
+            </div>
           </div>
+          <article className="month-budget-stand-card">
+            <p className="month-eyebrow">Aktueller Budgetstand</p>
+            <p
+              className={`mt-3 text-[clamp(2.05rem,4.6vw,3.4rem)] font-black tracking-[-0.075em] ${budgetStandTone(month.dashboard.totals.availableCents)}`}
+            >
+              {formatEuro(month.dashboard.totals.availableCents)}
+            </p>
+            <p className="mt-3 text-sm font-semibold leading-6 text-[color:var(--month-ink-soft)]">
+              Einnahmen abzueglich variabler Ausgaben und geplanter Fixkosten.
+            </p>
+          </article>
         </div>
       </section>
 

@@ -277,6 +277,71 @@ describe("months repository", () => {
     ]);
   });
 
+  it("calculates the month budget stand without double-counting recognized fixed-cost controls", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const bargeldId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Bargeld'").get() as { id: number }
+    ).id;
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+    const baselinePlannedFixedCostsCents = (
+      db
+        .prepare(
+          `
+            SELECT COALESCE(SUM(planned_amount_cents), 0) AS total
+            FROM fixed_costs
+            WHERE is_active = 1
+          `,
+        )
+        .get() as { total: number }
+    ).total;
+
+    db.prepare(
+      `
+        INSERT INTO fixed_costs (name, planned_amount_cents, booking_day_of_month, payment_note, note, is_active)
+        VALUES ('TEST-FIN-063 Fitness Studio', 3490, 1, 'FITNESS STUDIO', 'Test', 1)
+      `,
+    ).run();
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, currency_code, description, counterparty_name, source_type, category_id, special_budget_id
+        ) VALUES
+          (?, NULL, 'income', '2031-08-01', '2031-08', 200000, 'EUR', 'TEST-FIN-063 Salary', NULL, 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2031-08-03', '2031-08', -10000, 'EUR', 'TEST-FIN-063 Groceries', NULL, 'manual', ?, NULL),
+          (?, ?, 'transfer', '2031-08-04', '2031-08', -50000, 'EUR', 'TEST-FIN-063 Cash Transfer', NULL, 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2031-08-05', '2031-08', -4000, 'EUR', 'TEST-FIN-063 N26-Fix. Monatsblock', 'N26 BANK', 'import', NULL, NULL),
+          (?, NULL, 'expense', '2031-08-06', '2031-08', -3490, 'EUR', 'TEST-FIN-063 Lastschrift Fitness', 'FITNESS STUDIO', 'import', NULL, NULL),
+          (?, NULL, 'expense', '2031-08-07', '2031-08', -1700, 'EUR', 'TEST-FIN-063 Nicht erkannte Fixkostenbuchung', 'UNKNOWN PROVIDER', 'import', NULL, NULL)
+      `,
+    ).run(
+      sparkasseId,
+      sparkasseId,
+      einkaufId,
+      sparkasseId,
+      bargeldId,
+      sparkasseId,
+      sparkasseId,
+      sparkasseId,
+    );
+
+    const plannedFixedCostsCents = baselinePlannedFixedCostsCents + 3490;
+    const snapshot = getMonthSnapshot("2031-08");
+
+    expect(snapshot.totals.incomeCents).toBe(200000);
+    expect(snapshot.totals.actualFixedCostsCents).toBe(7490);
+    expect(snapshot.totals.expenseCents).toBe(11700);
+    expect(snapshot.totals.plannedFixedCostsCents).toBe(plannedFixedCostsCents);
+    expect(snapshot.totals.availableCents).toBe(
+      200000 - 11700 - plannedFixedCostsCents,
+    );
+  });
+
   it("uses the category default as month fallback until an explicit month override exists", () => {
     const einkaufId = (
       db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
