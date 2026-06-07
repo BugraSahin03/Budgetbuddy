@@ -3,32 +3,43 @@ import Link from "next/link";
 const GLOBAL_SETTINGS = [
   {
     href: "/einstellungen/import-aliase",
-    title: "Anzeigename fuer Importe",
-    text: "Importierte Banktexte lesbarer anzeigen, ohne Originaltext oder Zuordnung zu veraendern.",
-    meta: "Import-Aliasse",
+    title: "Import-Aliasse",
+    meta: "Anzeigenamen",
   },
 ] as const;
+
+const SETTING_TABS = ["Global", "Import", "Monatsuebergreifend"] as const;
 
 export default function SettingsPage() {
   return (
     <section className="month-page-shell space-y-5">
-      <header className="month-section-panel flex flex-col gap-2">
-        <p className="month-eyebrow">Einstellungen</p>
-        <h2 className="month-section-title">Globale Einstellungen</h2>
-        <p className="month-section-copy">
-          Zentrale App-Regeln, die monatsuebergreifend gelten und bewusst getrennt von der Monatsarbeit bleiben.
-        </p>
+      <header className="month-section-panel relative overflow-hidden">
+        <span className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-sky-100/70 blur-2xl" aria-hidden="true" />
+        <span className="absolute -bottom-14 left-10 h-28 w-28 rounded-full bg-slate-200/60 blur-2xl" aria-hidden="true" />
+        <div className="relative flex flex-col gap-4">
+          <div>
+            <p className="month-eyebrow">Einstellungen</p>
+            <h2 className="month-section-title mt-1">Globale Einstellungen</h2>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {SETTING_TABS.map((tab) => (
+              <span key={tab} className="month-chip month-chip-neutral bg-white/72">
+                {tab}
+              </span>
+            ))}
+          </div>
+        </div>
       </header>
 
       <section className="month-section-panel space-y-4">
         <header className="flex items-center justify-between gap-3">
           <div>
-            <p className="month-eyebrow">Globale Einstellungen</p>
+            <p className="month-eyebrow">Verwaltung</p>
             <h3 className="text-lg font-semibold tracking-[-0.03em] text-[color:var(--month-ink)]">
-              Verwaltung
+              Globale Einstellungen
             </h3>
           </div>
-          <span className="month-chip month-chip-neutral">{GLOBAL_SETTINGS.length} Bereich</span>
+          <span className="month-chip month-chip-accent">{GLOBAL_SETTINGS.length} Bereich</span>
         </header>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -36,20 +47,24 @@ export default function SettingsPage() {
             <Link
               key={setting.href}
               href={setting.href}
-              className="group rounded-[1.25rem] border border-[color:var(--month-line)] bg-white/78 p-4 shadow-sm transition hover:border-[color:var(--month-line-strong)] hover:bg-white hover:shadow-md"
+              className="group rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/82 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--month-line-strong)] hover:bg-white hover:shadow-md"
             >
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
-                    {setting.meta}
-                  </p>
-                  <h4 className="mt-2 text-base font-semibold text-[color:var(--month-ink)]">{setting.title}</h4>
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-sky-100 text-sm font-black tracking-[-0.05em] text-[#0f4c6d]">
+                    Aa
+                  </span>
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
+                      {setting.meta}
+                    </p>
+                    <h4 className="mt-1 text-base font-semibold text-[color:var(--month-ink)]">{setting.title}</h4>
+                  </div>
                 </div>
                 <span className="rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-semibold text-[color:var(--month-ink-soft)] transition group-hover:border-[color:var(--month-line-strong)] group-hover:text-[#0f4c6d]">
                   Oeffnen
                 </span>
               </div>
-              <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">{setting.text}</p>
             </Link>
           ))}
         </div>
