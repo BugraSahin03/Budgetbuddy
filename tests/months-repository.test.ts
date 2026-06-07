@@ -342,6 +342,50 @@ describe("months repository", () => {
     );
   });
 
+  it("keeps the month budget stand negative when expenses and fixed costs exceed income", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const bargeldId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Bargeld'").get() as { id: number }
+    ).id;
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+    const plannedFixedCostsCents = (
+      db
+        .prepare(
+          `
+            SELECT COALESCE(SUM(planned_amount_cents), 0) AS total
+            FROM fixed_costs
+            WHERE is_active = 1
+          `,
+        )
+        .get() as { total: number }
+    ).total;
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, currency_code, description, source_type, category_id, special_budget_id
+        ) VALUES
+          (?, NULL, 'income', '2031-09-01', '2031-09', 10000, 'EUR', 'TEST-FIN-063 Small Income', 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2031-09-03', '2031-09', -25000, 'EUR', 'TEST-FIN-063 Large Expense', 'manual', ?, NULL),
+          (?, ?, 'transfer', '2031-09-04', '2031-09', -50000, 'EUR', 'TEST-FIN-063 Ignored Transfer', 'manual', NULL, NULL)
+      `,
+    ).run(sparkasseId, sparkasseId, einkaufId, sparkasseId, bargeldId);
+
+    const snapshot = getMonthSnapshot("2031-09");
+
+    expect(snapshot.totals.incomeCents).toBe(10000);
+    expect(snapshot.totals.expenseCents).toBe(25000);
+    expect(snapshot.totals.availableCents).toBe(
+      10000 - 25000 - plannedFixedCostsCents,
+    );
+    expect(snapshot.totals.availableCents).toBeLessThan(0);
+  });
+
   it("uses the category default as month fallback until an explicit month override exists", () => {
     const einkaufId = (
       db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
