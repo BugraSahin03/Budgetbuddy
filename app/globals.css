@@ -456,6 +456,12 @@ body {
   width: 2.9rem;
 }
 
+.month-action-primary > span[aria-hidden="true"] {
+  display: inline-flex;
+  line-height: 1;
+  transform: translateY(-0.04em);
+}
+
 .month-action-primary-label {
   position: absolute;
   height: 1px;

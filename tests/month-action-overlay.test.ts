@@ -129,11 +129,16 @@ describe("FIN-052 month action overlay", () => {
     expect(monthPage).not.toContain(
       "Einnahmen abzueglich variabler Ausgaben und geplanter Fixkosten.",
     );
+    expect(monthPage).not.toContain(
+      "Einnahmen, Ausgaben und Budgetarbeit in einer ruhigen Finanzsicht.",
+    );
+    expect(monthPage).not.toContain("md:ml-16");
     expect(monthPage).not.toContain(">BudgetBuddy<");
     expect(overlay).toContain('aria-label="Buchung hinzufuegen"');
     expect(overlay).toContain('<span aria-hidden="true">+</span>');
     expect(overlay).toContain("month-action-primary-label");
     expect(globals).toContain(".month-budget-stand-card");
+    expect(globals).toContain('.month-action-primary > span[aria-hidden="true"]');
     expect(globals).toContain(".month-action-primary-label");
   });
 });

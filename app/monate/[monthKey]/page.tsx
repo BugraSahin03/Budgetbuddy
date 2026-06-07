@@ -419,14 +419,10 @@ export default async function MonthDetailPage({
         </div>
 
         <div className="mt-8 grid gap-7 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.52fr)] lg:items-end">
-          <div className="max-w-3xl md:ml-16 md:mt-3">
+          <div className="max-w-3xl md:mt-3">
             <h1 className="text-[clamp(2.5rem,8vw,4.6rem)] font-black leading-[0.92] tracking-[-0.085em] text-[color:var(--month-ink)]">
               {month.label}
             </h1>
-            <p className="mt-5 flex items-center gap-2 text-sm font-extrabold text-[#14766e]">
-              <span aria-hidden="true">↗</span>
-              Einnahmen, Ausgaben und Budgetarbeit in einer ruhigen Finanzsicht.
-            </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <MonthNavLink
                 href={month.previousMonth.href}
