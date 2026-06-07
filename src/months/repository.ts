@@ -13,6 +13,10 @@ import { listImportDisplayAliases } from "@/src/settings/import-display-aliases/
 import type { SparkasseCsvRow } from "@/src/import/sparkasse-csv";
 import { getCashAccountSnapshot } from "@/src/transactions/repository";
 import type { TransactionType } from "@/src/transactions/repository";
+import {
+  buildMonthPlanSummary,
+  type MonthPlanSummary,
+} from "@/src/months/plan-summary";
 
 export type MonthTimelinePreview = {
   monthKey: string;
@@ -83,6 +87,7 @@ export type MonthSpecialBudgetRow = {
 
 export type MonthSnapshot = {
   totals: MonthTotals;
+  planSummary: MonthPlanSummary;
   categoryRows: MonthlyBudgetCategoryRow[];
   specialBudgetRows: MonthSpecialBudgetRow[];
   transactions: MonthDetailTransactionRow[];
@@ -434,6 +439,13 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   );
   const plannedFixedCostsCents = getPlannedFixedCostsCents();
   const cashBalanceCents = getCashAccountSnapshot().currentBalanceCents;
+  const categoryRows = listMonthlyBudgetCategories(normalizedMonthKey);
+  const specialBudgetRows = listSpecialBudgetRows(normalizedMonthKey);
+  const planSummary = buildMonthPlanSummary({
+    incomeCents,
+    categoryRows,
+    specialBudgetRows,
+  });
 
   return {
     totals: {
@@ -445,8 +457,9 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
       availableCents: incomeCents - expenseCents - plannedFixedCostsCents,
       cashBalanceCents,
     },
-    categoryRows: listMonthlyBudgetCategories(normalizedMonthKey),
-    specialBudgetRows: listSpecialBudgetRows(normalizedMonthKey),
+    planSummary,
+    categoryRows,
+    specialBudgetRows,
     transactions: listMonthTransactions(normalizedMonthKey),
   };
 }
@@ -556,6 +569,7 @@ export function getMonthDetail(
     nextMonth: nextMonthKey ? buildNavigationLink(nextMonthKey) : null,
     dashboard: {
       totals: snapshot.totals,
+      planSummary: snapshot.planSummary,
       categoryRows: snapshot.categoryRows,
       specialBudgetRows: snapshot.specialBudgetRows,
     },

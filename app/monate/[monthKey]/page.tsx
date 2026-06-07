@@ -278,17 +278,22 @@ function ReferenceMetricCard({
   label: string;
   value: string;
   copy: string;
-  tone: "income" | "expense";
+  tone: "income" | "expense" | "plan";
   marker: string;
   action?: ReactNode;
   actionClassName?: string;
 }) {
-  const toneClasses =
-    tone === "income"
-      ? "bg-[#8bf0df] text-[#055c52]"
-      : "bg-[#74171d] text-white";
+  const toneClasses = {
+    income: "bg-[#8bf0df] text-[#055c52]",
+    expense: "bg-[#74171d] text-white",
+    plan: "bg-[#d7edf8] text-[color:var(--month-ink)]",
+  }[tone];
 
-  const valueClass = tone === "income" ? "text-[#08766b]" : "text-[#f17680]";
+  const valueClass = {
+    income: "text-[#08766b]",
+    expense: "text-[#f17680]",
+    plan: "text-[color:var(--month-ink)]",
+  }[tone];
 
   return (
     <article className="month-reference-card relative min-h-[10rem] p-6">
@@ -465,7 +470,7 @@ export default async function MonthDetailPage({
         </section>
       ) : null}
 
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid gap-6 md:grid-cols-3">
         <ReferenceMetricCard
           label="Einnahmen"
           value={formatEuro(month.dashboard.totals.incomeCents)}
@@ -513,6 +518,15 @@ export default async function MonthDetailPage({
             </MonthDialog>
           }
         />
+        <ReferenceMetricCard
+          label="Budgettoepfe geplant"
+          value={formatEuro(month.dashboard.planSummary.plannedBudgetPotCents)}
+          copy={`Plan-Rest nach Toepfen: ${formatEuro(
+            month.dashboard.planSummary.planRestAfterBudgetPotsCents,
+          )}`}
+          tone="plan"
+          marker="~"
+        />
       </section>
 
       <section className="grid gap-7 xl:grid-cols-[1.08fr_1fr]">
@@ -522,9 +536,16 @@ export default async function MonthDetailPage({
             title="Kategorien"
             aside={
               <div className="flex flex-wrap items-center gap-3">
-                <MonthChip tone="accent">
-                  {month.dashboard.categoryRows.length} Kategorien
-                </MonthChip>
+                <div className="rounded-[1.2rem] border border-white/70 bg-white/72 px-4 py-3 text-right shadow-[0_12px_28px_rgba(7,27,70,0.06)]">
+                  <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
+                    Geplant
+                  </p>
+                  <p className="mt-1 text-sm font-black text-[color:var(--month-ink)]">
+                    {formatEuro(
+                      month.dashboard.planSummary.plannedBudgetPotCents,
+                    )}
+                  </p>
+                </div>
                 <MonthDialog
                   eyebrow="Monatsarbeit"
                   title="Budgetpflege"
@@ -541,7 +562,11 @@ export default async function MonthDetailPage({
                           </h3>
                         </div>
                         <MonthChip tone="accent">
-                          {month.dashboard.categoryRows.length} Kategorien
+                          Plan{" "}
+                          {formatEuro(
+                            month.dashboard.planSummary
+                              .plannedCategoryBudgetCents,
+                          )}
                         </MonthChip>
                       </div>
                       <div className="mt-5 grid gap-4 lg:grid-cols-2">
