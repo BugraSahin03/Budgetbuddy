@@ -1194,3 +1194,19 @@ Auswirkung:
 - Kategorie-Breakdown und Monats-Budgetpflege nutzen eine einheitliche dynamische Verbrauchsfarbe.
 - Manuell gepflegte Kategorie-Farben bleiben nicht die Hauptlogik fuer Monatsverbrauch.
 - Sonderbudgets behalten ihre eigene visuelle Logik und werden nicht in diese Kategorie-Farblogik gezwungen.
+
+## 2026-06-07 - FIN-048 vereinfacht Budgetpflege als Budgettopf-Oberflaeche
+
+Quelle/Ticket: `FIN-048`
+
+Erkenntnis/Entscheidung:
+
+- Die Seite `/budgets` wird wordingseitig als Pflege fuer `Budgettoepfe` und Standardwerte gefuehrt: Kategorie beschreibt die Ausgabenart, Budget beschreibt den geplanten Betrag.
+- Neue Kategorien werden im Budgetbereich ueber einen Dialog angelegt; Name ist Pflicht, Icon und Standardbudget sind optional.
+- Die manuelle Farbeingabe wird aus der sichtbaren Budgetpflege entfernt. Bestehende `colorHex`-Werte bleiben als versteckte Formularwerte erhalten, damit gespeicherte technische Kompatibilitaet nicht unbeabsichtigt geloescht wird.
+- Sonderbudgets werden im selben Pflegebereich sichtbar markiert, bleiben fachlich aber eigene Monatstoepfe und werden nicht mit Kategorien zusammengelegt.
+
+Auswirkung:
+
+- Es gibt keine Datenmodell-, Import-, Monatsbudget- oder Sonderbudget-Logik-Aenderung.
+- Die Farblogik bleibt fuer bestehende Darstellungen technisch verfuegbar, wird aber auf `/budgets` nicht mehr als Pflegeaufgabe angeboten.

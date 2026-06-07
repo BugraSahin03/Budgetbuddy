@@ -948,3 +948,462 @@ select.month-action-input {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+.budget-hero-panel,
+.budget-care-shell {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.96), rgba(229, 245, 252, 0.82));
+  border: 1px solid rgba(148, 163, 184, 0.24);
+  border-radius: 1.4rem;
+  box-shadow: 0 24px 58px rgba(15, 23, 42, 0.08);
+}
+
+.budget-hero-panel {
+  align-items: flex-start;
+  display: flex;
+  gap: 1.5rem;
+  justify-content: space-between;
+  padding: 1.4rem;
+}
+
+.budget-hero-copy {
+  max-width: 47rem;
+}
+
+.budget-hero-copy p,
+.budget-care-header p,
+.budget-special-header p,
+.budget-dialog-header p {
+  color: rgba(7, 27, 70, 0.56);
+  font-size: 0.74rem;
+  font-weight: 900;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.budget-hero-copy h1,
+.budget-care-header h2,
+.budget-dialog-header h2 {
+  color: #071b46;
+  font-weight: 950;
+  letter-spacing: -0.055em;
+}
+
+.budget-hero-copy h1 {
+  font-size: clamp(1.85rem, 4vw, 3.35rem);
+  line-height: 0.98;
+  margin-top: 0.35rem;
+}
+
+.budget-hero-copy span,
+.budget-care-header span,
+.budget-dialog-header span {
+  color: rgba(7, 27, 70, 0.64);
+  display: block;
+  font-size: 0.98rem;
+  font-weight: 650;
+  line-height: 1.7;
+  margin-top: 0.75rem;
+}
+
+.budget-hero-actions {
+  align-items: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: flex-end;
+}
+
+.budget-hero-stat {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 1rem;
+  min-width: 8.3rem;
+  padding: 0.9rem 1rem;
+}
+
+.budget-hero-stat strong {
+  color: #071b46;
+  display: block;
+  font-size: 1.45rem;
+  font-weight: 950;
+}
+
+.budget-hero-stat span {
+  color: rgba(7, 27, 70, 0.58);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  margin-top: 0.2rem;
+}
+
+.budget-dialog-plus,
+.budget-dialog-trigger,
+.budget-primary-button,
+.budget-secondary-button,
+.budget-default-form button,
+.budget-inline-state-form button,
+.budget-special-card form button {
+  border: 0;
+  cursor: pointer;
+  font-weight: 900;
+}
+
+.budget-dialog-plus {
+  align-items: center;
+  align-self: stretch;
+  background: #071b46;
+  border-radius: 1.15rem;
+  box-shadow: 0 18px 34px rgba(7, 27, 70, 0.2);
+  color: #ffffff;
+  display: inline-flex;
+  font-size: 2rem;
+  justify-content: center;
+  min-height: 4.7rem;
+  width: 4.7rem;
+}
+
+.budget-dialog-trigger {
+  background: #071b46;
+  border-radius: 999px;
+  box-shadow: 0 14px 28px rgba(7, 27, 70, 0.16);
+  color: #ffffff;
+  padding: 0.85rem 1.15rem;
+}
+
+.budget-dialog {
+  background: transparent;
+  border: 0;
+  max-width: min(34rem, calc(100vw - 1rem));
+  padding: 0;
+  width: 100%;
+}
+
+.budget-dialog::backdrop {
+  background: rgba(7, 27, 70, 0.38);
+  backdrop-filter: blur(8px);
+}
+
+.budget-dialog-surface {
+  background: #f7fbfe;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  border-radius: 1.3rem;
+  box-shadow: 0 32px 80px rgba(7, 27, 70, 0.24);
+  padding: 1.2rem;
+}
+
+.budget-dialog-close-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.budget-dialog-close {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.26);
+  border-radius: 999px;
+  color: rgba(7, 27, 70, 0.68);
+  font-size: 0.78rem;
+  font-weight: 850;
+  padding: 0.45rem 0.75rem;
+}
+
+.budget-dialog-header h2 {
+  font-size: 1.8rem;
+  line-height: 1;
+  margin-top: 0.35rem;
+}
+
+.budget-dialog-form {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 1.1rem;
+}
+
+.budget-dialog-form label,
+.budget-edit-form label,
+.budget-default-form label {
+  color: rgba(7, 27, 70, 0.7);
+  display: grid;
+  font-size: 0.78rem;
+  font-weight: 900;
+  gap: 0.35rem;
+  letter-spacing: 0.02em;
+}
+
+.budget-dialog-form input,
+.budget-dialog-form select,
+.budget-edit-form input,
+.budget-default-form input {
+  background: rgba(255, 255, 255, 0.9);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  border-radius: 0.85rem;
+  color: #071b46;
+  font-size: 0.95rem;
+  font-weight: 750;
+  padding: 0.75rem 0.85rem;
+}
+
+.budget-dialog-form label span {
+  color: rgba(7, 27, 70, 0.5);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.budget-dialog-check {
+  align-items: center;
+  display: flex !important;
+  flex-direction: row;
+  gap: 0.55rem !important;
+}
+
+.budget-dialog-check input {
+  accent-color: #071b46;
+  width: auto;
+}
+
+.budget-primary-button,
+.budget-secondary-button {
+  background: #071b46;
+  border-radius: 0.9rem;
+  color: #ffffff;
+  padding: 0.85rem 1rem;
+}
+
+.budget-secondary-button {
+  background: rgba(7, 27, 70, 0.88);
+}
+
+.budget-feedback {
+  border-radius: 0.9rem;
+  font-size: 0.92rem;
+  font-weight: 750;
+  padding: 0.8rem 1rem;
+}
+
+.budget-feedback-success {
+  background: rgba(209, 250, 229, 0.9);
+  border: 1px solid rgba(16, 185, 129, 0.24);
+  color: #047857;
+}
+
+.budget-feedback-error {
+  background: rgba(254, 226, 226, 0.92);
+  border: 1px solid rgba(248, 113, 113, 0.28);
+  color: #b91c1c;
+}
+
+.budget-care-shell {
+  padding: 1.25rem;
+}
+
+.budget-care-header {
+  align-items: flex-start;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.budget-care-header h2 {
+  font-size: clamp(1.35rem, 2.2vw, 2.1rem);
+  margin-top: 0.35rem;
+}
+
+.budget-care-grid {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.42fr);
+}
+
+.budget-pot-list,
+.budget-special-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.budget-pot-card,
+.budget-special-panel,
+.budget-special-card {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+  border-radius: 1.1rem;
+}
+
+.budget-pot-card {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.6fr);
+  padding: 1rem;
+}
+
+.budget-pot-main {
+  align-items: flex-start;
+  display: flex;
+  gap: 0.85rem;
+}
+
+.budget-pot-icon {
+  flex: 0 0 auto;
+  height: 3.1rem;
+  width: 3.1rem;
+}
+
+.budget-pot-title-row {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.budget-pot-title-row h3,
+.budget-special-card h3 {
+  color: #071b46;
+  font-size: 1.05rem;
+  font-weight: 950;
+}
+
+.budget-pot-main p {
+  color: rgba(7, 27, 70, 0.52);
+  font-size: 0.86rem;
+  font-weight: 700;
+  margin-top: 0.32rem;
+}
+
+.budget-badge {
+  border-radius: 999px;
+  border-width: 1px;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 900;
+  padding: 0.22rem 0.5rem;
+}
+
+.budget-pot-controls {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.budget-default-form {
+  align-items: end;
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.budget-default-form label {
+  grid-column: 1 / -1;
+}
+
+.budget-default-form button,
+.budget-inline-state-form button,
+.budget-special-card form button {
+  background: rgba(7, 27, 70, 0.08);
+  border-radius: 0.8rem;
+  color: #071b46;
+  padding: 0.75rem 0.85rem;
+}
+
+.budget-pot-details {
+  background: rgba(223, 244, 253, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 0.9rem;
+  padding: 0.7rem;
+}
+
+.budget-pot-details summary {
+  color: rgba(7, 27, 70, 0.72);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 900;
+}
+
+.budget-edit-form,
+.budget-inline-state-form {
+  display: grid;
+  gap: 0.7rem;
+  margin-top: 0.75rem;
+}
+
+.budget-special-panel {
+  align-self: start;
+  padding: 1rem;
+}
+
+.budget-special-header strong {
+  color: #071b46;
+  display: block;
+  font-size: 2rem;
+  font-weight: 950;
+  line-height: 1;
+  margin-top: 0.3rem;
+}
+
+.budget-special-header span,
+.budget-special-card span,
+.budget-special-card p {
+  color: rgba(7, 27, 70, 0.54);
+  font-size: 0.82rem;
+  font-weight: 750;
+}
+
+.budget-special-list {
+  margin-top: 1rem;
+}
+
+.budget-special-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem;
+}
+
+.budget-special-values {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.budget-special-values strong {
+  color: #071b46;
+  font-size: 1rem;
+  font-weight: 950;
+}
+
+@media (max-width: 980px) {
+  .budget-hero-panel,
+  .budget-care-header,
+  .budget-pot-card {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-hero-panel,
+  .budget-care-header {
+    flex-direction: column;
+  }
+
+  .budget-hero-actions {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .budget-care-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  .budget-hero-panel,
+  .budget-care-shell {
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+
+  .budget-default-form {
+    grid-template-columns: 1fr;
+  }
+
+  .budget-dialog-plus {
+    min-height: 3.6rem;
+    width: 3.6rem;
+  }
+}
