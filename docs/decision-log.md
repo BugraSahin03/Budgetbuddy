@@ -1156,3 +1156,20 @@ Folgen:
 
 - Workflow-Dokumente und Prompts wurden um `status:visual-check`, Preview-Port-Regeln und Visual-Check-Handoff erweitert.
 - Das GitHub-Label `status:visual-check` muss im Repository angelegt werden, sofern noch nicht vorhanden.
+
+## 2026-06-07 - FIN-059 trennt Import-Anzeigenamen von Import-Regeln
+
+Quelle/Ticket: `FIN-059`
+
+Erkenntnis/Entscheidung:
+
+- Import-Aliasse fuer Anzeigenamen sind globale Einstellungen und werden ueber `Einstellungen` als eigener Unterbereich gepflegt.
+- Diese Aliasse gelten monatsuebergreifend fuer importierte Buchungen in Listen und veraendern nur den sichtbaren Anzeigenamen.
+- Der originale Bank-/Verwendungszwecktext in `transactions.description` bleibt unveraendert gespeichert und wird im Pruef-/Editierkontext weiterhin angezeigt.
+- Import-Aliasse bleiben fachlich und technisch getrennt von bestehenden Import-Regeln fuer Kategorie-, Sonderbudget-, Transfer- und Fixkosten-Kontrollvorschlaege.
+- Der Unterbereich nutzt die ruhige Monatsansicht-Formsprache, damit neue Verwaltungsfenster konsistent mit der aktuellen Produkt-UI wirken.
+
+Auswirkung:
+
+- Monats- und Transaktionslisten koennen ruhige Anzeigenamen wie `Amazon` oder `IKEA` zeigen, ohne Import-Fingerprint, Duplikaterkennung, Budgetzuordnung oder Fixkosten-Kontrolllogik zu veraendern.
+- Wiederkehrende Haendler koennen als persoenliche globale Anzeige-Regeln gepflegt werden.

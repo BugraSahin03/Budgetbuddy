@@ -1,11 +1,14 @@
 import "server-only";
 
 import { getDb } from "@/src/db/client";
+import { resolveImportDisplayName } from "@/src/import/display-name";
+import { listImportDisplayAliases } from "@/src/settings/import-display-aliases/repository";
 
 export type ImportedTransactionListItem = {
   id: number;
   bookingDate: string;
   description: string;
+  displayName: string;
   amountCents: number;
   transactionType: "expense" | "income" | "transfer" | "refund";
   sourceAccountName: string;
@@ -17,6 +20,7 @@ export type ImportedTransactionListItem = {
 };
 
 export function listImportedTransactions(): ImportedTransactionListItem[] {
+  const aliases = listImportDisplayAliases();
   const rows = getDb()
     .prepare(
       `
@@ -41,7 +45,15 @@ export function listImportedTransactions(): ImportedTransactionListItem[] {
         ORDER BY t.booking_date DESC, t.id DESC
       `,
     )
-    .all() as ImportedTransactionListItem[];
+    .all() as Array<Omit<ImportedTransactionListItem, "displayName">>;
 
-  return rows;
+  return rows.map((row) => ({
+    ...row,
+    displayName: resolveImportDisplayName({
+      sourceType: "import",
+      description: row.description,
+      counterpartyName: row.counterpartyName,
+      aliases,
+    }),
+  }));
 }

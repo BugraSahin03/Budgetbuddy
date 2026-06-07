@@ -848,7 +848,7 @@ export default async function MonthDetailPage({
                   />
                   <div className="min-w-0 flex-1">
                     <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
-                      {transaction.description}
+                      {transaction.displayName}
                     </p>
                     <p className="mt-1 truncate text-xs font-semibold text-[color:var(--month-ink-soft)]">
                       {transactionSubtitle(transaction)}
@@ -923,8 +923,15 @@ export default async function MonthDetailPage({
                         categoryVisuals={categoryVisuals}
                       />
                     </div>
-                    <h3 className="min-w-0 truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg">
-                      {transaction.description}
+                    <h3
+                      className="min-w-0 truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg"
+                      title={
+                        transaction.sourceType === "import"
+                          ? transaction.description
+                          : undefined
+                      }
+                    >
+                      {transaction.displayName}
                     </h3>
                     <p className="text-sm font-extrabold tracking-[-0.015em] text-[color:var(--month-ink-soft)] sm:text-left">
                       {transaction.bookingDate}
@@ -955,6 +962,17 @@ export default async function MonthDetailPage({
                             : transaction.accountName}
                         </span>
                       </div>
+
+                      {transaction.sourceType === "import" ? (
+                        <div className="rounded-xl border border-[color:var(--month-line)] bg-white/80 px-3 py-2">
+                          <p className="text-[0.68rem] font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
+                            Originaler Banktext
+                          </p>
+                          <p className="mt-1 text-xs font-semibold text-[color:var(--month-ink-soft)]">
+                            {transaction.description}
+                          </p>
+                        </div>
+                      ) : null}
 
                       {isManual ? (
                         <form
