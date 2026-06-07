@@ -197,6 +197,7 @@ function TransactionVisualMark({
         iconName={category?.iconName}
         colorHex={category?.colorHex}
         className="h-12 w-12 text-sm"
+        variant="neutral"
       />
     );
   }
