@@ -36,23 +36,23 @@ export default function SettingsPage() {
             <Link
               key={setting.href}
               href={setting.href}
-              className="group rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/82 p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--month-line-strong)] hover:bg-white hover:shadow-md"
+              className="group overflow-hidden rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/82 shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--month-line-strong)] hover:bg-white hover:shadow-md"
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-sky-100 text-sm font-black tracking-[-0.05em] text-[#0f4c6d]">
+              <div className="grid min-h-32 grid-cols-[6.5rem_minmax(0,1fr)]">
+                <span className="flex h-full items-center justify-center bg-sky-100/85 text-5xl font-black leading-none text-[#0f4c6d] transition group-hover:bg-sky-100">
                     &#9881;
-                  </span>
+                </span>
+                <div className="flex items-center justify-between gap-3 p-4">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
                       {setting.meta}
                     </p>
                     <h4 className="mt-1 text-base font-semibold text-[color:var(--month-ink)]">{setting.title}</h4>
                   </div>
+                  <span className="rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-semibold text-[color:var(--month-ink-soft)] transition group-hover:border-[color:var(--month-line-strong)] group-hover:text-[#0f4c6d]">
+                    Oeffnen
+                  </span>
                 </div>
-                <span className="rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-semibold text-[color:var(--month-ink-soft)] transition group-hover:border-[color:var(--month-line-strong)] group-hover:text-[#0f4c6d]">
-                  Oeffnen
-                </span>
               </div>
             </Link>
           ))}
