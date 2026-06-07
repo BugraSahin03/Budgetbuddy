@@ -204,7 +204,7 @@ function TransactionVisualMark({
         name={category?.name ?? transaction.categoryName ?? "Kategorie"}
         iconName={category?.iconName}
         colorHex={category?.colorHex}
-        className="h-12 w-12 text-sm"
+        className="h-10 w-10 text-xs"
         variant="neutral"
       />
     );
@@ -212,7 +212,7 @@ function TransactionVisualMark({
 
   if (transaction.specialBudgetId) {
     return (
-      <span className="category-visual-mark h-12 w-12 border-amber-200 bg-amber-100 text-sm text-amber-900">
+      <span className="category-visual-mark h-10 w-10 border-amber-200 bg-amber-100 text-xs text-amber-900">
         SB
       </span>
     );
@@ -220,14 +220,14 @@ function TransactionVisualMark({
 
   if (transaction.transactionType === "expense") {
     return (
-      <span className="category-visual-mark h-12 w-12 border-red-200 bg-red-100 text-lg text-red-700">
+      <span className="category-visual-mark h-10 w-10 border-red-200 bg-red-100 text-base text-red-700">
         ?
       </span>
     );
   }
 
   return (
-    <span className="category-visual-mark h-12 w-12 border-sky-200 bg-sky-100 text-sm text-sky-800">
+    <span className="category-visual-mark h-10 w-10 border-sky-200 bg-sky-100 text-xs text-sky-800">
       {transaction.transactionType === "transfer" ? "TR" : "+"}
     </span>
   );
@@ -895,7 +895,7 @@ export default async function MonthDetailPage({
           </span>
         </summary>
 
-        <div className="mt-7 space-y-4">
+        <div className="mt-6 space-y-2.5">
           {month.transactions.length === 0 ? (
             <EmptyReferenceCard>
               Keine Buchungen fuer diesen Monat vorhanden.
@@ -914,30 +914,30 @@ export default async function MonthDetailPage({
               return (
                 <article
                   key={`${transaction.sourceType}-${transaction.id}`}
-                  className="min-w-0 overflow-hidden rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/88 p-4 shadow-[0_12px_28px_rgba(7,27,70,0.04)] sm:p-5"
+                  className="min-w-0 overflow-hidden rounded-[1rem] border border-[color:var(--month-line)] bg-white/82 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.025)] sm:px-4"
                 >
-                  <div className="grid min-w-0 gap-4 lg:grid-cols-[auto_minmax(0,1.25fr)_minmax(8.5rem,auto)_minmax(9.5rem,auto)_auto] lg:items-center">
-                    <div className="flex min-w-0 items-center gap-4">
+                  <div className="month-booking-row-grid">
+                    <div className="flex min-w-0 items-center">
                       <TransactionVisualMark
                         transaction={transaction}
                         categoryVisuals={categoryVisuals}
                       />
                     </div>
-                    <h3 className="min-w-0 truncate text-2xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
+                    <h3 className="min-w-0 truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg">
                       {transaction.description}
                     </h3>
-                    <p className="text-base font-black tracking-[-0.025em] text-[color:var(--month-ink)]">
+                    <p className="text-sm font-extrabold tracking-[-0.015em] text-[color:var(--month-ink-soft)] sm:text-left">
                       {transaction.bookingDate}
                     </p>
                     <span
-                      className={`inline-flex max-w-full rounded-full border px-3 py-1.5 text-sm font-black ${assignmentTone(transaction)}`}
+                      className={`inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-black ${assignmentTone(transaction)}`}
                     >
                       <span className="truncate">
                         {assignmentChipLabel(transaction)}
                       </span>
                     </span>
                     <p
-                      className={`shrink-0 text-left text-2xl font-black tracking-[-0.055em] lg:text-right ${amountTone(transaction.amountCents)}`}
+                      className={`shrink-0 text-left text-lg font-black tracking-[-0.045em] sm:text-right ${amountTone(transaction.amountCents)}`}
                     >
                       {formatEuro(transaction.amountCents)}
                     </p>
