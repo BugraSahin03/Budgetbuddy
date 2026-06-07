@@ -8,26 +8,15 @@ const GLOBAL_SETTINGS = [
   },
 ] as const;
 
-const SETTING_TABS = ["Global", "Import", "Monatsuebergreifend"] as const;
-
 export default function SettingsPage() {
   return (
     <section className="month-page-shell space-y-5">
       <header className="month-section-panel relative overflow-hidden">
         <span className="absolute -right-10 -top-12 h-32 w-32 rounded-full bg-sky-100/70 blur-2xl" aria-hidden="true" />
         <span className="absolute -bottom-14 left-10 h-28 w-28 rounded-full bg-slate-200/60 blur-2xl" aria-hidden="true" />
-        <div className="relative flex flex-col gap-4">
-          <div>
-            <p className="month-eyebrow">Einstellungen</p>
-            <h2 className="month-section-title mt-1">Globale Einstellungen</h2>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {SETTING_TABS.map((tab) => (
-              <span key={tab} className="month-chip month-chip-neutral bg-white/72">
-                {tab}
-              </span>
-            ))}
-          </div>
+        <div className="relative">
+          <p className="month-eyebrow">Einstellungen</p>
+          <h2 className="month-section-title mt-1">Globale Einstellungen</h2>
         </div>
       </header>
 
@@ -52,7 +41,7 @@ export default function SettingsPage() {
               <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <span className="flex h-11 w-11 items-center justify-center rounded-[1rem] bg-sky-100 text-sm font-black tracking-[-0.05em] text-[#0f4c6d]">
-                    Aa
+                    &#9881;
                   </span>
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
