@@ -1,7 +1,7 @@
-import { createBudgetCategoryAction, setCategoryDefaultBudgetAction } from "@/app/budgets/actions";
+import { createBudgetCategoryAction, updateBudgetCategoriesAction } from "@/app/budgets/actions";
+import { BudgetCareEditor } from "@/app/budgets/budget-care-editor";
 import { BudgetDialog } from "@/app/budgets/budget-dialog";
 import { CategoryVisualMark } from "@/app/components/category-visual";
-import { updateCategoryAction } from "@/app/kategorien/actions";
 import {
   createSpecialBudgetAction,
   updateSpecialBudgetStateAction,
@@ -187,21 +187,9 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
       {error ? <p className="budget-feedback budget-feedback-error">{error}</p> : null}
 
       <section className="budget-care-shell">
-        <input
-          type="checkbox"
-          id="budget-edit-mode"
-          className="budget-edit-toggle"
-          aria-label="Editiermodus fuer Kategorien umschalten"
-        />
-        <div className="budget-care-header">
-          <div>
-            <h2>Kategorien und Sonderbudgets</h2>
-          </div>
-          <div className="budget-care-actions">
-            <label htmlFor="budget-edit-mode" className="budget-edit-toggle-button" role="button">
-              <span className="budget-edit-label-off">Editieren</span>
-              <span className="budget-edit-label-on">Fertig</span>
-            </label>
+        <BudgetCareEditor
+          action={updateBudgetCategoriesAction}
+          specialBudgetAction={
             <BudgetDialog
               triggerLabel="Sonderbudget anlegen"
               eyebrow="Sonderbudget"
@@ -236,145 +224,138 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                 </button>
               </form>
             </BudgetDialog>
-          </div>
-        </div>
+          }
+          sidePanel={
+            <aside className="budget-special-panel" aria-label="Sonderbudgets">
+              <div className="budget-special-header">
+                <p>Sonderbudgets</p>
+                <strong>{activeSpecialBudgetCount}</strong>
+                <span>aktive Monatstoepfe</span>
+              </div>
 
-        <div className="budget-care-grid">
-          <div className="budget-pot-list" aria-label="Budgettoepfe">
-            {categories.map((category) => {
-              const budgetRow = budgetByCategoryId.get(category.id);
-              const defaultBudgetAmountCents = budgetRow?.defaultBudgetAmountCents ?? null;
+              <div className="budget-special-list">
+                {specialBudgets.map((budget) => {
+                  const remainingCents = budget.plannedAmountCents - budget.actualExpenseCents;
 
-              return (
-                <article key={category.id} className="budget-pot-card">
-                  <div className="budget-pot-main">
-                    <CategoryVisualMark
-                      name={category.name}
-                      iconName={category.iconName}
-                      colorHex={category.colorHex}
-                      variant="neutral"
-                      className="budget-pot-icon"
-                    />
-                    <div>
-                      <div className="budget-pot-title-row">
-                        <h3>{category.name}</h3>
-                        <span className={`budget-badge ${statusBadgeTone(category.isActive)}`}>
-                          {category.isActive ? "Aktiv" : "Inaktiv"}
-                        </span>
-                        {category.isDefault ? (
-                          <span className="budget-badge border-sky-200 bg-sky-50 text-sky-700">
-                            Standard
-                          </span>
-                        ) : null}
+                  return (
+                    <article key={budget.id} className="budget-special-card">
+                      <div>
+                        <p>{formatMonthLabel(budget.monthKey)}</p>
+                        <h3>{budget.name}</h3>
+                        {budget.note ? <span>{budget.note}</span> : null}
                       </div>
-                      <p>
-                        {category.transactionCount} Buchungen, {category.monthlyBudgetCount}{" "}
-                        Monatswerte
-                      </p>
-                    </div>
-                  </div>
+                      <div className="budget-special-values">
+                        <span>{formatEuro(budget.actualExpenseCents)} genutzt</span>
+                        <strong>{formatEuro(budget.plannedAmountCents)}</strong>
+                        <small className={`budget-badge ${specialBudgetStatusTone(budget.isActive, remainingCents)}`}>
+                          {specialBudgetStatusLabel(budget.isActive, remainingCents)}
+                        </small>
+                      </div>
+                      <form action={updateSpecialBudgetStateAction}>
+                        <input type="hidden" name="specialBudgetId" value={budget.id} />
+                        <button type="submit" name="intent" value={budget.isActive ? "deactivate" : "reactivate"}>
+                          {budget.isActive ? "Deaktivieren" : "Reaktivieren"}
+                        </button>
+                      </form>
+                    </article>
+                  );
+                })}
+              </div>
+            </aside>
+          }
+        >
+          {categories.map((category) => {
+            const budgetRow = budgetByCategoryId.get(category.id);
+            const defaultBudgetAmountCents = budgetRow?.defaultBudgetAmountCents ?? null;
+            const defaultBudgetLabel = defaultBudgetAmountCents === null
+              ? "Kein Standardwert"
+              : formatEuro(defaultBudgetAmountCents);
 
-                  <div className="budget-pot-controls">
-                    <form action={setCategoryDefaultBudgetAction} className="budget-default-form">
-                      <input type="hidden" name="categoryId" value={category.id} />
-                      <label htmlFor={`budget-${category.id}`}>Standardbudget</label>
+            return (
+              <article key={category.id} className="budget-pot-card">
+                <input type="hidden" name="categoryIds" value={category.id} />
+                <input type="hidden" name={`colorHex-${category.id}`} value={category.colorHex ?? ""} />
+                <div className="budget-pot-main">
+                  <CategoryVisualMark
+                    name={category.name}
+                    iconName={category.iconName}
+                    colorHex={category.colorHex}
+                    variant="neutral"
+                    className="budget-pot-icon"
+                  />
+                  <div className="budget-pot-copy">
+                    <div className="budget-pot-title-row">
+                      <h3>{category.name}</h3>
+                      <span className={`budget-badge ${statusBadgeTone(category.isActive)}`}>
+                        {category.isActive ? "Aktiv" : "Inaktiv"}
+                      </span>
+                      {category.isDefault ? (
+                        <span className="budget-badge border-sky-200 bg-sky-50 text-sky-700">
+                          Standard
+                        </span>
+                      ) : null}
+                    </div>
+                    <p>
+                      {category.transactionCount} Buchungen · {category.monthlyBudgetCount} Monatswerte
+                    </p>
+                  </div>
+                </div>
+
+                <div className="budget-pot-readonly-value">
+                  <span>Standardbudget</span>
+                  <strong>{defaultBudgetLabel}</strong>
+                </div>
+
+                <div className="budget-category-edit-panel">
+                  <label>
+                    Standardbudget
+                    <input
+                      name={`budgetAmount-${category.id}`}
+                      inputMode="decimal"
+                      defaultValue={toInputAmount(defaultBudgetAmountCents)}
+                      placeholder="0.00"
+                    />
+                  </label>
+                  <label>
+                    Name
+                    <input
+                      name={`name-${category.id}`}
+                      required
+                      maxLength={60}
+                      defaultValue={category.name}
+                    />
+                  </label>
+                  <label>
+                    Icon
+                    <input
+                      name={`iconName-${category.id}`}
+                      maxLength={24}
+                      defaultValue={category.iconName ?? ""}
+                    />
+                  </label>
+                  <div className="budget-category-edit-flags">
+                    <label className="budget-dialog-check">
                       <input
-                        id={`budget-${category.id}`}
-                        name="budgetAmount"
-                        inputMode="decimal"
-                        defaultValue={toInputAmount(defaultBudgetAmountCents)}
-                        placeholder="0.00"
+                        type="checkbox"
+                        name={`isDefault-${category.id}`}
+                        defaultChecked={category.isDefault}
                       />
-                      <button type="submit">Speichern</button>
-                    </form>
-
-                    <div className="budget-category-edit-panel">
-                      <form action={updateCategoryAction} className="budget-edit-form">
-                        <input type="hidden" name="categoryId" value={category.id} />
-                        <input type="hidden" name="colorHex" value={category.colorHex ?? ""} />
-                        <label>
-                          Name
-                          <input
-                            name="name"
-                            required
-                            maxLength={60}
-                            defaultValue={category.name}
-                          />
-                        </label>
-                        <label>
-                          Icon
-                          <input
-                            name="iconName"
-                            maxLength={24}
-                            defaultValue={category.iconName ?? ""}
-                          />
-                        </label>
-                        <label className="budget-dialog-check">
-                          <input
-                            type="checkbox"
-                            name="isDefault"
-                            defaultChecked={category.isDefault}
-                          />
-                          In Standardlisten anzeigen
-                        </label>
-                        <button type="submit" className="budget-secondary-button">
-                          Kategorie speichern
-                        </button>
-                      </form>
-                      <form action={updateCategoryAction} className="budget-inline-state-form">
-                        <input type="hidden" name="categoryId" value={category.id} />
-                        <button
-                          type="submit"
-                          name="intent"
-                          value={category.isActive ? "deactivate" : "reactivate"}
-                        >
-                          {category.isActive ? "Deaktivieren" : "Reaktivieren"}
-                        </button>
-                      </form>
-                    </div>
+                      Standard
+                    </label>
+                    <label className="budget-dialog-check">
+                      <input
+                        type="checkbox"
+                        name={`isActive-${category.id}`}
+                        defaultChecked={category.isActive}
+                      />
+                      Aktiv
+                    </label>
                   </div>
-                </article>
-              );
-            })}
-          </div>
-
-          <aside className="budget-special-panel" aria-label="Sonderbudgets">
-            <div className="budget-special-header">
-              <p>Sonderbudgets</p>
-              <strong>{activeSpecialBudgetCount}</strong>
-              <span>aktive Monatstoepfe</span>
-            </div>
-
-            <div className="budget-special-list">
-              {specialBudgets.map((budget) => {
-                const remainingCents = budget.plannedAmountCents - budget.actualExpenseCents;
-
-                return (
-                  <article key={budget.id} className="budget-special-card">
-                    <div>
-                      <p>{formatMonthLabel(budget.monthKey)}</p>
-                      <h3>{budget.name}</h3>
-                      {budget.note ? <span>{budget.note}</span> : null}
-                    </div>
-                    <div className="budget-special-values">
-                      <span>{formatEuro(budget.actualExpenseCents)} genutzt</span>
-                      <strong>{formatEuro(budget.plannedAmountCents)}</strong>
-                      <small className={`budget-badge ${specialBudgetStatusTone(budget.isActive, remainingCents)}`}>
-                        {specialBudgetStatusLabel(budget.isActive, remainingCents)}
-                      </small>
-                    </div>
-                    <form action={updateSpecialBudgetStateAction}>
-                      <input type="hidden" name="specialBudgetId" value={budget.id} />
-                      <button type="submit" name="intent" value={budget.isActive ? "deactivate" : "reactivate"}>
-                        {budget.isActive ? "Deaktivieren" : "Reaktivieren"}
-                      </button>
-                    </form>
-                  </article>
-                );
-              })}
-            </div>
-          </aside>
-        </div>
+                </div>
+              </article>
+            );
+          })}
+        </BudgetCareEditor>
       </section>
     </section>
   );

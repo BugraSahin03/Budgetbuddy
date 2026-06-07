@@ -1217,50 +1217,32 @@ select.month-action-input {
   justify-content: flex-end;
 }
 
-.budget-edit-toggle {
-  height: 1px;
-  opacity: 0;
-  position: absolute;
-  width: 1px;
-}
-
-.budget-edit-toggle-button {
+.budget-icon-action {
   align-items: center;
-  background: rgba(255, 255, 255, 0.78);
+  background: rgba(255, 255, 255, 0.82);
   border: 1px solid rgba(7, 27, 70, 0.16);
-  border-radius: 999px;
+  border-radius: 0.95rem;
   color: #071b46;
   cursor: pointer;
   display: inline-flex;
-  font-size: 0.88rem;
+  font-size: 1.1rem;
   font-weight: 950;
+  height: 2.75rem;
   justify-content: center;
-  min-height: 2.75rem;
-  padding: 0.78rem 1.05rem;
+  width: 2.75rem;
   transition: background 160ms ease, box-shadow 160ms ease, color 160ms ease;
 }
 
-.budget-edit-toggle:focus-visible + .budget-care-header .budget-edit-toggle-button {
-  outline: 3px solid rgba(14, 165, 233, 0.35);
-  outline-offset: 3px;
-}
-
-.budget-edit-label-on {
-  display: none;
-}
-
-.budget-edit-toggle:checked + .budget-care-header .budget-edit-toggle-button {
+.budget-icon-action:hover,
+.budget-icon-action-save {
   background: #071b46;
   box-shadow: 0 14px 28px rgba(7, 27, 70, 0.16);
   color: #ffffff;
 }
 
-.budget-edit-toggle:checked + .budget-care-header .budget-edit-label-off {
-  display: none;
-}
-
-.budget-edit-toggle:checked + .budget-care-header .budget-edit-label-on {
-  display: inline;
+.budget-icon-action:focus-visible {
+  outline: 3px solid rgba(14, 165, 233, 0.35);
+  outline-offset: 3px;
 }
 
 .budget-care-grid {
@@ -1269,7 +1251,7 @@ select.month-action-input {
   grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.42fr);
 }
 
-.budget-pot-list,
+.budget-category-editor-form,
 .budget-special-list {
   display: grid;
   gap: 0.85rem;
@@ -1284,22 +1266,28 @@ select.month-action-input {
 }
 
 .budget-pot-card {
+  align-items: center;
   display: grid;
-  gap: 1rem;
-  grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.6fr);
-  padding: 1rem;
+  gap: 0.9rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  padding: 0.82rem;
 }
 
 .budget-pot-main {
-  align-items: flex-start;
+  align-items: center;
   display: flex;
   gap: 0.85rem;
+  min-width: 0;
 }
 
 .budget-pot-icon {
   flex: 0 0 auto;
-  height: 3.1rem;
-  width: 3.1rem;
+  height: 2.7rem;
+  width: 2.7rem;
+}
+
+.budget-pot-copy {
+  min-width: 0;
 }
 
 .budget-pot-title-row {
@@ -1312,7 +1300,7 @@ select.month-action-input {
 .budget-pot-title-row h3,
 .budget-special-card h3 {
   color: #071b46;
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 950;
 }
 
@@ -1332,47 +1320,74 @@ select.month-action-input {
   padding: 0.22rem 0.5rem;
 }
 
-.budget-pot-controls {
+.budget-pot-readonly-value {
+  color: rgba(7, 27, 70, 0.58);
   display: grid;
-  gap: 0.7rem;
+  font-size: 0.72rem;
+  font-weight: 850;
+  gap: 0.15rem;
+  justify-items: end;
+  min-width: 8.5rem;
+  text-align: right;
 }
 
-.budget-default-form {
-  align-items: end;
-  display: grid;
-  gap: 0.5rem;
-  grid-template-columns: minmax(0, 1fr) auto;
+.budget-pot-readonly-value strong {
+  color: #071b46;
+  font-size: 1.05rem;
+  font-weight: 950;
 }
 
-.budget-default-form label {
-  grid-column: 1 / -1;
-}
-
-.budget-default-form button,
-.budget-inline-state-form button,
 .budget-special-card form button {
   background: rgba(7, 27, 70, 0.08);
+  border: 0;
   border-radius: 0.8rem;
   color: #071b46;
+  cursor: pointer;
+  font-weight: 900;
   padding: 0.75rem 0.85rem;
 }
 
 .budget-category-edit-panel {
-  background: rgba(223, 244, 253, 0.45);
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  border-radius: 0.9rem;
-  padding: 0.7rem;
+  display: none;
+  gap: 0.65rem;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
 }
 
-.budget-edit-toggle:not(:checked) ~ .budget-care-grid .budget-category-edit-panel {
+.budget-care-editor.is-editing .budget-category-edit-panel {
+  display: grid;
+}
+
+.budget-care-editor.is-editing .budget-pot-card {
+  align-items: start;
+}
+
+.budget-care-editor.is-editing .budget-pot-readonly-value {
   display: none;
 }
 
-.budget-edit-form,
-.budget-inline-state-form {
+.budget-category-edit-panel label {
+  color: rgba(7, 27, 70, 0.68);
   display: grid;
-  gap: 0.7rem;
-  margin-top: 0.75rem;
+  font-size: 0.72rem;
+  font-weight: 900;
+  gap: 0.3rem;
+}
+
+.budget-category-edit-panel input {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  border-radius: 0.78rem;
+  color: #071b46;
+  font-size: 0.9rem;
+  font-weight: 750;
+  padding: 0.62rem 0.7rem;
+}
+
+.budget-category-edit-flags {
+  align-content: center;
+  display: grid;
+  gap: 0.25rem;
 }
 
 .budget-special-panel {

@@ -6,15 +6,16 @@ import { describe, expect, it } from "vitest";
 const rootDir = process.cwd();
 const pageSource = readFileSync(join(rootDir, "app/budgets/page.tsx"), "utf8");
 const actionSource = readFileSync(join(rootDir, "app/budgets/actions.ts"), "utf8");
+const editorSource = readFileSync(join(rootDir, "app/budgets/budget-care-editor.tsx"), "utf8");
 const dialogSource = readFileSync(join(rootDir, "app/budgets/budget-dialog.tsx"), "utf8");
 const cssSource = readFileSync(join(rootDir, "app/globals.css"), "utf8");
 
 describe("budgets page simplification", () => {
   it("uses one calm budget care area instead of three hard admin sections", () => {
     expect(pageSource).toContain("Budgettoepfe und Standardwerte");
-    expect(pageSource).toContain("Kategorien und Sonderbudgets");
+    expect(editorSource).toContain("Kategorien und Sonderbudgets");
     expect(pageSource).toContain("budget-care-shell");
-    expect(pageSource).toContain("budget-pot-list");
+    expect(editorSource).toContain("budget-category-editor-form");
     expect(pageSource).not.toContain("Gemeinsame Pflege");
     expect(pageSource).not.toContain("Kategorien beschreiben dauerhafte Ausgabenarten");
     expect(pageSource).not.toContain('href="#kategorien"');
@@ -23,13 +24,14 @@ describe("budgets page simplification", () => {
   });
 
   it("uses one shared edit mode instead of per-category detail toggles", () => {
-    expect(pageSource).toContain("budget-edit-mode");
-    expect(pageSource).toContain("budget-edit-toggle-button");
+    expect(pageSource).toContain("BudgetCareEditor");
+    expect(pageSource).toContain("updateBudgetCategoriesAction");
     expect(pageSource).toContain("budget-category-edit-panel");
+    expect(dialogSource).toContain("showModal()");
+    expect(cssSource).toContain(".budget-icon-action");
+    expect(cssSource).toContain(".budget-care-editor.is-editing .budget-category-edit-panel");
+    expect(pageSource).not.toContain("budget-edit-mode");
     expect(pageSource).not.toContain("Details bearbeiten");
-    expect(cssSource).toContain(
-      ".budget-edit-toggle:not(:checked) ~ .budget-care-grid .budget-category-edit-panel",
-    );
   });
 
   it("creates categories through a dialog with optional icon and standard budget", () => {
@@ -47,7 +49,8 @@ describe("budgets page simplification", () => {
     expect(pageSource).not.toContain("Farbvorschau");
     expect(pageSource).not.toContain("categoryColorPreview");
     expect(pageSource).toContain('type="hidden" name="colorHex" value=""');
-    expect(pageSource).toContain('type="hidden" name="colorHex" value={category.colorHex ?? ""}');
+    expect(pageSource).toContain('name={`colorHex-${category.id}`}');
+    expect(actionSource).toContain("colorHex: toOptionalString(formData.get(`colorHex-${categoryId}`))");
   });
 
   it("keeps special budgets visible as marked monthly pots", () => {

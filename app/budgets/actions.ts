@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { setCategoryDefaultBudget } from "@/src/budgets/repository";
-import { createCategory, listCategories } from "@/src/categories/repository";
+import {
+  createCategory,
+  listCategories,
+  setCategoryActive,
+  updateCategory,
+} from "@/src/categories/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
@@ -89,6 +94,42 @@ export async function createBudgetCategoryAction(formData: FormData): Promise<ne
 
     refreshBudgetPaths();
     redirect(`/budgets?notice=${encodeMessage("Budgettopf angelegt.")}`);
+  } catch (error) {
+    redirect(`/budgets?error=${encodeMessage(toErrorMessage(error))}`);
+  }
+}
+
+function parseCategoryIds(formData: FormData): number[] {
+  return formData
+    .getAll("categoryIds")
+    .map((value) => Number.parseInt(toSingleString(value), 10))
+    .filter((categoryId) => Number.isInteger(categoryId) && categoryId > 0);
+}
+
+export async function updateBudgetCategoriesAction(formData: FormData): Promise<never> {
+  try {
+    const categoryIds = parseCategoryIds(formData);
+
+    if (categoryIds.length === 0) {
+      throw new Error("Keine Kategorien zum Speichern gefunden.");
+    }
+
+    for (const categoryId of categoryIds) {
+      const budgetAmount = toSingleString(formData.get(`budgetAmount-${categoryId}`));
+
+      validateOptionalBudgetAmount(budgetAmount);
+      updateCategory(categoryId, {
+        name: toSingleString(formData.get(`name-${categoryId}`)),
+        colorHex: toOptionalString(formData.get(`colorHex-${categoryId}`)),
+        iconName: toOptionalString(formData.get(`iconName-${categoryId}`)),
+        isDefault: formData.get(`isDefault-${categoryId}`) === "on",
+      });
+      setCategoryActive(categoryId, formData.get(`isActive-${categoryId}`) === "on");
+      setCategoryDefaultBudget(categoryId, budgetAmount);
+    }
+
+    refreshBudgetPaths();
+    redirect(`/budgets?notice=${encodeMessage("Kategorien gespeichert.")}`);
   } catch (error) {
     redirect(`/budgets?error=${encodeMessage(toErrorMessage(error))}`);
   }
