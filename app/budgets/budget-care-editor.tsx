@@ -6,14 +6,12 @@ type BudgetCareEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
   children: ReactNode;
   sidePanel: ReactNode;
-  specialBudgetAction: ReactNode;
 };
 
 export function BudgetCareEditor({
   action,
   children,
   sidePanel,
-  specialBudgetAction,
 }: BudgetCareEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
   const formId = useId();
@@ -44,7 +42,6 @@ export function BudgetCareEditor({
               ✎
             </button>
           )}
-          {specialBudgetAction}
         </div>
       </div>
 

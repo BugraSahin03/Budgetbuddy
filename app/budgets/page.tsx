@@ -145,40 +145,87 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
           </div>
           <BudgetDialog
             triggerLabel="+"
-            triggerAriaLabel="Kategorie anlegen"
+            triggerAriaLabel="Kategorie oder Sonderbudget anlegen"
             triggerClassName="budget-dialog-plus"
-            eyebrow="Neuer Budgettopf"
-            title="Kategorie anlegen"
-            description="Name ist Pflicht. Icon und Standardbudget kannst du direkt mitgeben. Die visuelle Markierung wird automatisch beibehalten."
+            eyebrow="Neuer Eintrag"
+            title="Kategorie oder Sonderbudget anlegen"
+            description="Lege entweder einen dauerhaften Budgettopf oder einen besonderen Monatstopf an."
           >
-            <form action={createBudgetCategoryAction} className="budget-dialog-form">
-              <label>
-                Name
-                <input name="name" required maxLength={60} placeholder="Zum Beispiel Lebensmittel" />
-              </label>
-              <label>
-                Icon
-                <input name="iconName" maxLength={24} placeholder="Zum Beispiel Einkaufswagen oder L" />
-              </label>
-              <label>
-                Standardbudget
-                <input
-                  name="budgetAmount"
-                  inputMode="decimal"
-                  placeholder="Zum Beispiel 350.00"
-                  aria-describedby="new-budget-help"
-                />
-                <span id="new-budget-help">Optionaler Betrag fuer neue Monate.</span>
-              </label>
-              <input type="hidden" name="colorHex" value="" />
-              <label className="budget-dialog-check">
-                <input type="checkbox" name="isDefault" defaultChecked />
-                In Standardlisten anzeigen
-              </label>
-              <button type="submit" className="budget-primary-button">
-                Budgettopf speichern
-              </button>
-            </form>
+            <div className="budget-create-dialog-grid">
+              <section className="budget-create-dialog-group">
+                <h3>Kategorie erstellen</h3>
+                <p>Dauerhafter Budgettopf fuer regelmaessige Ausgaben.</p>
+                <form action={createBudgetCategoryAction} className="budget-dialog-form">
+                  <label>
+                    Name
+                    <input
+                      name="name"
+                      required
+                      maxLength={60}
+                      placeholder="Zum Beispiel Lebensmittel"
+                    />
+                  </label>
+                  <label>
+                    Icon
+                    <input
+                      name="iconName"
+                      maxLength={24}
+                      placeholder="Zum Beispiel Einkaufswagen oder L"
+                    />
+                  </label>
+                  <label>
+                    Standardbudget
+                    <input
+                      name="budgetAmount"
+                      inputMode="decimal"
+                      placeholder="Zum Beispiel 350.00"
+                      aria-describedby="new-budget-help"
+                    />
+                    <span id="new-budget-help">Optionaler Betrag fuer neue Monate.</span>
+                  </label>
+                  <input type="hidden" name="colorHex" value="" />
+                  <label className="budget-dialog-check">
+                    <input type="checkbox" name="isDefault" defaultChecked />
+                    In Standardlisten anzeigen
+                  </label>
+                  <button type="submit" className="budget-primary-button">
+                    Kategorie speichern
+                  </button>
+                </form>
+              </section>
+
+              <section className="budget-create-dialog-group">
+                <h3>Sonderbudget erstellen</h3>
+                <p>Monatstopf fuer einmalige oder besondere Ausgaben.</p>
+                <form action={createSpecialBudgetAction} className="budget-dialog-form">
+                  <label>
+                    Name
+                    <input name="name" required maxLength={80} placeholder="Zum Beispiel Urlaub" />
+                  </label>
+                  <label>
+                    Monat
+                    <select name="monthKey" defaultValue={selectedMonthKey}>
+                      {selectableMonths.map((monthKey) => (
+                        <option key={monthKey} value={monthKey}>
+                          {formatMonthLabel(monthKey)}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    Geplanter Betrag
+                    <input name="plannedAmount" required inputMode="decimal" placeholder="500.00" />
+                  </label>
+                  <label>
+                    Notiz
+                    <input name="note" maxLength={240} placeholder="Optional" />
+                  </label>
+                  <button type="submit" className="budget-primary-button">
+                    Sonderbudget speichern
+                  </button>
+                </form>
+              </section>
+            </div>
           </BudgetDialog>
         </div>
       </header>
@@ -189,42 +236,6 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
       <section className="budget-care-shell">
         <BudgetCareEditor
           action={updateBudgetCategoriesAction}
-          specialBudgetAction={
-            <BudgetDialog
-              triggerLabel="Sonderbudget anlegen"
-              eyebrow="Sonderbudget"
-              title="Monatstopf anlegen"
-              description="Fuer einmalige oder besondere Ausgaben, getrennt von normalen Kategorien."
-            >
-              <form action={createSpecialBudgetAction} className="budget-dialog-form">
-                <label>
-                  Name
-                  <input name="name" required maxLength={80} placeholder="Zum Beispiel Urlaub" />
-                </label>
-                <label>
-                  Monat
-                  <select name="monthKey" defaultValue={selectedMonthKey}>
-                    {selectableMonths.map((monthKey) => (
-                      <option key={monthKey} value={monthKey}>
-                        {formatMonthLabel(monthKey)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  Geplanter Betrag
-                  <input name="plannedAmount" required inputMode="decimal" placeholder="500.00" />
-                </label>
-                <label>
-                  Notiz
-                  <input name="note" maxLength={240} placeholder="Optional" />
-                </label>
-                <button type="submit" className="budget-primary-button">
-                  Sonderbudget speichern
-                </button>
-              </form>
-            </BudgetDialog>
-          }
           sidePanel={
             <aside className="budget-special-panel" aria-label="Sonderbudgets">
               <div className="budget-special-header">
