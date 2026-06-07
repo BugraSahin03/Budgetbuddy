@@ -1163,10 +1163,11 @@ Quelle/Ticket: `FIN-059`
 
 Erkenntnis/Entscheidung:
 
-- Import-Aliasse fuer Anzeigenamen sind globale Einstellungen und werden im Tab `Einstellungen` gepflegt.
+- Import-Aliasse fuer Anzeigenamen sind globale Einstellungen und werden ueber `Einstellungen` als eigener Unterbereich gepflegt.
 - Diese Aliasse gelten monatsuebergreifend fuer importierte Buchungen in Listen und veraendern nur den sichtbaren Anzeigenamen.
 - Der originale Bank-/Verwendungszwecktext in `transactions.description` bleibt unveraendert gespeichert und wird im Pruef-/Editierkontext weiterhin angezeigt.
 - Import-Aliasse bleiben fachlich und technisch getrennt von bestehenden Import-Regeln fuer Kategorie-, Sonderbudget-, Transfer- und Fixkosten-Kontrollvorschlaege.
+- Der Unterbereich nutzt die ruhige Monatsansicht-Formsprache, damit neue Verwaltungsfenster konsistent mit der aktuellen Produkt-UI wirken.
 
 Auswirkung:
 

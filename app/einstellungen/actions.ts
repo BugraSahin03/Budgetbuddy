@@ -38,11 +38,12 @@ export async function createImportDisplayAliasAction(
   try {
     createImportDisplayAlias(parseImportDisplayAliasInputFromFormData(formData));
     revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/import-aliase");
     revalidatePath("/monate");
     revalidatePath("/transaktionen");
-    redirect("/einstellungen?notice=" + encodeMessage("Import-Alias erstellt."));
+    redirect("/einstellungen/import-aliase?notice=" + encodeMessage("Import-Alias erstellt."));
   } catch (error) {
-    redirect("/einstellungen?error=" + encodeMessage(toErrorMessage(error)));
+    redirect("/einstellungen/import-aliase?error=" + encodeMessage(toErrorMessage(error)));
   }
 }
 
@@ -55,11 +56,12 @@ export async function updateImportDisplayAliasAction(
       parseImportDisplayAliasInputFromFormData(formData),
     );
     revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/import-aliase");
     revalidatePath("/monate");
     revalidatePath("/transaktionen");
-    redirect("/einstellungen?notice=" + encodeMessage("Import-Alias gespeichert."));
+    redirect("/einstellungen/import-aliase?notice=" + encodeMessage("Import-Alias gespeichert."));
   } catch (error) {
-    redirect("/einstellungen?error=" + encodeMessage(toErrorMessage(error)));
+    redirect("/einstellungen/import-aliase?error=" + encodeMessage(toErrorMessage(error)));
   }
 }
 
@@ -69,10 +71,11 @@ export async function deleteImportDisplayAliasAction(
   try {
     deleteImportDisplayAlias(parseAliasId(formData));
     revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/import-aliase");
     revalidatePath("/monate");
     revalidatePath("/transaktionen");
-    redirect("/einstellungen?notice=" + encodeMessage("Import-Alias geloescht."));
+    redirect("/einstellungen/import-aliase?notice=" + encodeMessage("Import-Alias geloescht."));
   } catch (error) {
-    redirect("/einstellungen?error=" + encodeMessage(toErrorMessage(error)));
+    redirect("/einstellungen/import-aliase?error=" + encodeMessage(toErrorMessage(error)));
   }
 }

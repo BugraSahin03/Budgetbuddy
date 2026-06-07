@@ -10,19 +10,26 @@ function readProjectFile(path: string): string {
 }
 
 describe("FIN-059 import display alias UI", () => {
-  it("keeps import display aliases under settings and separate from import rules", () => {
+  it("keeps import display aliases in a dedicated settings tab and separate from import rules", () => {
     const settingsPage = readProjectFile("app/einstellungen/page.tsx");
+    const importAliasesPage = readProjectFile("app/einstellungen/import-aliase/page.tsx");
     const settingsActions = readProjectFile("app/einstellungen/actions.ts");
 
     expect(settingsPage).toContain("Import-Aliasse");
-    expect(settingsPage).toContain("Anzeigenamen fuer importierte Buchungen");
-    expect(settingsPage).toContain("Aliasse aendern nur den sichtbaren Namen");
-    expect(settingsPage).toContain("getrennt von Import-Regelvorschlaegen und Fixkosten-Kontrollen");
-    expect(settingsPage).toContain('name="pattern"');
-    expect(settingsPage).toContain('name="displayName"');
+    expect(settingsPage).toContain('href: "/einstellungen/import-aliase"');
+    expect(settingsPage).not.toContain('name="pattern"');
+    expect(settingsPage).not.toContain('name="displayName"');
+    expect(importAliasesPage).toContain("Import-Aliasse");
+    expect(importAliasesPage).toContain("Anzeigenamen fuer importierte Buchungen");
+    expect(importAliasesPage).toContain("Aliasse aendern nur den sichtbaren Namen");
+    expect(importAliasesPage).toContain("Getrennt von Import-Regelvorschlaegen und Fixkosten-Kontrollen");
+    expect(importAliasesPage).toContain('name="pattern"');
+    expect(importAliasesPage).toContain('name="displayName"');
+    expect(importAliasesPage).toContain("month-hero-panel");
     expect(settingsActions).toContain("createImportDisplayAliasAction");
     expect(settingsActions).toContain("updateImportDisplayAliasAction");
     expect(settingsActions).toContain("deleteImportDisplayAliasAction");
+    expect(settingsActions).toContain("/einstellungen/import-aliase");
   });
 
   it("uses display names in month and imported transaction lists while preserving original text", () => {
