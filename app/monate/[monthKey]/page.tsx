@@ -910,7 +910,7 @@ export default async function MonthDetailPage({
                   key={`${transaction.sourceType}-${transaction.id}`}
                   className="min-w-0 overflow-hidden rounded-[1rem] border border-[color:var(--month-line)] bg-white/82 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.025)] sm:px-4"
                 >
-                  <div className="grid min-w-0 gap-3 sm:grid-cols-[auto_minmax(0,1fr)_7.5rem_minmax(8.5rem,auto)_auto] sm:items-center">
+                  <div className="month-booking-row-grid">
                     <div className="flex min-w-0 items-center">
                       <TransactionVisualMark
                         transaction={transaction}

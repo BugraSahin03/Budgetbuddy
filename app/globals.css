@@ -285,6 +285,19 @@ body {
   padding: 1rem;
 }
 
+.month-booking-row-grid {
+  display: grid;
+  gap: 0.75rem;
+  min-width: 0;
+}
+
+@media (min-width: 640px) {
+  .month-booking-row-grid {
+    align-items: center;
+    grid-template-columns: auto minmax(0, 1fr) 7.5rem minmax(8.5rem, auto) auto;
+  }
+}
+
 /* FIN-050: keep the reference screen compact while monthly care remains close by. */
 .month-dialog-trigger {
   display: inline-flex;

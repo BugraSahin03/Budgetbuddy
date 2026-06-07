@@ -43,7 +43,7 @@ describe("FIN-060 month bookings edit UI", () => {
     expect(page).toContain("function assignmentChipLabel");
     expect(page).toContain("Zuordnen");
     expect(page).toContain("space-y-2.5");
-    expect(page).toContain("sm:grid-cols-[auto_minmax(0,1fr)_7.5rem_minmax(8.5rem,auto)_auto]");
+    expect(page).toContain("month-booking-row-grid");
     expect(page).toContain("truncate text-base font-black");
     expect(page).toContain("text-lg font-black tracking-[-0.045em]");
     expect(page).toContain("border-amber-200 bg-amber-100");
