@@ -1209,6 +1209,60 @@ select.month-action-input {
   margin-top: 0.35rem;
 }
 
+.budget-care-actions {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  justify-content: flex-end;
+}
+
+.budget-edit-toggle {
+  height: 1px;
+  opacity: 0;
+  position: absolute;
+  width: 1px;
+}
+
+.budget-edit-toggle-button {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(7, 27, 70, 0.16);
+  border-radius: 999px;
+  color: #071b46;
+  cursor: pointer;
+  display: inline-flex;
+  font-size: 0.88rem;
+  font-weight: 950;
+  justify-content: center;
+  min-height: 2.75rem;
+  padding: 0.78rem 1.05rem;
+  transition: background 160ms ease, box-shadow 160ms ease, color 160ms ease;
+}
+
+.budget-edit-toggle:focus-visible + .budget-care-header .budget-edit-toggle-button {
+  outline: 3px solid rgba(14, 165, 233, 0.35);
+  outline-offset: 3px;
+}
+
+.budget-edit-label-on {
+  display: none;
+}
+
+.budget-edit-toggle:checked + .budget-care-header .budget-edit-toggle-button {
+  background: #071b46;
+  box-shadow: 0 14px 28px rgba(7, 27, 70, 0.16);
+  color: #ffffff;
+}
+
+.budget-edit-toggle:checked + .budget-care-header .budget-edit-label-off {
+  display: none;
+}
+
+.budget-edit-toggle:checked + .budget-care-header .budget-edit-label-on {
+  display: inline;
+}
+
 .budget-care-grid {
   display: grid;
   gap: 1rem;
@@ -1303,18 +1357,15 @@ select.month-action-input {
   padding: 0.75rem 0.85rem;
 }
 
-.budget-pot-details {
+.budget-category-edit-panel {
   background: rgba(223, 244, 253, 0.45);
   border: 1px solid rgba(148, 163, 184, 0.16);
   border-radius: 0.9rem;
   padding: 0.7rem;
 }
 
-.budget-pot-details summary {
-  color: rgba(7, 27, 70, 0.72);
-  cursor: pointer;
-  font-size: 0.82rem;
-  font-weight: 900;
+.budget-edit-toggle:not(:checked) ~ .budget-care-grid .budget-category-edit-panel {
+  display: none;
 }
 
 .budget-edit-form,

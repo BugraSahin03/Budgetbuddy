@@ -187,49 +187,56 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
       {error ? <p className="budget-feedback budget-feedback-error">{error}</p> : null}
 
       <section className="budget-care-shell">
+        <input
+          type="checkbox"
+          id="budget-edit-mode"
+          className="budget-edit-toggle"
+          aria-label="Editiermodus fuer Kategorien umschalten"
+        />
         <div className="budget-care-header">
           <div>
-            <p>Gemeinsame Pflege</p>
-            <h2>Normale Kategorien und Sonderbudgets an einem Ort</h2>
-            <span>
-              Kategorien beschreiben dauerhafte Ausgabenarten. Sonderbudgets sind markiert und
-              bleiben fachlich getrennte Monatstoepfe.
-            </span>
+            <h2>Kategorien und Sonderbudgets</h2>
           </div>
-          <BudgetDialog
-            triggerLabel="Sonderbudget anlegen"
-            eyebrow="Sonderbudget"
-            title="Monatstopf anlegen"
-            description="Fuer einmalige oder besondere Ausgaben, getrennt von normalen Kategorien."
-          >
-            <form action={createSpecialBudgetAction} className="budget-dialog-form">
-              <label>
-                Name
-                <input name="name" required maxLength={80} placeholder="Zum Beispiel Urlaub" />
-              </label>
-              <label>
-                Monat
-                <select name="monthKey" defaultValue={selectedMonthKey}>
-                  {selectableMonths.map((monthKey) => (
-                    <option key={monthKey} value={monthKey}>
-                      {formatMonthLabel(monthKey)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                Geplanter Betrag
-                <input name="plannedAmount" required inputMode="decimal" placeholder="500.00" />
-              </label>
-              <label>
-                Notiz
-                <input name="note" maxLength={240} placeholder="Optional" />
-              </label>
-              <button type="submit" className="budget-primary-button">
-                Sonderbudget speichern
-              </button>
-            </form>
-          </BudgetDialog>
+          <div className="budget-care-actions">
+            <label htmlFor="budget-edit-mode" className="budget-edit-toggle-button" role="button">
+              <span className="budget-edit-label-off">Editieren</span>
+              <span className="budget-edit-label-on">Fertig</span>
+            </label>
+            <BudgetDialog
+              triggerLabel="Sonderbudget anlegen"
+              eyebrow="Sonderbudget"
+              title="Monatstopf anlegen"
+              description="Fuer einmalige oder besondere Ausgaben, getrennt von normalen Kategorien."
+            >
+              <form action={createSpecialBudgetAction} className="budget-dialog-form">
+                <label>
+                  Name
+                  <input name="name" required maxLength={80} placeholder="Zum Beispiel Urlaub" />
+                </label>
+                <label>
+                  Monat
+                  <select name="monthKey" defaultValue={selectedMonthKey}>
+                    {selectableMonths.map((monthKey) => (
+                      <option key={monthKey} value={monthKey}>
+                        {formatMonthLabel(monthKey)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  Geplanter Betrag
+                  <input name="plannedAmount" required inputMode="decimal" placeholder="500.00" />
+                </label>
+                <label>
+                  Notiz
+                  <input name="note" maxLength={240} placeholder="Optional" />
+                </label>
+                <button type="submit" className="budget-primary-button">
+                  Sonderbudget speichern
+                </button>
+              </form>
+            </BudgetDialog>
+          </div>
         </div>
 
         <div className="budget-care-grid">
@@ -281,8 +288,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                       <button type="submit">Speichern</button>
                     </form>
 
-                    <details className="budget-pot-details">
-                      <summary>Details bearbeiten</summary>
+                    <div className="budget-category-edit-panel">
                       <form action={updateCategoryAction} className="budget-edit-form">
                         <input type="hidden" name="categoryId" value={category.id} />
                         <input type="hidden" name="colorHex" value={category.colorHex ?? ""} />
@@ -325,7 +331,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                           {category.isActive ? "Deaktivieren" : "Reaktivieren"}
                         </button>
                       </form>
-                    </details>
+                    </div>
                   </div>
                 </article>
               );

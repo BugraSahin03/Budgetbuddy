@@ -12,11 +12,24 @@ const cssSource = readFileSync(join(rootDir, "app/globals.css"), "utf8");
 describe("budgets page simplification", () => {
   it("uses one calm budget care area instead of three hard admin sections", () => {
     expect(pageSource).toContain("Budgettoepfe und Standardwerte");
+    expect(pageSource).toContain("Kategorien und Sonderbudgets");
     expect(pageSource).toContain("budget-care-shell");
     expect(pageSource).toContain("budget-pot-list");
+    expect(pageSource).not.toContain("Gemeinsame Pflege");
+    expect(pageSource).not.toContain("Kategorien beschreiben dauerhafte Ausgabenarten");
     expect(pageSource).not.toContain('href="#kategorien"');
     expect(pageSource).not.toContain('href="#standardbudgets"');
     expect(pageSource).not.toContain('href="#sonderbudgets"');
+  });
+
+  it("uses one shared edit mode instead of per-category detail toggles", () => {
+    expect(pageSource).toContain("budget-edit-mode");
+    expect(pageSource).toContain("budget-edit-toggle-button");
+    expect(pageSource).toContain("budget-category-edit-panel");
+    expect(pageSource).not.toContain("Details bearbeiten");
+    expect(cssSource).toContain(
+      ".budget-edit-toggle:not(:checked) ~ .budget-care-grid .budget-category-edit-panel",
+    );
   });
 
   it("creates categories through a dialog with optional icon and standard budget", () => {
