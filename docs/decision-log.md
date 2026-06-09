@@ -1239,6 +1239,7 @@ Erkenntnis/Entscheidung:
 - Kategorien ohne positiven Budgetwert zaehlen defensiv mit `0`.
 - Inaktive Sonderbudgets werden nicht in die Plansumme eingerechnet.
 - Der `Plan-Rest nach Toepfen` wird als `Einnahmen - Budgettoepfe geplant` berechnet.
+- Aktive Sonderbudgets des Monats erscheinen im Budgettopfbereich als eigene, hellgelb abgesetzte Gruppe und bleiben dadurch sichtbar, ohne als normale Kategorien zu wirken.
 
 Auswirkung:
 
@@ -1246,3 +1247,4 @@ Auswirkung:
 - Im KPI-Bereich steht der daraus abgeleitete `Plan-Rest`, damit Einnahmen, Ausgaben und grober Monatsrest direkt nebeneinander lesbar sind.
 - Die Kennzahl bleibt bewusst ein Plan-/Bauchgefuehl und ersetzt nicht den aktuellen Budgetstand aus FIN-063.
 - Fixkosten bleiben in dieser Kennzahl bewusst ausgeschlossen; eine spaetere Erweiterung muesste fachlich separat entschieden werden.
+- Monate ohne aktive Sonderbudgets zeigen keine Sonderbudget-Gruppe im Budgettopfbereich.

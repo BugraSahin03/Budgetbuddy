@@ -391,6 +391,9 @@ export default async function MonthDetailPage({
   const recentExpenses = month.transactions
     .filter((transaction) => transaction.transactionType === "expense")
     .slice(0, 5);
+  const activeSpecialBudgetRows = month.dashboard.specialBudgetRows.filter(
+    (row) => row.isActive,
+  );
 
   return (
     <MonthPageShell>
@@ -774,62 +777,129 @@ export default async function MonthDetailPage({
           />
 
           <div className="mt-7 space-y-5">
-            {month.dashboard.categoryRows.length === 0 ? (
+            {month.dashboard.categoryRows.length === 0 &&
+            activeSpecialBudgetRows.length === 0 ? (
               <EmptyReferenceCard>
-                Noch keine Kategorien fuer diesen Monat vorhanden.
+                Noch keine Budgettoepfe fuer diesen Monat vorhanden.
               </EmptyReferenceCard>
             ) : (
-              month.dashboard.categoryRows.map((row) => {
-                const category = categoryVisuals.get(row.categoryId);
-                const usageState = getCategoryUsageState(row);
-                const hasPlannedBudget =
-                  row.budgetAmountCents !== null && row.budgetAmountCents > 0;
+              <>
+                {month.dashboard.categoryRows.map((row) => {
+                  const category = categoryVisuals.get(row.categoryId);
+                  const usageState = getCategoryUsageState(row);
+                  const hasPlannedBudget =
+                    row.budgetAmountCents !== null &&
+                    row.budgetAmountCents > 0;
 
-                return (
-                  <div key={row.categoryId} className="grid gap-3">
-                    <div className="flex items-center gap-4">
-                      <CategoryVisualMark
-                        name={category?.name ?? row.categoryName}
-                        iconName={category?.iconName}
-                        colorHex={category?.colorHex}
-                        className="h-12 w-12 text-sm"
-                        variant="neutral"
-                      />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
-                            {row.categoryName}
-                          </p>
-                          <p className="shrink-0 text-sm font-extrabold text-[color:var(--month-ink)]">
-                            {formatEuro(row.spentAmountCents)}
-                          </p>
-                        </div>
-                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/85">
-                          <div
-                            className="h-full rounded-full"
-                            style={{
-                              width: `${usageState.progressPercent}%`,
-                              ...categoryUsageProgressStyle(usageState),
-                            }}
-                          />
-                        </div>
-                        <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-                          <span>
-                            {!hasPlannedBudget
-                              ? "Budget fehlt"
-                              : `${usageState.percent}% genutzt`}
-                          </span>
-                          <span>
-                            {!hasPlannedBudget
-                              ? "Kein Planwert"
-                              : `Plan ${formatEuro(row.budgetAmountCents ?? 0)}`}
-                          </span>
+                  return (
+                    <div key={row.categoryId} className="grid gap-3">
+                      <div className="flex items-center gap-4">
+                        <CategoryVisualMark
+                          name={category?.name ?? row.categoryName}
+                          iconName={category?.iconName}
+                          colorHex={category?.colorHex}
+                          className="h-12 w-12 text-sm"
+                          variant="neutral"
+                        />
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
+                              {row.categoryName}
+                            </p>
+                            <p className="shrink-0 text-sm font-extrabold text-[color:var(--month-ink)]">
+                              {formatEuro(row.spentAmountCents)}
+                            </p>
+                          </div>
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/85">
+                            <div
+                              className="h-full rounded-full"
+                              style={{
+                                width: `${usageState.progressPercent}%`,
+                                ...categoryUsageProgressStyle(usageState),
+                              }}
+                            />
+                          </div>
+                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
+                            <span>
+                              {!hasPlannedBudget
+                                ? "Budget fehlt"
+                                : `${usageState.percent}% genutzt`}
+                            </span>
+                            <span>
+                              {!hasPlannedBudget
+                                ? "Kein Planwert"
+                                : `Plan ${formatEuro(row.budgetAmountCents ?? 0)}`}
+                            </span>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })
+                  );
+                })}
+
+                {activeSpecialBudgetRows.length > 0 ? (
+                  <section className="rounded-[1.6rem] border border-amber-200/70 bg-amber-50/75 p-4 shadow-[0_16px_34px_rgba(146,64,14,0.045)]">
+                    <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-amber-700">
+                      Sonderbudgets
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      {activeSpecialBudgetRows.map((row) => {
+                        const progressPercent =
+                          row.plannedAmountCents <= 0
+                            ? 0
+                            : Math.min(
+                                100,
+                                Math.round(
+                                  (row.actualExpenseCents /
+                                    row.plannedAmountCents) *
+                                    100,
+                                ),
+                              );
+
+                        return (
+                          <div
+                            key={row.id}
+                            className="grid gap-3 rounded-[1.2rem] border border-amber-200/80 bg-white/78 p-4"
+                          >
+                            <div className="flex items-center gap-4">
+                              <span className="category-visual-mark h-12 w-12 border-amber-200 bg-amber-100 text-xs text-amber-900">
+                                SB
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <div className="flex items-center justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
+                                      {row.name}
+                                    </p>
+                                    <p className="mt-1 text-xs font-semibold text-amber-800">
+                                      Sonderbudget
+                                    </p>
+                                  </div>
+                                  <p className="shrink-0 text-sm font-extrabold text-[color:var(--month-ink)]">
+                                    {formatEuro(row.actualExpenseCents)}
+                                  </p>
+                                </div>
+                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-amber-100">
+                                  <div
+                                    className="h-full rounded-full bg-amber-400"
+                                    style={{ width: `${progressPercent}%` }}
+                                  />
+                                </div>
+                                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-amber-900/75">
+                                  <span>{progressPercent}% genutzt</span>
+                                  <span>
+                                    Plan {formatEuro(row.plannedAmountCents)}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </section>
+                ) : null}
+              </>
             )}
           </div>
         </article>

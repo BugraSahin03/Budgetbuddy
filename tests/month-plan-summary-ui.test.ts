@@ -19,6 +19,9 @@ describe("FIN-066 month plan summary UI", () => {
     expect(page).toContain(
       "month.dashboard.planSummary.planRestAfterBudgetPotsCents",
     );
+    expect(page).toContain("activeSpecialBudgetRows");
+    expect(page).toContain("Sonderbudgets");
+    expect(page).toContain("bg-amber-50/75");
     expect(page).not.toContain(
       "{month.dashboard.categoryRows.length} Kategorien",
     );
