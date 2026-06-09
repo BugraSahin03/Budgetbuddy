@@ -522,13 +522,13 @@ export default async function MonthDetailPage({
           }
         />
         <ReferenceMetricCard
-          label="Plan-Rest"
+          label="Planpuffer"
           value={formatEuro(
             month.dashboard.planSummary.planRestAfterBudgetPotsCents,
           )}
-          copy="Einnahmen minus geplante Budgettoepfe."
+          copy="Grob uebrig nach geplanten Toepfen."
           tone="plan"
-          marker="~"
+          marker="≈"
         />
       </section>
 
@@ -838,57 +838,57 @@ export default async function MonthDetailPage({
                 })}
 
                 {activeSpecialBudgetRows.length > 0 ? (
-                  <section className="rounded-[1.6rem] border border-amber-200/70 bg-amber-50/75 p-4 shadow-[0_16px_34px_rgba(146,64,14,0.045)]">
+                  <section className="pt-2">
                     <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-amber-700">
                       Sonderbudgets
                     </p>
-                    <div className="mt-4 space-y-3">
+                    <div className="mt-4 space-y-5">
                       {activeSpecialBudgetRows.map((row) => {
-                        const progressPercent =
-                          row.plannedAmountCents <= 0
-                            ? 0
-                            : Math.min(
-                                100,
-                                Math.round(
-                                  (row.actualExpenseCents /
-                                    row.plannedAmountCents) *
-                                    100,
-                                ),
-                              );
+                        const usageState = getCategoryUsageState({
+                          budgetAmountCents: row.plannedAmountCents,
+                          spentAmountCents: row.actualExpenseCents,
+                        });
+                        const hasPlannedBudget = row.plannedAmountCents > 0;
 
                         return (
                           <div
                             key={row.id}
-                            className="grid gap-3 rounded-[1.2rem] border border-amber-200/80 bg-white/78 p-4"
+                            className="grid gap-3"
                           >
                             <div className="flex items-center gap-4">
-                              <span className="category-visual-mark h-12 w-12 border-amber-200 bg-amber-100 text-xs text-amber-900">
+                              <span className="category-visual-mark h-12 w-12 text-xs">
                                 SB
                               </span>
                               <div className="min-w-0 flex-1">
                                 <div className="flex items-center justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
-                                      {row.name}
-                                    </p>
-                                    <p className="mt-1 text-xs font-semibold text-amber-800">
-                                      Sonderbudget
-                                    </p>
-                                  </div>
+                                  <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
+                                    {row.name}
+                                  </p>
                                   <p className="shrink-0 text-sm font-extrabold text-[color:var(--month-ink)]">
                                     {formatEuro(row.actualExpenseCents)}
                                   </p>
                                 </div>
-                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-amber-100">
+                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/85">
                                   <div
-                                    className="h-full rounded-full bg-amber-400"
-                                    style={{ width: `${progressPercent}%` }}
+                                    className="h-full rounded-full"
+                                    style={{
+                                      width: `${usageState.progressPercent}%`,
+                                      ...categoryUsageProgressStyle(
+                                        usageState,
+                                      ),
+                                    }}
                                   />
                                 </div>
-                                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-amber-900/75">
-                                  <span>{progressPercent}% genutzt</span>
+                                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
                                   <span>
-                                    Plan {formatEuro(row.plannedAmountCents)}
+                                    {!hasPlannedBudget
+                                      ? "Budget fehlt"
+                                      : `${usageState.percent}% genutzt`}
+                                  </span>
+                                  <span>
+                                    {!hasPlannedBudget
+                                      ? "Kein Planwert"
+                                      : `Plan ${formatEuro(row.plannedAmountCents)}`}
                                   </span>
                                 </div>
                               </div>
