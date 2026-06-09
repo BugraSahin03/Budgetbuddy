@@ -9,7 +9,7 @@ import {
 
 describe("navigation config", () => {
   it("contains the budgets tab", () => {
-    expect(NAV_ITEMS).toContainEqual({ href: "/budgets", label: "Budgets", shortLabel: "BU" });
+    expect(NAV_ITEMS).toContainEqual({ href: "/budgets", label: "Budgets" });
   });
 
   it("does not keep duplicate admin tabs for categories and special budgets", () => {
@@ -18,20 +18,11 @@ describe("navigation config", () => {
   });
 
   it("contains the months tab", () => {
-    expect(NAV_ITEMS).toContainEqual({ href: "/monate", label: "Monate", shortLabel: "MO" });
+    expect(NAV_ITEMS).toContainEqual({ href: "/monate", label: "Monate" });
   });
 
   it("contains the month comparison tab", () => {
-    expect(NAV_ITEMS).toContainEqual({
-      href: "/monatsvergleich",
-      label: "Monatsvergleich",
-      shortLabel: "MV",
-    });
-  });
-
-  it("has compact markers for the collapsed navigation", () => {
-    expect(NAV_ITEMS.every((item) => item.shortLabel.length >= 2)).toBe(true);
-    expect(NAV_ITEMS.every((item) => item.shortLabel.length <= 3)).toBe(true);
+    expect(NAV_ITEMS).toContainEqual({ href: "/monatsvergleich", label: "Monatsvergleich" });
   });
 
   it("keeps a stable local storage key for collapsed navigation", () => {

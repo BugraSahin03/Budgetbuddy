@@ -1,10 +1,10 @@
 export const NAV_ITEMS = [
-  { href: "/", label: "Dashboard", shortLabel: "DA" },
-  { href: "/monate", label: "Monate", shortLabel: "MO" },
-  { href: "/monatsvergleich", label: "Monatsvergleich", shortLabel: "MV" },
-  { href: "/budgets", label: "Budgets", shortLabel: "BU" },
-  { href: "/fixkosten", label: "Fixkosten", shortLabel: "FI" },
-  { href: "/einstellungen", label: "Einstellungen", shortLabel: "ES" },
+  { href: "/", label: "Dashboard" },
+  { href: "/monate", label: "Monate" },
+  { href: "/monatsvergleich", label: "Monatsvergleich" },
+  { href: "/budgets", label: "Budgets" },
+  { href: "/fixkosten", label: "Fixkosten" },
+  { href: "/einstellungen", label: "Einstellungen" },
 ] as const;
 
 export const NAV_COLLAPSED_STORAGE_KEY = "budgetbuddy:navigation-collapsed";

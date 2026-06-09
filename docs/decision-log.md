@@ -1235,7 +1235,7 @@ Erkenntnis/Entscheidung:
 
 - Die globale Navigation wird als helle App-Shell gefuehrt und enthaelt dauerhaft keine fachlichen Erklaertexte mehr.
 - Die Hauptnavigation bleibt auf die bestehenden Hauptbereiche fokussiert: Dashboard, Monate, Monatsvergleich, Budgets, Fixkosten und Einstellungen.
-- Der eingeklappte Desktop-Zustand nutzt kurze Marker pro Navigationspunkt und behaelt den aktiven Bereich sichtbar.
+- Der eingeklappte Desktop-Zustand reduziert die Navigationsleiste auf eine schmale Rail zum schnellen Wieder-Ausklappen.
 - Der Einklappzustand wird lokal im Browser gespeichert, damit Nutzer ihre bevorzugte Arbeitsbreite behalten koennen.
 
 Auswirkung:

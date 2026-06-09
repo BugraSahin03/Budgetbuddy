@@ -25,9 +25,6 @@ export function AppNavigation({ collapsed = false }: AppNavigationProps) {
                 aria-current={active ? "page" : undefined}
                 title={collapsed ? item.label : undefined}
               >
-                <span className="app-nav-icon" aria-hidden="true">
-                  {item.shortLabel}
-                </span>
                 <span className="app-nav-label">{item.label}</span>
               </Link>
             </li>
