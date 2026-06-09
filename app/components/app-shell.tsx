@@ -49,6 +49,7 @@ export function AppShell({ children }: AppShellProps) {
     <div className={`app-shell ${collapsed ? "app-shell-collapsed" : ""}`}>
       <aside className="app-sidebar" aria-label="App-Shell">
         <div className="app-brand-row">
+          <span className="app-brand-dot" aria-hidden="true" />
           <div className="app-brand-copy">
             <p>BudgetBuddy</p>
           </div>
@@ -59,7 +60,7 @@ export function AppShell({ children }: AppShellProps) {
             aria-expanded={!collapsed}
             onClick={toggleNavigation}
           >
-            <span aria-hidden="true">{collapsed ? ">" : "<"}</span>
+            <span className="app-nav-toggle-icon" aria-hidden="true" />
           </button>
         </div>
 
