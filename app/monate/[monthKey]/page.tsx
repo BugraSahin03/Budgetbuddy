@@ -519,11 +519,11 @@ export default async function MonthDetailPage({
           }
         />
         <ReferenceMetricCard
-          label="Budgettoepfe geplant"
-          value={formatEuro(month.dashboard.planSummary.plannedBudgetPotCents)}
-          copy={`Plan-Rest nach Toepfen: ${formatEuro(
+          label="Plan-Rest"
+          value={formatEuro(
             month.dashboard.planSummary.planRestAfterBudgetPotsCents,
-          )}`}
+          )}
+          copy="Einnahmen minus geplante Budgettoepfe."
           tone="plan"
           marker="~"
         />
