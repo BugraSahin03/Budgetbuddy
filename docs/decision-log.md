@@ -1226,3 +1226,25 @@ Auswirkung:
 - Die Budgetpflege bleibt auf aktuell nutzbare Budgettoepfe fokussiert.
 - Es wird kein Datenmodell geaendert; bestehende `is_active`-Felder werden weiter genutzt.
 - Lokale Test-/Preview-Deaktivierungen veraendern nur die jeweilige lokale Datenbank und werden nicht mit dem Code-PR ausgeliefert.
+
+## 2026-06-07 - FIN-066 zeigt geplante Budgettoepfe als Plan-Gefuehl
+
+Quelle/Ticket: `FIN-066`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsansicht bekommt eine eigene Plan-Kennzahl `Planpuffer`.
+- Die Kennzahl summiert effektive Kategorie-Budgetwerte und aktive Sonderbudgets des Monats.
+- Effektive Kategorie-Budgetwerte nutzen die bestehende Monatslogik: Monats-Override vor globalem Standardbudget.
+- Kategorien ohne positiven Budgetwert zaehlen defensiv mit `0`.
+- Inaktive Sonderbudgets werden nicht in die Plansumme eingerechnet.
+- Der `Plan-Rest nach Toepfen` wird als `Einnahmen - Budgettoepfe geplant` berechnet.
+- Aktive Sonderbudgets des Monats erscheinen im Budgettopfbereich unter einer dezenten gelben Abschnittsueberschrift und nutzen danach dieselbe Verbrauchslogik wie normale Budgettoepfe.
+
+Auswirkung:
+
+- Das bisher prominentere reine Kategorien-Anzahlgefuehl wird im Kategorienbereich durch die geplante Budgettopf-Summe ersetzt.
+- Im KPI-Bereich steht der daraus abgeleitete `Planpuffer`, damit Einnahmen, Ausgaben und grober Monatsrest direkt nebeneinander lesbar sind.
+- Die Kennzahl bleibt bewusst ein Plan-/Bauchgefuehl und ersetzt nicht den aktuellen Budgetstand aus FIN-063.
+- Fixkosten bleiben in dieser Kennzahl bewusst ausgeschlossen; eine spaetere Erweiterung muesste fachlich separat entschieden werden.
+- Monate ohne aktive Sonderbudgets zeigen keine Sonderbudget-Gruppe im Budgettopfbereich.
