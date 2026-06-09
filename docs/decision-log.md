@@ -1233,7 +1233,7 @@ Quelle/Ticket: `FIN-066`
 
 Erkenntnis/Entscheidung:
 
-- Die Monatsansicht bekommt eine eigene Plan-Kennzahl `Planpuffer`.
+- Die Monatsansicht bekommt eine eigene Plan-Kennzahl `Rest nach Planung`.
 - Die Kennzahl summiert effektive Kategorie-Budgetwerte und aktive Sonderbudgets des Monats.
 - Effektive Kategorie-Budgetwerte nutzen die bestehende Monatslogik: Monats-Override vor globalem Standardbudget.
 - Kategorien ohne positiven Budgetwert zaehlen defensiv mit `0`.
@@ -1244,7 +1244,7 @@ Erkenntnis/Entscheidung:
 Auswirkung:
 
 - Das bisher prominentere reine Kategorien-Anzahlgefuehl wird im Kategorienbereich durch die geplante Budgettopf-Summe ersetzt.
-- Im KPI-Bereich steht der daraus abgeleitete `Planpuffer`, damit Einnahmen, Ausgaben und grober Monatsrest direkt nebeneinander lesbar sind.
+- Im KPI-Bereich steht der daraus abgeleitete `Rest nach Planung`, damit Einnahmen, Ausgaben und grober Monatsrest direkt nebeneinander lesbar sind.
 - Die Kennzahl bleibt bewusst ein Plan-/Bauchgefuehl und ersetzt nicht den aktuellen Budgetstand aus FIN-063.
 - Fixkosten bleiben in dieser Kennzahl bewusst ausgeschlossen; eine spaetere Erweiterung muesste fachlich separat entschieden werden.
 - Monate ohne aktive Sonderbudgets zeigen keine Sonderbudget-Gruppe im Budgettopfbereich.

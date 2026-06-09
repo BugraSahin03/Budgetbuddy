@@ -522,11 +522,11 @@ export default async function MonthDetailPage({
           }
         />
         <ReferenceMetricCard
-          label="Planpuffer"
+          label="Rest nach Planung"
           value={formatEuro(
             month.dashboard.planSummary.planRestAfterBudgetPotsCents,
           )}
-          copy="Grob uebrig nach geplanten Toepfen."
+          copy="Einnahmen minus Kategorien."
           tone="plan"
           marker="≈"
         />

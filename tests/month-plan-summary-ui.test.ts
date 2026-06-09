@@ -13,8 +13,8 @@ describe("FIN-066 month plan summary UI", () => {
   it("shows budget pot plan values instead of a prominent category count in the month overview", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
 
-    expect(page).toContain("Planpuffer");
-    expect(page).toContain("Grob uebrig nach geplanten Toepfen.");
+    expect(page).toContain("Rest nach Planung");
+    expect(page).toContain("Einnahmen minus Kategorien.");
     expect(page).toContain("month.dashboard.planSummary.plannedBudgetPotCents");
     expect(page).toContain(
       "month.dashboard.planSummary.planRestAfterBudgetPotsCents",
