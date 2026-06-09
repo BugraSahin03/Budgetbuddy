@@ -49,9 +49,6 @@ export function AppShell({ children }: AppShellProps) {
     <div className={`app-shell ${collapsed ? "app-shell-collapsed" : ""}`}>
       <aside className="app-sidebar" aria-label="App-Shell">
         <div className="app-brand-row">
-          <div className="app-brand-mark" aria-hidden="true">
-            BB
-          </div>
           <div className="app-brand-copy">
             <p>BudgetBuddy</p>
           </div>
