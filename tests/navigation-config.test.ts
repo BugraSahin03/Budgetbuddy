@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
-import { isActivePath, NAV_ITEMS } from "@/app/components/navigation-config";
+import {
+  NAV_COLLAPSED_STORAGE_KEY,
+  isActivePath,
+  getNavigationToggleLabel,
+  NAV_ITEMS,
+} from "@/app/components/navigation-config";
 
 describe("navigation config", () => {
   it("contains the budgets tab", () => {
-    expect(NAV_ITEMS).toContainEqual({ href: "/budgets", label: "Budgets" });
+    expect(NAV_ITEMS).toContainEqual({ href: "/budgets", label: "Budgets", shortLabel: "BU" });
   });
 
   it("does not keep duplicate admin tabs for categories and special budgets", () => {
@@ -13,11 +18,29 @@ describe("navigation config", () => {
   });
 
   it("contains the months tab", () => {
-    expect(NAV_ITEMS).toContainEqual({ href: "/monate", label: "Monate" });
+    expect(NAV_ITEMS).toContainEqual({ href: "/monate", label: "Monate", shortLabel: "MO" });
   });
 
   it("contains the month comparison tab", () => {
-    expect(NAV_ITEMS).toContainEqual({ href: "/monatsvergleich", label: "Monatsvergleich" });
+    expect(NAV_ITEMS).toContainEqual({
+      href: "/monatsvergleich",
+      label: "Monatsvergleich",
+      shortLabel: "MV",
+    });
+  });
+
+  it("has compact markers for the collapsed navigation", () => {
+    expect(NAV_ITEMS.every((item) => item.shortLabel.length >= 2)).toBe(true);
+    expect(NAV_ITEMS.every((item) => item.shortLabel.length <= 3)).toBe(true);
+  });
+
+  it("keeps a stable local storage key for collapsed navigation", () => {
+    expect(NAV_COLLAPSED_STORAGE_KEY).toBe("budgetbuddy:navigation-collapsed");
+  });
+
+  it("describes the navigation toggle state accessibly", () => {
+    expect(getNavigationToggleLabel(false)).toBe("Navigation einklappen");
+    expect(getNavigationToggleLabel(true)).toBe("Navigation ausklappen");
   });
 
   it("does not expose transaction and import as main navigation tabs", () => {

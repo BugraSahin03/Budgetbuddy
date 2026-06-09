@@ -1226,3 +1226,20 @@ Auswirkung:
 - Die Budgetpflege bleibt auf aktuell nutzbare Budgettoepfe fokussiert.
 - Es wird kein Datenmodell geaendert; bestehende `is_active`-Felder werden weiter genutzt.
 - Lokale Test-/Preview-Deaktivierungen veraendern nur die jeweilige lokale Datenbank und werden nicht mit dem Code-PR ausgeliefert.
+
+## 2026-06-09 - FIN-046 fuehrt eine einklappbare App-Shell ein
+
+Quelle/Ticket: `FIN-046`
+
+Erkenntnis/Entscheidung:
+
+- Die globale Navigation wird als helle App-Shell gefuehrt und enthaelt dauerhaft keine fachlichen Erklaertexte mehr.
+- Die Hauptnavigation bleibt auf die bestehenden Hauptbereiche fokussiert: Dashboard, Monate, Monatsvergleich, Budgets, Fixkosten und Einstellungen.
+- Der eingeklappte Desktop-Zustand nutzt kurze Marker pro Navigationspunkt und behaelt den aktiven Bereich sichtbar.
+- Der Einklappzustand wird lokal im Browser gespeichert, damit Nutzer ihre bevorzugte Arbeitsbreite behalten koennen.
+
+Auswirkung:
+
+- Es werden keine Routen entfernt und keine fachlichen Bereiche neu zugeschnitten.
+- Die Shell ist wiederverwendbar fuer Dashboard, Monatsansicht, Budgets und spaetere Verwaltungsseiten.
+- Die Entscheidung betrifft nur UI/Shell-Verhalten; Datenmodell, Importlogik und zentrale Fachlogik bleiben unveraendert.
