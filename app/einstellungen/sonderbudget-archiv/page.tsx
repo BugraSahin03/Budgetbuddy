@@ -138,6 +138,21 @@ export default async function SpecialBudgetArchivePage({
                       <span className="month-chip month-chip-accent">Plan {formatEuro(project.plannedAmountCents)}</span>
                       <span className="month-chip month-chip-neutral">Ist {formatEuro(project.actualExpenseCents)}</span>
                     </div>
+                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      {project.monthShares.map((share) => (
+                        <div key={share.id} className="rounded-[1rem] border border-[color:var(--month-line)] bg-sky-50/45 px-3 py-2">
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
+                            {formatMonthLabel(share.monthKey)}
+                          </p>
+                          <p className="mt-1 text-sm font-semibold text-[color:var(--month-ink)]">
+                            Plan {formatEuro(share.plannedAmountCents)}
+                          </p>
+                          <p className="text-xs text-[color:var(--month-ink-soft)]">
+                            Ist {formatEuro(share.actualExpenseCents)}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
                   <form action={reactivateSpecialBudgetProjectAction}>

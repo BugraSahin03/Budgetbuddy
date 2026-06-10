@@ -26,9 +26,18 @@ export type SpecialBudgetArchiveItem = {
   note: string | null;
   firstMonthKey: string | null;
   lastMonthKey: string | null;
+  monthShares: SpecialBudgetArchiveMonthShare[];
   monthCount: number;
   plannedAmountCents: number;
   actualExpenseCents: number;
+};
+
+export type SpecialBudgetArchiveMonthShare = {
+  id: number;
+  monthKey: string;
+  plannedAmountCents: number;
+  actualExpenseCents: number;
+  isActive: boolean;
 };
 
 export type SpecialBudgetInput = {
@@ -36,6 +45,11 @@ export type SpecialBudgetInput = {
   monthKey: string;
   plannedAmountCents: number;
   note: string;
+};
+
+export type SpecialBudgetShareInput = {
+  monthKey: string;
+  plannedAmountCents: number;
 };
 
 export type ActiveSpecialBudgetOption = {
@@ -427,37 +441,111 @@ export function listArchivedSpecialBudgetProjects(): SpecialBudgetArchiveItem[] 
         ORDER BY lastMonthKey DESC, sbp.name COLLATE NOCASE ASC
       `,
     )
-    .all() as SpecialBudgetArchiveItem[];
+    .all() as Array<Omit<SpecialBudgetArchiveItem, "monthShares">>;
 
-  return rows;
+  return rows.map((row) => {
+    const monthShares = getDb()
+      .prepare(
+        `
+          SELECT
+            sb.id,
+            sb.month_key AS monthKey,
+            sb.planned_amount_cents AS plannedAmountCents,
+            sb.is_active AS isActive,
+            COALESCE(
+              (
+                SELECT SUM(-t.amount_cents)
+                FROM transactions t
+                WHERE t.special_budget_id = sb.id
+                  AND t.transaction_type = 'expense'
+              ),
+              0
+            ) AS actualExpenseCents
+          FROM special_budgets sb
+          WHERE sb.project_id = ?
+          ORDER BY sb.month_key ASC, sb.id ASC
+        `,
+      )
+      .all(row.projectId) as Array<{
+      id: number;
+      monthKey: string;
+      plannedAmountCents: number;
+      actualExpenseCents: number;
+      isActive: number;
+    }>;
+
+    return {
+      ...row,
+      monthShares: monthShares.map((share) => ({
+        id: share.id,
+        monthKey: share.monthKey,
+        plannedAmountCents: share.plannedAmountCents,
+        actualExpenseCents: share.actualExpenseCents,
+        isActive: mapSqliteBoolean(share.isActive),
+      })),
+    };
+  });
 }
 
 export function createSpecialBudget(input: SpecialBudgetInput): void {
+  createSpecialBudgetShares({
+    name: input.name,
+    note: input.note,
+    shares: [
+      {
+        monthKey: input.monthKey,
+        plannedAmountCents: input.plannedAmountCents,
+      },
+    ],
+  });
+}
+
+export function createSpecialBudgetShares(input: {
+  name: string;
+  note: string;
+  shares: SpecialBudgetShareInput[];
+}): void {
   const name = normalizeName(input.name);
-  const monthKey = normalizeMonthKey(input.monthKey);
-  const plannedAmountCents = normalizePlannedAmountCents(input.plannedAmountCents);
   const note = normalizeNote(input.note);
+  const normalizedShares = input.shares.map((share) => ({
+    monthKey: normalizeMonthKey(share.monthKey),
+    plannedAmountCents: normalizePlannedAmountCents(share.plannedAmountCents),
+  }));
+  const duplicateMonthKey = normalizedShares.find(
+    (share, index) =>
+      normalizedShares.findIndex((candidate) => candidate.monthKey === share.monthKey) !== index,
+  )?.monthKey;
+
+  if (normalizedShares.length === 0) {
+    throw new Error("Sonderbudget braucht mindestens einen Monatsanteil.");
+  }
+
+  if (duplicateMonthKey) {
+    throw new Error("Ein Sonderbudget darf pro Vorhaben nur einen Anteil je Monat haben.");
+  }
 
   try {
     const transaction = getDb().transaction(() => {
       const projectId = ensureProjectForName(name, note);
 
-      getDb()
-        .prepare(
-          `
-            INSERT INTO special_budgets (
-              project_id,
-              name,
-              month_key,
-              planned_amount_cents,
-              note,
-              is_active,
-              updated_at
-            )
-            VALUES (?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
-          `,
-        )
-        .run(projectId, name, monthKey, plannedAmountCents, note);
+      for (const share of normalizedShares) {
+        getDb()
+          .prepare(
+            `
+              INSERT INTO special_budgets (
+                project_id,
+                name,
+                month_key,
+                planned_amount_cents,
+                note,
+                is_active,
+                updated_at
+              )
+              VALUES (?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+            `,
+          )
+          .run(projectId, name, share.monthKey, share.plannedAmountCents, note);
+      }
     });
 
     transaction();

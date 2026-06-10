@@ -12,7 +12,7 @@ import {
 } from "@/src/categories/repository";
 import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
-  createSpecialBudget,
+  createSpecialBudgetShares,
   setSpecialBudgetActive,
 } from "@/src/special-budgets/repository";
 
@@ -58,6 +58,35 @@ function toOptionalString(value: FormDataEntryValue | null): string | null {
   const normalized = toSingleString(value).trim();
 
   return normalized.length > 0 ? normalized : null;
+}
+
+function parseAdditionalSpecialBudgetShares(formData: FormData): Array<{
+  monthKey: string;
+  plannedAmountCents: number;
+}> {
+  const monthKeys = formData.getAll("additionalMonthKey").map(toSingleString);
+  const plannedAmounts = formData.getAll("additionalPlannedAmount").map(toSingleString);
+  const shares: Array<{ monthKey: string; plannedAmountCents: number }> = [];
+
+  for (let index = 0; index < monthKeys.length; index += 1) {
+    const monthKey = monthKeys[index]?.trim() ?? "";
+    const plannedAmount = plannedAmounts[index]?.trim() ?? "";
+
+    if (monthKey.length === 0 && plannedAmount.length === 0) {
+      continue;
+    }
+
+    if (monthKey.length === 0 || plannedAmount.length === 0) {
+      throw new Error("Weitere Monatsanteile brauchen Monat und Betrag.");
+    }
+
+    shares.push({
+      monthKey,
+      plannedAmountCents: parsePlannedAmountCents(plannedAmount),
+    });
+  }
+
+  return shares;
 }
 
 function validateOptionalBudgetAmount(rawValue: string): void {
@@ -123,13 +152,31 @@ export async function createBudgetSpecialBudgetAction(formData: FormData): Promi
   let redirectTarget = "/budgets";
 
   try {
-    createSpecialBudget({
-      name: toSingleString(formData.get("name")),
-      monthKey: toSingleString(formData.get("monthKey")),
-      plannedAmountCents: parsePlannedAmountCents(
-        toSingleString(formData.get("plannedAmount")),
-      ),
-      note: toSingleString(formData.get("note")),
+    const name = toSingleString(formData.get("name"));
+    const note = toSingleString(formData.get("note"));
+    const primaryMonthKey = toSingleString(formData.get("monthKey"));
+    const shares = [
+      {
+        monthKey: primaryMonthKey,
+        plannedAmountCents: parsePlannedAmountCents(
+          toSingleString(formData.get("plannedAmount")),
+        ),
+      },
+      ...parseAdditionalSpecialBudgetShares(formData),
+    ];
+    const duplicateMonthKey = shares.find(
+      (share, index) =>
+        shares.findIndex((candidate) => candidate.monthKey === share.monthKey) !== index,
+    )?.monthKey;
+
+    if (duplicateMonthKey) {
+      throw new Error("Ein Sonderbudget darf pro Vorhaben nur einen Anteil je Monat haben.");
+    }
+
+    createSpecialBudgetShares({
+      name,
+      note,
+      shares,
     });
 
     refreshBudgetPaths();

@@ -143,6 +143,35 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     Betrag
                     <input name="plannedAmount" required inputMode="decimal" placeholder="500.00" />
                   </label>
+                  <fieldset className="budget-dialog-form">
+                    <legend>Weitere Monatsanteile</legend>
+                    <p>
+                      Optional: Gleicher Name verbindet die Anteile zu einem mehrmonatigen Vorhaben.
+                    </p>
+                    {[0, 1, 2].map((index) => (
+                      <div key={index} className="grid gap-3 md:grid-cols-2">
+                        <label>
+                          Monat
+                          <select name="additionalMonthKey" defaultValue="">
+                            <option value="">Kein weiterer Monat</option>
+                            {selectableMonths.map((monthKey) => (
+                              <option key={monthKey} value={monthKey}>
+                                {formatMonthLabel(monthKey)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          Betrag
+                          <input
+                            name="additionalPlannedAmount"
+                            inputMode="decimal"
+                            placeholder="Optional"
+                          />
+                        </label>
+                      </div>
+                    ))}
+                  </fieldset>
                   <label>
                     Notiz
                     <input name="note" maxLength={240} placeholder="Optional" />

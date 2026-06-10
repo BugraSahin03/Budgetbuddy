@@ -79,6 +79,50 @@ describe("special budgets repository", () => {
     expect(shares[0]?.projectPlannedAmountCents).toBe(60000);
   });
 
+  it("creates multiple monthly shares atomically for one project", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudgetShares({
+      name: `${TEST_NAME_PREFIX}Furniture`,
+      note: "Mehrmonatiges Vorhaben",
+      shares: [
+        {
+          monthKey: "2026-05",
+          plannedAmountCents: 20000,
+        },
+        {
+          monthKey: "2026-06",
+          plannedAmountCents: 25000,
+        },
+      ],
+    });
+
+    const shares = repository
+      .listSpecialBudgets()
+      .filter((budget) => budget.name === `${TEST_NAME_PREFIX}Furniture`);
+
+    expect(shares).toHaveLength(2);
+    expect(new Set(shares.map((budget) => budget.projectId)).size).toBe(1);
+    expect(shares[0]?.projectPlannedAmountCents).toBe(45000);
+
+    expect(() =>
+      repository.createSpecialBudgetShares({
+        name: `${TEST_NAME_PREFIX}Furniture-Duplicate`,
+        note: "",
+        shares: [
+          {
+            monthKey: "2026-07",
+            plannedAmountCents: 1000,
+          },
+          {
+            monthKey: "2026-07",
+            plannedAmountCents: 2000,
+          },
+        ],
+      }),
+    ).toThrow("Ein Sonderbudget darf pro Vorhaben nur einen Anteil je Monat haben.");
+  });
+
   it("returns active options only for the selected month", () => {
     cleanupSpecialBudgets();
 
@@ -141,6 +185,10 @@ describe("special budgets repository", () => {
 
     expect(archived?.monthCount).toBe(2);
     expect(archived?.plannedAmountCents).toBe(70000);
+    expect(archived?.monthShares.map((share) => share.monthKey)).toEqual([
+      "2026-05",
+      "2026-08",
+    ]);
 
     if (!projectId) {
       return;
