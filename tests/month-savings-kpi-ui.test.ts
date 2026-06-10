@@ -19,4 +19,12 @@ describe("FIN-068 month savings KPI UI", () => {
     expect(page).toContain('tone="savings"');
     expect(page).not.toContain("incomeCents - expenseCents");
   });
+
+  it("keeps savings visually accented in month category marks", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+
+    expect(page).toContain("function categoryMarkVariant");
+    expect(page).toContain("category?.isSavings ? \"accent\" : \"neutral\"");
+    expect(page).toContain("variant={categoryMarkVariant(category)}");
+  });
 });

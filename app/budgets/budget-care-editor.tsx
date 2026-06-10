@@ -178,7 +178,7 @@ export function BudgetCareEditor({
                             name={`iconName-${category.id}`}
                             maxLength={2}
                             defaultValue={category.iconName ?? ""}
-                            placeholder="SP"
+                            placeholder="↟"
                           />
                         </label>
                         <div className="rounded-[1rem] border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm font-semibold text-sky-950">

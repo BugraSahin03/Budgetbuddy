@@ -48,6 +48,7 @@ type CategoryVisual = {
   name: string;
   iconName: string | null;
   colorHex: string | null;
+  isSavings: boolean;
 };
 
 function categoryVisualById(
@@ -60,9 +61,14 @@ function categoryVisualById(
         name: category.name,
         iconName: category.iconName,
         colorHex: category.colorHex,
+        isSavings: category.isSavings,
       },
     ]),
   );
+}
+
+function categoryMarkVariant(category: CategoryVisual | undefined): "accent" | "neutral" {
+  return category?.isSavings ? "accent" : "neutral";
 }
 
 function toSingleParam(value: string | string[] | undefined): string | null {
@@ -205,7 +211,7 @@ function TransactionVisualMark({
         iconName={category?.iconName}
         colorHex={category?.colorHex}
         className="h-10 w-10 text-xs"
-        variant="neutral"
+        variant={categoryMarkVariant(category)}
       />
     );
   }
@@ -597,8 +603,9 @@ export default async function MonthDetailPage({
                                   <CategoryVisualMark
                                     name={category?.name ?? row.categoryName}
                                     iconName={category?.iconName}
+                                    colorHex={category?.colorHex}
                                     className="h-11 w-11 text-sm"
-                                    variant="neutral"
+                                    variant={categoryMarkVariant(category)}
                                   />
                                   <div className="min-w-0">
                                     <h4 className="truncate text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
@@ -808,7 +815,7 @@ export default async function MonthDetailPage({
                           iconName={category?.iconName}
                           colorHex={category?.colorHex}
                           className="h-12 w-12 text-sm"
-                          variant="neutral"
+                          variant={categoryMarkVariant(category)}
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-3">

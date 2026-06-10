@@ -40,10 +40,40 @@ describe("categories repository", () => {
 
     expect(savings).toMatchObject({
       systemKey: "savings",
+      colorHex: "#D9F7B5",
+      iconName: "↟",
       isActive: true,
       isDefault: true,
       isProtected: true,
       isSavings: true,
+    });
+  });
+
+  it("upgrades old savings visual defaults without overwriting custom icons", () => {
+    db.prepare(
+      `
+        UPDATE categories
+        SET color_hex = '#DFF4FD',
+            icon_name = 'SP'
+        WHERE system_key = 'savings'
+      `,
+    ).run();
+
+    expect(listCategories().find((category) => category.name === "Sparen")).toMatchObject({
+      colorHex: "#D9F7B5",
+      iconName: "↟",
+    });
+
+    updateCategory(getSavingsCategoryId(), {
+      name: "Sparen",
+      colorHex: "#DFF4FD",
+      iconName: "💰",
+      isDefault: true,
+    });
+
+    expect(listCategories().find((category) => category.name === "Sparen")).toMatchObject({
+      colorHex: "#D9F7B5",
+      iconName: "💰",
     });
   });
 

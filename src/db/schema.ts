@@ -727,10 +727,14 @@ INSERT INTO categories (
   system_key,
   updated_at
 )
-VALUES ('Sparen', '#DFF4FD', 'SP', 1, 1, NULL, 'savings', CURRENT_TIMESTAMP)
+VALUES ('Sparen', '#D9F7B5', '↟', 1, 1, NULL, 'savings', CURRENT_TIMESTAMP)
 ON CONFLICT(name) DO UPDATE SET
-  color_hex = COALESCE(categories.color_hex, excluded.color_hex),
-  icon_name = COALESCE(categories.icon_name, excluded.icon_name),
+  color_hex = excluded.color_hex,
+  icon_name = CASE
+    WHEN categories.icon_name IS NULL OR TRIM(categories.icon_name) = '' OR categories.icon_name = 'SP'
+      THEN excluded.icon_name
+    ELSE categories.icon_name
+  END,
   is_default = 1,
   is_active = 1,
   default_budget_amount_cents = NULL,

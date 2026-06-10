@@ -4,6 +4,8 @@ import { getDb } from "@/src/db/client";
 
 export const SAVINGS_CATEGORY_SYSTEM_KEY = "savings";
 export const SAVINGS_CATEGORY_NAME = "Sparen";
+export const SAVINGS_CATEGORY_COLOR_HEX = "#D9F7B5";
+export const SAVINGS_CATEGORY_DEFAULT_ICON = "↟";
 
 export type CategoryListItem = {
   id: number;
@@ -172,10 +174,14 @@ function ensureSavingsCategory(): void {
           system_key,
           updated_at
         )
-        VALUES (?, '#DFF4FD', 'SP', 1, 1, NULL, ?, CURRENT_TIMESTAMP)
+        VALUES (?, ?, ?, 1, 1, NULL, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(name) DO UPDATE SET
-          color_hex = COALESCE(categories.color_hex, excluded.color_hex),
-          icon_name = COALESCE(categories.icon_name, excluded.icon_name),
+          color_hex = excluded.color_hex,
+          icon_name = CASE
+            WHEN categories.icon_name IS NULL OR TRIM(categories.icon_name) = '' OR categories.icon_name = 'SP'
+              THEN excluded.icon_name
+            ELSE categories.icon_name
+          END,
           is_default = 1,
           is_active = 1,
           default_budget_amount_cents = NULL,
@@ -185,6 +191,8 @@ function ensureSavingsCategory(): void {
     )
     .run(
       SAVINGS_CATEGORY_NAME,
+      SAVINGS_CATEGORY_COLOR_HEX,
+      SAVINGS_CATEGORY_DEFAULT_ICON,
       SAVINGS_CATEGORY_SYSTEM_KEY,
       SAVINGS_CATEGORY_SYSTEM_KEY,
     );
@@ -280,7 +288,7 @@ export function createCategory(input: CategoryInput): void {
 }
 
 export function updateCategory(categoryId: number, input: CategoryInput): void {
-  const sanitized = sanitizeInput(input);
+  let sanitized = sanitizeInput(input);
   const existingCategory = getCategorySystemSnapshot(categoryId);
 
   if (!existingCategory) {
@@ -288,6 +296,13 @@ export function updateCategory(categoryId: number, input: CategoryInput): void {
   }
 
   assertSavingsCategoryCanBeUpdated(existingCategory, sanitized);
+
+  if (isSavingsSystemKey(existingCategory.systemKey)) {
+    sanitized = {
+      ...sanitized,
+      colorHex: SAVINGS_CATEGORY_COLOR_HEX,
+    };
+  }
 
   let result: { changes: number };
 

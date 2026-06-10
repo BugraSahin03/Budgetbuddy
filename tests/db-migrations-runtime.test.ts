@@ -318,6 +318,8 @@ describe("database migrations runtime behavior", () => {
         `
           SELECT
             name,
+            color_hex AS colorHex,
+            icon_name AS iconName,
             system_key AS systemKey,
             is_active AS isActive,
             is_default AS isDefault,
@@ -330,6 +332,8 @@ describe("database migrations runtime behavior", () => {
       .get() as
       | {
           name: string;
+          colorHex: string;
+          iconName: string;
           systemKey: string;
           isActive: number;
           isDefault: number;
@@ -340,6 +344,8 @@ describe("database migrations runtime behavior", () => {
     expect(columns.some((column) => column.name === "system_key")).toBe(true);
     expect(savings).toEqual({
       name: "Sparen",
+      colorHex: "#D9F7B5",
+      iconName: "↟",
       systemKey: "savings",
       isActive: 1,
       isDefault: 1,
