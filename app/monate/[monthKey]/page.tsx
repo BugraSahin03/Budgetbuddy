@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 import Link from "next/link";
 
 import { CategoryVisualMark } from "@/app/components/category-visual";
@@ -289,24 +289,33 @@ function ReferenceMetricCard({
   action?: ReactNode;
   actionClassName?: string;
 }) {
-  const toneClasses = {
-    income: "bg-[#8bf0df] text-[#055c52]",
-    expense: "bg-[#74171d] text-white",
-    savings: "bg-[#d9f7b5] text-[#365f08]",
-    plan: "bg-[#d7edf8] text-[color:var(--month-ink)]",
-  }[tone];
-
-  const valueClass = {
-    income: "text-[#08766b]",
-    expense: "text-[#f17680]",
-    savings: "text-[#4f7d12]",
-    plan: "text-[color:var(--month-ink)]",
+  const toneStyle: {
+    marker: CSSProperties;
+    value: CSSProperties;
+  } = {
+    income: {
+      marker: { backgroundColor: "#8bf0df", color: "#055c52" },
+      value: { color: "#08766b" },
+    },
+    expense: {
+      marker: { backgroundColor: "#74171d", color: "#ffffff" },
+      value: { color: "#f17680" },
+    },
+    savings: {
+      marker: { backgroundColor: "#d9f7b5", color: "#365f08" },
+      value: { color: "#4f7d12" },
+    },
+    plan: {
+      marker: { backgroundColor: "#d7edf8", color: "var(--month-ink)" },
+      value: { color: "var(--month-ink)" },
+    },
   }[tone];
 
   return (
     <article className="month-reference-card relative min-h-[10rem] p-6">
       <div
-        className={`flex h-10 w-10 items-center justify-center rounded-2xl ${toneClasses}`}
+        className="flex h-10 w-10 items-center justify-center rounded-2xl"
+        style={toneStyle.marker}
       >
         <span className="text-lg font-bold leading-none">{marker}</span>
       </div>
@@ -314,7 +323,8 @@ function ReferenceMetricCard({
         {label}
       </p>
       <p
-        className={`mt-2 text-[2rem] font-extrabold tracking-[-0.055em] ${valueClass}`}
+        className="mt-2 text-[2rem] font-extrabold tracking-[-0.055em]"
+        style={toneStyle.value}
       >
         {value}
       </p>
