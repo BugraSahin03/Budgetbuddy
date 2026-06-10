@@ -213,7 +213,113 @@ function updateProjectStatusFromMonthlyShares(projectId: number): void {
     .run(row.activeShareCount > 0 ? "active" : "archived", projectId);
 }
 
+function reconcileProjectStatuses(): void {
+  getDb()
+    .prepare(
+      `
+        UPDATE special_budget_projects
+        SET
+          status = CASE
+            WHEN EXISTS (
+              SELECT 1
+              FROM special_budgets sb
+              WHERE sb.project_id = special_budget_projects.id
+                AND sb.is_active = 1
+            ) THEN 'active'
+            ELSE 'archived'
+          END,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE EXISTS (
+          SELECT 1
+          FROM special_budgets sb
+          WHERE sb.project_id = special_budget_projects.id
+        )
+      `,
+    )
+    .run();
+}
+
+export function ensureProjectsForUnlinkedMonthlyShares(): void {
+  const rows = getDb()
+    .prepare(
+      `
+        SELECT DISTINCT name
+        FROM special_budgets
+        WHERE project_id IS NULL
+        ORDER BY name COLLATE NOCASE ASC
+      `,
+    )
+    .all() as Array<{ name: string }>;
+
+  if (rows.length === 0) {
+    reconcileProjectStatuses();
+    return;
+  }
+
+  const transaction = getDb().transaction((names: string[]) => {
+    for (const name of names) {
+      getDb()
+        .prepare(
+          `
+            INSERT INTO special_budget_projects (
+              name,
+              status,
+              note,
+              created_at,
+              updated_at
+            )
+            SELECT
+              sb.name,
+              CASE
+                WHEN MAX(sb.is_active) = 1 THEN 'active'
+                ELSE 'archived'
+              END AS status,
+              (
+                SELECT inner_sb.note
+                FROM special_budgets inner_sb
+                WHERE inner_sb.name = sb.name
+                  AND inner_sb.note IS NOT NULL
+                ORDER BY inner_sb.month_key DESC, inner_sb.id DESC
+                LIMIT 1
+              ) AS note,
+              MIN(sb.created_at) AS created_at,
+              CURRENT_TIMESTAMP AS updated_at
+            FROM special_budgets sb
+            WHERE sb.name = ?
+            GROUP BY sb.name
+            ON CONFLICT(name) DO UPDATE SET
+              status = excluded.status,
+              note = COALESCE(excluded.note, special_budget_projects.note),
+              updated_at = CURRENT_TIMESTAMP
+          `,
+        )
+        .run(name);
+
+      getDb()
+        .prepare(
+          `
+            UPDATE special_budgets
+            SET project_id = (
+              SELECT id
+              FROM special_budget_projects
+              WHERE name = ?
+              LIMIT 1
+            )
+            WHERE name = ?
+              AND project_id IS NULL
+          `,
+        )
+        .run(name, name);
+    }
+  });
+
+  transaction(rows.map((row) => row.name));
+  reconcileProjectStatuses();
+}
+
 export function listSpecialBudgets(): SpecialBudgetListItem[] {
+  ensureProjectsForUnlinkedMonthlyShares();
+
   const rows = getDb()
     .prepare(
       `
@@ -289,6 +395,8 @@ export function listSpecialBudgets(): SpecialBudgetListItem[] {
 }
 
 export function listArchivedSpecialBudgetProjects(): SpecialBudgetArchiveItem[] {
+  ensureProjectsForUnlinkedMonthlyShares();
+
   const rows = getDb()
     .prepare(
       `
@@ -359,6 +467,8 @@ export function createSpecialBudget(input: SpecialBudgetInput): void {
 }
 
 export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolean): void {
+  ensureProjectsForUnlinkedMonthlyShares();
+
   const existing = getDb()
     .prepare(
       `

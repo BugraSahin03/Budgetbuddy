@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDb } from "@/src/db/client";
+import { ensureProjectsForUnlinkedMonthlyShares } from "@/src/special-budgets/repository";
 
 export type TransactionType = "expense" | "income" | "transfer" | "refund";
 
@@ -189,6 +190,8 @@ function getActiveSpecialBudgetById(specialBudgetId: number): {
   isActive: number;
   projectStatus: "active" | "archived";
 } {
+  ensureProjectsForUnlinkedMonthlyShares();
+
   const specialBudget = getDb()
     .prepare(
       `
@@ -437,6 +440,8 @@ export function listActiveCategoryOptions(): CategoryOption[] {
 export function listActiveSpecialBudgetOptionsForMonth(
   monthKey: string,
 ): SpecialBudgetOption[] {
+  ensureProjectsForUnlinkedMonthlyShares();
+
   return getDb()
     .prepare(
       `

@@ -157,6 +157,34 @@ describe("special budgets repository", () => {
     expect(repository.listArchivedSpecialBudgetProjects().some((project) => project.projectId === projectId)).toBe(false);
   });
 
+  it("backfills unlinked inactive monthly shares into the archive", () => {
+    cleanupSpecialBudgets();
+
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO special_budgets (
+            name,
+            month_key,
+            planned_amount_cents,
+            note,
+            is_active
+          )
+          VALUES (?, '2026-11', 9900, 'Altbestand', 0)
+        `,
+      )
+      .run(`${TEST_NAME_PREFIX}Legacy Archive`);
+
+    const archived = repository
+      .listArchivedSpecialBudgetProjects()
+      .find((project) => project.name === `${TEST_NAME_PREFIX}Legacy Archive`);
+
+    expect(archived?.monthCount).toBe(1);
+    expect(archived?.plannedAmountCents).toBe(9900);
+    expect(archived?.status).toBe("archived");
+  });
+
   it("validates month key and prevents duplicates in one month", () => {
     cleanupSpecialBudgets();
 
