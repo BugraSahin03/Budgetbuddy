@@ -172,9 +172,17 @@ export function BudgetCareEditor({
                   <div className="budget-category-edit-panel">
                     {category.isSavings ? (
                       <>
-                        <input type="hidden" name={`iconName-${category.id}`} value={category.iconName ?? ""} />
+                        <label>
+                          Icon
+                          <input
+                            name={`iconName-${category.id}`}
+                            maxLength={2}
+                            defaultValue={category.iconName ?? ""}
+                            placeholder="SP"
+                          />
+                        </label>
                         <div className="rounded-[1rem] border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm font-semibold text-sky-950">
-                          Sparen ist geschuetzt und bekommt keinen Planwert.
+                          Sparen ist geschuetzt; nur das Icon ist editierbar.
                         </div>
                       </>
                     ) : (
