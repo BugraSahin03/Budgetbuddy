@@ -709,6 +709,35 @@ ALTER TABLE special_budget_projects
 ADD COLUMN icon_name TEXT;
 `;
 
+const fin072MigrationSql = `
+ALTER TABLE categories
+ADD COLUMN system_key TEXT;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_categories_system_key_unique
+ON categories(system_key)
+WHERE system_key IS NOT NULL;
+
+INSERT INTO categories (
+  name,
+  color_hex,
+  icon_name,
+  is_default,
+  is_active,
+  default_budget_amount_cents,
+  system_key,
+  updated_at
+)
+VALUES ('Sparen', '#DFF4FD', 'SP', 1, 1, NULL, 'savings', CURRENT_TIMESTAMP)
+ON CONFLICT(name) DO UPDATE SET
+  color_hex = COALESCE(categories.color_hex, excluded.color_hex),
+  icon_name = COALESCE(categories.icon_name, excluded.icon_name),
+  is_default = 1,
+  is_active = 1,
+  default_budget_amount_cents = NULL,
+  system_key = 'savings',
+  updated_at = CURRENT_TIMESTAMP;
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -759,6 +788,11 @@ export const migrations: readonly Migration[] = [
     id: "0010_fin_065b",
     name: "FIN-065 add optional special budget project icons",
     sql: fin065bMigrationSql,
+  },
+  {
+    id: "0011_fin_072",
+    name: "FIN-072 add protected savings category",
+    sql: fin072MigrationSql,
   },
 ];
 

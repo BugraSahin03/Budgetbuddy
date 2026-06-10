@@ -74,6 +74,15 @@ Startliste fuer den MVP:
 
 Feste Kategorien koennen deaktiviert statt geloescht werden, damit historische Transaktionen gueltig bleiben.
 
+Seit FIN-072 gibt es zusaetzlich die geschuetzte Systemkategorie `Sparen`:
+
+- `Sparen` ist global und nicht monatsabhaengig.
+- `Sparen` kann fuer manuelle und importierte Ausgaben als Kategorie zugeordnet werden.
+- `Sparen` kann nicht deaktiviert, archiviert, geloescht oder umbenannt werden.
+- `Sparen` bekommt im MVP keinen Planwert und keinen eigenen Sparzielbetrag.
+- Der Ist-Wert von `Sparen` entsteht ausschliesslich aus echten Ausgaben, die dieser Kategorie zugeordnet sind.
+- Sparbuchungen bleiben budgetwirksame Ausgaben, koennen aber ueber den Systemschluessel `savings` separat von normalen Konsumausgaben erkannt werden.
+
 ### Monatsbudget
 
 Ein Monatsbudget ist der Orientierungswert einer festen Kategorie fuer einen bestimmten Monat.

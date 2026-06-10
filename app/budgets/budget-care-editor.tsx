@@ -9,8 +9,11 @@ type BudgetEditorCategory = {
   name: string;
   colorHex: string | null;
   iconName: string | null;
+  systemKey: string | null;
   isDefault: boolean;
   isActive: boolean;
+  isProtected: boolean;
+  isSavings: boolean;
   monthlyBudgetCount: number;
   transactionCount: number;
   defaultBudgetAmountCents: number | null;
@@ -57,6 +60,14 @@ function formatEuro(cents: number): string {
 
 function defaultBudgetLabel(amountCents: number | null): string {
   return amountCents === null ? "Kein Betrag" : formatEuro(amountCents);
+}
+
+function categoryBudgetLabel(category: BudgetEditorCategory): string {
+  if (category.isSavings) {
+    return "Kein Planwert";
+  }
+
+  return defaultBudgetLabel(category.defaultBudgetAmountCents);
 }
 
 function formatMonthLabel(monthKey: string): string {
@@ -111,7 +122,13 @@ export function BudgetCareEditor({
                 <article key={category.id} className="budget-pot-card">
                   <input type="hidden" name="categoryIds" value={category.id} />
                   <input type="hidden" name={`colorHex-${category.id}`} value={category.colorHex ?? ""} />
-                  {category.isDefault ? (
+                  {category.isSavings ? (
+                    <>
+                      <input type="hidden" name={`name-${category.id}`} value={category.name} />
+                      <input type="hidden" name={`budgetAmount-${category.id}`} value="" />
+                    </>
+                  ) : null}
+                  {category.isDefault || category.isSavings ? (
                     <input type="hidden" name={`isDefault-${category.id}`} value="on" />
                   ) : null}
                   {category.isActive ? (
@@ -129,47 +146,68 @@ export function BudgetCareEditor({
                     <div className="budget-pot-copy">
                       <div className="budget-pot-title-row">
                         <h3>{category.name}</h3>
+                        {category.isSavings ? (
+                          <span className="month-chip month-chip-neutral">
+                            Geschuetzt
+                          </span>
+                        ) : null}
                       </div>
+                      {category.isSavings ? (
+                        <p>Systemkategorie fuer echte Sparbuchungen ohne Planwert.</p>
+                      ) : null}
                     </div>
                   </div>
 
-                  <button
-                    type="submit"
-                    name="deactivateCategoryId"
-                    value={category.id}
-                    className="budget-secondary-action"
-                  >
-                    Deaktivieren
-                  </button>
+                  {!category.isProtected ? (
+                    <button
+                      type="submit"
+                      name="deactivateCategoryId"
+                      value={category.id}
+                      className="budget-secondary-action"
+                    >
+                      Deaktivieren
+                    </button>
+                  ) : null}
 
                   <div className="budget-category-edit-panel">
-                    <label>
-                      Betrag
-                      <input
-                        name={`budgetAmount-${category.id}`}
-                        inputMode="decimal"
-                        defaultValue={toInputAmount(category.defaultBudgetAmountCents)}
-                        placeholder="0.00"
-                      />
-                    </label>
-                    <label>
-                      Name
-                      <input
-                        name={`name-${category.id}`}
-                        required
-                        maxLength={60}
-                        defaultValue={category.name}
-                      />
-                    </label>
-                    <label>
-                      Icon
-                      <input
-                        name={`iconName-${category.id}`}
-                        maxLength={2}
-                        defaultValue={category.iconName ?? ""}
-                        placeholder="EI"
-                      />
-                    </label>
+                    {category.isSavings ? (
+                      <>
+                        <input type="hidden" name={`iconName-${category.id}`} value={category.iconName ?? ""} />
+                        <div className="rounded-[1rem] border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm font-semibold text-sky-950">
+                          Sparen ist geschuetzt und bekommt keinen Planwert.
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <label>
+                          Betrag
+                          <input
+                            name={`budgetAmount-${category.id}`}
+                            inputMode="decimal"
+                            defaultValue={toInputAmount(category.defaultBudgetAmountCents)}
+                            placeholder="0.00"
+                          />
+                        </label>
+                        <label>
+                          Name
+                          <input
+                            name={`name-${category.id}`}
+                            required
+                            maxLength={60}
+                            defaultValue={category.name}
+                          />
+                        </label>
+                        <label>
+                          Icon
+                          <input
+                            name={`iconName-${category.id}`}
+                            maxLength={2}
+                            defaultValue={category.iconName ?? ""}
+                            placeholder="EI"
+                          />
+                        </label>
+                      </>
+                    )}
                   </div>
                 </article>
               ))}
@@ -225,7 +263,7 @@ export function BudgetCareEditor({
               </div>
 
               <div className="budget-pot-readonly-value">
-                <strong>{defaultBudgetLabel(category.defaultBudgetAmountCents)}</strong>
+                <strong>{categoryBudgetLabel(category)}</strong>
               </div>
             </article>
           ))}

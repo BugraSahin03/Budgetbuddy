@@ -1320,3 +1320,22 @@ Auswirkung:
 - Nutzer muessen nicht zwischen zwei Archivseiten unterscheiden.
 - Deaktivierte Kategorien zeigen im Archiv nur noch den fachlich relevanten Namen; technische Zaehlwerte wie Buchungen oder Monatswerte werden ausgeblendet.
 - Transaktionszuordnungen bleiben weiterhin am konkreten Sonderbudget-Monatsanteil; die neue Icon-Angabe ist reine Darstellungsmetadaten.
+
+## 2026-06-10 - FIN-072 fuehrt Sparen als geschuetzte Systemkategorie ein
+
+Quelle/Ticket: `FIN-072`
+
+Erkenntnis/Entscheidung:
+
+- `Sparen` wird als feste, globale Systemkategorie mit `system_key = savings` modelliert.
+- Die Kategorie ist immer aktiv und kann nicht deaktiviert, archiviert, geloescht oder umbenannt werden.
+- `Sparen` bekommt im MVP keinen globalen oder monatsbezogenen Planwert.
+- Der Spar-Ist-Wert entsteht ausschliesslich aus echten Ausgaben, die dieser Kategorie zugeordnet sind.
+- Importierte und manuelle Ausgaben koennen `Sparen` wie eine normale Kategorie als Budgetzuordnung nutzen.
+
+Auswirkung:
+
+- Sparbuchungen reduzieren weiterhin das verfuegbare Monatsbudget wie Ausgaben.
+- Zukuenftige Auswertungen koennen Sparbuchungen stabil ueber den Systemschluessel separat von Konsumausgaben erkennen.
+- Es entsteht keine neue Transfer-, Sparziel- oder automatische Importregel-Logik.
+- Die Entscheidung ist in `docs/adr/0006-protected-savings-category.md` festgehalten.

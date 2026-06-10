@@ -1,5 +1,6 @@
 import "server-only";
 
+import { isSavingsCategoryId } from "@/src/categories/repository";
 import { getDb } from "@/src/db/client";
 
 export type MonthlyBudgetCategoryRow = {
@@ -64,6 +65,15 @@ function assertCategoryExists(categoryId: number): void {
 
   if (!category) {
     throw new Error("Kategorie wurde nicht gefunden.");
+  }
+}
+
+function assertCategoryCanHavePlannedBudget(
+  categoryId: number,
+  normalizedAmountCents: number | null,
+): void {
+  if (normalizedAmountCents !== null && isSavingsCategoryId(categoryId)) {
+    throw new Error("Sparen bekommt im MVP keinen Planwert.");
   }
 }
 
@@ -171,6 +181,7 @@ export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCate
 export function setCategoryDefaultBudget(categoryId: number, budgetAmount: string): void {
   assertCategoryExists(categoryId);
   const normalizedAmountCents = normalizeBudgetAmountCents(budgetAmount);
+  assertCategoryCanHavePlannedBudget(categoryId, normalizedAmountCents);
 
   getDb()
     .prepare(
@@ -194,6 +205,7 @@ export function setMonthlyCategoryBudget(
   const normalizedAmountCents = normalizeBudgetAmountCents(budgetAmount);
 
   assertCategoryExists(categoryId);
+  assertCategoryCanHavePlannedBudget(categoryId, normalizedAmountCents);
 
   if (normalizedAmountCents === null) {
     getDb()
