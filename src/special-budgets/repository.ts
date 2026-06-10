@@ -19,6 +19,16 @@ export type SpecialBudgetListItem = {
   actualExpenseCents: number;
 };
 
+export type SpecialBudgetProjectListItem = {
+  projectId: number;
+  name: string;
+  note: string | null;
+  monthShares: SpecialBudgetArchiveMonthShare[];
+  monthCount: number;
+  plannedAmountCents: number;
+  actualExpenseCents: number;
+};
+
 export type SpecialBudgetArchiveItem = {
   projectId: number;
   name: string;
@@ -487,6 +497,84 @@ export function listArchivedSpecialBudgetProjects(): SpecialBudgetArchiveItem[] 
   });
 }
 
+export function listActiveSpecialBudgetProjects(): SpecialBudgetProjectListItem[] {
+  ensureProjectsForUnlinkedMonthlyShares();
+
+  const rows = getDb()
+    .prepare(
+      `
+        SELECT
+          sbp.id AS projectId,
+          sbp.name,
+          sbp.note,
+          COUNT(sb.id) AS monthCount,
+          COALESCE(SUM(sb.planned_amount_cents), 0) AS plannedAmountCents,
+          COALESCE(
+            SUM(
+              (
+                SELECT COALESCE(SUM(-t.amount_cents), 0)
+                FROM transactions t
+                WHERE t.special_budget_id = sb.id
+                  AND t.transaction_type = 'expense'
+              )
+            ),
+            0
+          ) AS actualExpenseCents
+        FROM special_budget_projects sbp
+        INNER JOIN special_budgets sb ON sb.project_id = sbp.id
+        WHERE sbp.status = 'active'
+          AND sb.is_active = 1
+        GROUP BY sbp.id, sbp.name, sbp.note
+        ORDER BY sbp.name COLLATE NOCASE ASC
+      `,
+    )
+    .all() as Array<Omit<SpecialBudgetProjectListItem, "monthShares">>;
+
+  return rows.map((row) => {
+    const monthShares = getDb()
+      .prepare(
+        `
+          SELECT
+            sb.id,
+            sb.month_key AS monthKey,
+            sb.planned_amount_cents AS plannedAmountCents,
+            sb.is_active AS isActive,
+            COALESCE(
+              (
+                SELECT SUM(-t.amount_cents)
+                FROM transactions t
+                WHERE t.special_budget_id = sb.id
+                  AND t.transaction_type = 'expense'
+              ),
+              0
+            ) AS actualExpenseCents
+          FROM special_budgets sb
+          WHERE sb.project_id = ?
+            AND sb.is_active = 1
+          ORDER BY sb.month_key ASC, sb.id ASC
+        `,
+      )
+      .all(row.projectId) as Array<{
+      id: number;
+      monthKey: string;
+      plannedAmountCents: number;
+      actualExpenseCents: number;
+      isActive: number;
+    }>;
+
+    return {
+      ...row,
+      monthShares: monthShares.map((share) => ({
+        id: share.id,
+        monthKey: share.monthKey,
+        plannedAmountCents: share.plannedAmountCents,
+        actualExpenseCents: share.actualExpenseCents,
+        isActive: mapSqliteBoolean(share.isActive),
+      })),
+    };
+  });
+}
+
 export function createSpecialBudget(input: SpecialBudgetInput): void {
   createSpecialBudgetShares({
     name: input.name,
@@ -661,6 +749,55 @@ export function reactivateSpecialBudgetProject(projectId: number): void {
         `,
       )
       .run(projectId);
+  });
+
+  transaction();
+}
+
+export function setSpecialBudgetProjectActive(projectId: number, isActive: boolean): void {
+  if (!Number.isInteger(projectId) || projectId <= 0) {
+    throw new Error("Sonderbudget-Vorhaben ist ungueltig.");
+  }
+
+  const project = getDb()
+    .prepare(
+      `
+        SELECT id
+        FROM special_budget_projects
+        WHERE id = ?
+        LIMIT 1
+      `,
+    )
+    .get(projectId) as { id: number } | undefined;
+
+  if (!project) {
+    throw new Error("Sonderbudget-Vorhaben wurde nicht gefunden.");
+  }
+
+  const transaction = getDb().transaction(() => {
+    getDb()
+      .prepare(
+        `
+          UPDATE special_budgets
+          SET
+            is_active = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE project_id = ?
+        `,
+      )
+      .run(isActive ? 1 : 0, projectId);
+
+    getDb()
+      .prepare(
+        `
+          UPDATE special_budget_projects
+          SET
+            status = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `,
+      )
+      .run(isActive ? "active" : "archived", projectId);
   });
 
   transaction();

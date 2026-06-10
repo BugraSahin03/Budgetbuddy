@@ -24,15 +24,19 @@ type BudgetCareEditorProps = {
 };
 
 type BudgetEditorSpecialBudget = {
-  id: number;
-  projectId: number | null;
-  projectMonthCount: number;
-  projectPlannedAmountCents: number;
-  projectActualExpenseCents: number;
+  projectId: number;
   name: string;
-  monthKey: string;
-  plannedAmountCents: number;
   note: string | null;
+  monthShares: Array<{
+    id: number;
+    monthKey: string;
+    plannedAmountCents: number;
+    actualExpenseCents: number;
+    isActive: boolean;
+  }>;
+  monthCount: number;
+  plannedAmountCents: number;
+  actualExpenseCents: number;
 };
 
 function toInputAmount(amountCents: number | null): string {
@@ -276,7 +280,7 @@ function SpecialBudgetList({
       <h3 className="budget-section-heading">Sonderbudgets</h3>
       <div className="budget-special-list">
         {specialBudgets.map((budget) => (
-          <article key={budget.id} className="budget-pot-card budget-special-pot-card">
+          <article key={budget.projectId} className="budget-pot-card budget-special-pot-card">
             <div className="budget-pot-main">
               <CategoryVisualMark
                 name={budget.name}
@@ -289,25 +293,27 @@ function SpecialBudgetList({
                 <div className="budget-pot-title-row">
                   <h3>{budget.name}</h3>
                 </div>
-                <p>{formatMonthLabel(budget.monthKey)}</p>
-                {budget.projectMonthCount > 1 ? (
-                  <p>
-                    Vorhaben mit {budget.projectMonthCount} Monatsanteilen · Gesamt{" "}
-                    {formatEuro(budget.projectPlannedAmountCents)}
-                  </p>
-                ) : null}
+                <p>{budget.monthCount} Monatsanteile</p>
+                <div className="flex flex-wrap gap-2">
+                  {budget.monthShares.map((share) => (
+                    <span key={share.id} className="month-chip month-chip-neutral">
+                      {formatMonthLabel(share.monthKey)} · {formatEuro(share.plannedAmountCents)}
+                    </span>
+                  ))}
+                </div>
                 {budget.note ? <p>{budget.note}</p> : null}
               </div>
             </div>
 
             <div className="budget-pot-readonly-value">
               <strong>{formatEuro(budget.plannedAmountCents)}</strong>
+              <span>Ist {formatEuro(budget.actualExpenseCents)}</span>
             </div>
 
             {isEditing ? (
               <form action={action}>
-                <input type="hidden" name="specialBudgetId" value={budget.id} />
-                <button type="submit" name="intent" value="deactivate">
+                <input type="hidden" name="specialBudgetProjectId" value={budget.projectId} />
+                <button type="submit" name="intent" value="deactivateProject">
                   Deaktivieren
                 </button>
               </form>

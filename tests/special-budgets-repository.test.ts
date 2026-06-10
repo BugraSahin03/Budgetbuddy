@@ -123,6 +123,36 @@ describe("special budgets repository", () => {
     ).toThrow("Ein Sonderbudget darf pro Vorhaben nur einen Anteil je Monat haben.");
   });
 
+  it("lists active multi-month projects once for budget care", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudgetShares({
+      name: `${TEST_NAME_PREFIX}Japan`,
+      note: "",
+      shares: [
+        {
+          monthKey: "2026-06",
+          plannedAmountCents: 50000,
+        },
+        {
+          monthKey: "2026-07",
+          plannedAmountCents: 70000,
+        },
+      ],
+    });
+
+    const projects = repository
+      .listActiveSpecialBudgetProjects()
+      .filter((project) => project.name === `${TEST_NAME_PREFIX}Japan`);
+
+    expect(projects).toHaveLength(1);
+    expect(projects[0]?.monthShares.map((share) => share.monthKey)).toEqual([
+      "2026-06",
+      "2026-07",
+    ]);
+    expect(projects[0]?.plannedAmountCents).toBe(120000);
+  });
+
   it("returns active options only for the selected month", () => {
     cleanupSpecialBudgets();
 
@@ -203,6 +233,48 @@ describe("special budgets repository", () => {
 
     expect(latestShare?.isActive).toBe(true);
     expect(repository.listArchivedSpecialBudgetProjects().some((project) => project.projectId === projectId)).toBe(false);
+  });
+
+  it("archives an entire active project from budget care", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudgetShares({
+      name: `${TEST_NAME_PREFIX}ArchiveProject`,
+      note: "",
+      shares: [
+        {
+          monthKey: "2026-09",
+          plannedAmountCents: 15000,
+        },
+        {
+          monthKey: "2026-10",
+          plannedAmountCents: 25000,
+        },
+      ],
+    });
+
+    const project = repository
+      .listActiveSpecialBudgetProjects()
+      .find((item) => item.name === `${TEST_NAME_PREFIX}ArchiveProject`);
+
+    expect(project).toBeDefined();
+
+    if (!project) {
+      return;
+    }
+
+    repository.setSpecialBudgetProjectActive(project.projectId, false);
+
+    expect(
+      repository
+        .listActiveSpecialBudgetProjects()
+        .some((item) => item.projectId === project.projectId),
+    ).toBe(false);
+    expect(
+      repository
+        .listArchivedSpecialBudgetProjects()
+        .some((item) => item.projectId === project.projectId),
+    ).toBe(true);
   });
 
   it("backfills unlinked inactive monthly shares into the archive", () => {

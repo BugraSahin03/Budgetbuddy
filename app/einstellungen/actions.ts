@@ -9,6 +9,7 @@ import {
   parseImportDisplayAliasInputFromFormData,
   updateImportDisplayAlias,
 } from "@/src/settings/import-display-aliases/repository";
+import { setCategoryActive } from "@/src/categories/repository";
 import { reactivateSpecialBudgetProject } from "@/src/special-budgets/repository";
 
 function encodeMessage(message: string): string {
@@ -41,6 +42,16 @@ function parseProjectId(formData: FormData): number {
   }
 
   return projectId;
+}
+
+function parseCategoryId(formData: FormData): number {
+  const categoryId = Number.parseInt(String(formData.get("categoryId") ?? ""), 10);
+
+  if (!Number.isInteger(categoryId) || categoryId <= 0) {
+    throw new Error("Kategorie-ID ist ungueltig.");
+  }
+
+  return categoryId;
 }
 
 export async function createImportDisplayAliasAction(
@@ -134,5 +145,28 @@ export async function reactivateSpecialBudgetProjectAction(
   redirect(
     "/einstellungen/sonderbudget-archiv?notice=" +
       encodeMessage("Sonderbudget-Vorhaben reaktiviert."),
+  );
+}
+
+export async function reactivateCategoryAction(formData: FormData): Promise<never> {
+  let errorMessage: string | null = null;
+
+  try {
+    setCategoryActive(parseCategoryId(formData), true);
+    revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/kategorie-archiv");
+    revalidatePath("/budgets");
+    revalidatePath("/monate");
+  } catch (error) {
+    errorMessage = toErrorMessage(error);
+  }
+
+  if (errorMessage) {
+    redirect("/einstellungen/kategorie-archiv?error=" + encodeMessage(errorMessage));
+  }
+
+  redirect(
+    "/einstellungen/kategorie-archiv?notice=" +
+      encodeMessage("Kategorie reaktiviert."),
   );
 }

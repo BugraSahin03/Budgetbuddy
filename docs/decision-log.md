@@ -1268,3 +1268,20 @@ Auswirkung:
 - Archivierte Vorhaben ueberladen die Budgetpflege nicht, bleiben aber nachvollziehbar.
 - Sonderbudget-Abgaenge bleiben Ausgaben; es entsteht keine automatische Spar-, Transfer- oder Umbuchungslogik.
 - Die Entscheidung ist in `docs/adr/0005-multimonth-special-budget-projects.md` festgehalten.
+
+## 2026-06-10 - FIN-065 erweitert Archiv um Kategorien und gruppiert Sonderbudget-Vorhaben
+
+Quelle/Ticket: `FIN-065`
+
+Erkenntnis/Entscheidung:
+
+- Deaktivierte Kategorien werden im selben Ticket ueber ein eigenes Kategorie-Archiv unter `Einstellungen` verwaltbar gemacht.
+- Kategorien bleiben fachlich getrennt von Sonderbudgets, nutzen aber dasselbe Archivierungsprinzip: deaktiviert statt geloescht, reaktivierbar, historische Buchungen bleiben gueltig.
+- Die Budgetpflege zeigt mehrmonatige Sonderbudgets nur noch einmal als Vorhaben an.
+- Monatsanteile eines Sonderbudget-Vorhabens werden innerhalb der Karte angezeigt, damit z. B. `Japan` fuer Juni und Juli nicht doppelt wie zwei verschiedene Sonderbudgets wirkt.
+
+Auswirkung:
+
+- `/budgets` bleibt auf aktuelle Budgettoepfe fokussiert und vermeidet doppelte Sonderbudget-Zeilen fuer dasselbe Vorhaben.
+- `/einstellungen/kategorie-archiv` wird der neue Ort fuer deaktivierte Kategorien.
+- `/einstellungen/sonderbudget-archiv` bleibt der Ort fuer archivierte Sonderbudget-Vorhaben.

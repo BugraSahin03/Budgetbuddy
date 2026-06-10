@@ -13,7 +13,7 @@ import {
 import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
   createSpecialBudgetShares,
-  setSpecialBudgetActive,
+  setSpecialBudgetProjectActive,
 } from "@/src/special-budgets/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
@@ -31,15 +31,15 @@ function parseCategoryId(rawValue: FormDataEntryValue | null): number {
   return categoryId;
 }
 
-function parseSpecialBudgetId(rawValue: FormDataEntryValue | null): number {
+function parseSpecialBudgetProjectId(rawValue: FormDataEntryValue | null): number {
   const value = toSingleString(rawValue).trim();
-  const specialBudgetId = Number.parseInt(value, 10);
+  const specialBudgetProjectId = Number.parseInt(value, 10);
 
-  if (!Number.isInteger(specialBudgetId) || specialBudgetId <= 0) {
-    throw new Error("Sonderbudget-ID ist ungueltig.");
+  if (!Number.isInteger(specialBudgetProjectId) || specialBudgetProjectId <= 0) {
+    throw new Error("Sonderbudget-Vorhaben ist ungueltig.");
   }
 
-  return specialBudgetId;
+  return specialBudgetProjectId;
 }
 
 function toErrorMessage(error: unknown): string {
@@ -232,14 +232,16 @@ export async function updateBudgetSpecialBudgetStateAction(formData: FormData): 
   let redirectTarget = "/budgets";
 
   try {
-    const specialBudgetId = parseSpecialBudgetId(formData.get("specialBudgetId"));
+    const specialBudgetProjectId = parseSpecialBudgetProjectId(
+      formData.get("specialBudgetProjectId"),
+    );
     const intent = toSingleString(formData.get("intent"));
 
-    if (intent !== "deactivate") {
+    if (intent !== "deactivateProject") {
       throw new Error("Unbekannte Aktion.");
     }
 
-    setSpecialBudgetActive(specialBudgetId, false);
+    setSpecialBudgetProjectActive(specialBudgetProjectId, false);
     refreshBudgetPaths();
     redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget deaktiviert.")}`;
   } catch (error) {

@@ -11,7 +11,7 @@ import { listCategoryBudgetDefaults } from "@/src/budgets/repository";
 import { listCategories } from "@/src/categories/repository";
 import {
   getSelectableMonthKeys,
-  listSpecialBudgets,
+  listActiveSpecialBudgetProjects,
 } from "@/src/special-budgets/repository";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +63,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
     toSingleParam(params.monthKey) ??
     selectableMonths[0] ??
     new Date().toISOString().slice(0, 7);
-  const specialBudgets = listSpecialBudgets().filter((budget) => budget.isActive);
+  const specialBudgets = listActiveSpecialBudgetProjects();
   const editorCategories = categories.map((category) => ({
     ...category,
     defaultBudgetAmountCents:

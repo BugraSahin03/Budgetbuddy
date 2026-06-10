@@ -13,6 +13,12 @@ const GLOBAL_SETTINGS = [
     meta: "Historie",
     icon: "◎",
   },
+  {
+    href: "/einstellungen/kategorie-archiv",
+    title: "Kategorie-Archiv",
+    meta: "Historie",
+    icon: "◇",
+  },
 ] as const;
 
 export default function SettingsPage() {
