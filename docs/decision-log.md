@@ -1227,6 +1227,28 @@ Auswirkung:
 - Es wird kein Datenmodell geaendert; bestehende `is_active`-Felder werden weiter genutzt.
 - Lokale Test-/Preview-Deaktivierungen veraendern nur die jeweilige lokale Datenbank und werden nicht mit dem Code-PR ausgeliefert.
 
+## 2026-06-07 - FIN-066 zeigt geplante Budgettoepfe als Plan-Gefuehl
+
+Quelle/Ticket: `FIN-066`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsansicht bekommt eine eigene Plan-Kennzahl `Rest nach Planung`.
+- Die Kennzahl summiert effektive Kategorie-Budgetwerte und aktive Sonderbudgets des Monats.
+- Effektive Kategorie-Budgetwerte nutzen die bestehende Monatslogik: Monats-Override vor globalem Standardbudget.
+- Kategorien ohne positiven Budgetwert zaehlen defensiv mit `0`.
+- Inaktive Sonderbudgets werden nicht in die Plansumme eingerechnet.
+- Der `Plan-Rest nach Toepfen` wird als `Einnahmen - Budgettoepfe geplant` berechnet.
+- Aktive Sonderbudgets des Monats erscheinen im Budgettopfbereich unter einer dezenten gelben Abschnittsueberschrift und nutzen danach dieselbe Verbrauchslogik wie normale Budgettoepfe.
+
+Auswirkung:
+
+- Das bisher prominentere reine Kategorien-Anzahlgefuehl wird im Kategorienbereich durch die geplante Budgettopf-Summe ersetzt.
+- Im KPI-Bereich steht der daraus abgeleitete `Rest nach Planung`, damit Einnahmen, Ausgaben und grober Monatsrest direkt nebeneinander lesbar sind.
+- Die Kennzahl bleibt bewusst ein Plan-/Bauchgefuehl und ersetzt nicht den aktuellen Budgetstand aus FIN-063.
+- Fixkosten bleiben in dieser Kennzahl bewusst ausgeschlossen; eine spaetere Erweiterung muesste fachlich separat entschieden werden.
+- Monate ohne aktive Sonderbudgets zeigen keine Sonderbudget-Gruppe im Budgettopfbereich.
+
 ## 2026-06-09 - FIN-046 fuehrt eine einklappbare App-Shell ein
 
 Quelle/Ticket: `FIN-046`
@@ -1235,7 +1257,7 @@ Erkenntnis/Entscheidung:
 
 - Die globale Navigation wird als helle App-Shell gefuehrt und enthaelt dauerhaft keine fachlichen Erklaertexte mehr.
 - Die Hauptnavigation bleibt auf die bestehenden Hauptbereiche fokussiert: Dashboard, Monate, Monatsvergleich, Budgets, Fixkosten und Einstellungen.
-- Der eingeklappte Desktop-Zustand reduziert die Navigationsleiste auf eine schmale Rail zum schnellen Wieder-Ausklappen.
+- Der eingeklappte Desktop-Zustand nutzt eine schmale Rail mit erreichbaren Navigationszielen und sichtbarem Aktivmarker.
 - Der Einklappzustand wird lokal im Browser gespeichert, damit Nutzer ihre bevorzugte Arbeitsbreite behalten koennen.
 
 Auswirkung:

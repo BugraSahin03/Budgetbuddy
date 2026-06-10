@@ -419,6 +419,7 @@ describe("months repository", () => {
     expect(einkauf?.defaultBudgetAmountCents).toBe(22000);
     expect(einkauf?.monthOverrideAmountCents).toBe(17500);
     expect(einkauf?.budgetAmountCents).toBe(17500);
+    expect(snapshot.planSummary.plannedCategoryBudgetCents).toBeGreaterThanOrEqual(17500);
   });
 
   it("reflects special budget amount and active-state changes inside the month snapshot", () => {
@@ -438,6 +439,7 @@ describe("months repository", () => {
 
     expect(specialBudget?.plannedAmountCents).toBe(12000);
     expect(specialBudget?.isActive).toBe(true);
+    expect(snapshot.planSummary.plannedSpecialBudgetCents).toBe(12000);
 
     db.prepare(
       `
@@ -454,5 +456,6 @@ describe("months repository", () => {
     expect(specialBudget?.plannedAmountCents).toBe(18500);
     expect(specialBudget?.remainingAmountCents).toBe(18500);
     expect(specialBudget?.isActive).toBe(false);
+    expect(snapshot.planSummary.plannedSpecialBudgetCents).toBe(0);
   });
 });
