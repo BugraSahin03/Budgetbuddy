@@ -97,6 +97,20 @@ function parseSpecialBudgetShareIds(formData: FormData): number[] {
     .filter((shareId) => Number.isInteger(shareId) && shareId > 0);
 }
 
+function parseSpecialBudgetProjectIds(formData: FormData): number[] {
+  return formData
+    .getAll("specialBudgetProjectIds")
+    .map((value) => Number.parseInt(toSingleString(value), 10))
+    .filter((projectId) => Number.isInteger(projectId) && projectId > 0);
+}
+
+function parseProjectShareIds(formData: FormData, projectId: number): number[] {
+  return formData
+    .getAll(`specialBudgetShareIds-${projectId}`)
+    .map((value) => Number.parseInt(toSingleString(value), 10))
+    .filter((shareId) => Number.isInteger(shareId) && shareId > 0);
+}
+
 function validateOptionalBudgetAmount(rawValue: string): void {
   const normalized = rawValue.trim();
 
@@ -229,8 +243,27 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
       setCategoryDefaultBudget(categoryId, budgetAmount);
     }
 
+    for (const projectId of parseSpecialBudgetProjectIds(formData)) {
+      const shareIds = parseProjectShareIds(formData, projectId);
+
+      if (shareIds.length === 0) {
+        continue;
+      }
+
+      updateSpecialBudgetProject({
+        projectId,
+        iconName: toOptionalString(formData.get(`specialBudgetIconName-${projectId}`)),
+        shares: shareIds.map((shareId) => ({
+          id: shareId,
+          plannedAmountCents: parsePlannedAmountCents(
+            toSingleString(formData.get(`plannedAmount-${shareId}`)),
+          ),
+        })),
+      });
+    }
+
     refreshBudgetPaths();
-    redirectTarget = `/budgets?notice=${encodeMessage("Kategorien gespeichert.")}`;
+    redirectTarget = `/budgets?notice=${encodeMessage("Budgetpflege gespeichert.")}`;
   } catch (error) {
     redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }
@@ -242,10 +275,11 @@ export async function updateBudgetSpecialBudgetStateAction(formData: FormData): 
   let redirectTarget = "/budgets";
 
   try {
-    const specialBudgetProjectId = parseSpecialBudgetProjectId(
-      formData.get("specialBudgetProjectId"),
-    );
     const intent = toSingleString(formData.get("intent"));
+    const deactivateProjectPrefix = "deactivateProject:";
+    const specialBudgetProjectId = intent.startsWith(deactivateProjectPrefix)
+      ? parseSpecialBudgetProjectId(intent.slice(deactivateProjectPrefix.length))
+      : parseSpecialBudgetProjectId(formData.get("specialBudgetProjectId"));
 
     if (intent === "updateProject") {
       const shareIds = parseSpecialBudgetShareIds(formData);
@@ -267,7 +301,7 @@ export async function updateBudgetSpecialBudgetStateAction(formData: FormData): 
 
       refreshBudgetPaths();
       redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget gespeichert.")}`;
-    } else if (intent === "deactivateProject") {
+    } else if (intent.startsWith(deactivateProjectPrefix)) {
       setSpecialBudgetProjectActive(specialBudgetProjectId, false);
       refreshBudgetPaths();
       redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget deaktiviert.")}`;

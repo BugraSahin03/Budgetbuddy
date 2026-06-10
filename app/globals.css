@@ -1434,7 +1434,6 @@ select.month-action-input {
 }
 
 .budget-secondary-action,
-.budget-special-pot-card form button,
 .budget-special-card form button {
   background: rgba(7, 27, 70, 0.08);
   border: 0;
@@ -1492,6 +1491,44 @@ select.month-action-input {
   gap: 0.55rem;
   grid-column: 1 / -1;
   justify-content: flex-end;
+}
+
+.budget-special-deactivate-action {
+  align-self: start;
+  justify-self: end;
+}
+
+.archive-section-summary {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  list-style: none;
+}
+
+.archive-section-summary::-webkit-details-marker {
+  display: none;
+}
+
+.archive-section-summary::after {
+  align-items: center;
+  background: rgba(7, 27, 70, 0.07);
+  border-radius: 999px;
+  color: #071b46;
+  content: "⌄";
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1rem;
+  font-weight: 950;
+  height: 2rem;
+  justify-content: center;
+  transition: transform 160ms ease;
+  width: 2rem;
+}
+
+details[open] > .archive-section-summary::after {
+  transform: rotate(180deg);
 }
 
 .budget-category-edit-flags {

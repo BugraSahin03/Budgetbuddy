@@ -197,16 +197,13 @@ export function BudgetCareEditor({
                 </article>
               ))}
             </div>
+            <SpecialBudgetList
+              action={specialBudgetAction}
+              isEditing={true}
+              specialBudgets={specialBudgets}
+            />
           </div>
         </form>
-
-        <div className="budget-care-grid">
-          <SpecialBudgetList
-            action={specialBudgetAction}
-            isEditing={true}
-            specialBudgets={specialBudgets}
-          />
-        </div>
       </div>
     );
   }
@@ -314,12 +311,12 @@ function SpecialBudgetList({
 
             {isEditing ? (
               <>
-                <input type="hidden" name="specialBudgetProjectId" value={budget.projectId} />
+                <input type="hidden" name="specialBudgetProjectIds" value={budget.projectId} />
                 {budget.monthShares.map((share) => (
                   <input
                     key={`share-${share.id}`}
                     type="hidden"
-                    name="specialBudgetShareIds"
+                    name={`specialBudgetShareIds-${budget.projectId}`}
                     value={share.id}
                   />
                 ))}
@@ -327,7 +324,7 @@ function SpecialBudgetList({
                   <label>
                     Icon
                     <input
-                      name="iconName"
+                      name={`specialBudgetIconName-${budget.projectId}`}
                       maxLength={24}
                       defaultValue={budget.iconName ?? ""}
                       placeholder="Optional"
@@ -346,14 +343,15 @@ function SpecialBudgetList({
                     </label>
                   ))}
                 </div>
-                <div className="budget-special-edit-actions">
-                  <button type="submit" name="intent" value="updateProject">
-                    Speichern
-                  </button>
-                  <button type="submit" name="intent" value="deactivateProject">
-                    Deaktivieren
-                  </button>
-                </div>
+                <button
+                  type="submit"
+                  formAction={action}
+                  name="intent"
+                  value={`deactivateProject:${budget.projectId}`}
+                  className="budget-secondary-action budget-special-deactivate-action"
+                >
+                  Deaktivieren
+                </button>
               </>
             ) : null}
             </>
@@ -361,13 +359,12 @@ function SpecialBudgetList({
 
           if (isEditing) {
             return (
-              <form
+              <article
                 key={budget.projectId}
-                action={action}
                 className="budget-pot-card budget-special-pot-card budget-special-edit-form"
               >
                 {content}
-              </form>
+              </article>
             );
           }
 

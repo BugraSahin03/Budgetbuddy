@@ -53,18 +53,6 @@ function formatMonthLabel(monthKey: string | null): string {
   }).format(new Date(Date.UTC(year, month - 1, 1)));
 }
 
-function formatPeriod(firstMonthKey: string | null, lastMonthKey: string | null): string {
-  if (!firstMonthKey && !lastMonthKey) {
-    return "Kein Zeitraum";
-  }
-
-  if (firstMonthKey === lastMonthKey) {
-    return formatMonthLabel(firstMonthKey);
-  }
-
-  return `${formatMonthLabel(firstMonthKey)} bis ${formatMonthLabel(lastMonthKey)}`;
-}
-
 export default async function CategoryArchivePage({ searchParams }: CategoryArchivePageProps) {
   const params = (await searchParams) ?? {};
   const notice = toSingleParam(params.notice);
@@ -108,16 +96,16 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
         </p>
       ) : null}
 
-      <section className="month-section-panel space-y-4">
-        <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="month-eyebrow">Sonderbudgets</p>
-            <h3 className="month-section-title mt-1">Archivierte Sonderbudgets</h3>
-          </div>
+      <details open className="month-section-panel space-y-4">
+        <summary className="archive-section-summary">
+          <span>
+            <span className="month-eyebrow">Sonderbudgets</span>
+            <span className="month-section-title mt-1 block">Archivierte Sonderbudgets</span>
+          </span>
           <span className="month-chip month-chip-neutral w-fit">
             {archivedProjects.length} Eintraege
           </span>
-        </header>
+        </summary>
 
         {archivedProjects.length === 0 ? (
           <p className="rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/75 px-4 py-6 text-sm text-[color:var(--month-ink-soft)]">
@@ -138,8 +126,7 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
                         className="budget-pot-icon"
                       />
                       <div>
-                        <p className="month-eyebrow">{formatPeriod(project.firstMonthKey, project.lastMonthKey)}</p>
-                        <h4 className="mt-1 text-lg font-semibold tracking-[-0.03em] text-[color:var(--month-ink)]">
+                        <h4 className="text-lg font-semibold tracking-[-0.03em] text-[color:var(--month-ink)]">
                           {project.name}
                         </h4>
                       </div>
@@ -148,23 +135,13 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
                       <p className="text-sm text-[color:var(--month-ink-soft)]">{project.note}</p>
                     ) : null}
                     <div className="flex flex-wrap gap-2">
-                      <span className="month-chip month-chip-neutral">{project.monthCount} Monatsanteile</span>
-                      <span className="month-chip month-chip-accent">Plan {formatEuro(project.plannedAmountCents)}</span>
+                      <span className="month-chip month-chip-accent">Plan gesamt {formatEuro(project.plannedAmountCents)}</span>
                       <span className="month-chip month-chip-neutral">Ist {formatEuro(project.actualExpenseCents)}</span>
-                    </div>
-                    <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                      <span className="month-chip month-chip-neutral">{project.monthCount} Monatsanteile</span>
                       {project.monthShares.map((share) => (
-                        <div key={share.id} className="rounded-[1rem] border border-[color:var(--month-line)] bg-sky-50/45 px-3 py-2">
-                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
-                            {formatMonthLabel(share.monthKey)}
-                          </p>
-                          <p className="mt-1 text-sm font-semibold text-[color:var(--month-ink)]">
-                            Plan {formatEuro(share.plannedAmountCents)}
-                          </p>
-                          <p className="text-xs text-[color:var(--month-ink-soft)]">
-                            Ist {formatEuro(share.actualExpenseCents)}
-                          </p>
-                        </div>
+                        <span key={share.id} className="month-chip month-chip-neutral">
+                          {formatMonthLabel(share.monthKey)}: {formatEuro(share.plannedAmountCents)}
+                        </span>
                       ))}
                     </div>
                   </div>
@@ -180,18 +157,18 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
             ))}
           </ul>
         )}
-      </section>
+      </details>
 
-      <section className="month-section-panel space-y-4">
-        <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="month-eyebrow">Kategorien</p>
-            <h3 className="month-section-title mt-1">Deaktivierte Kategorien</h3>
-          </div>
+      <details open className="month-section-panel space-y-4">
+        <summary className="archive-section-summary">
+          <span>
+            <span className="month-eyebrow">Kategorien</span>
+            <span className="month-section-title mt-1 block">Archivierte Kategorien</span>
+          </span>
           <span className="month-chip month-chip-neutral w-fit">
             {inactiveCategories.length} Eintraege
           </span>
-        </header>
+        </summary>
 
         {inactiveCategories.length === 0 ? (
           <p className="rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/75 px-4 py-6 text-sm text-[color:var(--month-ink-soft)]">
@@ -226,7 +203,7 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
             ))}
           </ul>
         )}
-      </section>
+      </details>
     </section>
   );
 }

@@ -104,7 +104,7 @@ describe("budgets page simplification", () => {
     expect(pageSource).toContain("updateBudgetSpecialBudgetStateAction");
     expect(actionSource).toContain("updateBudgetSpecialBudgetStateAction");
     expect(actionSource).toContain("setSpecialBudgetProjectActive(specialBudgetProjectId, false)");
-    expect(editorSource).toContain('value="deactivateProject"');
+    expect(editorSource).toContain("deactivateProject:");
   });
 
   it("adds dedicated styling for the simplified surface", () => {
