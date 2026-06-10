@@ -93,7 +93,6 @@ describe("budgets page simplification", () => {
     expect(pageSource).toContain("createBudgetSpecialBudgetAction");
     expect(pageSource).toContain("listCategories().filter((category) => category.isActive)");
     expect(pageSource).toContain("listActiveSpecialBudgetProjects()");
-    expect(pageSource).toContain("specialBudgetAction={updateBudgetSpecialBudgetStateAction}");
     expect(pageSource).toContain("specialBudgets={specialBudgets}");
     expect(editorSource).toContain("function SpecialBudgetList");
     expect(editorSource).toContain("budget-special-pot-card");
@@ -101,10 +100,9 @@ describe("budgets page simplification", () => {
     expect(pageSource).not.toContain('triggerLabel="Sonderbudget anlegen"');
     expect(pageSource).not.toContain("aktive Monatstoepfe");
     expect(cssSource).not.toContain(".budget-special-panel");
-    expect(pageSource).toContain("updateBudgetSpecialBudgetStateAction");
     expect(actionSource).toContain("updateBudgetSpecialBudgetStateAction");
     expect(actionSource).toContain("setSpecialBudgetProjectActive(specialBudgetProjectId, false)");
-    expect(editorSource).toContain("deactivateProject:");
+    expect(editorSource).toContain("deactivateSpecialBudgetProjectId");
   });
 
   it("adds dedicated styling for the simplified surface", () => {

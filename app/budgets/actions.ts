@@ -223,47 +223,60 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
   let redirectTarget = "/budgets";
 
   try {
-    const categoryIds = parseCategoryIds(formData);
+    const deactivatedSpecialBudgetProjectId = toSingleString(
+      formData.get("deactivateSpecialBudgetProjectId"),
+    ).trim();
 
-    if (categoryIds.length === 0) {
-      throw new Error("Keine Kategorien zum Speichern gefunden.");
-    }
+    if (deactivatedSpecialBudgetProjectId.length > 0) {
+      setSpecialBudgetProjectActive(
+        parseSpecialBudgetProjectId(deactivatedSpecialBudgetProjectId),
+        false,
+      );
+      refreshBudgetPaths();
+      redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget deaktiviert.")}`;
+    } else {
+      const categoryIds = parseCategoryIds(formData);
 
-    for (const categoryId of categoryIds) {
-      const budgetAmount = toSingleString(formData.get(`budgetAmount-${categoryId}`));
-
-      validateOptionalBudgetAmount(budgetAmount);
-      updateCategory(categoryId, {
-        name: toSingleString(formData.get(`name-${categoryId}`)),
-        colorHex: toOptionalString(formData.get(`colorHex-${categoryId}`)),
-        iconName: toOptionalString(formData.get(`iconName-${categoryId}`)),
-        isDefault: formData.get(`isDefault-${categoryId}`) === "on",
-      });
-      setCategoryActive(categoryId, formData.get(`isActive-${categoryId}`) === "on");
-      setCategoryDefaultBudget(categoryId, budgetAmount);
-    }
-
-    for (const projectId of parseSpecialBudgetProjectIds(formData)) {
-      const shareIds = parseProjectShareIds(formData, projectId);
-
-      if (shareIds.length === 0) {
-        continue;
+      if (categoryIds.length === 0) {
+        throw new Error("Keine Kategorien zum Speichern gefunden.");
       }
 
-      updateSpecialBudgetProject({
-        projectId,
-        iconName: toOptionalString(formData.get(`specialBudgetIconName-${projectId}`)),
-        shares: shareIds.map((shareId) => ({
-          id: shareId,
-          plannedAmountCents: parsePlannedAmountCents(
-            toSingleString(formData.get(`plannedAmount-${shareId}`)),
-          ),
-        })),
-      });
-    }
+      for (const categoryId of categoryIds) {
+        const budgetAmount = toSingleString(formData.get(`budgetAmount-${categoryId}`));
 
-    refreshBudgetPaths();
-    redirectTarget = `/budgets?notice=${encodeMessage("Budgetpflege gespeichert.")}`;
+        validateOptionalBudgetAmount(budgetAmount);
+        updateCategory(categoryId, {
+          name: toSingleString(formData.get(`name-${categoryId}`)),
+          colorHex: toOptionalString(formData.get(`colorHex-${categoryId}`)),
+          iconName: toOptionalString(formData.get(`iconName-${categoryId}`)),
+          isDefault: formData.get(`isDefault-${categoryId}`) === "on",
+        });
+        setCategoryActive(categoryId, formData.get(`isActive-${categoryId}`) === "on");
+        setCategoryDefaultBudget(categoryId, budgetAmount);
+      }
+
+      for (const projectId of parseSpecialBudgetProjectIds(formData)) {
+        const shareIds = parseProjectShareIds(formData, projectId);
+
+        if (shareIds.length === 0) {
+          continue;
+        }
+
+        updateSpecialBudgetProject({
+          projectId,
+          iconName: toOptionalString(formData.get(`specialBudgetIconName-${projectId}`)),
+          shares: shareIds.map((shareId) => ({
+            id: shareId,
+            plannedAmountCents: parsePlannedAmountCents(
+              toSingleString(formData.get(`plannedAmount-${shareId}`)),
+            ),
+          })),
+        });
+      }
+
+      refreshBudgetPaths();
+      redirectTarget = `/budgets?notice=${encodeMessage("Budgetpflege gespeichert.")}`;
+    }
   } catch (error) {
     redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }

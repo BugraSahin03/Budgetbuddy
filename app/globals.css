@@ -1505,6 +1505,12 @@ select.month-action-input {
   gap: 1rem;
   justify-content: space-between;
   list-style: none;
+  padding-right: 3rem;
+  position: relative;
+}
+
+.archive-section-summary::marker {
+  content: "";
 }
 
 .archive-section-summary::-webkit-details-marker {
@@ -1523,6 +1529,9 @@ select.month-action-input {
   font-weight: 950;
   height: 2rem;
   justify-content: center;
+  position: absolute;
+  right: 0;
+  top: 0.1rem;
   transition: transform 160ms ease;
   width: 2rem;
 }

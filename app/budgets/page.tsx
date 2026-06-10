@@ -2,7 +2,6 @@ import {
   createBudgetCategoryAction,
   createBudgetSpecialBudgetAction,
   updateBudgetCategoriesAction,
-  updateBudgetSpecialBudgetStateAction,
 } from "@/app/budgets/actions";
 import { BudgetCareEditor } from "@/app/budgets/budget-care-editor";
 import { BudgetCreateTabs } from "@/app/budgets/budget-create-tabs";
@@ -197,7 +196,6 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
         <BudgetCareEditor
           action={updateBudgetCategoriesAction}
           categories={editorCategories}
-          specialBudgetAction={updateBudgetSpecialBudgetStateAction}
           specialBudgets={specialBudgets}
         />
       </section>

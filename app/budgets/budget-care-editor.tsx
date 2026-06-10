@@ -19,7 +19,6 @@ type BudgetEditorCategory = {
 type BudgetCareEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
   categories: BudgetEditorCategory[];
-  specialBudgetAction: (formData: FormData) => void | Promise<void>;
   specialBudgets: BudgetEditorSpecialBudget[];
 };
 
@@ -78,7 +77,6 @@ function formatMonthLabel(monthKey: string): string {
 export function BudgetCareEditor({
   action,
   categories,
-  specialBudgetAction,
   specialBudgets,
 }: BudgetCareEditorProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -198,7 +196,6 @@ export function BudgetCareEditor({
               ))}
             </div>
             <SpecialBudgetList
-              action={specialBudgetAction}
               isEditing={true}
               specialBudgets={specialBudgets}
             />
@@ -255,7 +252,6 @@ export function BudgetCareEditor({
           ))}
         </div>
         <SpecialBudgetList
-          action={specialBudgetAction}
           isEditing={false}
           specialBudgets={specialBudgets}
         />
@@ -265,11 +261,9 @@ export function BudgetCareEditor({
 }
 
 function SpecialBudgetList({
-  action,
   isEditing,
   specialBudgets,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
   isEditing: boolean;
   specialBudgets: BudgetEditorSpecialBudget[];
 }) {
@@ -345,9 +339,8 @@ function SpecialBudgetList({
                 </div>
                 <button
                   type="submit"
-                  formAction={action}
-                  name="intent"
-                  value={`deactivateProject:${budget.projectId}`}
+                  name="deactivateSpecialBudgetProjectId"
+                  value={budget.projectId}
                   className="budget-secondary-action budget-special-deactivate-action"
                 >
                   Deaktivieren
