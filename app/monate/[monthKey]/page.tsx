@@ -278,7 +278,7 @@ function ReferenceMetricCard({
   label: string;
   value: string;
   copy: string;
-  tone: "income" | "expense" | "plan";
+  tone: "income" | "expense" | "savings" | "plan";
   marker: string;
   action?: ReactNode;
   actionClassName?: string;
@@ -286,12 +286,14 @@ function ReferenceMetricCard({
   const toneClasses = {
     income: "bg-[#8bf0df] text-[#055c52]",
     expense: "bg-[#74171d] text-white",
+    savings: "bg-[#d9f7b5] text-[#365f08]",
     plan: "bg-[#d7edf8] text-[color:var(--month-ink)]",
   }[tone];
 
   const valueClass = {
     income: "text-[#08766b]",
     expense: "text-[#f17680]",
+    savings: "text-[#4f7d12]",
     plan: "text-[color:var(--month-ink)]",
   }[tone];
 
@@ -473,7 +475,7 @@ export default async function MonthDetailPage({
         </section>
       ) : null}
 
-      <section className="grid gap-6 md:grid-cols-3">
+      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
         <ReferenceMetricCard
           label="Einnahmen"
           value={formatEuro(month.dashboard.totals.incomeCents)}
@@ -520,6 +522,13 @@ export default async function MonthDetailPage({
               </div>
             </MonthDialog>
           }
+        />
+        <ReferenceMetricCard
+          label="Gespart"
+          value={formatEuro(month.dashboard.totals.savingsCents)}
+          copy="Echte Buchungen der Kategorie Sparen."
+          tone="savings"
+          marker="↟"
         />
         <ReferenceMetricCard
           label="Rest nach Planung"

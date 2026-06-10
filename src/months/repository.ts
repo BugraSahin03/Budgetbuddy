@@ -5,6 +5,7 @@ import {
   listMonthlyBudgetCategories,
   type MonthlyBudgetCategoryRow,
 } from "@/src/budgets/repository";
+import { getSavingsActualCents } from "@/src/categories/repository";
 import { listFixedCosts } from "@/src/fixed-costs/repository";
 import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
 import { listActiveImportRules } from "@/src/import-rules/repository";
@@ -69,6 +70,7 @@ export type MonthTotals = {
   monthKey: string;
   incomeCents: number;
   expenseCents: number;
+  savingsCents: number;
   plannedFixedCostsCents: number;
   actualFixedCostsCents: number;
   availableCents: number;
@@ -441,6 +443,7 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
     normalizedMonthKey,
     actualFixedCostsCents,
   );
+  const savingsCents = getSavingsActualCents(normalizedMonthKey);
   const plannedFixedCostsCents = getPlannedFixedCostsCents();
   const cashBalanceCents = getCashAccountSnapshot().currentBalanceCents;
   const categoryRows = listMonthlyBudgetCategories(normalizedMonthKey);
@@ -456,6 +459,7 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
       monthKey: normalizedMonthKey,
       incomeCents,
       expenseCents,
+      savingsCents,
       plannedFixedCostsCents,
       actualFixedCostsCents,
       availableCents: incomeCents - expenseCents - plannedFixedCostsCents,

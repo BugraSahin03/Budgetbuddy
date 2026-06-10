@@ -1339,3 +1339,20 @@ Auswirkung:
 - Zukuenftige Auswertungen koennen Sparbuchungen stabil ueber den Systemschluessel separat von Konsumausgaben erkennen.
 - Es entsteht keine neue Transfer-, Sparziel- oder automatische Importregel-Logik.
 - Die Entscheidung ist in `docs/adr/0006-protected-savings-category.md` festgehalten.
+
+## 2026-06-10 - FIN-068 zeigt tatsaechlich gesparten Betrag als Monats-KPI
+
+Quelle/Ticket: `FIN-068`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsansicht zeigt eine eigene KPI-Kachel `Gespart`.
+- Die Kachel bleibt auch bei `0 EUR` sichtbar, damit die KPI-Zeile stabil bleibt.
+- Der Wert kommt ausschliesslich aus echten Ausgaben, die der geschuetzten Kategorie `Sparen` zugeordnet sind.
+- Manuelle und importierte Sparbuchungen zaehlen gleich.
+- Der KPI wird nicht aus `Einnahmen - Ausgaben`, `Rest nach Planung` oder einem Planwert berechnet.
+
+Auswirkung:
+
+- Sparbuchungen bleiben weiterhin budgetwirksame Ausgaben und reduzieren die Monatsverfuegbarkeit.
+- Die neue Kachel macht Sparen sichtbar, ohne Sparziele, Transferlogik oder automatische Importerkennung einzufuehren.

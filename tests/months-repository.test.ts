@@ -229,6 +229,9 @@ describe("months repository", () => {
     const einkaufId = (
       db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
     ).id;
+    const savingsId = (
+      db.prepare("SELECT id FROM categories WHERE system_key = 'savings'").get() as { id: number }
+    ).id;
 
     db.prepare(
       `
@@ -256,21 +259,43 @@ describe("months repository", () => {
         ) VALUES
           (?, NULL, 'income', '2031-05-03', '2031-05', 250000, 'EUR', 'Gehalt', 'manual', NULL, NULL),
           (?, NULL, 'expense', '2031-05-10', '2031-05', -4200, 'EUR', 'Supermarkt', 'manual', ?, NULL),
-          (?, NULL, 'expense', '2031-05-15', '2031-05', -1800, 'EUR', 'Museumsbesuch', 'manual', NULL, ?)
+          (?, NULL, 'expense', '2031-05-15', '2031-05', -1800, 'EUR', 'Museumsbesuch', 'manual', NULL, ?),
+          (?, NULL, 'expense', '2031-05-18', '2031-05', -5000, 'EUR', 'Sparrate', 'manual', ?, NULL),
+          (?, NULL, 'expense', '2031-05-19', '2031-05', -1250, 'EUR', 'Importierte Sparrate', 'import', ?, NULL),
+          (?, NULL, 'expense', '2031-06-01', '2031-06', -9900, 'EUR', 'Sparrate Folgemonat', 'manual', ?, NULL)
       `,
-    ).run(sparkasseId, sparkasseId, einkaufId, sparkasseId, specialBudgetId);
+    ).run(
+      sparkasseId,
+      sparkasseId,
+      einkaufId,
+      sparkasseId,
+      specialBudgetId,
+      sparkasseId,
+      savingsId,
+      sparkasseId,
+      savingsId,
+      sparkasseId,
+      savingsId,
+    );
 
     const snapshot = getMonthSnapshot("2031-05");
 
     expect(snapshot.totals.monthKey).toBe("2031-05");
     expect(snapshot.totals.incomeCents).toBe(250000);
+    expect(snapshot.totals.expenseCents).toBe(12250);
+    expect(snapshot.totals.savingsCents).toBe(6250);
     expect(snapshot.categoryRows.find((row) => row.categoryName === "Einkauf")?.spentAmountCents).toBe(
       4200,
+    );
+    expect(snapshot.categoryRows.find((row) => row.categoryName === "Sparen")?.spentAmountCents).toBe(
+      6250,
     );
     expect(snapshot.specialBudgetRows.find((row) => row.name === "Mai Reise")?.actualExpenseCents).toBe(
       1800,
     );
     expect(snapshot.transactions.map((transaction) => transaction.description)).toEqual([
+      "Importierte Sparrate",
+      "Sparrate",
       "Museumsbesuch",
       "Supermarkt",
       "Gehalt",
