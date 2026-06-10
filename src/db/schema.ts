@@ -649,6 +649,61 @@ ON transactions(special_budget_id);
 PRAGMA foreign_keys = ON;
 `;
 
+const fin065MigrationSql = `
+CREATE TABLE IF NOT EXISTS special_budget_projects (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'archived')),
+  note TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+ALTER TABLE special_budgets
+ADD COLUMN project_id INTEGER REFERENCES special_budget_projects(id) ON DELETE RESTRICT;
+
+INSERT INTO special_budget_projects (
+  name,
+  status,
+  note,
+  created_at,
+  updated_at
+)
+SELECT
+  sb.name,
+  CASE
+    WHEN MAX(sb.is_active) = 1 THEN 'active'
+    ELSE 'archived'
+  END AS status,
+  (
+    SELECT inner_sb.note
+    FROM special_budgets inner_sb
+    WHERE inner_sb.name = sb.name
+      AND inner_sb.note IS NOT NULL
+    ORDER BY inner_sb.month_key DESC, inner_sb.id DESC
+    LIMIT 1
+  ) AS note,
+  MIN(sb.created_at) AS created_at,
+  CURRENT_TIMESTAMP AS updated_at
+FROM special_budgets sb
+GROUP BY sb.name;
+
+UPDATE special_budgets
+SET project_id = (
+  SELECT sbp.id
+  FROM special_budget_projects sbp
+  WHERE sbp.name = special_budgets.name
+  LIMIT 1
+)
+WHERE project_id IS NULL;
+
+CREATE INDEX IF NOT EXISTS idx_special_budgets_project_id
+ON special_budgets(project_id);
+
+CREATE INDEX IF NOT EXISTS idx_special_budget_projects_status
+ON special_budget_projects(status);
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -689,6 +744,11 @@ export const migrations: readonly Migration[] = [
     id: "0008_fin_040",
     name: "FIN-040 allow imported expenses to be assigned later in month context",
     sql: fin040MigrationSql,
+  },
+  {
+    id: "0009_fin_065",
+    name: "FIN-065 group special budgets into multi-month projects",
+    sql: fin065MigrationSql,
   },
 ];
 

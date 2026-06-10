@@ -5,6 +5,13 @@ const GLOBAL_SETTINGS = [
     href: "/einstellungen/import-aliase",
     title: "Import-Aliasse",
     meta: "Anzeigenamen",
+    icon: "⚙",
+  },
+  {
+    href: "/einstellungen/sonderbudget-archiv",
+    title: "Sonderbudget-Archiv",
+    meta: "Historie",
+    icon: "◎",
   },
 ] as const;
 
@@ -40,7 +47,7 @@ export default function SettingsPage() {
             >
               <div className="grid min-h-32 grid-cols-[6.5rem_minmax(0,1fr)]">
                 <span className="flex h-full items-center justify-center bg-sky-100/85 text-5xl font-black leading-none text-[#0f4c6d] transition group-hover:bg-sky-100">
-                    &#9881;
+                  {setting.icon}
                 </span>
                 <div className="flex items-center justify-between gap-3 p-4">
                   <div>

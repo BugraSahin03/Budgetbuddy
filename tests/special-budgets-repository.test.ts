@@ -15,6 +15,10 @@ function cleanupSpecialBudgets(): void {
     .getDb()
     .prepare("DELETE FROM special_budgets WHERE name LIKE ?")
     .run(`${TEST_NAME_PREFIX}%`);
+  dbClient
+    .getDb()
+    .prepare("DELETE FROM special_budget_projects WHERE name LIKE ?")
+    .run(`${TEST_NAME_PREFIX}%`);
 }
 
 beforeAll(async () => {
@@ -45,6 +49,34 @@ describe("special budgets repository", () => {
     expect(created?.plannedAmountCents).toBe(12000);
     expect(created?.actualExpenseCents).toBe(0);
     expect(created?.isActive).toBe(true);
+    expect(created?.projectId).toEqual(expect.any(Number));
+    expect(created?.projectStatus).toBe("active");
+  });
+
+  it("groups same-name monthly shares into one multi-month project", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudget({
+      name: `${TEST_NAME_PREFIX}Computer`,
+      monthKey: "2026-05",
+      plannedAmountCents: 30000,
+      note: "Teil 1",
+    });
+    repository.createSpecialBudget({
+      name: `${TEST_NAME_PREFIX}Computer`,
+      monthKey: "2026-06",
+      plannedAmountCents: 30000,
+      note: "Teil 2",
+    });
+
+    const shares = repository
+      .listSpecialBudgets()
+      .filter((budget) => budget.name === `${TEST_NAME_PREFIX}Computer`);
+
+    expect(shares).toHaveLength(2);
+    expect(new Set(shares.map((budget) => budget.projectId)).size).toBe(1);
+    expect(shares[0]?.projectMonthCount).toBe(2);
+    expect(shares[0]?.projectPlannedAmountCents).toBe(60000);
   });
 
   it("returns active options only for the selected month", () => {
@@ -74,6 +106,55 @@ describe("special budgets repository", () => {
 
     const optionsAfterDeactivate = repository.listActiveSpecialBudgetOptions("2026-07");
     expect(optionsAfterDeactivate.some((option) => option.id === created.id)).toBe(false);
+  });
+
+  it("archives projects when all monthly shares are inactive and can reactivate the latest share", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudget({
+      name: `${TEST_NAME_PREFIX}ArchiveMe`,
+      monthKey: "2026-05",
+      plannedAmountCents: 30000,
+      note: "",
+    });
+    repository.createSpecialBudget({
+      name: `${TEST_NAME_PREFIX}ArchiveMe`,
+      monthKey: "2026-08",
+      plannedAmountCents: 40000,
+      note: "",
+    });
+
+    const createdShares = repository
+      .listSpecialBudgets()
+      .filter((budget) => budget.name === `${TEST_NAME_PREFIX}ArchiveMe`);
+    const projectId = createdShares[0]?.projectId;
+
+    expect(projectId).toEqual(expect.any(Number));
+
+    for (const share of createdShares) {
+      repository.setSpecialBudgetActive(share.id, false);
+    }
+
+    const archived = repository
+      .listArchivedSpecialBudgetProjects()
+      .find((project) => project.projectId === projectId);
+
+    expect(archived?.monthCount).toBe(2);
+    expect(archived?.plannedAmountCents).toBe(70000);
+
+    if (!projectId) {
+      return;
+    }
+
+    repository.reactivateSpecialBudgetProject(projectId);
+
+    const reactivatedShares = repository
+      .listSpecialBudgets()
+      .filter((budget) => budget.projectId === projectId);
+    const latestShare = reactivatedShares.find((budget) => budget.monthKey === "2026-08");
+
+    expect(latestShare?.isActive).toBe(true);
+    expect(repository.listArchivedSpecialBudgetProjects().some((project) => project.projectId === projectId)).toBe(false);
   });
 
   it("validates month key and prevents duplicates in one month", () => {

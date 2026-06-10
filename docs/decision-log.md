@@ -1248,3 +1248,23 @@ Auswirkung:
 - Die Kennzahl bleibt bewusst ein Plan-/Bauchgefuehl und ersetzt nicht den aktuellen Budgetstand aus FIN-063.
 - Fixkosten bleiben in dieser Kennzahl bewusst ausgeschlossen; eine spaetere Erweiterung muesste fachlich separat entschieden werden.
 - Monate ohne aktive Sonderbudgets zeigen keine Sonderbudget-Gruppe im Budgettopfbereich.
+
+## 2026-06-10 - FIN-065 buendelt Sonderbudgets als mehrmonatige Vorhaben
+
+Quelle/Ticket: `FIN-065`
+
+Erkenntnis/Entscheidung:
+
+- Mehrmonatige Sonderbudgets werden als uebergeordnetes Vorhaben mit konkreten Monatsanteilen modelliert.
+- `special_budget_projects` beschreibt das Vorhaben; `special_budgets` bleiben die Monatsanteile mit Planbetrag, Monat und Aktiv-Status.
+- Transaktionen referenzieren weiterhin den konkreten Monatsanteil, damit historische Zuordnungen stabil bleiben.
+- Gleiche Sonderbudget-Namen in unterschiedlichen Monaten werden als dasselbe Vorhaben zusammengefuehrt.
+- Ein Vorhaben wird archiviert, wenn kein Monatsanteil mehr aktiv ist; das Archiv liegt unter `Einstellungen`.
+- Reaktivieren aktiviert das Vorhaben und den juengsten Monatsanteil wieder.
+
+Auswirkung:
+
+- Aktive Sonderbudget-Monatsanteile bleiben in der normalen Budgetpflege sichtbar.
+- Archivierte Vorhaben ueberladen die Budgetpflege nicht, bleiben aber nachvollziehbar.
+- Sonderbudget-Abgaenge bleiben Ausgaben; es entsteht keine automatische Spar-, Transfer- oder Umbuchungslogik.
+- Die Entscheidung ist in `docs/adr/0005-multimonth-special-budget-projects.md` festgehalten.

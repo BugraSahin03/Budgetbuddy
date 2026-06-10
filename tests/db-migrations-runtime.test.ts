@@ -35,6 +35,7 @@ describe("database migrations runtime behavior", () => {
               'accounts',
               'categories',
               'monthly_category_budgets',
+              'special_budget_projects',
               'special_budgets',
               'fixed_costs',
               'import_runs',
@@ -53,9 +54,60 @@ describe("database migrations runtime behavior", () => {
       "import_runs",
       "imported_transactions",
       "monthly_category_budgets",
+      "special_budget_projects",
       "special_budgets",
       "transactions",
     ]);
+  });
+
+  it("stores special budget monthly shares under a project", () => {
+    const project = db
+      .prepare(
+        `
+          SELECT
+            sbp.name,
+            sbp.status,
+            COUNT(sb.id) AS monthCount
+          FROM special_budget_projects sbp
+          INNER JOIN special_budgets sb ON sb.project_id = sbp.id
+          GROUP BY sbp.id, sbp.name, sbp.status
+        `,
+      )
+      .get() as { name: string; status: string; monthCount: number } | undefined;
+
+    expect(project).toBeUndefined();
+
+    db.prepare(
+      `
+        INSERT INTO special_budget_projects (name, status)
+        VALUES ('Test Vorhaben', 'active')
+      `,
+    ).run();
+
+    const projectId = (db
+      .prepare("SELECT id FROM special_budget_projects WHERE name = 'Test Vorhaben'")
+      .get() as { id: number }).id;
+
+    db.prepare(
+      `
+        INSERT INTO special_budgets (project_id, name, month_key, planned_amount_cents, is_active)
+        VALUES (?, 'Test Vorhaben', '2030-01', 10000, 1)
+      `,
+    ).run(projectId);
+
+    const row = db
+      .prepare(
+        `
+          SELECT sb.project_id AS projectId, sbp.status
+          FROM special_budgets sb
+          INNER JOIN special_budget_projects sbp ON sbp.id = sb.project_id
+          WHERE sb.name = 'Test Vorhaben'
+        `,
+      )
+      .get() as { projectId: number; status: string };
+
+    expect(row.projectId).toBe(projectId);
+    expect(row.status).toBe("active");
   });
 
   it("enforces expense assignment constraint", () => {

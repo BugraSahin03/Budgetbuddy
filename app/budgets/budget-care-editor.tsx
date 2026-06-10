@@ -25,6 +25,10 @@ type BudgetCareEditorProps = {
 
 type BudgetEditorSpecialBudget = {
   id: number;
+  projectId: number | null;
+  projectMonthCount: number;
+  projectPlannedAmountCents: number;
+  projectActualExpenseCents: number;
   name: string;
   monthKey: string;
   plannedAmountCents: number;
@@ -286,6 +290,12 @@ function SpecialBudgetList({
                   <h3>{budget.name}</h3>
                 </div>
                 <p>{formatMonthLabel(budget.monthKey)}</p>
+                {budget.projectMonthCount > 1 ? (
+                  <p>
+                    Vorhaben mit {budget.projectMonthCount} Monatsanteilen · Gesamt{" "}
+                    {formatEuro(budget.projectPlannedAmountCents)}
+                  </p>
+                ) : null}
                 {budget.note ? <p>{budget.note}</p> : null}
               </div>
             </div>

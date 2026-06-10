@@ -187,20 +187,30 @@ function getActiveSpecialBudgetById(specialBudgetId: number): {
   id: number;
   monthKey: string;
   isActive: number;
+  projectStatus: "active" | "archived";
 } {
   const specialBudget = getDb()
     .prepare(
-      "SELECT id, month_key AS monthKey, is_active AS isActive FROM special_budgets WHERE id = ?",
+      `
+        SELECT
+          sb.id,
+          sb.month_key AS monthKey,
+          sb.is_active AS isActive,
+          COALESCE(sbp.status, 'active') AS projectStatus
+        FROM special_budgets sb
+        LEFT JOIN special_budget_projects sbp ON sbp.id = sb.project_id
+        WHERE sb.id = ?
+      `,
     )
     .get(specialBudgetId) as
-    | { id: number; monthKey: string; isActive: number }
+    | { id: number; monthKey: string; isActive: number; projectStatus: "active" | "archived" }
     | undefined;
 
   if (!specialBudget) {
     throw new Error("Sonderbudget wurde nicht gefunden.");
   }
 
-  if (specialBudget.isActive !== 1) {
+  if (specialBudget.isActive !== 1 || specialBudget.projectStatus !== "active") {
     throw new Error("Sonderbudget ist deaktiviert und nicht auswaehlbar.");
   }
 
@@ -431,13 +441,15 @@ export function listActiveSpecialBudgetOptionsForMonth(
     .prepare(
       `
         SELECT
-          id,
-          name,
-          month_key AS monthKey
+          special_budgets.id,
+          special_budgets.name,
+          special_budgets.month_key AS monthKey
         FROM special_budgets
-        WHERE is_active = 1
-          AND month_key = ?
-        ORDER BY name COLLATE NOCASE ASC
+        LEFT JOIN special_budget_projects sbp ON sbp.id = special_budgets.project_id
+        WHERE special_budgets.is_active = 1
+          AND COALESCE(sbp.status, 'active') = 'active'
+          AND special_budgets.month_key = ?
+        ORDER BY special_budgets.name COLLATE NOCASE ASC
       `,
     )
     .all(monthKey) as SpecialBudgetOption[];

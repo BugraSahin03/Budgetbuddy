@@ -97,7 +97,7 @@ Eine App, die:
 - Buchungen automatisch oder halbautomatisch Kategorien zuordnet
 - manuelle Barzahlungen und Sonderfaelle erlaubt
 - feste Kategorien jeden Monat wiederverwendet
-- Sonderbudgets pro Monat erlaubt
+- Sonderbudgets pro Monat oder mehrmonatigem Vorhaben erlaubt
 - Fixkosten separat plant
 - Bargeldbestand nachvollziehbar fuehrt
 - Monats-, Kategorie- und Trend-Auswertungen bietet
@@ -138,16 +138,16 @@ Startliste fuer den MVP (festgelegt am 2026-04-26):
 
 ### Sonderbudgets
 
-Sonderbudgets sind konkrete, monatlich angelegte Ausgabeziele. Beispiele:
+Sonderbudgets sind konkrete Ausgabeziele fuer einen Monat oder ein mehrmonatiges Vorhaben. Beispiele:
 
 - Raspberry Pi
 - Bali Flug
 - SSD
 - Arzt Rechnung
 
-Wichtig: Sonderbudgets sind direkte Ausgaben, keine reinen virtuellen Sparziele. Wenn eine echte Zahlung existiert, wird diese Ausgabe dem Sonderbudget zugeordnet.
+Wichtig: Sonderbudgets sind direkte Ausgaben, keine reinen virtuellen Sparziele. Wenn eine echte Zahlung existiert, wird diese Ausgabe dem konkreten Sonderbudget-Monatsanteil zugeordnet.
 
-Sonderbudgets sind nur fuer bestimmte Monate aktiv. Sie sollen neben festen Kategorien auftauchen und separat auswertbar sein.
+Sonderbudgets sind nur fuer bestimmte Monate oder Zeitraeume aktiv. Mehrmonatige Vorhaben buendeln mehrere Monatsanteile, bleiben aber von Kategorien, Transfers und spaeterer Sparlogik getrennt. Erledigte Vorhaben werden archiviert und nicht in der normalen Budgetpflege angezeigt.
 
 ### Jede Ausgabe braucht eine Zuordnung
 
