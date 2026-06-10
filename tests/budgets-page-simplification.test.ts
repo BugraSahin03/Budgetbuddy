@@ -89,6 +89,14 @@ describe("budgets page simplification", () => {
     expect(editorSource).not.toContain("Kein Standardwert");
   });
 
+  it("keeps savings protected while allowing only icon editing", () => {
+    expect(editorSource).toContain("category.isSavings");
+    expect(editorSource).toContain('name={`name-${category.id}`} value={category.name}');
+    expect(editorSource).toContain('name={`budgetAmount-${category.id}`} value=""');
+    expect(editorSource).toContain('name={`iconName-${category.id}`}');
+    expect(editorSource).toContain("Sparen ist geschuetzt; nur das Icon ist editierbar.");
+  });
+
   it("keeps special budgets visible as marked monthly pots", () => {
     expect(editorSource).toContain("Sonderbudgets");
     expect(pageSource).toContain("createBudgetSpecialBudgetAction");
