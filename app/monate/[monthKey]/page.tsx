@@ -67,10 +67,6 @@ function categoryVisualById(
   );
 }
 
-function categoryMarkVariant(category: CategoryVisual | undefined): "accent" | "neutral" {
-  return category?.isSavings ? "accent" : "neutral";
-}
-
 function toSingleParam(value: string | string[] | undefined): string | null {
   if (typeof value === "string") {
     return value;
@@ -211,7 +207,7 @@ function TransactionVisualMark({
         iconName={category?.iconName}
         colorHex={category?.colorHex}
         className="h-10 w-10 text-xs"
-        variant={categoryMarkVariant(category)}
+        variant="neutral"
       />
     );
   }
@@ -613,9 +609,8 @@ export default async function MonthDetailPage({
                                   <CategoryVisualMark
                                     name={category?.name ?? row.categoryName}
                                     iconName={category?.iconName}
-                                    colorHex={category?.colorHex}
                                     className="h-11 w-11 text-sm"
-                                    variant={categoryMarkVariant(category)}
+                                    variant="neutral"
                                   />
                                   <div className="min-w-0">
                                     <h4 className="truncate text-base font-extrabold tracking-[-0.03em] text-[color:var(--month-ink)]">
@@ -816,6 +811,7 @@ export default async function MonthDetailPage({
                   const hasPlannedBudget =
                     row.budgetAmountCents !== null &&
                     row.budgetAmountCents > 0;
+                  const isSavingsCategory = category?.isSavings === true;
 
                   return (
                     <div key={row.categoryId} className="grid gap-3">
@@ -823,9 +819,8 @@ export default async function MonthDetailPage({
                         <CategoryVisualMark
                           name={category?.name ?? row.categoryName}
                           iconName={category?.iconName}
-                          colorHex={category?.colorHex}
                           className="h-12 w-12 text-sm"
-                          variant={categoryMarkVariant(category)}
+                          variant="neutral"
                         />
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-3">
@@ -845,18 +840,20 @@ export default async function MonthDetailPage({
                               }}
                             />
                           </div>
-                          <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-                            <span>
-                              {!hasPlannedBudget
-                                ? "Budget fehlt"
-                                : `${usageState.percent}% genutzt`}
-                            </span>
-                            <span>
-                              {!hasPlannedBudget
-                                ? "Kein Planwert"
-                                : `Plan ${formatEuro(row.budgetAmountCents ?? 0)}`}
-                            </span>
-                          </div>
+                          {!isSavingsCategory ? (
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
+                              <span>
+                                {!hasPlannedBudget
+                                  ? "Budget fehlt"
+                                  : `${usageState.percent}% genutzt`}
+                              </span>
+                              <span>
+                                {!hasPlannedBudget
+                                  ? "Kein Planwert"
+                                  : `Plan ${formatEuro(row.budgetAmountCents ?? 0)}`}
+                              </span>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>

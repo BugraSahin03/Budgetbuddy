@@ -22,11 +22,19 @@ describe("FIN-068 month savings KPI UI", () => {
     expect(page).not.toContain("incomeCents - expenseCents");
   });
 
-  it("keeps savings visually accented in month category marks", () => {
+  it("keeps category marks neutral so savings is not singled out in category lists", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
 
-    expect(page).toContain("function categoryMarkVariant");
-    expect(page).toContain("category?.isSavings ? \"accent\" : \"neutral\"");
-    expect(page).toContain("variant={categoryMarkVariant(category)}");
+    expect(page).toContain('variant="neutral"');
+    expect(page).not.toContain("categoryMarkVariant");
+  });
+
+  it("hides missing plan copy for savings in the category overview", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+
+    expect(page).toContain("const isSavingsCategory = category?.isSavings === true");
+    expect(page).toContain("{!isSavingsCategory ? (");
+    expect(page).toContain("Budget fehlt");
+    expect(page).toContain("Kein Planwert");
   });
 });
