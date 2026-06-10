@@ -62,6 +62,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
     toSingleParam(params.monthKey) ??
     selectableMonths[0] ??
     new Date().toISOString().slice(0, 7);
+  const initialIsEditing = toSingleParam(params.edit) === "1";
   const specialBudgets = listActiveSpecialBudgetProjects();
   const editorCategories = categories.map((category) => ({
     ...category,
@@ -196,6 +197,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
         <BudgetCareEditor
           action={updateBudgetCategoriesAction}
           categories={editorCategories}
+          initialIsEditing={initialIsEditing}
           specialBudgets={specialBudgets}
         />
       </section>

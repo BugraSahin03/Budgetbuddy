@@ -1499,7 +1499,9 @@ select.month-action-input {
 }
 
 .archive-section-summary {
+  -webkit-appearance: none;
   align-items: center;
+  appearance: none;
   cursor: pointer;
   display: flex;
   gap: 1rem;
@@ -1511,10 +1513,13 @@ select.month-action-input {
 
 .archive-section-summary::marker {
   content: "";
+  font-size: 0;
 }
 
 .archive-section-summary::-webkit-details-marker {
   display: none;
+  height: 0;
+  width: 0;
 }
 
 .archive-section-summary::after {

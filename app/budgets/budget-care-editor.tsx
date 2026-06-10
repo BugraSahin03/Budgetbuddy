@@ -19,6 +19,7 @@ type BudgetEditorCategory = {
 type BudgetCareEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
   categories: BudgetEditorCategory[];
+  initialIsEditing?: boolean;
   specialBudgets: BudgetEditorSpecialBudget[];
 };
 
@@ -77,13 +78,10 @@ function formatMonthLabel(monthKey: string): string {
 export function BudgetCareEditor({
   action,
   categories,
+  initialIsEditing = false,
   specialBudgets,
 }: BudgetCareEditorProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [pendingInactiveCategoryIds, setPendingInactiveCategoryIds] = useState<number[]>([]);
-  const visibleCategories = categories.filter(
-    (category) => !pendingInactiveCategoryIds.includes(category.id),
-  );
+  const [isEditing, setIsEditing] = useState(initialIsEditing);
 
   if (isEditing) {
     return (
@@ -109,25 +107,7 @@ export function BudgetCareEditor({
               className="budget-category-editor-form"
             aria-label="Kategorien bearbeiten"
           >
-              {categories.map((category) => {
-                if (!pendingInactiveCategoryIds.includes(category.id)) {
-                  return null;
-                }
-
-                return (
-                  <div key={`inactive-${category.id}`}>
-                    <input type="hidden" name="categoryIds" value={category.id} />
-                    <input type="hidden" name={`colorHex-${category.id}`} value={category.colorHex ?? ""} />
-                    <input type="hidden" name={`budgetAmount-${category.id}`} value={toInputAmount(category.defaultBudgetAmountCents)} />
-                    <input type="hidden" name={`name-${category.id}`} value={category.name} />
-                    <input type="hidden" name={`iconName-${category.id}`} value={category.iconName ?? ""} />
-                    {category.isDefault ? (
-                      <input type="hidden" name={`isDefault-${category.id}`} value="on" />
-                    ) : null}
-                  </div>
-                );
-              })}
-              {visibleCategories.map((category) => (
+              {categories.map((category) => (
                 <article key={category.id} className="budget-pot-card">
                   <input type="hidden" name="categoryIds" value={category.id} />
                   <input type="hidden" name={`colorHex-${category.id}`} value={category.colorHex ?? ""} />
@@ -154,11 +134,10 @@ export function BudgetCareEditor({
                   </div>
 
                   <button
-                    type="button"
+                    type="submit"
+                    name="deactivateCategoryId"
+                    value={category.id}
                     className="budget-secondary-action"
-                    onClick={() =>
-                      setPendingInactiveCategoryIds((currentIds) => [...currentIds, category.id])
-                    }
                   >
                     Deaktivieren
                   </button>

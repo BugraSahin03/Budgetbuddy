@@ -41,7 +41,8 @@ describe("budgets page simplification", () => {
     expect(editorSource).toContain('name={`name-${category.id}`}');
     expect(editorSource).toContain('name={`iconName-${category.id}`}');
     expect(editorSource).toContain("maxLength={2}");
-    expect(editorSource).toContain("pendingInactiveCategoryIds");
+    expect(editorSource).toContain("initialIsEditing");
+    expect(editorSource).toContain("deactivateCategoryId");
     expect(editorSource).toContain("budget-secondary-action");
     expect(editorSource).not.toContain("form={formId}");
     expect(dialogSource).toContain("showModal()");
