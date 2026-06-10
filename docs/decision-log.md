@@ -1265,3 +1265,58 @@ Auswirkung:
 - Es werden keine Routen entfernt und keine fachlichen Bereiche neu zugeschnitten.
 - Die Shell ist wiederverwendbar fuer Dashboard, Monatsansicht, Budgets und spaetere Verwaltungsseiten.
 - Die Entscheidung betrifft nur UI/Shell-Verhalten; Datenmodell, Importlogik und zentrale Fachlogik bleiben unveraendert.
+
+## 2026-06-10 - FIN-065 buendelt Sonderbudgets als mehrmonatige Vorhaben
+
+Quelle/Ticket: `FIN-065`
+
+Erkenntnis/Entscheidung:
+
+- Mehrmonatige Sonderbudgets werden als uebergeordnetes Vorhaben mit konkreten Monatsanteilen modelliert.
+- `special_budget_projects` beschreibt das Vorhaben; `special_budgets` bleiben die Monatsanteile mit Planbetrag, Monat und Aktiv-Status.
+- Transaktionen referenzieren weiterhin den konkreten Monatsanteil, damit historische Zuordnungen stabil bleiben.
+- Gleiche Sonderbudget-Namen in unterschiedlichen Monaten werden als dasselbe Vorhaben zusammengefuehrt.
+- Ein Vorhaben wird archiviert, wenn kein Monatsanteil mehr aktiv ist; das Archiv liegt unter `Einstellungen`.
+- Reaktivieren aktiviert das Vorhaben und den juengsten Monatsanteil wieder.
+
+Auswirkung:
+
+- Aktive Sonderbudget-Monatsanteile bleiben in der normalen Budgetpflege sichtbar.
+- Archivierte Vorhaben ueberladen die Budgetpflege nicht, bleiben aber nachvollziehbar.
+- Sonderbudget-Abgaenge bleiben Ausgaben; es entsteht keine automatische Spar-, Transfer- oder Umbuchungslogik.
+- Die Entscheidung ist in `docs/adr/0005-multimonth-special-budget-projects.md` festgehalten.
+
+## 2026-06-10 - FIN-065 erweitert Archiv um Kategorien und gruppiert Sonderbudget-Vorhaben
+
+Quelle/Ticket: `FIN-065`
+
+Erkenntnis/Entscheidung:
+
+- Deaktivierte Kategorien werden im selben Ticket ueber ein eigenes Kategorie-Archiv unter `Einstellungen` verwaltbar gemacht.
+- Kategorien bleiben fachlich getrennt von Sonderbudgets, nutzen aber dasselbe Archivierungsprinzip: deaktiviert statt geloescht, reaktivierbar, historische Buchungen bleiben gueltig.
+- Die Budgetpflege zeigt mehrmonatige Sonderbudgets nur noch einmal als Vorhaben an.
+- Monatsanteile eines Sonderbudget-Vorhabens werden innerhalb der Karte angezeigt, damit z. B. `Japan` fuer Juni und Juli nicht doppelt wie zwei verschiedene Sonderbudgets wirkt.
+
+Auswirkung:
+
+- `/budgets` bleibt auf aktuelle Budgettoepfe fokussiert und vermeidet doppelte Sonderbudget-Zeilen fuer dasselbe Vorhaben.
+- `/einstellungen/kategorie-archiv` wird der neue Ort fuer deaktivierte Kategorien.
+- `/einstellungen/sonderbudget-archiv` bleibt der Ort fuer archivierte Sonderbudget-Vorhaben.
+
+## 2026-06-10 - FIN-065 fuehrt Kategoriearchiv und Sonderbudgetpflege zusammen
+
+Quelle/Ticket: `FIN-065`
+
+Erkenntnis/Entscheidung:
+
+- Das Kategoriearchiv unter `/einstellungen/kategorie-archiv` wird zur gemeinsamen Archivsicht fuer archivierte Sonderbudget-Vorhaben und deaktivierte Kategorien.
+- Archivierte Sonderbudgets werden dort vor den normalen Kategorien gelistet, damit beide deaktivierten Budgettopf-Arten an einem Ort auffindbar sind.
+- Die separate Route `/einstellungen/sonderbudget-archiv` bleibt als Weiterleitung bestehen, wird aber nicht mehr als eigener Einstellungsbereich beworben.
+- Sonderbudget-Vorhaben erhalten ein optionales Icon auf Projektebene.
+- In der Budgetpflege koennen im Editiermodus die Planbetraege der einzelnen Monatsanteile eines Sonderbudget-Vorhabens angepasst werden.
+
+Auswirkung:
+
+- Nutzer muessen nicht zwischen zwei Archivseiten unterscheiden.
+- Deaktivierte Kategorien zeigen im Archiv nur noch den fachlich relevanten Namen; technische Zaehlwerte wie Buchungen oder Monatswerte werden ausgeblendet.
+- Transaktionszuordnungen bleiben weiterhin am konkreten Sonderbudget-Monatsanteil; die neue Icon-Angabe ist reine Darstellungsmetadaten.

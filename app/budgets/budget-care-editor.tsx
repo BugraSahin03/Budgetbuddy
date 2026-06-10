@@ -19,16 +19,25 @@ type BudgetEditorCategory = {
 type BudgetCareEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
   categories: BudgetEditorCategory[];
-  specialBudgetAction: (formData: FormData) => void | Promise<void>;
+  initialIsEditing?: boolean;
   specialBudgets: BudgetEditorSpecialBudget[];
 };
 
 type BudgetEditorSpecialBudget = {
-  id: number;
+  projectId: number;
   name: string;
-  monthKey: string;
-  plannedAmountCents: number;
+  iconName: string | null;
   note: string | null;
+  monthShares: Array<{
+    id: number;
+    monthKey: string;
+    plannedAmountCents: number;
+    actualExpenseCents: number;
+    isActive: boolean;
+  }>;
+  monthCount: number;
+  plannedAmountCents: number;
+  actualExpenseCents: number;
 };
 
 function toInputAmount(amountCents: number | null): string {
@@ -69,14 +78,10 @@ function formatMonthLabel(monthKey: string): string {
 export function BudgetCareEditor({
   action,
   categories,
-  specialBudgetAction,
+  initialIsEditing = false,
   specialBudgets,
 }: BudgetCareEditorProps) {
-  const [isEditing, setIsEditing] = useState(false);
-  const [pendingInactiveCategoryIds, setPendingInactiveCategoryIds] = useState<number[]>([]);
-  const visibleCategories = categories.filter(
-    (category) => !pendingInactiveCategoryIds.includes(category.id),
-  );
+  const [isEditing, setIsEditing] = useState(initialIsEditing);
 
   if (isEditing) {
     return (
@@ -102,25 +107,7 @@ export function BudgetCareEditor({
               className="budget-category-editor-form"
             aria-label="Kategorien bearbeiten"
           >
-              {categories.map((category) => {
-                if (!pendingInactiveCategoryIds.includes(category.id)) {
-                  return null;
-                }
-
-                return (
-                  <div key={`inactive-${category.id}`}>
-                    <input type="hidden" name="categoryIds" value={category.id} />
-                    <input type="hidden" name={`colorHex-${category.id}`} value={category.colorHex ?? ""} />
-                    <input type="hidden" name={`budgetAmount-${category.id}`} value={toInputAmount(category.defaultBudgetAmountCents)} />
-                    <input type="hidden" name={`name-${category.id}`} value={category.name} />
-                    <input type="hidden" name={`iconName-${category.id}`} value={category.iconName ?? ""} />
-                    {category.isDefault ? (
-                      <input type="hidden" name={`isDefault-${category.id}`} value="on" />
-                    ) : null}
-                  </div>
-                );
-              })}
-              {visibleCategories.map((category) => (
+              {categories.map((category) => (
                 <article key={category.id} className="budget-pot-card">
                   <input type="hidden" name="categoryIds" value={category.id} />
                   <input type="hidden" name={`colorHex-${category.id}`} value={category.colorHex ?? ""} />
@@ -147,11 +134,10 @@ export function BudgetCareEditor({
                   </div>
 
                   <button
-                    type="button"
+                    type="submit"
+                    name="deactivateCategoryId"
+                    value={category.id}
                     className="budget-secondary-action"
-                    onClick={() =>
-                      setPendingInactiveCategoryIds((currentIds) => [...currentIds, category.id])
-                    }
                   >
                     Deaktivieren
                   </button>
@@ -188,16 +174,12 @@ export function BudgetCareEditor({
                 </article>
               ))}
             </div>
+            <SpecialBudgetList
+              isEditing={true}
+              specialBudgets={specialBudgets}
+            />
           </div>
         </form>
-
-        <div className="budget-care-grid">
-          <SpecialBudgetList
-            action={specialBudgetAction}
-            isEditing={true}
-            specialBudgets={specialBudgets}
-          />
-        </div>
       </div>
     );
   }
@@ -249,7 +231,6 @@ export function BudgetCareEditor({
           ))}
         </div>
         <SpecialBudgetList
-          action={specialBudgetAction}
           isEditing={false}
           specialBudgets={specialBudgets}
         />
@@ -259,11 +240,9 @@ export function BudgetCareEditor({
 }
 
 function SpecialBudgetList({
-  action,
   isEditing,
   specialBudgets,
 }: {
-  action: (formData: FormData) => void | Promise<void>;
   isEditing: boolean;
   specialBudgets: BudgetEditorSpecialBudget[];
 }) {
@@ -271,12 +250,13 @@ function SpecialBudgetList({
     <section className="budget-section-list" aria-label="Sonderbudgets">
       <h3 className="budget-section-heading">Sonderbudgets</h3>
       <div className="budget-special-list">
-        {specialBudgets.map((budget) => (
-          <article key={budget.id} className="budget-pot-card budget-special-pot-card">
+        {specialBudgets.map((budget) => {
+          const content = (
+            <>
             <div className="budget-pot-main">
               <CategoryVisualMark
                 name={budget.name}
-                iconName={null}
+                iconName={budget.iconName}
                 colorHex={null}
                 variant="neutral"
                 className="budget-pot-icon"
@@ -285,25 +265,87 @@ function SpecialBudgetList({
                 <div className="budget-pot-title-row">
                   <h3>{budget.name}</h3>
                 </div>
-                <p>{formatMonthLabel(budget.monthKey)}</p>
+                <p>{budget.monthCount} Monatsanteile</p>
+                <div className="flex flex-wrap gap-2">
+                  {budget.monthShares.map((share) => (
+                    <span key={share.id} className="month-chip month-chip-neutral">
+                      {formatMonthLabel(share.monthKey)} · {formatEuro(share.plannedAmountCents)}
+                    </span>
+                  ))}
+                </div>
                 {budget.note ? <p>{budget.note}</p> : null}
               </div>
             </div>
 
             <div className="budget-pot-readonly-value">
               <strong>{formatEuro(budget.plannedAmountCents)}</strong>
+              <span>Ist {formatEuro(budget.actualExpenseCents)}</span>
             </div>
 
             {isEditing ? (
-              <form action={action}>
-                <input type="hidden" name="specialBudgetId" value={budget.id} />
-                <button type="submit" name="intent" value="deactivate">
+              <>
+                <input type="hidden" name="specialBudgetProjectIds" value={budget.projectId} />
+                {budget.monthShares.map((share) => (
+                  <input
+                    key={`share-${share.id}`}
+                    type="hidden"
+                    name={`specialBudgetShareIds-${budget.projectId}`}
+                    value={share.id}
+                  />
+                ))}
+                <div className="budget-category-edit-panel budget-special-edit-panel">
+                  <label>
+                    Icon
+                    <input
+                      name={`specialBudgetIconName-${budget.projectId}`}
+                      maxLength={24}
+                      defaultValue={budget.iconName ?? ""}
+                      placeholder="Optional"
+                    />
+                  </label>
+                  {budget.monthShares.map((share) => (
+                    <label key={share.id}>
+                      {formatMonthLabel(share.monthKey)}
+                      <input
+                        name={`plannedAmount-${share.id}`}
+                        inputMode="decimal"
+                        required
+                        defaultValue={toInputAmount(share.plannedAmountCents)}
+                        placeholder="0.00"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <button
+                  type="submit"
+                  name="deactivateSpecialBudgetProjectId"
+                  value={budget.projectId}
+                  className="budget-secondary-action budget-special-deactivate-action"
+                >
                   Deaktivieren
                 </button>
-              </form>
+              </>
             ) : null}
-          </article>
-        ))}
+            </>
+          );
+
+          if (isEditing) {
+            return (
+              <article
+                key={budget.projectId}
+                className="budget-pot-card budget-special-pot-card budget-special-edit-form"
+              >
+                {content}
+              </article>
+            );
+          }
+
+          return (
+            <article key={budget.projectId} className="budget-pot-card budget-special-pot-card">
+              {content}
+            </article>
+          );
+        })}
       </div>
     </section>
   );

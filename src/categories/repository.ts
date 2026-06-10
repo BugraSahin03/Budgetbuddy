@@ -147,6 +147,10 @@ export function listCategories(): CategoryListItem[] {
   }));
 }
 
+export function listInactiveCategories(): CategoryListItem[] {
+  return listCategories().filter((category) => !category.isActive);
+}
+
 export function createCategory(input: CategoryInput): void {
   const sanitized = sanitizeInput(input);
 

@@ -13,6 +13,10 @@ const PREFIX = "TEST-FIN-007-";
 function cleanupTestTransactions(): void {
   dbClient.getDb().prepare("DELETE FROM transactions WHERE description LIKE ?").run(`${PREFIX}%`);
   dbClient.getDb().prepare("DELETE FROM fixed_costs WHERE name LIKE ?").run(`${PREFIX}%`);
+  dbClient
+    .getDb()
+    .prepare("UPDATE categories SET is_active = 1 WHERE name IN ('Einkauf', 'Freizeit')")
+    .run();
 }
 
 function ensureSpecialBudget(monthKey: string): number {

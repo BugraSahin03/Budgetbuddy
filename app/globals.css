@@ -1662,6 +1662,10 @@ select.month-action-input {
   grid-template-columns: minmax(0, 1fr) auto auto;
 }
 
+.budget-special-edit-form {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .budget-section-heading {
   color: #071b46;
   font-size: clamp(1.1rem, 1.8vw, 1.55rem);
@@ -1734,7 +1738,6 @@ select.month-action-input {
 }
 
 .budget-secondary-action,
-.budget-special-pot-card form button,
 .budget-special-card form button {
   background: rgba(7, 27, 70, 0.08);
   border: 0;
@@ -1780,6 +1783,70 @@ select.month-action-input {
   font-size: 0.9rem;
   font-weight: 750;
   padding: 0.62rem 0.7rem;
+}
+
+.budget-special-edit-panel {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.budget-special-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+}
+
+.budget-special-deactivate-action {
+  align-self: start;
+  justify-self: end;
+}
+
+.archive-section-summary {
+  -webkit-appearance: none;
+  align-items: center;
+  appearance: none;
+  cursor: pointer;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+  list-style: none;
+  padding-right: 3rem;
+  position: relative;
+}
+
+.archive-section-summary::marker {
+  content: "";
+  font-size: 0;
+}
+
+.archive-section-summary::-webkit-details-marker {
+  display: none;
+  height: 0;
+  width: 0;
+}
+
+.archive-section-summary::after {
+  align-items: center;
+  background: rgba(7, 27, 70, 0.07);
+  border-radius: 999px;
+  color: #071b46;
+  content: "⌄";
+  display: inline-flex;
+  flex: 0 0 auto;
+  font-size: 1rem;
+  font-weight: 950;
+  height: 2rem;
+  justify-content: center;
+  position: absolute;
+  right: 0;
+  top: 0.1rem;
+  transition: transform 160ms ease;
+  width: 2rem;
+}
+
+details[open] > .archive-section-summary::after {
+  transform: rotate(180deg);
 }
 
 .budget-category-edit-flags {

@@ -12,8 +12,9 @@ import {
 } from "@/src/categories/repository";
 import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
-  createSpecialBudget,
-  setSpecialBudgetActive,
+  createSpecialBudgetShares,
+  setSpecialBudgetProjectActive,
+  updateSpecialBudgetProject,
 } from "@/src/special-budgets/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
@@ -31,15 +32,15 @@ function parseCategoryId(rawValue: FormDataEntryValue | null): number {
   return categoryId;
 }
 
-function parseSpecialBudgetId(rawValue: FormDataEntryValue | null): number {
+function parseSpecialBudgetProjectId(rawValue: FormDataEntryValue | null): number {
   const value = toSingleString(rawValue).trim();
-  const specialBudgetId = Number.parseInt(value, 10);
+  const specialBudgetProjectId = Number.parseInt(value, 10);
 
-  if (!Number.isInteger(specialBudgetId) || specialBudgetId <= 0) {
-    throw new Error("Sonderbudget-ID ist ungueltig.");
+  if (!Number.isInteger(specialBudgetProjectId) || specialBudgetProjectId <= 0) {
+    throw new Error("Sonderbudget-Vorhaben ist ungueltig.");
   }
 
-  return specialBudgetId;
+  return specialBudgetProjectId;
 }
 
 function toErrorMessage(error: unknown): string {
@@ -58,6 +59,56 @@ function toOptionalString(value: FormDataEntryValue | null): string | null {
   const normalized = toSingleString(value).trim();
 
   return normalized.length > 0 ? normalized : null;
+}
+
+function parseAdditionalSpecialBudgetShares(formData: FormData): Array<{
+  monthKey: string;
+  plannedAmountCents: number;
+}> {
+  const monthKeys = formData.getAll("additionalMonthKey").map(toSingleString);
+  const plannedAmounts = formData.getAll("additionalPlannedAmount").map(toSingleString);
+  const shares: Array<{ monthKey: string; plannedAmountCents: number }> = [];
+
+  for (let index = 0; index < monthKeys.length; index += 1) {
+    const monthKey = monthKeys[index]?.trim() ?? "";
+    const plannedAmount = plannedAmounts[index]?.trim() ?? "";
+
+    if (monthKey.length === 0 && plannedAmount.length === 0) {
+      continue;
+    }
+
+    if (monthKey.length === 0 || plannedAmount.length === 0) {
+      throw new Error("Weitere Monatsanteile brauchen Monat und Betrag.");
+    }
+
+    shares.push({
+      monthKey,
+      plannedAmountCents: parsePlannedAmountCents(plannedAmount),
+    });
+  }
+
+  return shares;
+}
+
+function parseSpecialBudgetShareIds(formData: FormData): number[] {
+  return formData
+    .getAll("specialBudgetShareIds")
+    .map((value) => Number.parseInt(toSingleString(value), 10))
+    .filter((shareId) => Number.isInteger(shareId) && shareId > 0);
+}
+
+function parseSpecialBudgetProjectIds(formData: FormData): number[] {
+  return formData
+    .getAll("specialBudgetProjectIds")
+    .map((value) => Number.parseInt(toSingleString(value), 10))
+    .filter((projectId) => Number.isInteger(projectId) && projectId > 0);
+}
+
+function parseProjectShareIds(formData: FormData, projectId: number): number[] {
+  return formData
+    .getAll(`specialBudgetShareIds-${projectId}`)
+    .map((value) => Number.parseInt(toSingleString(value), 10))
+    .filter((shareId) => Number.isInteger(shareId) && shareId > 0);
 }
 
 function validateOptionalBudgetAmount(rawValue: string): void {
@@ -123,13 +174,33 @@ export async function createBudgetSpecialBudgetAction(formData: FormData): Promi
   let redirectTarget = "/budgets";
 
   try {
-    createSpecialBudget({
-      name: toSingleString(formData.get("name")),
-      monthKey: toSingleString(formData.get("monthKey")),
-      plannedAmountCents: parsePlannedAmountCents(
-        toSingleString(formData.get("plannedAmount")),
-      ),
-      note: toSingleString(formData.get("note")),
+    const name = toSingleString(formData.get("name"));
+    const note = toSingleString(formData.get("note"));
+    const iconName = toOptionalString(formData.get("iconName"));
+    const primaryMonthKey = toSingleString(formData.get("monthKey"));
+    const shares = [
+      {
+        monthKey: primaryMonthKey,
+        plannedAmountCents: parsePlannedAmountCents(
+          toSingleString(formData.get("plannedAmount")),
+        ),
+      },
+      ...parseAdditionalSpecialBudgetShares(formData),
+    ];
+    const duplicateMonthKey = shares.find(
+      (share, index) =>
+        shares.findIndex((candidate) => candidate.monthKey === share.monthKey) !== index,
+    )?.monthKey;
+
+    if (duplicateMonthKey) {
+      throw new Error("Ein Sonderbudget darf pro Vorhaben nur einen Anteil je Monat haben.");
+    }
+
+    createSpecialBudgetShares({
+      name,
+      note,
+      iconName,
+      shares,
     });
 
     refreshBudgetPaths();
@@ -152,6 +223,21 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
   let redirectTarget = "/budgets";
 
   try {
+    const deactivatedCategoryId = toSingleString(
+      formData.get("deactivateCategoryId"),
+    ).trim();
+    const deactivatedSpecialBudgetProjectId = toSingleString(
+      formData.get("deactivateSpecialBudgetProjectId"),
+    ).trim();
+    const hasImmediateDeactivation =
+      deactivatedCategoryId.length > 0 || deactivatedSpecialBudgetProjectId.length > 0;
+    const categoryIdToDeactivate =
+      deactivatedCategoryId.length > 0 ? parseCategoryId(deactivatedCategoryId) : null;
+    const specialBudgetProjectIdToDeactivate =
+      deactivatedSpecialBudgetProjectId.length > 0
+        ? parseSpecialBudgetProjectId(deactivatedSpecialBudgetProjectId)
+        : null;
+
     const categoryIds = parseCategoryIds(formData);
 
     if (categoryIds.length === 0) {
@@ -168,12 +254,48 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
         iconName: toOptionalString(formData.get(`iconName-${categoryId}`)),
         isDefault: formData.get(`isDefault-${categoryId}`) === "on",
       });
-      setCategoryActive(categoryId, formData.get(`isActive-${categoryId}`) === "on");
+      setCategoryActive(
+        categoryId,
+        categoryId !== categoryIdToDeactivate &&
+          formData.get(`isActive-${categoryId}`) === "on",
+      );
       setCategoryDefaultBudget(categoryId, budgetAmount);
     }
 
+    for (const projectId of parseSpecialBudgetProjectIds(formData)) {
+      const shareIds = parseProjectShareIds(formData, projectId);
+
+      if (shareIds.length === 0) {
+        continue;
+      }
+
+      updateSpecialBudgetProject({
+        projectId,
+        iconName: toOptionalString(formData.get(`specialBudgetIconName-${projectId}`)),
+        shares: shareIds.map((shareId) => ({
+          id: shareId,
+          plannedAmountCents: parsePlannedAmountCents(
+            toSingleString(formData.get(`plannedAmount-${shareId}`)),
+          ),
+        })),
+      });
+    }
+
+    if (specialBudgetProjectIdToDeactivate !== null) {
+      setSpecialBudgetProjectActive(specialBudgetProjectIdToDeactivate, false);
+    }
+
     refreshBudgetPaths();
-    redirectTarget = `/budgets?notice=${encodeMessage("Kategorien gespeichert.")}`;
+
+    if (hasImmediateDeactivation) {
+      redirectTarget = `/budgets?edit=1&notice=${encodeMessage(
+        categoryIdToDeactivate !== null
+          ? "Kategorie deaktiviert."
+          : "Sonderbudget deaktiviert.",
+      )}`;
+    } else {
+      redirectTarget = `/budgets?notice=${encodeMessage("Budgetpflege gespeichert.")}`;
+    }
   } catch (error) {
     redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }
@@ -185,16 +307,39 @@ export async function updateBudgetSpecialBudgetStateAction(formData: FormData): 
   let redirectTarget = "/budgets";
 
   try {
-    const specialBudgetId = parseSpecialBudgetId(formData.get("specialBudgetId"));
     const intent = toSingleString(formData.get("intent"));
+    const deactivateProjectPrefix = "deactivateProject:";
+    const specialBudgetProjectId = intent.startsWith(deactivateProjectPrefix)
+      ? parseSpecialBudgetProjectId(intent.slice(deactivateProjectPrefix.length))
+      : parseSpecialBudgetProjectId(formData.get("specialBudgetProjectId"));
 
-    if (intent !== "deactivate") {
+    if (intent === "updateProject") {
+      const shareIds = parseSpecialBudgetShareIds(formData);
+
+      if (shareIds.length === 0) {
+        throw new Error("Keine Sonderbudget-Anteile zum Speichern gefunden.");
+      }
+
+      updateSpecialBudgetProject({
+        projectId: specialBudgetProjectId,
+        iconName: toOptionalString(formData.get("iconName")),
+        shares: shareIds.map((shareId) => ({
+          id: shareId,
+          plannedAmountCents: parsePlannedAmountCents(
+            toSingleString(formData.get(`plannedAmount-${shareId}`)),
+          ),
+        })),
+      });
+
+      refreshBudgetPaths();
+      redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget gespeichert.")}`;
+    } else if (intent.startsWith(deactivateProjectPrefix)) {
+      setSpecialBudgetProjectActive(specialBudgetProjectId, false);
+      refreshBudgetPaths();
+      redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget deaktiviert.")}`;
+    } else {
       throw new Error("Unbekannte Aktion.");
     }
-
-    setSpecialBudgetActive(specialBudgetId, false);
-    refreshBudgetPaths();
-    redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget deaktiviert.")}`;
   } catch (error) {
     redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }

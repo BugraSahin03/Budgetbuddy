@@ -301,7 +301,10 @@ function listSpecialBudgetRows(monthKey: string): MonthSpecialBudgetRow[] {
           sb.name,
           sb.month_key AS monthKey,
           sb.planned_amount_cents AS plannedAmountCents,
-          sb.is_active AS isActive,
+          CASE
+            WHEN sb.is_active = 1 AND COALESCE(sbp.status, 'active') = 'active' THEN 1
+            ELSE 0
+          END AS isActive,
           COALESCE(
             (
               SELECT SUM(-t.amount_cents)
@@ -312,8 +315,9 @@ function listSpecialBudgetRows(monthKey: string): MonthSpecialBudgetRow[] {
             0
           ) AS actualExpenseCents
         FROM special_budgets sb
+        LEFT JOIN special_budget_projects sbp ON sbp.id = sb.project_id
         WHERE sb.month_key = ?
-        ORDER BY sb.is_active DESC, sb.name COLLATE NOCASE ASC
+        ORDER BY isActive DESC, sb.name COLLATE NOCASE ASC
       `,
     )
     .all(monthKey) as Array<{

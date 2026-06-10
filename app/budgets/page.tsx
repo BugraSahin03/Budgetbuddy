@@ -2,7 +2,6 @@ import {
   createBudgetCategoryAction,
   createBudgetSpecialBudgetAction,
   updateBudgetCategoriesAction,
-  updateBudgetSpecialBudgetStateAction,
 } from "@/app/budgets/actions";
 import { BudgetCareEditor } from "@/app/budgets/budget-care-editor";
 import { BudgetCreateTabs } from "@/app/budgets/budget-create-tabs";
@@ -11,7 +10,7 @@ import { listCategoryBudgetDefaults } from "@/src/budgets/repository";
 import { listCategories } from "@/src/categories/repository";
 import {
   getSelectableMonthKeys,
-  listSpecialBudgets,
+  listActiveSpecialBudgetProjects,
 } from "@/src/special-budgets/repository";
 
 export const dynamic = "force-dynamic";
@@ -63,7 +62,8 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
     toSingleParam(params.monthKey) ??
     selectableMonths[0] ??
     new Date().toISOString().slice(0, 7);
-  const specialBudgets = listSpecialBudgets().filter((budget) => budget.isActive);
+  const initialIsEditing = toSingleParam(params.edit) === "1";
+  const specialBudgets = listActiveSpecialBudgetProjects();
   const editorCategories = categories.map((category) => ({
     ...category,
     defaultBudgetAmountCents:
@@ -130,6 +130,10 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     <input name="name" required maxLength={80} placeholder="Zum Beispiel Urlaub" />
                   </label>
                   <label>
+                    Icon
+                    <input name="iconName" maxLength={24} placeholder="Optional" />
+                  </label>
+                  <label>
                     Monat
                     <select name="monthKey" defaultValue={selectedMonthKey}>
                       {selectableMonths.map((monthKey) => (
@@ -143,6 +147,35 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     Betrag
                     <input name="plannedAmount" required inputMode="decimal" placeholder="500.00" />
                   </label>
+                  <fieldset className="budget-dialog-form">
+                    <legend>Weitere Monatsanteile</legend>
+                    <p>
+                      Optional: Gleicher Name verbindet die Anteile zu einem mehrmonatigen Vorhaben.
+                    </p>
+                    {[0, 1, 2].map((index) => (
+                      <div key={index} className="grid gap-3 md:grid-cols-2">
+                        <label>
+                          Monat
+                          <select name="additionalMonthKey" defaultValue="">
+                            <option value="">Kein weiterer Monat</option>
+                            {selectableMonths.map((monthKey) => (
+                              <option key={monthKey} value={monthKey}>
+                                {formatMonthLabel(monthKey)}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label>
+                          Betrag
+                          <input
+                            name="additionalPlannedAmount"
+                            inputMode="decimal"
+                            placeholder="Optional"
+                          />
+                        </label>
+                      </div>
+                    ))}
+                  </fieldset>
                   <label>
                     Notiz
                     <input name="note" maxLength={240} placeholder="Optional" />
@@ -164,7 +197,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
         <BudgetCareEditor
           action={updateBudgetCategoriesAction}
           categories={editorCategories}
-          specialBudgetAction={updateBudgetSpecialBudgetStateAction}
+          initialIsEditing={initialIsEditing}
           specialBudgets={specialBudgets}
         />
       </section>

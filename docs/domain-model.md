@@ -94,7 +94,7 @@ Ein Monatsbudget ist kein hartes Limit. Ueberschreitungen sind erlaubt, werden a
 
 ### Sonderbudget
 
-Ein Sonderbudget ist ein konkretes Budget fuer einen bestimmten Monat oder Zeitraum.
+Ein Sonderbudget ist ein konkretes Ausgabeziel fuer einen bestimmten Monat oder Zeitraum. Seit FIN-065 besteht ein mehrmonatiges Sonderbudget aus einem uebergeordneten Vorhaben und konkreten Monatsanteilen.
 
 Beispiele:
 
@@ -102,15 +102,30 @@ Beispiele:
 - April 2026, Raspberry Pi, 80 EUR
 - Mai 2026, Raspberry Pi, 80 EUR
 
-Sonderbudgets sind direkte Ausgabeziele. Wenn eine Zahlung fuer den Zweck existiert, wird sie dem Sonderbudget zugeordnet.
+Sonderbudgets sind direkte Ausgabeziele. Wenn eine Zahlung fuer den Zweck existiert, wird sie dem konkreten Monatsanteil des Sonderbudgets zugeordnet.
 
-Sonderbudgets koennen wiederkehrend manuell in mehreren Monaten angelegt werden, sind aber fachlich keine globale feste Kategorie.
+Mehrmonatige Sonderbudgets werden als Vorhaben gebuendelt:
+
+- `special_budget_projects` beschreibt das Vorhaben, z. B. `Computer`.
+- `special_budgets` beschreibt den Monatsanteil, z. B. `2026-05`, `300 EUR`.
+- Gleichnamige Sonderbudgets in mehreren Monaten gehoeren zum selben Vorhaben.
+- Transaktionen referenzieren weiter den konkreten Monatsanteil, damit historische Zuordnungen stabil bleiben.
+- Archivierte Vorhaben bleiben nachvollziehbar, werden aber aus der normalen Budgetpflege ausgeblendet.
+
+Sonderbudgets sind fachlich keine globale feste Kategorie.
 
 Seit FIN-039 gilt fuer bestehende Sonderbudgets im Monatskontext:
 
 - der geplante Betrag bleibt direkt auf dem konkreten Sonderbudget des Monats editierbar
 - Aktiv/Inaktiv bleibt eine Eigenschaft dieses konkreten Monatseintrags
 - es entstehen dadurch keine globalen Sonderbudget-Vorlagen
+
+Seit FIN-065 gilt zusaetzlich:
+
+- Vorhaben mit keinem aktiven Monatsanteil gelten als archiviert.
+- Das Sonderbudget-Archiv unter `Einstellungen` zeigt archivierte Vorhaben mit Zeitraum, Plan- und Ist-Summe.
+- Reaktivieren aktiviert das Vorhaben wieder und stellt den juengsten Monatsanteil aktiv.
+- Es entsteht keine automatische Transfer- oder Sparlogik.
 
 ### Fixkosten
 
@@ -222,7 +237,7 @@ Fuer den aktuellen MVP gilt weiterhin:
 
 ### Sonderbudget-Ist
 
-Summe aller Ausgaben, die diesem Sonderbudget zugeordnet sind.
+Summe aller Ausgaben, die diesem konkreten Sonderbudget-Monatsanteil zugeordnet sind.
 
 ### Sonderbudget-Rest
 
@@ -290,7 +305,7 @@ Damit verwenden Monatsliste, Monatsdetailseite und Dashboard dieselbe fachliche 
 - Jede Ausgabe muss zugeordnet sein.
 - Unzugeordnete importierte Ausgaben muessen im Import/Dashboard sichtbar sein.
 - Kategorien sollten deaktiviert statt historisch geloescht werden.
-- Sonderbudgets duerfen geloescht werden, solange keine Transaktionen daran haengen.
+- Sonderbudgets werden fuer historische Nachvollziehbarkeit archiviert/deaktiviert statt hart geloescht.
 - Importierte Transaktionen brauchen eine stabile Duplikatkennung.
 - Manuelle Transaktionen brauchen keine Importkennung.
 

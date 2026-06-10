@@ -12,6 +12,14 @@ const repositoryMocks = vi.hoisted(() => ({
   parseImportDisplayAliasInputFromFormData: vi.fn(),
   updateImportDisplayAlias: vi.fn(),
 }));
+const specialBudgetRepositoryMocks = vi.hoisted(() => ({
+  reactivateSpecialBudgetProject: vi.fn(),
+}));
+const categoryRepositoryMocks = vi.hoisted(() => ({
+  setCategoryActive: vi.fn(),
+}));
+
+vi.mock("server-only", () => ({}));
 
 vi.mock("next/navigation", () => ({
   redirect: redirectMock,
@@ -22,10 +30,14 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/src/settings/import-display-aliases/repository", () => repositoryMocks);
+vi.mock("@/src/special-budgets/repository", () => specialBudgetRepositoryMocks);
+vi.mock("@/src/categories/repository", () => categoryRepositoryMocks);
 
 import {
   createImportDisplayAliasAction,
   deleteImportDisplayAliasAction,
+  reactivateCategoryAction,
+  reactivateSpecialBudgetProjectAction,
   updateImportDisplayAliasAction,
 } from "@/app/einstellungen/actions";
 
@@ -37,6 +49,8 @@ describe("FIN-059 import display alias actions", () => {
     repositoryMocks.deleteImportDisplayAlias.mockReset();
     repositoryMocks.parseImportDisplayAliasInputFromFormData.mockReset();
     repositoryMocks.updateImportDisplayAlias.mockReset();
+    specialBudgetRepositoryMocks.reactivateSpecialBudgetProject.mockReset();
+    categoryRepositoryMocks.setCategoryActive.mockReset();
     repositoryMocks.parseImportDisplayAliasInputFromFormData.mockReturnValue({
       displayName: "Amazon",
       pattern: "AMZN",
@@ -81,5 +95,32 @@ describe("FIN-059 import display alias actions", () => {
     expect(redirectMock).toHaveBeenCalledWith(
       "/einstellungen/import-aliase?error=Muster%20existiert%20bereits.",
     );
+  });
+
+  it("reactivates archived special budget projects from settings", async () => {
+    const formData = new FormData();
+    formData.set("projectId", "42");
+
+    await expect(reactivateSpecialBudgetProjectAction(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/kategorie-archiv?notice=Sonderbudget-Vorhaben%20reaktiviert.",
+    );
+
+    expect(specialBudgetRepositoryMocks.reactivateSpecialBudgetProject).toHaveBeenCalledWith(42);
+    expect(revalidatePathMock).toHaveBeenCalledWith("/einstellungen/kategorie-archiv");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/einstellungen/sonderbudget-archiv");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/budgets");
+  });
+
+  it("reactivates archived categories from settings", async () => {
+    const formData = new FormData();
+    formData.set("categoryId", "9");
+
+    await expect(reactivateCategoryAction(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/kategorie-archiv?notice=Kategorie%20reaktiviert.",
+    );
+
+    expect(categoryRepositoryMocks.setCategoryActive).toHaveBeenCalledWith(9, true);
+    expect(revalidatePathMock).toHaveBeenCalledWith("/einstellungen/kategorie-archiv");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/budgets");
   });
 });

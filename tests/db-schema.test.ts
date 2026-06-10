@@ -107,7 +107,26 @@ describe("schema migrations", () => {
     expect(sql).toContain("(category_id IS NULL AND special_budget_id IS NOT NULL)");
   });
 
+  it("contains migration for multi-month special budget projects", () => {
+    const sql = migrations.find((migration) => migration.id === "0009_fin_065")
+      ?.sql ?? "";
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS special_budget_projects");
+    expect(sql).toContain("status TEXT NOT NULL DEFAULT 'active'");
+    expect(sql).toContain("ALTER TABLE special_budgets");
+    expect(sql).toContain("ADD COLUMN project_id INTEGER");
+    expect(sql).toContain("idx_special_budgets_project_id");
+  });
+
+  it("contains migration for optional special budget project icons", () => {
+    const sql = migrations.find((migration) => migration.id === "0010_fin_065b")
+      ?.sql ?? "";
+
+    expect(sql).toContain("ALTER TABLE special_budget_projects");
+    expect(sql).toContain("ADD COLUMN icon_name TEXT");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0008_fin_040");
+    expect(getLatestSchemaVersion()).toBe("0010_fin_065b");
   });
 });

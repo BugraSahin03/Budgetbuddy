@@ -15,6 +15,10 @@ function cleanupSpecialBudgets(): void {
     .getDb()
     .prepare("DELETE FROM special_budgets WHERE name LIKE ?")
     .run(`${TEST_NAME_PREFIX}%`);
+  dbClient
+    .getDb()
+    .prepare("DELETE FROM special_budget_projects WHERE name LIKE ?")
+    .run(`${TEST_NAME_PREFIX}%`);
 }
 
 beforeAll(async () => {
@@ -45,6 +49,159 @@ describe("special budgets repository", () => {
     expect(created?.plannedAmountCents).toBe(12000);
     expect(created?.actualExpenseCents).toBe(0);
     expect(created?.isActive).toBe(true);
+    expect(created?.projectId).toEqual(expect.any(Number));
+    expect(created?.projectStatus).toBe("active");
+  });
+
+  it("groups same-name monthly shares into one multi-month project", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudget({
+      name: `${TEST_NAME_PREFIX}Computer`,
+      monthKey: "2026-05",
+      plannedAmountCents: 30000,
+      note: "Teil 1",
+    });
+    repository.createSpecialBudget({
+      name: `${TEST_NAME_PREFIX}Computer`,
+      monthKey: "2026-06",
+      plannedAmountCents: 30000,
+      note: "Teil 2",
+    });
+
+    const shares = repository
+      .listSpecialBudgets()
+      .filter((budget) => budget.name === `${TEST_NAME_PREFIX}Computer`);
+
+    expect(shares).toHaveLength(2);
+    expect(new Set(shares.map((budget) => budget.projectId)).size).toBe(1);
+    expect(shares[0]?.projectMonthCount).toBe(2);
+    expect(shares[0]?.projectPlannedAmountCents).toBe(60000);
+  });
+
+  it("creates multiple monthly shares atomically for one project", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudgetShares({
+      name: `${TEST_NAME_PREFIX}Furniture`,
+      note: "Mehrmonatiges Vorhaben",
+      shares: [
+        {
+          monthKey: "2026-05",
+          plannedAmountCents: 20000,
+        },
+        {
+          monthKey: "2026-06",
+          plannedAmountCents: 25000,
+        },
+      ],
+    });
+
+    const shares = repository
+      .listSpecialBudgets()
+      .filter((budget) => budget.name === `${TEST_NAME_PREFIX}Furniture`);
+
+    expect(shares).toHaveLength(2);
+    expect(new Set(shares.map((budget) => budget.projectId)).size).toBe(1);
+    expect(shares[0]?.projectPlannedAmountCents).toBe(45000);
+
+    expect(() =>
+      repository.createSpecialBudgetShares({
+        name: `${TEST_NAME_PREFIX}Furniture-Duplicate`,
+        note: "",
+        shares: [
+          {
+            monthKey: "2026-07",
+            plannedAmountCents: 1000,
+          },
+          {
+            monthKey: "2026-07",
+            plannedAmountCents: 2000,
+          },
+        ],
+      }),
+    ).toThrow("Ein Sonderbudget darf pro Vorhaben nur einen Anteil je Monat haben.");
+  });
+
+  it("lists active multi-month projects once for budget care", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudgetShares({
+      name: `${TEST_NAME_PREFIX}Japan`,
+      note: "",
+      shares: [
+        {
+          monthKey: "2026-06",
+          plannedAmountCents: 50000,
+        },
+        {
+          monthKey: "2026-07",
+          plannedAmountCents: 70000,
+        },
+      ],
+    });
+
+    const projects = repository
+      .listActiveSpecialBudgetProjects()
+      .filter((project) => project.name === `${TEST_NAME_PREFIX}Japan`);
+
+    expect(projects).toHaveLength(1);
+    expect(projects[0]?.monthShares.map((share) => share.monthKey)).toEqual([
+      "2026-06",
+      "2026-07",
+    ]);
+    expect(projects[0]?.plannedAmountCents).toBe(120000);
+  });
+
+  it("updates icon and monthly share amounts for one special budget project", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudgetShares({
+      name: `${TEST_NAME_PREFIX}World Trip`,
+      note: "",
+      iconName: "WT",
+      shares: [
+        {
+          monthKey: "2026-06",
+          plannedAmountCents: 30000,
+        },
+        {
+          monthKey: "2026-07",
+          plannedAmountCents: 40000,
+        },
+      ],
+    });
+
+    const project = repository
+      .listActiveSpecialBudgetProjects()
+      .find((item) => item.name === `${TEST_NAME_PREFIX}World Trip`);
+
+    expect(project?.iconName).toBe("WT");
+    expect(project?.monthShares).toHaveLength(2);
+
+    if (!project) {
+      return;
+    }
+
+    repository.updateSpecialBudgetProject({
+      projectId: project.projectId,
+      iconName: "JP",
+      shares: project.monthShares.map((share) => ({
+        id: share.id,
+        plannedAmountCents: share.monthKey === "2026-06" ? 35000 : 45000,
+      })),
+    });
+
+    const updated = repository
+      .listActiveSpecialBudgetProjects()
+      .find((item) => item.projectId === project.projectId);
+
+    expect(updated?.iconName).toBe("JP");
+    expect(updated?.plannedAmountCents).toBe(80000);
+    expect(updated?.monthShares.map((share) => share.plannedAmountCents)).toEqual([
+      35000,
+      45000,
+    ]);
   });
 
   it("returns active options only for the selected month", () => {
@@ -74,6 +231,129 @@ describe("special budgets repository", () => {
 
     const optionsAfterDeactivate = repository.listActiveSpecialBudgetOptions("2026-07");
     expect(optionsAfterDeactivate.some((option) => option.id === created.id)).toBe(false);
+  });
+
+  it("archives projects when all monthly shares are inactive and can reactivate the latest share", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudget({
+      name: `${TEST_NAME_PREFIX}ArchiveMe`,
+      monthKey: "2026-05",
+      plannedAmountCents: 30000,
+      note: "",
+    });
+    repository.createSpecialBudget({
+      name: `${TEST_NAME_PREFIX}ArchiveMe`,
+      monthKey: "2026-08",
+      plannedAmountCents: 40000,
+      note: "",
+    });
+
+    const createdShares = repository
+      .listSpecialBudgets()
+      .filter((budget) => budget.name === `${TEST_NAME_PREFIX}ArchiveMe`);
+    const projectId = createdShares[0]?.projectId;
+
+    expect(projectId).toEqual(expect.any(Number));
+
+    for (const share of createdShares) {
+      repository.setSpecialBudgetActive(share.id, false);
+    }
+
+    const archived = repository
+      .listArchivedSpecialBudgetProjects()
+      .find((project) => project.projectId === projectId);
+
+    expect(archived?.monthCount).toBe(2);
+    expect(archived?.plannedAmountCents).toBe(70000);
+    expect(archived?.monthShares.map((share) => share.monthKey)).toEqual([
+      "2026-05",
+      "2026-08",
+    ]);
+
+    if (!projectId) {
+      return;
+    }
+
+    repository.reactivateSpecialBudgetProject(projectId);
+
+    const reactivatedShares = repository
+      .listSpecialBudgets()
+      .filter((budget) => budget.projectId === projectId);
+    const latestShare = reactivatedShares.find((budget) => budget.monthKey === "2026-08");
+
+    expect(latestShare?.isActive).toBe(true);
+    expect(repository.listArchivedSpecialBudgetProjects().some((project) => project.projectId === projectId)).toBe(false);
+  });
+
+  it("archives an entire active project from budget care", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudgetShares({
+      name: `${TEST_NAME_PREFIX}ArchiveProject`,
+      note: "",
+      shares: [
+        {
+          monthKey: "2026-09",
+          plannedAmountCents: 15000,
+        },
+        {
+          monthKey: "2026-10",
+          plannedAmountCents: 25000,
+        },
+      ],
+    });
+
+    const project = repository
+      .listActiveSpecialBudgetProjects()
+      .find((item) => item.name === `${TEST_NAME_PREFIX}ArchiveProject`);
+
+    expect(project).toBeDefined();
+
+    if (!project) {
+      return;
+    }
+
+    repository.setSpecialBudgetProjectActive(project.projectId, false);
+
+    expect(
+      repository
+        .listActiveSpecialBudgetProjects()
+        .some((item) => item.projectId === project.projectId),
+    ).toBe(false);
+    expect(
+      repository
+        .listArchivedSpecialBudgetProjects()
+        .some((item) => item.projectId === project.projectId),
+    ).toBe(true);
+  });
+
+  it("backfills unlinked inactive monthly shares into the archive", () => {
+    cleanupSpecialBudgets();
+
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO special_budgets (
+            name,
+            month_key,
+            planned_amount_cents,
+            note,
+            is_active
+          )
+          VALUES (?, '2026-11', 9900, 'Altbestand', 0)
+        `,
+      )
+      .run(`${TEST_NAME_PREFIX}Legacy Archive`);
+
+    const archived = repository
+      .listArchivedSpecialBudgetProjects()
+      .find((project) => project.name === `${TEST_NAME_PREFIX}Legacy Archive`);
+
+    expect(archived?.monthCount).toBe(1);
+    expect(archived?.plannedAmountCents).toBe(9900);
+    expect(archived?.status).toBe("archived");
   });
 
   it("validates month key and prevents duplicates in one month", () => {
