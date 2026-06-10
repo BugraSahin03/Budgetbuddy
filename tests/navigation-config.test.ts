@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { isActivePath, NAV_ITEMS } from "@/app/components/navigation-config";
+import {
+  NAV_COLLAPSED_STORAGE_KEY,
+  isActivePath,
+  getNavigationToggleLabel,
+  NAV_ITEMS,
+} from "@/app/components/navigation-config";
 
 describe("navigation config", () => {
   it("contains the budgets tab", () => {
@@ -18,6 +23,15 @@ describe("navigation config", () => {
 
   it("contains the month comparison tab", () => {
     expect(NAV_ITEMS).toContainEqual({ href: "/monatsvergleich", label: "Monatsvergleich" });
+  });
+
+  it("keeps a stable local storage key for collapsed navigation", () => {
+    expect(NAV_COLLAPSED_STORAGE_KEY).toBe("budgetbuddy:navigation-collapsed");
+  });
+
+  it("describes the navigation toggle state accessibly", () => {
+    expect(getNavigationToggleLabel(false)).toBe("Navigation einklappen");
+    expect(getNavigationToggleLabel(true)).toBe("Navigation ausklappen");
   });
 
   it("does not expose transaction and import as main navigation tabs", () => {

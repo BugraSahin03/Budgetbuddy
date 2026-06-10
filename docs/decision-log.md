@@ -1248,3 +1248,20 @@ Auswirkung:
 - Die Kennzahl bleibt bewusst ein Plan-/Bauchgefuehl und ersetzt nicht den aktuellen Budgetstand aus FIN-063.
 - Fixkosten bleiben in dieser Kennzahl bewusst ausgeschlossen; eine spaetere Erweiterung muesste fachlich separat entschieden werden.
 - Monate ohne aktive Sonderbudgets zeigen keine Sonderbudget-Gruppe im Budgettopfbereich.
+
+## 2026-06-09 - FIN-046 fuehrt eine einklappbare App-Shell ein
+
+Quelle/Ticket: `FIN-046`
+
+Erkenntnis/Entscheidung:
+
+- Die globale Navigation wird als helle App-Shell gefuehrt und enthaelt dauerhaft keine fachlichen Erklaertexte mehr.
+- Die Hauptnavigation bleibt auf die bestehenden Hauptbereiche fokussiert: Dashboard, Monate, Monatsvergleich, Budgets, Fixkosten und Einstellungen.
+- Der eingeklappte Desktop-Zustand nutzt eine schmale Rail mit erreichbaren Navigationszielen und sichtbarem Aktivmarker.
+- Der Einklappzustand wird lokal im Browser gespeichert, damit Nutzer ihre bevorzugte Arbeitsbreite behalten koennen.
+
+Auswirkung:
+
+- Es werden keine Routen entfernt und keine fachlichen Bereiche neu zugeschnitten.
+- Die Shell ist wiederverwendbar fuer Dashboard, Monatsansicht, Budgets und spaetere Verwaltungsseiten.
+- Die Entscheidung betrifft nur UI/Shell-Verhalten; Datenmodell, Importlogik und zentrale Fachlogik bleiben unveraendert.
