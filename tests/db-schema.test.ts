@@ -126,7 +126,18 @@ describe("schema migrations", () => {
     expect(sql).toContain("ADD COLUMN icon_name TEXT");
   });
 
+  it("contains migration for protected savings category", () => {
+    const sql = migrations.find((migration) => migration.id === "0011_fin_072")
+      ?.sql ?? "";
+
+    expect(sql).toContain("ADD COLUMN system_key TEXT");
+    expect(sql).toContain("idx_categories_system_key_unique");
+    expect(sql).toContain("'Sparen'");
+    expect(sql).toContain("'savings'");
+    expect(sql).toContain("default_budget_amount_cents = NULL");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0010_fin_065b");
+    expect(getLatestSchemaVersion()).toBe("0011_fin_072");
   });
 });

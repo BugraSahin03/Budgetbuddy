@@ -309,6 +309,44 @@ describe("database migrations runtime behavior", () => {
     ).toBe(true);
   });
 
+  it("adds protected savings category metadata and seed row", () => {
+    const columns = db
+      .prepare("PRAGMA table_info(categories)")
+      .all() as Array<{ name: string }>;
+    const savings = db
+      .prepare(
+        `
+          SELECT
+            name,
+            system_key AS systemKey,
+            is_active AS isActive,
+            is_default AS isDefault,
+            default_budget_amount_cents AS defaultBudgetAmountCents
+          FROM categories
+          WHERE system_key = 'savings'
+          LIMIT 1
+        `,
+      )
+      .get() as
+      | {
+          name: string;
+          systemKey: string;
+          isActive: number;
+          isDefault: number;
+          defaultBudgetAmountCents: number | null;
+        }
+      | undefined;
+
+    expect(columns.some((column) => column.name === "system_key")).toBe(true);
+    expect(savings).toEqual({
+      name: "Sparen",
+      systemKey: "savings",
+      isActive: 1,
+      isDefault: 1,
+      defaultBudgetAmountCents: null,
+    });
+  });
+
   it("backfills effective month key when migrating legacy transaction rows", () => {
     const legacyDb = new Database(":memory:");
     legacyDb.exec("PRAGMA foreign_keys = ON;");
