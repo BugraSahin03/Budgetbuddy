@@ -26,6 +26,7 @@ type BudgetCareEditorProps = {
 type BudgetEditorSpecialBudget = {
   projectId: number;
   name: string;
+  iconName: string | null;
   note: string | null;
   monthShares: Array<{
     id: number;
@@ -279,12 +280,13 @@ function SpecialBudgetList({
     <section className="budget-section-list" aria-label="Sonderbudgets">
       <h3 className="budget-section-heading">Sonderbudgets</h3>
       <div className="budget-special-list">
-        {specialBudgets.map((budget) => (
-          <article key={budget.projectId} className="budget-pot-card budget-special-pot-card">
+        {specialBudgets.map((budget) => {
+          const content = (
+            <>
             <div className="budget-pot-main">
               <CategoryVisualMark
                 name={budget.name}
-                iconName={null}
+                iconName={budget.iconName}
                 colorHex={null}
                 variant="neutral"
                 className="budget-pot-icon"
@@ -311,15 +313,70 @@ function SpecialBudgetList({
             </div>
 
             {isEditing ? (
-              <form action={action}>
+              <>
                 <input type="hidden" name="specialBudgetProjectId" value={budget.projectId} />
-                <button type="submit" name="intent" value="deactivateProject">
-                  Deaktivieren
-                </button>
-              </form>
+                {budget.monthShares.map((share) => (
+                  <input
+                    key={`share-${share.id}`}
+                    type="hidden"
+                    name="specialBudgetShareIds"
+                    value={share.id}
+                  />
+                ))}
+                <div className="budget-category-edit-panel budget-special-edit-panel">
+                  <label>
+                    Icon
+                    <input
+                      name="iconName"
+                      maxLength={24}
+                      defaultValue={budget.iconName ?? ""}
+                      placeholder="Optional"
+                    />
+                  </label>
+                  {budget.monthShares.map((share) => (
+                    <label key={share.id}>
+                      {formatMonthLabel(share.monthKey)}
+                      <input
+                        name={`plannedAmount-${share.id}`}
+                        inputMode="decimal"
+                        required
+                        defaultValue={toInputAmount(share.plannedAmountCents)}
+                        placeholder="0.00"
+                      />
+                    </label>
+                  ))}
+                </div>
+                <div className="budget-special-edit-actions">
+                  <button type="submit" name="intent" value="updateProject">
+                    Speichern
+                  </button>
+                  <button type="submit" name="intent" value="deactivateProject">
+                    Deaktivieren
+                  </button>
+                </div>
+              </>
             ) : null}
-          </article>
-        ))}
+            </>
+          );
+
+          if (isEditing) {
+            return (
+              <form
+                key={budget.projectId}
+                action={action}
+                className="budget-pot-card budget-special-pot-card budget-special-edit-form"
+              >
+                {content}
+              </form>
+            );
+          }
+
+          return (
+            <article key={budget.projectId} className="budget-pot-card budget-special-pot-card">
+              {content}
+            </article>
+          );
+        })}
       </div>
     </section>
   );

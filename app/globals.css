@@ -1358,6 +1358,10 @@ select.month-action-input {
   grid-template-columns: minmax(0, 1fr) auto auto;
 }
 
+.budget-special-edit-form {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .budget-section-heading {
   color: #071b46;
   font-size: clamp(1.1rem, 1.8vw, 1.55rem);
@@ -1476,6 +1480,18 @@ select.month-action-input {
   font-size: 0.9rem;
   font-weight: 750;
   padding: 0.62rem 0.7rem;
+}
+
+.budget-special-edit-panel {
+  grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+}
+
+.budget-special-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
 }
 
 .budget-category-edit-flags {

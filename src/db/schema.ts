@@ -704,6 +704,11 @@ CREATE INDEX IF NOT EXISTS idx_special_budget_projects_status
 ON special_budget_projects(status);
 `;
 
+const fin065bMigrationSql = `
+ALTER TABLE special_budget_projects
+ADD COLUMN icon_name TEXT;
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -749,6 +754,11 @@ export const migrations: readonly Migration[] = [
     id: "0009_fin_065",
     name: "FIN-065 group special budgets into multi-month projects",
     sql: fin065MigrationSql,
+  },
+  {
+    id: "0010_fin_065b",
+    name: "FIN-065 add optional special budget project icons",
+    sql: fin065bMigrationSql,
   },
 ];
 

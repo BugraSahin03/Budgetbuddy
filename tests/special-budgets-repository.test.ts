@@ -153,6 +153,57 @@ describe("special budgets repository", () => {
     expect(projects[0]?.plannedAmountCents).toBe(120000);
   });
 
+  it("updates icon and monthly share amounts for one special budget project", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudgetShares({
+      name: `${TEST_NAME_PREFIX}World Trip`,
+      note: "",
+      iconName: "WT",
+      shares: [
+        {
+          monthKey: "2026-06",
+          plannedAmountCents: 30000,
+        },
+        {
+          monthKey: "2026-07",
+          plannedAmountCents: 40000,
+        },
+      ],
+    });
+
+    const project = repository
+      .listActiveSpecialBudgetProjects()
+      .find((item) => item.name === `${TEST_NAME_PREFIX}World Trip`);
+
+    expect(project?.iconName).toBe("WT");
+    expect(project?.monthShares).toHaveLength(2);
+
+    if (!project) {
+      return;
+    }
+
+    repository.updateSpecialBudgetProject({
+      projectId: project.projectId,
+      iconName: "JP",
+      shares: project.monthShares.map((share) => ({
+        id: share.id,
+        plannedAmountCents: share.monthKey === "2026-06" ? 35000 : 45000,
+      })),
+    });
+
+    const updated = repository
+      .listActiveSpecialBudgetProjects()
+      .find((item) => item.projectId === project.projectId);
+
+    expect(updated?.iconName).toBe("JP");
+    expect(updated?.plannedAmountCents).toBe(80000);
+    expect(updated?.monthShares.map((share) => share.plannedAmountCents)).toEqual([
+      35000,
+      45000,
+    ]);
+  });
+
   it("returns active options only for the selected month", () => {
     cleanupSpecialBudgets();
 

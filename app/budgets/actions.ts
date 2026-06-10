@@ -14,6 +14,7 @@ import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
   createSpecialBudgetShares,
   setSpecialBudgetProjectActive,
+  updateSpecialBudgetProject,
 } from "@/src/special-budgets/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
@@ -89,6 +90,13 @@ function parseAdditionalSpecialBudgetShares(formData: FormData): Array<{
   return shares;
 }
 
+function parseSpecialBudgetShareIds(formData: FormData): number[] {
+  return formData
+    .getAll("specialBudgetShareIds")
+    .map((value) => Number.parseInt(toSingleString(value), 10))
+    .filter((shareId) => Number.isInteger(shareId) && shareId > 0);
+}
+
 function validateOptionalBudgetAmount(rawValue: string): void {
   const normalized = rawValue.trim();
 
@@ -154,6 +162,7 @@ export async function createBudgetSpecialBudgetAction(formData: FormData): Promi
   try {
     const name = toSingleString(formData.get("name"));
     const note = toSingleString(formData.get("note"));
+    const iconName = toOptionalString(formData.get("iconName"));
     const primaryMonthKey = toSingleString(formData.get("monthKey"));
     const shares = [
       {
@@ -176,6 +185,7 @@ export async function createBudgetSpecialBudgetAction(formData: FormData): Promi
     createSpecialBudgetShares({
       name,
       note,
+      iconName,
       shares,
     });
 
@@ -237,13 +247,33 @@ export async function updateBudgetSpecialBudgetStateAction(formData: FormData): 
     );
     const intent = toSingleString(formData.get("intent"));
 
-    if (intent !== "deactivateProject") {
+    if (intent === "updateProject") {
+      const shareIds = parseSpecialBudgetShareIds(formData);
+
+      if (shareIds.length === 0) {
+        throw new Error("Keine Sonderbudget-Anteile zum Speichern gefunden.");
+      }
+
+      updateSpecialBudgetProject({
+        projectId: specialBudgetProjectId,
+        iconName: toOptionalString(formData.get("iconName")),
+        shares: shareIds.map((shareId) => ({
+          id: shareId,
+          plannedAmountCents: parsePlannedAmountCents(
+            toSingleString(formData.get(`plannedAmount-${shareId}`)),
+          ),
+        })),
+      });
+
+      refreshBudgetPaths();
+      redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget gespeichert.")}`;
+    } else if (intent === "deactivateProject") {
+      setSpecialBudgetProjectActive(specialBudgetProjectId, false);
+      refreshBudgetPaths();
+      redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget deaktiviert.")}`;
+    } else {
       throw new Error("Unbekannte Aktion.");
     }
-
-    setSpecialBudgetProjectActive(specialBudgetProjectId, false);
-    refreshBudgetPaths();
-    redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget deaktiviert.")}`;
   } catch (error) {
     redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }

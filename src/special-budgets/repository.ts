@@ -22,6 +22,7 @@ export type SpecialBudgetListItem = {
 export type SpecialBudgetProjectListItem = {
   projectId: number;
   name: string;
+  iconName: string | null;
   note: string | null;
   monthShares: SpecialBudgetArchiveMonthShare[];
   monthCount: number;
@@ -32,6 +33,7 @@ export type SpecialBudgetProjectListItem = {
 export type SpecialBudgetArchiveItem = {
   projectId: number;
   name: string;
+  iconName: string | null;
   status: SpecialBudgetProjectStatus;
   note: string | null;
   firstMonthKey: string | null;
@@ -55,6 +57,7 @@ export type SpecialBudgetInput = {
   monthKey: string;
   plannedAmountCents: number;
   note: string;
+  iconName?: string | null;
 };
 
 export type SpecialBudgetShareInput = {
@@ -142,6 +145,20 @@ function normalizeNote(note: string): string | null {
   return normalized;
 }
 
+function normalizeIconName(iconName: string | null | undefined): string | null {
+  const normalized = iconName?.trim() ?? "";
+
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  if (normalized.length > 24) {
+    throw new Error("Icon darf maximal 24 Zeichen enthalten.");
+  }
+
+  return normalized;
+}
+
 function toMonthKey(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -175,7 +192,7 @@ function mapSpecialBudgetPersistenceError(error: unknown): Error {
   return new Error("Sonderbudget konnte nicht gespeichert werden.");
 }
 
-function ensureProjectForName(name: string, note: string | null): number {
+function ensureProjectForName(name: string, note: string | null, iconName: string | null): number {
   getDb()
     .prepare(
       `
@@ -183,16 +200,18 @@ function ensureProjectForName(name: string, note: string | null): number {
           name,
           status,
           note,
+          icon_name,
           updated_at
         )
-        VALUES (?, 'active', ?, CURRENT_TIMESTAMP)
+        VALUES (?, 'active', ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(name) DO UPDATE SET
           status = 'active',
           note = COALESCE(excluded.note, special_budget_projects.note),
+          icon_name = COALESCE(excluded.icon_name, special_budget_projects.icon_name),
           updated_at = CURRENT_TIMESTAMP
       `,
     )
-    .run(name, note);
+    .run(name, note, iconName);
 
   const project = getDb()
     .prepare(
@@ -427,6 +446,7 @@ export function listArchivedSpecialBudgetProjects(): SpecialBudgetArchiveItem[] 
         SELECT
           sbp.id AS projectId,
           sbp.name,
+          sbp.icon_name AS iconName,
           sbp.status,
           sbp.note,
           MIN(sb.month_key) AS firstMonthKey,
@@ -447,7 +467,7 @@ export function listArchivedSpecialBudgetProjects(): SpecialBudgetArchiveItem[] 
         FROM special_budget_projects sbp
         LEFT JOIN special_budgets sb ON sb.project_id = sbp.id
         WHERE sbp.status = 'archived'
-        GROUP BY sbp.id, sbp.name, sbp.status, sbp.note
+        GROUP BY sbp.id, sbp.name, sbp.icon_name, sbp.status, sbp.note
         ORDER BY lastMonthKey DESC, sbp.name COLLATE NOCASE ASC
       `,
     )
@@ -506,6 +526,7 @@ export function listActiveSpecialBudgetProjects(): SpecialBudgetProjectListItem[
         SELECT
           sbp.id AS projectId,
           sbp.name,
+          sbp.icon_name AS iconName,
           sbp.note,
           COUNT(sb.id) AS monthCount,
           COALESCE(SUM(sb.planned_amount_cents), 0) AS plannedAmountCents,
@@ -524,7 +545,7 @@ export function listActiveSpecialBudgetProjects(): SpecialBudgetProjectListItem[
         INNER JOIN special_budgets sb ON sb.project_id = sbp.id
         WHERE sbp.status = 'active'
           AND sb.is_active = 1
-        GROUP BY sbp.id, sbp.name, sbp.note
+        GROUP BY sbp.id, sbp.name, sbp.icon_name, sbp.note
         ORDER BY sbp.name COLLATE NOCASE ASC
       `,
     )
@@ -579,6 +600,7 @@ export function createSpecialBudget(input: SpecialBudgetInput): void {
   createSpecialBudgetShares({
     name: input.name,
     note: input.note,
+    iconName: input.iconName,
     shares: [
       {
         monthKey: input.monthKey,
@@ -591,10 +613,12 @@ export function createSpecialBudget(input: SpecialBudgetInput): void {
 export function createSpecialBudgetShares(input: {
   name: string;
   note: string;
+  iconName?: string | null;
   shares: SpecialBudgetShareInput[];
 }): void {
   const name = normalizeName(input.name);
   const note = normalizeNote(input.note);
+  const iconName = normalizeIconName(input.iconName);
   const normalizedShares = input.shares.map((share) => ({
     monthKey: normalizeMonthKey(share.monthKey),
     plannedAmountCents: normalizePlannedAmountCents(share.plannedAmountCents),
@@ -614,7 +638,7 @@ export function createSpecialBudgetShares(input: {
 
   try {
     const transaction = getDb().transaction(() => {
-      const projectId = ensureProjectForName(name, note);
+      const projectId = ensureProjectForName(name, note, iconName);
 
       for (const share of normalizedShares) {
         getDb()
@@ -640,6 +664,89 @@ export function createSpecialBudgetShares(input: {
   } catch (error) {
     throw mapSpecialBudgetPersistenceError(error);
   }
+}
+
+export function updateSpecialBudgetProject(input: {
+  projectId: number;
+  iconName: string | null;
+  shares: Array<{
+    id: number;
+    plannedAmountCents: number;
+  }>;
+}): void {
+  if (!Number.isInteger(input.projectId) || input.projectId <= 0) {
+    throw new Error("Sonderbudget-Vorhaben ist ungueltig.");
+  }
+
+  if (input.shares.length === 0) {
+    throw new Error("Sonderbudget braucht mindestens einen Monatsanteil.");
+  }
+
+  const iconName = normalizeIconName(input.iconName);
+  const normalizedShares = input.shares.map((share) => {
+    if (!Number.isInteger(share.id) || share.id <= 0) {
+      throw new Error("Sonderbudget-Monatsanteil ist ungueltig.");
+    }
+
+    return {
+      id: share.id,
+      plannedAmountCents: normalizePlannedAmountCents(share.plannedAmountCents),
+    };
+  });
+
+  const transaction = getDb().transaction(() => {
+    const project = getDb()
+      .prepare(
+        `
+          SELECT id
+          FROM special_budget_projects
+          WHERE id = ?
+          LIMIT 1
+        `,
+      )
+      .get(input.projectId) as { id: number } | undefined;
+
+    if (!project) {
+      throw new Error("Sonderbudget-Vorhaben wurde nicht gefunden.");
+    }
+
+    getDb()
+      .prepare(
+        `
+          UPDATE special_budget_projects
+          SET
+            icon_name = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `,
+      )
+      .run(iconName, input.projectId);
+
+    const updateShare = getDb().prepare(
+      `
+        UPDATE special_budgets
+        SET
+          planned_amount_cents = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+          AND project_id = ?
+      `,
+    );
+
+    for (const share of normalizedShares) {
+      const result = updateShare.run(
+        share.plannedAmountCents,
+        share.id,
+        input.projectId,
+      );
+
+      if (result.changes === 0) {
+        throw new Error("Sonderbudget-Monatsanteil wurde nicht gefunden.");
+      }
+    }
+  });
+
+  transaction();
 }
 
 export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolean): void {

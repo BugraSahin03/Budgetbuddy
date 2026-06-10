@@ -132,6 +132,7 @@ export async function reactivateSpecialBudgetProjectAction(
     reactivateSpecialBudgetProject(parseProjectId(formData));
     revalidatePath("/einstellungen");
     revalidatePath("/einstellungen/sonderbudget-archiv");
+    revalidatePath("/einstellungen/kategorie-archiv");
     revalidatePath("/budgets");
     revalidatePath("/monate");
   } catch (error) {
@@ -139,11 +140,11 @@ export async function reactivateSpecialBudgetProjectAction(
   }
 
   if (errorMessage) {
-    redirect("/einstellungen/sonderbudget-archiv?error=" + encodeMessage(errorMessage));
+    redirect("/einstellungen/kategorie-archiv?error=" + encodeMessage(errorMessage));
   }
 
   redirect(
-    "/einstellungen/sonderbudget-archiv?notice=" +
+    "/einstellungen/kategorie-archiv?notice=" +
       encodeMessage("Sonderbudget-Vorhaben reaktiviert."),
   );
 }

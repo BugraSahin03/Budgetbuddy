@@ -1285,3 +1285,21 @@ Auswirkung:
 - `/budgets` bleibt auf aktuelle Budgettoepfe fokussiert und vermeidet doppelte Sonderbudget-Zeilen fuer dasselbe Vorhaben.
 - `/einstellungen/kategorie-archiv` wird der neue Ort fuer deaktivierte Kategorien.
 - `/einstellungen/sonderbudget-archiv` bleibt der Ort fuer archivierte Sonderbudget-Vorhaben.
+
+## 2026-06-10 - FIN-065 fuehrt Kategoriearchiv und Sonderbudgetpflege zusammen
+
+Quelle/Ticket: `FIN-065`
+
+Erkenntnis/Entscheidung:
+
+- Das Kategoriearchiv unter `/einstellungen/kategorie-archiv` wird zur gemeinsamen Archivsicht fuer archivierte Sonderbudget-Vorhaben und deaktivierte Kategorien.
+- Archivierte Sonderbudgets werden dort vor den normalen Kategorien gelistet, damit beide deaktivierten Budgettopf-Arten an einem Ort auffindbar sind.
+- Die separate Route `/einstellungen/sonderbudget-archiv` bleibt als Weiterleitung bestehen, wird aber nicht mehr als eigener Einstellungsbereich beworben.
+- Sonderbudget-Vorhaben erhalten ein optionales Icon auf Projektebene.
+- In der Budgetpflege koennen im Editiermodus die Planbetraege der einzelnen Monatsanteile eines Sonderbudget-Vorhabens angepasst werden.
+
+Auswirkung:
+
+- Nutzer muessen nicht zwischen zwei Archivseiten unterscheiden.
+- Deaktivierte Kategorien zeigen im Archiv nur noch den fachlich relevanten Namen; technische Zaehlwerte wie Buchungen oder Monatswerte werden ausgeblendet.
+- Transaktionszuordnungen bleiben weiterhin am konkreten Sonderbudget-Monatsanteil; die neue Icon-Angabe ist reine Darstellungsmetadaten.

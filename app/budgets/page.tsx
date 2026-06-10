@@ -130,6 +130,10 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     <input name="name" required maxLength={80} placeholder="Zum Beispiel Urlaub" />
                   </label>
                   <label>
+                    Icon
+                    <input name="iconName" maxLength={24} placeholder="Optional" />
+                  </label>
+                  <label>
                     Monat
                     <select name="monthKey" defaultValue={selectedMonthKey}>
                       {selectableMonths.map((monthKey) => (

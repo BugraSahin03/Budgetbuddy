@@ -102,10 +102,11 @@ describe("FIN-059 import display alias actions", () => {
     formData.set("projectId", "42");
 
     await expect(reactivateSpecialBudgetProjectAction(formData)).rejects.toThrow(
-      "NEXT_REDIRECT:/einstellungen/sonderbudget-archiv?notice=Sonderbudget-Vorhaben%20reaktiviert.",
+      "NEXT_REDIRECT:/einstellungen/kategorie-archiv?notice=Sonderbudget-Vorhaben%20reaktiviert.",
     );
 
     expect(specialBudgetRepositoryMocks.reactivateSpecialBudgetProject).toHaveBeenCalledWith(42);
+    expect(revalidatePathMock).toHaveBeenCalledWith("/einstellungen/kategorie-archiv");
     expect(revalidatePathMock).toHaveBeenCalledWith("/einstellungen/sonderbudget-archiv");
     expect(revalidatePathMock).toHaveBeenCalledWith("/budgets");
   });

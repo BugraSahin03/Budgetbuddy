@@ -8,15 +8,9 @@ const GLOBAL_SETTINGS = [
     icon: "⚙",
   },
   {
-    href: "/einstellungen/sonderbudget-archiv",
-    title: "Sonderbudget-Archiv",
-    meta: "Historie",
-    icon: "◎",
-  },
-  {
     href: "/einstellungen/kategorie-archiv",
     title: "Kategorie-Archiv",
-    meta: "Historie",
+    meta: "Kategorien & Sonderbudgets",
     icon: "◇",
   },
 ] as const;
