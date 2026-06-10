@@ -26,6 +26,7 @@ export function AppNavigation({ collapsed = false }: AppNavigationProps) {
                 title={collapsed ? item.label : undefined}
               >
                 <span className="app-nav-label">{item.label}</span>
+                <span className="app-nav-rail-marker" aria-hidden="true" />
               </Link>
             </li>
           );

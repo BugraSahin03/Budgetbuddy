@@ -180,6 +180,10 @@ body {
   letter-spacing: -0.02em;
 }
 
+.app-nav-rail-marker {
+  display: none;
+}
+
 .app-content-frame {
   min-width: 0;
 }
@@ -270,13 +274,46 @@ body {
   }
 
   .app-shell-collapsed .app-nav {
-    display: none;
+    display: block;
   }
 
   .app-shell-collapsed .app-nav-link {
+    background: transparent;
+    border-color: rgba(255, 255, 255, 0.12);
     justify-content: center;
     min-height: 2.85rem;
     padding: 0.6rem;
+  }
+
+  .app-shell-collapsed .app-nav-link:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(125, 211, 252, 0.4);
+  }
+
+  .app-shell-collapsed .app-nav-link-active {
+    background: rgba(255, 255, 255, 0.12);
+    border-color: rgba(255, 255, 255, 0.34);
+  }
+
+  .app-shell-collapsed .app-nav-rail-marker {
+    background: rgba(255, 255, 255, 0.26);
+    border-radius: 999px;
+    display: block;
+    height: 0.5rem;
+    transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+    width: 0.5rem;
+  }
+
+  .app-shell-collapsed .app-nav-link:hover .app-nav-rail-marker {
+    background: rgba(125, 211, 252, 0.78);
+    transform: scale(1.1);
+  }
+
+  .app-shell-collapsed .app-nav-link-active .app-nav-rail-marker {
+    background: #ffffff;
+    box-shadow: 0 0 0 0.34rem rgba(125, 211, 252, 0.18), 0 10px 22px rgba(2, 8, 23, 0.22);
+    height: 0.72rem;
+    width: 0.72rem;
   }
 
   .app-shell-collapsed .app-nav-toggle {
