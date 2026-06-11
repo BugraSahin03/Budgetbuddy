@@ -1447,3 +1447,17 @@ Auswirkung:
 - Das Dashboard bleibt noch staerker auf Status und offene Arbeit fokussiert.
 - Die Buchungsdetailarbeit bleibt vollstaendig in der Monatsansicht.
 - Es wird keine Monats-, Import-, Transaktions- oder Sparlogik geaendert.
+
+## 2026-06-11 - FIN-077 Visual Check gleicht Dashboard-Farben ab
+
+Quelle/Ticket: `FIN-077`
+
+Erkenntnis/Entscheidung:
+
+- Die Dashboard-Kopfzeile orientiert sich wieder an der hellen, leicht blauen Fixkostenpflege-Kachel statt an einer dunklen Vollflaeche.
+- Die KPI-Zahlen verwenden die Farblogik der Monatsansicht: Einnahmen gruen, Ausgaben rot, Gespart hellgruen.
+
+Auswirkung:
+
+- Das Dashboard bleibt aufgeraeumt, wirkt aber weniger extrem und konsistenter mit den bestehenden Pflege- und Monatsseiten.
+- Es wird weiterhin keine Monats-, Transaktions- oder Berechnungslogik geaendert.

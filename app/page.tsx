@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { getDashboardMonthSnapshot } from "@/src/dashboard/repository";
 import { buildDashboardKpis, formatEuro } from "@/src/dashboard/ui";
 import { formatMonthLabel, getCurrentMonthKey } from "@/src/months/repository";
@@ -6,26 +8,38 @@ export const dynamic = "force-dynamic";
 
 function amountTone(cents: number): string {
   if (cents < 0) {
-    return "text-red-100";
+    return "text-[#b91c1c]";
   }
 
   if (cents > 0) {
-    return "text-emerald-100";
+    return "text-[#08766b]";
   }
 
-  return "text-white";
+  return "text-[color:var(--month-ink)]";
 }
 
 function kpiAccent(label: string): string {
   if (label === "Einnahmen") {
-    return "bg-emerald-300";
+    return "bg-[#8bf0df]";
   }
 
   if (label === "Ausgaben") {
-    return "bg-rose-300";
+    return "bg-[#74171d]";
   }
 
-  return "bg-sky-300";
+  return "bg-[#d9f7b5]";
+}
+
+function kpiValueStyle(label: string): CSSProperties {
+  if (label === "Einnahmen") {
+    return { color: "#08766b" };
+  }
+
+  if (label === "Ausgaben") {
+    return { color: "#f17680" };
+  }
+
+  return { color: "#4f7d12" };
 }
 
 export default async function HomePage() {
@@ -40,19 +54,19 @@ export default async function HomePage() {
 
   return (
     <div className="month-page-shell space-y-6 md:space-y-8">
-      <section className="relative overflow-hidden rounded-[2.1rem] border border-white/12 bg-[linear-gradient(135deg,#071b46_0%,#0a2a4a_48%,#123f57_100%)] p-6 text-white shadow-[0_28px_70px_rgba(7,27,70,0.22)] md:p-8 xl:p-10">
-        <div className="absolute -left-16 top-8 h-44 w-44 rounded-full bg-cyan-200/16 blur-3xl" aria-hidden="true" />
-        <div className="absolute -right-20 bottom-0 h-56 w-56 rounded-full bg-emerald-200/12 blur-3xl" aria-hidden="true" />
+      <section className="relative overflow-hidden rounded-[2.25rem] border border-white/80 bg-[radial-gradient(circle_at_88%_14%,rgba(134,239,222,0.16),transparent_22rem),linear-gradient(180deg,rgba(234,248,255,0.96),rgba(245,251,255,0.84))] p-6 shadow-[0_24px_58px_rgba(7,27,70,0.07)] backdrop-blur md:p-8 xl:p-10">
+        <div className="absolute -left-16 top-8 h-44 w-44 rounded-full bg-cyan-200/20 blur-3xl" aria-hidden="true" />
+        <div className="absolute -right-20 bottom-0 h-56 w-56 rounded-full bg-white/60 blur-3xl" aria-hidden="true" />
 
         <div className="relative max-w-4xl">
-          <p className="text-xs font-black uppercase tracking-[0.32em] text-cyan-100/72">Dashboard</p>
-          <h1 className="mt-4 text-[clamp(2.7rem,7vw,6.2rem)] font-black leading-[0.88] tracking-[-0.085em]">
+          <p className="month-eyebrow">Dashboard</p>
+          <h1 className="mt-4 text-[clamp(2.35rem,5.4vw,4.4rem)] font-black leading-[0.92] tracking-[-0.08em] text-[color:var(--month-ink)]">
             {monthLabel}
           </h1>
-          <p className="mt-7 text-sm font-bold uppercase tracking-[0.24em] text-cyan-100/68">
+          <p className="mt-7 text-sm font-bold uppercase tracking-[0.24em] text-[color:var(--month-ink-muted)]">
             Aktueller Stand
           </p>
-          <p className={`mt-3 text-[4.1rem] font-semibold leading-none tracking-[-0.08em] md:text-[6rem] ${amountTone(snapshot.totals.availableCents)}`}>
+          <p className={`mt-3 text-[3.6rem] font-semibold leading-none tracking-[-0.075em] md:text-[5rem] ${amountTone(snapshot.totals.availableCents)}`}>
             {formatEuro(snapshot.totals.availableCents)}
           </p>
         </div>
@@ -63,7 +77,9 @@ export default async function HomePage() {
           <article key={card.label} className="month-stat-card overflow-hidden">
             <div className={`mb-4 h-1.5 w-16 rounded-full ${kpiAccent(card.label)}`} aria-hidden="true" />
             <p className="month-stat-label">{card.label}</p>
-            <p className={`month-stat-value mt-3 ${card.tone}`}>{card.value}</p>
+            <p className="month-stat-value mt-3" style={kpiValueStyle(card.label)}>
+              {card.value}
+            </p>
           </article>
         ))}
       </section>

@@ -26,9 +26,9 @@ describe("dashboard ui adapters", () => {
     expect(kpis.map((card) => card.label)).toEqual(["Einnahmen", "Ausgaben", "Gespart"]);
     expect(kpis.map((card) => card.value)).toEqual(["2.000,00 €", "1.200,00 €", "250,00 €"]);
     expect(kpis.map((card) => card.tone)).toEqual([
-      "text-emerald-700",
-      "text-rose-700",
-      "text-sky-700",
+      "text-[#08766b]",
+      "text-[#f17680]",
+      "text-[#4f7d12]",
     ]);
   });
 });
