@@ -61,7 +61,7 @@ export default async function ImportPage({ searchParams }: ImportPageProps) {
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Regelvorschlaege</p>
           <h3 className="text-base font-semibold text-slate-900">Import-Regel anlegen</h3>
           <p className="text-sm text-slate-600">
-            Regeln schlagen Kategorie, Sonderbudget oder Transfer-Buchungen fuer passende Buchungen vor.
+            Regeln schlagen Kategorie, Sonderkategorie oder Transfer-Buchungen fuer passende Buchungen vor.
           </p>
         </div>
 
@@ -97,7 +97,7 @@ export default async function ImportPage({ searchParams }: ImportPageProps) {
             </label>
             <select id="rule-target-type" name="targetType" defaultValue="category" className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm">
               <option value="category">Kategorie</option>
-              <option value="special_budget">Sonderbudget</option>
+              <option value="special_budget">Sonderkategorie</option>
               <option value="transfer_cash">Transfer Bargeld</option>
             </select>
           </div>
@@ -123,7 +123,7 @@ export default async function ImportPage({ searchParams }: ImportPageProps) {
 
           <div className="xl:col-span-2">
             <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="rule-special-budget">
-              Sonderbudget
+              Sonderkategorie
             </label>
             <select id="rule-special-budget" name="specialBudgetId" defaultValue="" className="mt-1 w-full rounded border border-slate-300 px-3 py-2 text-sm">
               <option value="">-</option>
@@ -171,7 +171,7 @@ export default async function ImportPage({ searchParams }: ImportPageProps) {
 
                   <select name="targetType" defaultValue={rule.targetType} className="xl:col-span-2 rounded border border-slate-300 px-2 py-1 text-xs">
                     <option value="category">Kategorie</option>
-                    <option value="special_budget">Sonderbudget</option>
+                    <option value="special_budget">Sonderkategorie</option>
                     <option value="transfer_cash">Transfer Bargeld</option>
                   </select>
 

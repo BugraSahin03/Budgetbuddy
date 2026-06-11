@@ -251,7 +251,7 @@ export function BudgetCareEditor({
         <div
           key="budget-readonly-list"
           className="budget-category-editor-form"
-          aria-label="Budgettoepfe"
+          aria-label="Kategorien und Sonderkategorien"
         >
           {categories.map((category) => (
             <article key={category.id} className="budget-pot-card">
@@ -293,8 +293,8 @@ function SpecialBudgetList({
   specialBudgets: BudgetEditorSpecialBudget[];
 }) {
   return (
-    <section className="budget-section-list" aria-label="Sonderbudgets">
-      <h3 className="budget-section-heading">Sonderbudgets</h3>
+    <section className="budget-section-list" aria-label="Sonderkategorien">
+      <h3 className="budget-section-heading">Sonderkategorien</h3>
       <div className="budget-special-list">
         {specialBudgets.map((budget) => {
           const content = (

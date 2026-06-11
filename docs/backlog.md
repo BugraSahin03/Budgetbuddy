@@ -68,8 +68,8 @@ Ziel: Die wichtigsten fachlichen Objekte werden in SQLite abgebildet.
 
 Akzeptanzkriterien:
 
-- Tabellen fuer Transaktionen, Konten, Kategorien, Monatsbudgets, Sonderbudgets, Fixkosten und Importlaeufe existieren
-- Jede Transaktion kann genau einer Kategorie oder einem Sonderbudget zugeordnet werden
+- Tabellen fuer Transaktionen, Konten, Kategorien, Monatsbudgets, Sonderkategorien, Fixkosten und Importlaeufe existieren
+- Jede Transaktion kann genau einer Kategorie oder einer Sonderkategorie zugeordnet werden
 - Bargeld kann als Konto gefuehrt werden
 - Import-Deduplizierung ist konzeptionell vorbereitet
 - Transaktionstypen unterscheiden echte Ausgaben, Einnahmen und Transfers
@@ -77,7 +77,7 @@ Akzeptanzkriterien:
 
 Notizen:
 
-- Sonderbudgets sind direkte Ausgaben, keine reinen Sparziele.
+- Sonderkategorien sind direkte Ausgaben, keine reinen Sparziele.
 - Fixkosten werden geplant, aber nicht ueber N26 importiert.
 - Siehe `docs/domain-model.md`.
 - Umsetzung liegt in `src/db/schema.ts` (Migrationsbasis + FIN-002 Schema), `src/db/client.ts` und DB-Tests.
@@ -92,7 +92,7 @@ Ziel: Die App bekommt eine klare Grundnavigation.
 
 Akzeptanzkriterien:
 
-- Navigation enthaelt Dashboard, Transaktionen, Import, Kategorien, Sonderbudgets, Fixkosten und Einstellungen
+- Navigation enthaelt Dashboard, Transaktionen, Import, Kategorien, Sonderkategorien, Fixkosten und Einstellungen
 - Layout funktioniert am Desktop
 - Grunddesign ist ruhig, tabellarisch und finanzfokussiert
 - Keine Marketing-Landingpage als erste Ansicht
@@ -130,20 +130,20 @@ Akzeptanzkriterien:
 - Budgetwerte koennen je Monat unterschiedlich sein
 - fehlende Budgetwerte werden klar angezeigt
 
-### FIN-006 Sonderbudgets verwalten
+### FIN-006 Sonderkategorien verwalten
 
 Status: `todo`
 Prioritaet: `P0`
 
-Ziel: Monatliche Sonderbudgets fuer konkrete Ausgaben koennen erstellt werden.
+Ziel: Monatliche Sonderkategorien fuer konkrete Ausgaben koennen erstellt werden.
 
 Akzeptanzkriterien:
 
-- Sonderbudget mit Name, Monat, geplantem Betrag und optionaler Notiz erstellen
-- Sonderbudget kann nur in aktiven Monaten ausgewaehlt werden
-- Ausgaben koennen einem Sonderbudget zugeordnet werden
+- Sonderkategorie mit Name, Monat, geplantem Betrag und optionaler Notiz erstellen
+- Sonderkategorie kann nur in aktiven Monaten ausgewaehlt werden
+- Ausgaben koennen einer Sonderkategorie zugeordnet werden
 - Ueberschreitung wird deutlich markiert
-- Sonderbudgets erscheinen getrennt von festen Kategorien in der Monatsuebersicht
+- Sonderkategorien erscheinen getrennt von festen Kategorien in der Monatsuebersicht
 
 ### FIN-007 Transaktionen manuell erfassen
 
@@ -155,7 +155,7 @@ Ziel: Ausgaben und Einnahmen koennen manuell eingetragen werden.
 Akzeptanzkriterien:
 
 - Transaktion mit Datum, Betrag, Name/Beschreibung, Konto/Zahlungsart erfassen
-- Ausgabe muss Kategorie oder Sonderbudget erhalten
+- Ausgabe muss Kategorie oder Sonderkategorie erhalten
 - Einnahme kann als Einkommen oder sonstige Einnahme markiert werden
 - Transaktionen koennen bearbeitet und geloescht werden
 - Transfer kann ohne Kategorie erfasst werden
@@ -246,7 +246,7 @@ Ziel: Wiederkehrende Buchungen werden automatisch vorgeschlagen oder zugeordnet.
 Akzeptanzkriterien:
 
 - Regel anhand Beschreibung/Gegenpartei erstellen
-- Regel setzt Kategorie, Sonderbudget oder Transfer-Typ
+- Regel setzt Kategorie, Sonderkategorie oder Transfer-Typ
 - Regelvorschlag wird im Import angezeigt
 - Regel kann nachtraeglich angepasst werden
 - Regel kann Bargeldabhebung als Transfer vorschlagen
@@ -264,7 +264,7 @@ Akzeptanzkriterien:
 
 - Einnahmen, Ausgaben, Fixkosten und verfuegbarer Betrag sichtbar
 - Kategorien mit Budget, Ist-Wert und Rest sichtbar
-- Sonderbudgets separat sichtbar
+- Sonderkategorien separat sichtbar
 - Ueberschreitungen werden deutlich markiert
 - Bargeldbestand ist sichtbar
 - Transfers werden nicht als Ausgaben gezaehlt

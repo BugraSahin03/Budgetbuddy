@@ -10,7 +10,7 @@ const GLOBAL_SETTINGS = [
   {
     href: "/einstellungen/kategorie-archiv",
     title: "Kategorie-Archiv",
-    meta: "Kategorien & Sonderbudgets",
+    meta: "Kategorien & Sonderkategorien",
     icon: "◇",
   },
   {

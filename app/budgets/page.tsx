@@ -81,10 +81,10 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
         <div className="budget-hero-actions">
           <BudgetDialog
             triggerLabel="+"
-            triggerAriaLabel="Kategorie oder Sonderbudget anlegen"
+            triggerAriaLabel="Kategorie oder Sonderkategorie anlegen"
             triggerClassName="budget-dialog-plus"
             eyebrow="Neuer Eintrag"
-            title="Kategorie oder Sonderbudget anlegen"
+            title="Kategorie oder Sonderkategorie anlegen"
           >
             <BudgetCreateTabs
               categoryForm={
@@ -181,7 +181,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                     <input name="note" maxLength={240} placeholder="Optional" />
                   </label>
                   <button type="submit" className="budget-primary-button">
-                    Sonderbudget speichern
+                    Sonderkategorie speichern
                   </button>
                 </form>
               }

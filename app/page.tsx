@@ -195,7 +195,7 @@ export default async function HomePage({ searchParams }: HomePageProps) {
                 {warningCount} Budgetueberschreitung(en) aktiv
               </h2>
               <p className="mt-1 text-sm leading-6 text-red-800">
-                Bitte pruefen, ob Umbuchung oder Sonderbudget-Anpassung noetig ist.
+                Bitte pruefen, ob Umbuchung oder Sonderkategorie-Anpassung noetig ist.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -273,14 +273,14 @@ export default async function HomePage({ searchParams }: HomePageProps) {
         <aside className="space-y-5">
           <section className="month-section-panel">
             <div className="border-b border-[color:var(--month-line)] pb-4">
-              <p className="month-eyebrow">Sonderbudgets</p>
+              <p className="month-eyebrow">Sonderkategorien</p>
               <h2 className="month-section-title mt-2">Separat geplant</h2>
             </div>
 
             <div className="mt-5 space-y-3">
               {snapshot.specialBudgetRows.length === 0 ? (
                 <p className="rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/70 p-4 text-sm text-[color:var(--month-ink-soft)]">
-                  Keine Sonderbudgets fuer diesen Monat vorhanden.
+                  Keine Sonderkategorien fuer diesen Monat vorhanden.
                 </p>
               ) : (
                 snapshot.specialBudgetRows.map((row) => (

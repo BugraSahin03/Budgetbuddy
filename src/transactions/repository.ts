@@ -210,11 +210,11 @@ function getActiveSpecialBudgetById(specialBudgetId: number): {
     | undefined;
 
   if (!specialBudget) {
-    throw new Error("Sonderbudget wurde nicht gefunden.");
+    throw new Error("Sonderkategorie wurde nicht gefunden.");
   }
 
   if (specialBudget.isActive !== 1 || specialBudget.projectStatus !== "active") {
-    throw new Error("Sonderbudget ist deaktiviert und nicht auswaehlbar.");
+    throw new Error("Sonderkategorie ist deaktiviert und nicht auswaehlbar.");
   }
 
   return specialBudget;
@@ -235,7 +235,7 @@ function validateExpenseAssignment(
 
   if (hasCategory && hasSpecialBudget) {
     throw new Error(
-      "Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.",
+      "Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderkategorie.",
     );
   }
 
@@ -248,7 +248,7 @@ function validateExpenseAssignment(
     }
 
     throw new Error(
-      "Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.",
+      "Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderkategorie.",
     );
   }
 
@@ -264,13 +264,13 @@ function validateExpenseAssignment(
 
   const specialBudgetId = ensurePositiveInt(
     input.specialBudgetId ?? -1,
-    "Sonderbudget",
+    "Sonderkategorie",
   );
   const specialBudget = getActiveSpecialBudgetById(specialBudgetId);
 
   if (specialBudget.monthKey !== effectiveMonthKey) {
     throw new Error(
-      "Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.",
+      "Sonderkategorie muss im gleichen Monat wie die Ausgabe aktiv sein.",
     );
   }
 

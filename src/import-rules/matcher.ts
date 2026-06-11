@@ -62,7 +62,7 @@ function suggestionLabel(rule: ImportRule): string {
     return `Kategorie-ID ${rule.categoryId}`;
   }
 
-  return `Sonderbudget-ID ${rule.specialBudgetId}`;
+  return `Sonderkategorie-ID ${rule.specialBudgetId}`;
 }
 
 function normalizeToken(value: string | null): string {

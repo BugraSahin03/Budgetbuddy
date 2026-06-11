@@ -9,7 +9,7 @@ Angenommen
 Fuer `FIN-002` muss das Datenmodell in SQLite umgesetzt werden. Dabei muss klar sein:
 
 - wie Ausgaben, Einnahmen und Transfers strukturell unterschieden werden
-- wie die Pflichtzuordnung von Ausgaben zu Kategorie oder Sonderbudget technisch garantiert wird
+- wie die Pflichtzuordnung von Ausgaben zu Kategorie oder Sonderkategorie technisch garantiert wird
 - wie Betraege gespeichert werden, damit Import, Berechnungen und Deduplizierung robust bleiben
 
 ## Entscheidung
@@ -18,7 +18,7 @@ Wir verwenden folgende Konventionen:
 
 - Transaktionen haben den Typ `expense`, `income`, `transfer` oder `refund`.
 - `expense` braucht genau eine Zuordnung zu `category_id` oder `special_budget_id`.
-- `transfer` hat keine Kategorie/Sonderbudget-Zuordnung und ein `destination_account_id`.
+- `transfer` hat keine Kategorie-/Sonderkategorie-Zuordnung und ein `destination_account_id`.
 - Betraege werden als `amount_cents` (signed Integer) gespeichert.
 - Import-Deduplizierung wird vorbereitet mit:
   - `transactions.import_fingerprint` (unique, sofern vorhanden)

@@ -1,4 +1,4 @@
-# ADR 0005: Mehrmonatige Sonderbudgets als Vorhaben mit Monatsanteilen
+# ADR 0005: Mehrmonatige Sonderkategorien als Vorhaben mit Monatsanteilen
 
 ## Status
 
@@ -6,18 +6,18 @@ Angenommen
 
 ## Kontext
 
-Sonderbudgets waren bisher direkt ein einzelner Monatsanteil: ein Name, ein `month_key`, ein geplanter Betrag. Fuer groessere Vorhaben wie `Computer` oder `Urlaub` reicht das fachlich nicht, weil Nutzer mehrere Monatsanteile als ein zusammenhaengendes Vorhaben verstehen.
+Sonderkategorien waren bisher direkt ein einzelner Monatsanteil: ein Name, ein `month_key`, ein geplanter Betrag. Fuer groessere Vorhaben wie `Computer` oder `Urlaub` reicht das fachlich nicht, weil Nutzer mehrere Monatsanteile als ein zusammenhaengendes Vorhaben verstehen.
 
 Gleichzeitig muessen historische Transaktionszuordnungen stabil bleiben. Ausgaben referenzieren heute konkrete `special_budgets.id`; diese Referenz darf nicht durch ein neues Gruppierungsmodell aufgebrochen werden.
 
 ## Entscheidung
 
-Mehrmonatige Sonderbudgets werden als Vorhaben mit Monatsanteilen modelliert:
+Mehrmonatige Sonderkategorien werden als Vorhaben mit Monatsanteilen modelliert:
 
 - `special_budget_projects` ist das uebergeordnete Vorhaben, z. B. `Computer`.
 - `special_budgets` bleiben konkrete Monatsanteile mit `month_key`, Planbetrag und Aktiv-Status.
 - Ein Monatsanteil verweist ueber `project_id` auf das Vorhaben.
-- Beim Anlegen eines Sonderbudgets mit gleichem Namen in einem weiteren Monat wird dasselbe Vorhaben genutzt.
+- Beim Anlegen einer Sonderkategorie mit gleichem Namen in einem weiteren Monat wird dasselbe Vorhaben genutzt.
 - Transaktionen bleiben weiterhin am konkreten Monatsanteil (`special_budgets.id`) verankert.
 - Ein Vorhaben wird archiviert, wenn kein Monatsanteil mehr aktiv ist.
 - Reaktivieren holt das Vorhaben zurueck und aktiviert den juengsten Monatsanteil.
@@ -30,16 +30,16 @@ Die stabile Transaktionsreferenz verhindert Historienbrueche. Alte Buchungen zei
 
 ## Abgrenzung
 
-Mehrmonatige Sonderbudgets sind keine Sparlogik:
+Mehrmonatige Sonderkategorien sind keine Sparlogik:
 
 - Es werden keine automatischen Transfers erzeugt.
 - Es entsteht keine interne Spar- oder Umbuchungsbuchhaltung.
-- Kontoabgaenge, die einem Sonderbudget zugeordnet werden, bleiben echte Ausgaben.
+- Kontoabgaenge, die einer Sonderkategorie zugeordnet werden, bleiben echte Ausgaben.
 - FIN-049 bleibt die separate Folgearbeit fuer echte Sparlogik.
 
 ## Konsequenzen
 
-- Die normale Budgetpflege zeigt nur aktive Sonderbudget-Monatsanteile aus aktiven Vorhaben.
-- Archivierte Vorhaben werden unter Einstellungen im Sonderbudget-Archiv sichtbar.
+- Die normale Budgetpflege zeigt nur aktive Monatsanteile der Sonderkategorien aus aktiven Vorhaben.
+- Archivierte Vorhaben werden unter Einstellungen im Sonderkategorie-Archiv sichtbar.
 - Historische Buchungen bleiben nachvollziehbar und werden nicht geloescht.
-- Die Fachregel bleibt unveraendert: Eine Ausgabe hat genau eine Zuordnung, Kategorie oder Sonderbudget.
+- Die Fachregel bleibt unveraendert: Eine Ausgabe hat genau eine Zuordnung, Kategorie oder Sonderkategorie.

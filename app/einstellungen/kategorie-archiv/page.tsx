@@ -74,7 +74,7 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
             <p className="month-eyebrow">Archiv</p>
             <h2 className="month-hero-title mt-2">Kategoriearchiv</h2>
             <p className="month-hero-copy mt-4">
-              Deaktivierte Sonderbudgets und Kategorien bleiben erhalten und koennen hier reaktiviert werden.
+              Deaktivierte Sonderkategorien und Kategorien bleiben erhalten und koennen hier reaktiviert werden.
             </p>
           </div>
           <div className="month-stat-card month-stat-card-calm min-w-64">
@@ -99,8 +99,8 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
       <details open className="month-section-panel space-y-4">
         <summary className="archive-section-summary">
           <span>
-            <span className="month-eyebrow">Sonderbudgets</span>
-            <span className="month-section-title mt-1 block">Archivierte Sonderbudgets</span>
+            <span className="month-eyebrow">Sonderkategorien</span>
+            <span className="month-section-title mt-1 block">Archivierte Sonderkategorien</span>
           </span>
           <span className="month-chip month-chip-neutral w-fit">
             {archivedProjects.length} Eintraege
@@ -109,7 +109,7 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
 
         {archivedProjects.length === 0 ? (
           <p className="rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/75 px-4 py-6 text-sm text-[color:var(--month-ink-soft)]">
-            Keine archivierten Sonderbudgets.
+            Keine archivierten Sonderkategorien.
           </p>
         ) : (
           <ul className="space-y-3">

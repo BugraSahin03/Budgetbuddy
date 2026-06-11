@@ -51,7 +51,7 @@ describe("import rules", () => {
     });
 
     repo.createImportRule({
-      name: "Bali -> Sonderbudget",
+      name: "Bali -> Sonderkategorie",
       pattern: "BALI",
       matchField: "description",
       targetType: "special_budget",
@@ -63,7 +63,7 @@ describe("import rules", () => {
 
     const rules = repo
       .listImportRules()
-      .filter((rule) => rule.name === "REWE -> Einkauf" || rule.name === "Bali -> Sonderbudget");
+      .filter((rule) => rule.name === "REWE -> Einkauf" || rule.name === "Bali -> Sonderkategorie");
     expect(rules).toHaveLength(2);
 
     repo.updateImportRule(rules[0].id, {

@@ -70,7 +70,7 @@ Erkenntnis/Entscheidung:
 Auswirkung:
 
 - UI-Folgetickets koennen Dashboard, Shell, Monatsansicht und Verwaltungsseiten getrennt umsetzen, ohne die Richtung neu zu verhandeln.
-- Redesign-Arbeit darf keine Fachlogik zu Budgets, Sonderbudgets, Fixkosten, Transfers oder `effective_month_key` stillschweigend veraendern.
+- Redesign-Arbeit darf keine Fachlogik zu Budgets, Sonderkategorien, Fixkosten, Transfers oder `effective_month_key` stillschweigend veraendern.
 
 Folgeaktion:
 
@@ -92,7 +92,7 @@ Erkenntnis/Entscheidung:
 Auswirkung:
 
 - Nutzer koennen mehrere Monate schnell miteinander vergleichen, ohne in einzelne Monatsdetails springen zu muessen.
-- Es entsteht keine neue Sparfachlogik und keine stille Umdeutung von Kategorien, Sonderbudgets oder Transfers.
+- Es entsteht keine neue Sparfachlogik und keine stille Umdeutung von Kategorien, Sonderkategorien oder Transfers.
 
 Folgeaktion:
 
@@ -106,7 +106,7 @@ Erkenntnis/Entscheidung:
 
 - Das Dashboard wird als erster konkreter Referenzscreen fuer die ruhige Premium-Finanzsprache umgesetzt.
 - Der Primaerfokus liegt auf einer dominanten Hero-Flaeche mit Monatskontext und `Verfuegbar` als Hauptzahl.
-- Kategorien und Sonderbudgets werden auf dem Dashboard als Karten-/Listenflaechen statt als klassische Tabellen dargestellt.
+- Kategorien und Sonderkategorien werden auf dem Dashboard als Karten-/Listenflaechen statt als klassische Tabellen dargestellt.
 - Die fachliche Dashboard-Berechnung bleibt unveraendert; geaendert wird bewusst nur die visuelle Struktur und Blickfuehrung.
 - Transfers bleiben sichtbar markiert und werden weiterhin nicht als Budgetausgaben interpretiert.
 
@@ -146,7 +146,7 @@ Quelle/Ticket: `FIN-034`
 
 Erkenntnis/Entscheidung:
 
-- Monatsaggregation fuer KPIs, Kategorien, Sonderbudgets, Fixkosten-Kontrollsicht und Monatsbuchungen liegt jetzt in `src/months/**` als gemeinsame Lesebasis.
+- Monatsaggregation fuer KPIs, Kategorien, Sonderkategorien, Fixkosten-Kontrollsicht und Monatsbuchungen liegt jetzt in `src/months/**` als gemeinsame Lesebasis.
 - Dashboard-Readlogik baut darauf nur noch als Adapter auf, statt dieselben Monatsabfragen separat zu pflegen.
 - Monatsbuchungen werden in allen Monatslesesichten einheitlich nach `booking_date DESC, id DESC` bereitgestellt.
 
@@ -514,9 +514,9 @@ Quelle/Ticket: `FIN-002`
 Erkenntnis/Entscheidung:
 
 - Die Datenbank wird migrationsbasiert aufgebaut (`schema_migrations` + `app_meta`).
-- Kernobjekte sind als Tabellen angelegt: Konten, Kategorien, Monatsbudgets, Sonderbudgets, Fixkosten, Importlaeufe, Transaktionen und importierte Transaktionsmetadaten.
-- `expense` muss genau eine Zuordnung zu Kategorie oder Sonderbudget haben.
-- `transfer` darf keine Kategorie/Sonderbudget haben und braucht ein Zielkonto.
+- Kernobjekte sind als Tabellen angelegt: Konten, Kategorien, Monatsbudgets, Sonderkategorien, Fixkosten, Importlaeufe, Transaktionen und importierte Transaktionsmetadaten.
+- `expense` muss genau eine Zuordnung zu Kategorie oder Sonderkategorie haben.
+- `transfer` darf keine Kategorie/Sonderkategorie haben und braucht ein Zielkonto.
 - Betragskonvention: `amount_cents` wird als signed Integer gespeichert.
 
 Auswirkung:
@@ -597,7 +597,7 @@ Erkenntnis/Entscheidung:
 
 - Sparkassen-Importpersistenz protokolliert jeden Lauf in `import_runs` und persistiert erfolgreich importierte Zeilen in `transactions` + `imported_transactions`.
 - Duplikaterkennung erfolgt ueber einen SHA-256 Fingerprint auf normalisierten Kernfeldern aus FIN-010 (u. a. Konto, Buchungstag, Betrag, Gegenpartei, Verwendungszweck, End-to-End, Mandatsreferenz).
-- Importierte `expense`-Buchungen duerfen initial ohne Kategorie/Sonderbudget gespeichert werden; manuelle Ausgaben behalten die bestehende Pflichtzuordnung.
+- Importierte `expense`-Buchungen duerfen initial ohne Kategorie/Sonderkategorie gespeichert werden; manuelle Ausgaben behalten die bestehende Pflichtzuordnung.
 
 Auswirkung:
 
@@ -629,13 +629,13 @@ Folgeaktion:
 
 - In FIN-012 auf dieser Markierung aufsetzen und Zuordnungsregeln zur schrittweisen Automatisierung einfuehren.
 
-## 2026-05-23 - FIN-013B Dashboard trennt Budgetsicht, Sonderbudgets und Transferdarstellung
+## 2026-05-23 - FIN-013B Dashboard trennt Budgetsicht, Sonderkategorien und Transferdarstellung
 
 Quelle/Ticket: `FIN-013B`
 
 Erkenntnis/Entscheidung:
 
-- Das Monatsdashboard nutzt die bestehende FIN-013A-Aggregation unveraendert und bildet die UI in getrennten Abschnitten ab: Kategorien, Sonderbudgets und Monatsbuchungen.
+- Das Monatsdashboard nutzt die bestehende FIN-013A-Aggregation unveraendert und bildet die UI in getrennten Abschnitten ab: Kategorien, Sonderkategorien und Monatsbuchungen.
 - Transfers werden im Dashboard explizit markiert und nicht als Ausgaben in Budgettabellen interpretiert.
 - Fixkosten werden in der Monatsbuchungsliste ueber eigenen visuellen Status hervorgehoben und bleiben damit in relevanten Ansichten klar erkennbar.
 - Historischer Hinweis: Die visuelle Fixkosten-Markierung in Monatsbuchungen wurde spaeter durch FIN-028 entfernt.
@@ -657,7 +657,7 @@ Erkenntnis/Entscheidung:
 
 - Import-Regeln werden als persistente Datensaetze (`import_rules`) mit Match-Feld, Muster, Zieltyp und Prioritaet verwaltet.
 - Regelvorschlaege werden im Import-Preview pro Zeile eingeblendet und priorisiert nur der erste passende Treffer je Buchung verwendet.
-- Zieltypen im MVP: Kategorie, Sonderbudget oder `Transfer -> Bargeld` (inkl. expliziter Regelmoeglichkeit fuer Bargeldabhebung).
+- Zieltypen im MVP: Kategorie, Sonderkategorie oder `Transfer -> Bargeld` (inkl. expliziter Regelmoeglichkeit fuer Bargeldabhebung).
 
 Auswirkung:
 
@@ -774,12 +774,12 @@ Erkenntnis/Entscheidung:
 
 - Der fachliche Zielmonat (`effective_month_key`) wird in der manuellen Transaktionsmaske und beim Bearbeiten explizit erfasst (`YYYY-MM`).
 - Beim Import-Confirm kann ein Zielmonat fuer den gesamten Importlauf gesetzt werden; ohne Eingabe wird ein Standardmonat aus den Import-Buchungen erkannt.
-- Sonderbudget-Monatspruefungen laufen gegen den fachlichen Zielmonat statt gegen das reine Buchungsdatum.
+- Sonderkategorie-Monatspruefungen laufen gegen den fachlichen Zielmonat statt gegen das reine Buchungsdatum.
 
 Auswirkung:
 
 - Buchungsdatum und fachlicher Auswertungsmonat koennen bewusst voneinander abweichen, ohne Umwege ueber Datenmigrationen.
-- Monatsbezogene Auswertungen und Sonderbudget-Zuordnungen bleiben konsistent mit der Nutzerentscheidung.
+- Monatsbezogene Auswertungen und Sonderkategorie-Zuordnungen bleiben konsistent mit der Nutzerentscheidung.
 
 Folgeaktion:
 
@@ -843,17 +843,17 @@ Auswirkung:
 
 Folgeaktion:
 
-- FIN-039 kann dieselbe Interaktionsidee fuer Sonderbudgets im Monatskontext weiterziehen.
+- FIN-039 kann dieselbe Interaktionsidee fuer Sonderkategorien im Monatskontext weiterziehen.
 
-## 2026-06-01 - FIN-039 macht bestehende Sonderbudgets direkt im Monatskontext bearbeitbar
+## 2026-06-01 - FIN-039 macht bestehende Sonderkategorien direkt im Monatskontext bearbeitbar
 
 Quelle/Ticket: `FIN-039`
 
 Erkenntnis/Entscheidung:
 
-- Auf `/monate/[monthKey]` koennen bestehende Sonderbudgets jetzt direkt pro Monatszeile angepasst werden.
+- Auf `/monate/[monthKey]` koennen bestehende Sonderkategorien jetzt direkt pro Monatszeile angepasst werden.
 - Bearbeitet werden nur Eigenschaften des konkreten Monatseintrags: geplanter Betrag sowie Aktiv/Inaktiv.
-- Es werden dadurch keine globalen Sonderbudget-Vorlagen eingefuehrt; die Sonderbudget-Seite bleibt die Stelle fuer Neuanlage und Gesamtuebersicht.
+- Es werden dadurch keine globalen Sonderkategorie-Vorlagen eingefuehrt; die Sonderkategorie-Seite bleibt die Stelle fuer Neuanlage und Gesamtuebersicht.
 
 Auswirkung:
 
@@ -870,7 +870,7 @@ Quelle/Ticket: `FIN-040`
 
 Erkenntnis/Entscheidung:
 
-- Die Monatsdetailseite darf Ausgaben jetzt direkt inline Kategorien oder aktiven Sonderbudgets desselben Monats zuweisen und umzuweisen.
+- Die Monatsdetailseite darf Ausgaben jetzt direkt inline Kategorien oder aktive Sonderkategorien desselben Monats zuweisen und umzuweisen.
 - Dafuer wird die Ausgaben-Zuordnungslogik zentral im Transaktions-Repository gebuendelt, statt getrennte Regeln fuer manuelle und importierte Monatsbuchungen aufzubauen.
 - Importierte Ausgaben duerfen im Datenmodell weiterhin offen bleiben, bis der Nutzer sie zuordnet; nach einer Zuordnung gelten aber dieselben Fachregeln wie bei manuellen Ausgaben.
 - Einkommen, Transfers und Rueckerstattungen bleiben in der Monatsbuchungsliste bewusst read-only.
@@ -885,14 +885,14 @@ Folgeaktion:
 
 - Ein spaeteres Ticket kann entscheiden, ob offene importierte Ausgaben auf der Monatsseite noch staerker gefiltert oder priorisiert hervorgehoben werden sollen.
 
-## 2026-06-01 - FIN-042 buendelt Kategorien, Standardbudgets und Sonderbudgets unter einem Verwaltungsbereich
+## 2026-06-01 - FIN-042 buendelt Kategorien, Standardbudgets und Sonderkategorien unter einem Verwaltungsbereich
 
 Quelle/Ticket: `FIN-042`
 
 Erkenntnis/Entscheidung:
 
-- Der bestehende Haupttab `Budgets` wird zur gemeinsamen Verwaltungsseite fuer Kategorien, globale Standardbudgets und Sonderbudgets ausgebaut.
-- Die separaten Haupttabs `Kategorien` und `Sonderbudgets` entfallen aus der Navigation, um die Oberflaeche fuer den MVP ruhiger und kompakter zu machen.
+- Der bestehende Haupttab `Budgets` wird zur gemeinsamen Verwaltungsseite fuer Kategorien, globale Standardbudgets und Sonderkategorien ausgebaut.
+- Die separaten Haupttabs `Kategorien` und `Sonderkategorien` entfallen aus der Navigation, um die Oberflaeche fuer den MVP ruhiger und kompakter zu machen.
 - Die bisherigen Einzelrouten `/kategorien` und `/sonderbudgets` bleiben technisch erhalten, leiten aber auf den gemeinsamen Verwaltungsbereich weiter.
 - Die Fachlogik, Persistenz und bestehenden Server-Actions bleiben erhalten; geaendert wird bewusst nur die UI- und Navigationsstruktur.
 
@@ -913,9 +913,9 @@ Quelle/Ticket: `FIN-047`
 Erkenntnis/Entscheidung:
 
 - Die Monatsdetailseite orientiert sich ab jetzt am gelieferten hellen Finanz-Referenzscreen und wird als erste konkrete visuelle Leitseite fuer weitere UI-Arbeit genutzt.
-- Der sichtbare Einstieg bleibt fachlich knapp: Monatskopf, prominente KPI-Karten fuer Einnahmen und Ausgaben, Budget-Breakdown nach Kategorien und die letzten fuenf Ausgaben.
+- Der sichtbare Einstieg bleibt fachlich knapp: Monatskopf, prominente KPI-Karten fuer Einnahmen und Ausgaben, Kategorieuebersicht und die letzten fuenf Ausgaben.
 - Ein grosser Balance-Hero sowie ein `Budget Utilized`-KPI werden bewusst nicht uebernommen, weil diese Elemente fachlich nicht zur aktuellen BudgetBuddy-Monatsarbeit gehoeren.
-- Die bestehende Monatsarbeit fuer Budgetwerte, Sonderbudgets, Fixkostenkontrolle und Buchungszuordnung bleibt darunter erhalten, aber ruhiger und kartiger statt als schwere Tabellenflaeche.
+- Die bestehende Monatsarbeit fuer Budgetwerte, Sonderkategorien, Fixkostenkontrolle und Buchungszuordnung bleibt darunter erhalten, aber ruhiger und kartiger statt als schwere Tabellenflaeche.
 
 Auswirkung:
 
@@ -932,14 +932,14 @@ Quelle/Ticket: `FIN-050`
 
 Erkenntnis/Entscheidung:
 
-- Budgetpflege, Sonderbudgetpflege und Fixkostenkontrolle bleiben direkt auf der Monatsdetailseite erreichbar, werden aber aus der dauerhaft sichtbaren Seitenstruktur in Dialoge verschoben.
-- Normale Kategorienbudgets und Sonderbudgets werden im selben Budgetpflege-Dialog angeboten, bleiben dort aber visuell und fachlich getrennt; Sonderbudgets erhalten einen hellen gelben Akzent.
+- Budgetpflege, Sonderkategoriepflege und Fixkostenkontrolle bleiben direkt auf der Monatsdetailseite erreichbar, werden aber aus der dauerhaft sichtbaren Seitenstruktur in Dialoge verschoben.
+- Kategorien und Sonderkategorien werden im selben Budgetpflege-Dialog angeboten, bleiben dort aber visuell und fachlich getrennt; Sonderkategorien erhalten einen hellen gelben Akzent.
 - Die vollstaendige Monatsbuchungsliste bleibt erhalten, wird aber als einklappbarer Bereich umgesetzt, damit die letzten fuenf Ausgaben die ruhige Hauptansicht nicht verlieren.
 
 Auswirkung:
 
 - Die Monatsuebersicht bleibt kompakter und staerker an der FIN-047-Referenzsprache orientiert.
-- Es werden keine Budget-, Sonderbudget-, Fixkosten- oder Zuordnungsregeln geaendert; die bestehenden Server-Actions bleiben die fachlichen Grenzen.
+- Es werden keine Budget-, Sonderkategorie-, Fixkosten- oder Zuordnungsregeln geaendert; die bestehenden Server-Actions bleiben die fachlichen Grenzen.
 
 Folgeaktion:
 
@@ -983,13 +983,13 @@ Erkenntnis/Entscheidung:
 
 - Die Monatsdetailseite erhaelt eine zentrale Aktion `Hinzufuegen`, die ein grosses Overlay im Monatskontext oeffnet.
 - Das Overlay bietet getrennte Modi fuer Ausgabe, Einnahme und Import, nutzt aber die bestehenden Repository- und Importpfade weiter.
-- Manuelle Ausgaben waehlen Kategorie oder Sonderbudget als gemeinsame Kachel-Auswahl, damit weiterhin genau eine Ausgabezuordnung entsteht.
+- Manuelle Ausgaben waehlen Kategorie oder Sonderkategorie als gemeinsame Kachel-Auswahl, damit weiterhin genau eine Ausgabezuordnung entsteht.
 - Der Importbereich bettet die bestehende Sparkassen-Importvorschau ein und belegt den Zielmonat mit dem aktuell geoeffneten Monat vor.
 
 Auswirkung:
 
 - `/transaktionen` und `/import` bleiben technisch und funktional erhalten, werden aber fuer die Monatsarbeit nicht mehr als primaere Einstiege benoetigt.
-- Es werden keine neuen Import-, Kategorie-, Sonderbudget- oder Persistenzregeln eingefuehrt; die Monatsseite wird nur als zentraler Einstieg gestärkt.
+- Es werden keine neuen Import-, Kategorie-, Sonderkategorie- oder Persistenzregeln eingefuehrt; die Monatsseite wird nur als zentraler Einstieg gestärkt.
 
 ## 2026-06-04 - FIN-053 entfernt Transaktionen und Import aus der Hauptnavigation
 
@@ -1004,7 +1004,7 @@ Erkenntnis/Entscheidung:
 Auswirkung:
 
 - Die Navigation fuehrt staerker in die Monatsansicht als zentralen Arbeitsort.
-- Es werden keine Transaktions-, Import-, Kategorie-, Sonderbudget- oder Zielmonat-Regeln geaendert.
+- Es werden keine Transaktions-, Import-, Kategorie-, Sonderkategorie- oder Zielmonat-Regeln geaendert.
 
 ## 2026-06-04 - FIN-056 stabilisiert Monatsimport nach Vorschau und Re-Import
 
@@ -1021,7 +1021,7 @@ Auswirkung:
 - Re-Importe landen in der fachlichen Duplikatzaehlung statt in einer rohen SQLite-Unique-Fehlermeldung.
 - Der normale Importbereich und das eingebettete Monatsaktions-Overlay nutzen weiterhin dieselbe Importlogik.
 - Abgelaufene Preview-Tokens werden fachlich als erneute Dateiauswahl behandelt; sensible CSV-Inhalte bleiben nicht unbegrenzt im Prozessspeicher.
-- Es werden keine neuen Bank-, Kategorie-, Sonderbudget- oder Zielmonat-Fachregeln eingefuehrt.
+- Es werden keine neuen Bank-, Kategorie-, Sonderkategorie- oder Zielmonat-Fachregeln eingefuehrt.
 
 ## 2026-06-05 - FIN-057 macht Bargeld im Monatsdialog zum Konto-Override
 
@@ -1053,7 +1053,7 @@ Erkenntnis/Entscheidung:
 Auswirkung:
 
 - Die Monatsaktion fuehlt sich weniger wie ein technischer Dialog und mehr wie eine fokussierte Transaktionsseite im Overlay an.
-- Bestehende Import-, Konto-, Kategorie-, Sonderbudget- und Transaktionsregeln bleiben unveraendert.
+- Bestehende Import-, Konto-, Kategorie-, Sonderkategorie- und Transaktionsregeln bleiben unveraendert.
 
 ## 2026-06-06 - FIN-057 reduziert die Kontoauswahl im Hinzufuegen-Dialog
 
@@ -1110,14 +1110,14 @@ Erkenntnis/Entscheidung:
 
 - `Alle Monatsbuchungen` bleibt einklappbar, zeigt im Normalmodus aber keine dauerhaften Formularfelder mehr pro Buchung.
 - Bearbeitung wird ueber einen expliziten Editiermodus im Monatskontext aktiviert.
-- Ausgaben erhalten genau ein UI-Feld `Budgetzuordnung`, das Kategorien und aktive Sonderbudgets des Monats gemeinsam anbietet.
-- Manuelle Buchungen koennen im Monatskontext mit Name, Datum, Betrag und Budgetzuordnung bearbeitet sowie mit bewusster Bestaetigung geloescht werden.
-- Importierte Ausgaben behalten ihre Importdaten unveraendert; im Monatskontext wird nur die Budgetzuordnung bearbeitet.
+- Ausgaben erhalten genau ein UI-Feld `Kategoriezuordnung`, das Kategorien und aktive Sonderkategorien des Monats gemeinsam anbietet.
+- Manuelle Buchungen koennen im Monatskontext mit Name, Datum, Betrag und Kategoriezuordnung bearbeitet sowie mit bewusster Bestaetigung geloescht werden.
+- Importierte Ausgaben behalten ihre Importdaten unveraendert; im Monatskontext wird nur die Kategoriezuordnung bearbeitet.
 
 Auswirkung:
 
 - Die Monatsbuchungsliste wirkt im Normalmodus ruhiger und transportiert Zuordnungen als Chips statt als Formularfelder.
-- Die bestehende Fachregel `Kategorie oder Sonderbudget, nicht beides` bleibt die zentrale Validierung und wird nur UI-seitig eindeutiger abgebildet.
+- Die bestehende Fachregel `Kategorie oder Sonderkategorie, nicht beides` bleibt die zentrale Validierung und wird nur UI-seitig eindeutiger abgebildet.
 - Es werden keine Import-Fingerprints, Import-Persistenz oder automatische Kategorisierungsregeln geaendert.
 
 ## 2026-06-06 - FIN-060 Feinschliff fuer Monatsbuchungen
@@ -1126,7 +1126,7 @@ Quelle/Ticket: `FIN-060`
 
 Erkenntnis/Entscheidung:
 
-- Die Read-only-Liste nutzt die breite Monatsflaeche staerker aus: Titel, Datum, Budgetzuordnung und Betrag werden als eigene Blickpunkte dargestellt.
+- Die Read-only-Liste nutzt die breite Monatsflaeche staerker aus: Titel, Datum, Kategoriezuordnung und Betrag werden als eigene Blickpunkte dargestellt.
 - Der erklaerende Read-only-Hinweis entfaellt; Editiermodus wird nur noch ueber ein Icon im Kopf aktiviert bzw. beendet.
 - Wechsel in und aus dem Editiermodus sowie Monatsbuchungs-Actions springen per `#monatsbuchungen` wieder in den Buchungsbereich zurueck.
 - Importierte Buchungen koennen im Editiermodus nach bewusster Bestaetigung geloescht werden.
@@ -1166,12 +1166,12 @@ Erkenntnis/Entscheidung:
 - Import-Aliasse fuer Anzeigenamen sind globale Einstellungen und werden ueber `Einstellungen` als eigener Unterbereich gepflegt.
 - Diese Aliasse gelten monatsuebergreifend fuer importierte Buchungen in Listen und veraendern nur den sichtbaren Anzeigenamen.
 - Der originale Bank-/Verwendungszwecktext in `transactions.description` bleibt unveraendert gespeichert und wird im Pruef-/Editierkontext weiterhin angezeigt.
-- Import-Aliasse bleiben fachlich und technisch getrennt von bestehenden Import-Regeln fuer Kategorie-, Sonderbudget-, Transfer- und Fixkosten-Kontrollvorschlaege.
+- Import-Aliasse bleiben fachlich und technisch getrennt von bestehenden Import-Regeln fuer Kategorie-, Sonderkategorie-, Transfer- und Fixkosten-Kontrollvorschlaege.
 - Der Unterbereich nutzt die ruhige Monatsansicht-Formsprache, damit neue Verwaltungsfenster konsistent mit der aktuellen Produkt-UI wirken.
 
 Auswirkung:
 
-- Monats- und Transaktionslisten koennen ruhige Anzeigenamen wie `Amazon` oder `IKEA` zeigen, ohne Import-Fingerprint, Duplikaterkennung, Budgetzuordnung oder Fixkosten-Kontrolllogik zu veraendern.
+- Monats- und Transaktionslisten koennen ruhige Anzeigenamen wie `Amazon` oder `IKEA` zeigen, ohne Import-Fingerprint, Duplikaterkennung, Kategoriezuordnung oder Fixkosten-Kontrolllogik zu veraendern.
 - Wiederkehrende Haendler koennen als persoenliche globale Anzeige-Regeln gepflegt werden.
 
 ## 2026-06-07 - FIN-064 nutzt Budgetverbrauch statt Kategorie-Farbe in der Monatsansicht
@@ -1193,61 +1193,61 @@ Auswirkung:
 
 - Kategorie-Breakdown und Monats-Budgetpflege nutzen eine einheitliche dynamische Verbrauchsfarbe.
 - Manuell gepflegte Kategorie-Farben bleiben nicht die Hauptlogik fuer Monatsverbrauch.
-- Sonderbudgets behalten ihre eigene visuelle Logik und werden nicht in diese Kategorie-Farblogik gezwungen.
+- Sonderkategorien behalten ihre eigene visuelle Logik und werden nicht in diese Kategorie-Farblogik gezwungen.
 
-## 2026-06-07 - FIN-048 vereinfacht Budgetpflege als Budgettopf-Oberflaeche
+## 2026-06-07 - FIN-048 vereinfacht Budgetpflege als Kategorie-Oberflaeche
 
 Quelle/Ticket: `FIN-048`
 
 Erkenntnis/Entscheidung:
 
-- Die Seite `/budgets` wird wordingseitig als Pflege fuer `Budgettoepfe` und Standardwerte gefuehrt: Kategorie beschreibt die Ausgabenart, Budget beschreibt den geplanten Betrag.
+- Die Seite `/budgets` wird wordingseitig als Pflege fuer `Kategorien und Sonderkategorien` und Standardwerte gefuehrt: Kategorie beschreibt die Ausgabenart, Budget beschreibt den geplanten Betrag.
 - Neue Kategorien werden im Budgetbereich ueber einen Dialog angelegt; Name ist Pflicht, Icon und Standardbudget sind optional.
 - Die manuelle Farbeingabe wird aus der sichtbaren Budgetpflege entfernt. Bestehende `colorHex`-Werte bleiben als versteckte Formularwerte erhalten, damit gespeicherte technische Kompatibilitaet nicht unbeabsichtigt geloescht wird.
-- Sonderbudgets werden im selben Pflegebereich sichtbar markiert, bleiben fachlich aber eigene Monatstoepfe und werden nicht mit Kategorien zusammengelegt.
+- Sonderkategorien werden im selben Pflegebereich sichtbar markiert, bleiben fachlich aber eigene Monatstoepfe und werden nicht mit Kategorien zusammengelegt.
 
 Auswirkung:
 
-- Es gibt keine Datenmodell-, Import-, Monatsbudget- oder Sonderbudget-Logik-Aenderung.
+- Es gibt keine Datenmodell-, Import-, Monatsbudget- oder Sonderkategorie-Logik-Aenderung.
 - Die Farblogik bleibt fuer bestehende Darstellungen technisch verfuegbar, wird aber auf `/budgets` nicht mehr als Pflegeaufgabe angeboten.
 
-## 2026-06-07 - FIN-048 zeigt nur aktive Budgettoepfe in der Budgetpflege
+## 2026-06-07 - FIN-048 zeigt nur aktive Kategorien und Sonderkategorien in der Budgetpflege
 
 Quelle/Ticket: `FIN-048`
 
 Erkenntnis/Entscheidung:
 
-- Die Budgetpflege unter `/budgets` zeigt nur aktive Kategorien und aktive Sonderbudgets.
+- Die Budgetpflege unter `/budgets` zeigt nur aktive Kategorien und aktive Sonderkategorien.
 - Deaktivieren ist eine bewusste Aktion im Editiermodus und wird im normalen Lesemodus nicht dauerhaft angeboten.
-- Deaktivierte Kategorien und Sonderbudgets bleiben historisch erhalten, werden aber aus dieser Pflegeansicht ausgeblendet und koennen spaeter in einer separaten Verwaltungs-/Archivsicht behandelt werden.
+- Deaktivierte Kategorien und Sonderkategorien bleiben historisch erhalten, werden aber aus dieser Pflegeansicht ausgeblendet und koennen spaeter in einer separaten Verwaltungs-/Archivsicht behandelt werden.
 
 Auswirkung:
 
-- Die Budgetpflege bleibt auf aktuell nutzbare Budgettoepfe fokussiert.
+- Die Budgetpflege bleibt auf aktuell nutzbare Kategorien und Sonderkategorien fokussiert.
 - Es wird kein Datenmodell geaendert; bestehende `is_active`-Felder werden weiter genutzt.
 - Lokale Test-/Preview-Deaktivierungen veraendern nur die jeweilige lokale Datenbank und werden nicht mit dem Code-PR ausgeliefert.
 
-## 2026-06-07 - FIN-066 zeigt geplante Budgettoepfe als Plan-Gefuehl
+## 2026-06-07 - FIN-066 zeigt geplante Kategorien und Sonderkategorien als Plan-Gefuehl
 
 Quelle/Ticket: `FIN-066`
 
 Erkenntnis/Entscheidung:
 
 - Die Monatsansicht bekommt eine eigene Plan-Kennzahl `Rest nach Planung`.
-- Die Kennzahl summiert effektive Kategorie-Budgetwerte und aktive Sonderbudgets des Monats.
+- Die Kennzahl summiert effektive Kategorie-Budgetwerte und aktive Sonderkategorien des Monats.
 - Effektive Kategorie-Budgetwerte nutzen die bestehende Monatslogik: Monats-Override vor globalem Standardbudget.
 - Kategorien ohne positiven Budgetwert zaehlen defensiv mit `0`.
-- Inaktive Sonderbudgets werden nicht in die Plansumme eingerechnet.
-- Der `Plan-Rest nach Toepfen` wird als `Einnahmen - Budgettoepfe geplant` berechnet.
-- Aktive Sonderbudgets des Monats erscheinen im Budgettopfbereich unter einer dezenten gelben Abschnittsueberschrift und nutzen danach dieselbe Verbrauchslogik wie normale Budgettoepfe.
+- Inaktive Sonderkategorien werden nicht in die Plansumme eingerechnet.
+- Der `Plan-Rest nach Toepfen` wird als `Einnahmen - Kategorien und Sonderkategorien geplant` berechnet.
+- Aktive Sonderkategorien des Monats erscheinen im Kategoriebereich unter einer dezenten gelben Abschnittsueberschrift und nutzen danach dieselbe Verbrauchslogik wie normale Kategorien und Sonderkategorien.
 
 Auswirkung:
 
-- Das bisher prominentere reine Kategorien-Anzahlgefuehl wird im Kategorienbereich durch die geplante Budgettopf-Summe ersetzt.
+- Das bisher prominentere reine Kategorien-Anzahlgefuehl wird im Kategorienbereich durch die geplante Kategorie-Summe ersetzt.
 - Im KPI-Bereich steht der daraus abgeleitete `Rest nach Planung`, damit Einnahmen, Ausgaben und grober Monatsrest direkt nebeneinander lesbar sind.
 - Die Kennzahl bleibt bewusst ein Plan-/Bauchgefuehl und ersetzt nicht den aktuellen Budgetstand aus FIN-063.
 - Fixkosten bleiben in dieser Kennzahl bewusst ausgeschlossen; eine spaetere Erweiterung muesste fachlich separat entschieden werden.
-- Monate ohne aktive Sonderbudgets zeigen keine Sonderbudget-Gruppe im Budgettopfbereich.
+- Monate ohne aktive Sonderkategorien zeigen keine Sonderkategorie-Gruppe im Kategoriebereich.
 
 ## 2026-06-09 - FIN-046 fuehrt eine einklappbare App-Shell ein
 
@@ -1266,60 +1266,60 @@ Auswirkung:
 - Die Shell ist wiederverwendbar fuer Dashboard, Monatsansicht, Budgets und spaetere Verwaltungsseiten.
 - Die Entscheidung betrifft nur UI/Shell-Verhalten; Datenmodell, Importlogik und zentrale Fachlogik bleiben unveraendert.
 
-## 2026-06-10 - FIN-065 buendelt Sonderbudgets als mehrmonatige Vorhaben
+## 2026-06-10 - FIN-065 buendelt Sonderkategorien als mehrmonatige Vorhaben
 
 Quelle/Ticket: `FIN-065`
 
 Erkenntnis/Entscheidung:
 
-- Mehrmonatige Sonderbudgets werden als uebergeordnetes Vorhaben mit konkreten Monatsanteilen modelliert.
+- Mehrmonatige Sonderkategorien werden als uebergeordnetes Vorhaben mit konkreten Monatsanteilen modelliert.
 - `special_budget_projects` beschreibt das Vorhaben; `special_budgets` bleiben die Monatsanteile mit Planbetrag, Monat und Aktiv-Status.
 - Transaktionen referenzieren weiterhin den konkreten Monatsanteil, damit historische Zuordnungen stabil bleiben.
-- Gleiche Sonderbudget-Namen in unterschiedlichen Monaten werden als dasselbe Vorhaben zusammengefuehrt.
+- Gleiche Sonderkategorie-Namen in unterschiedlichen Monaten werden als dasselbe Vorhaben zusammengefuehrt.
 - Ein Vorhaben wird archiviert, wenn kein Monatsanteil mehr aktiv ist; das Archiv liegt unter `Einstellungen`.
 - Reaktivieren aktiviert das Vorhaben und den juengsten Monatsanteil wieder.
 
 Auswirkung:
 
-- Aktive Sonderbudget-Monatsanteile bleiben in der normalen Budgetpflege sichtbar.
+- Aktive Monatsanteile der Sonderkategorien bleiben in der normalen Budgetpflege sichtbar.
 - Archivierte Vorhaben ueberladen die Budgetpflege nicht, bleiben aber nachvollziehbar.
-- Sonderbudget-Abgaenge bleiben Ausgaben; es entsteht keine automatische Spar-, Transfer- oder Umbuchungslogik.
+- Sonderkategorie-Abgaenge bleiben Ausgaben; es entsteht keine automatische Spar-, Transfer- oder Umbuchungslogik.
 - Die Entscheidung ist in `docs/adr/0005-multimonth-special-budget-projects.md` festgehalten.
 
-## 2026-06-10 - FIN-065 erweitert Archiv um Kategorien und gruppiert Sonderbudget-Vorhaben
+## 2026-06-10 - FIN-065 erweitert Archiv um Kategorien und gruppiert mehrmonatige Sonderkategorien
 
 Quelle/Ticket: `FIN-065`
 
 Erkenntnis/Entscheidung:
 
 - Deaktivierte Kategorien werden im selben Ticket ueber ein eigenes Kategorie-Archiv unter `Einstellungen` verwaltbar gemacht.
-- Kategorien bleiben fachlich getrennt von Sonderbudgets, nutzen aber dasselbe Archivierungsprinzip: deaktiviert statt geloescht, reaktivierbar, historische Buchungen bleiben gueltig.
-- Die Budgetpflege zeigt mehrmonatige Sonderbudgets nur noch einmal als Vorhaben an.
-- Monatsanteile eines Sonderbudget-Vorhabens werden innerhalb der Karte angezeigt, damit z. B. `Japan` fuer Juni und Juli nicht doppelt wie zwei verschiedene Sonderbudgets wirkt.
+- Kategorien bleiben fachlich getrennt von Sonderkategorien, nutzen aber dasselbe Archivierungsprinzip: deaktiviert statt geloescht, reaktivierbar, historische Buchungen bleiben gueltig.
+- Die Budgetpflege zeigt mehrmonatige Sonderkategorien nur noch einmal als Vorhaben an.
+- Monatsanteile einer mehrmonatigen Sonderkategorie werden innerhalb der Karte angezeigt, damit z. B. `Japan` fuer Juni und Juli nicht doppelt wie zwei verschiedene Sonderkategorien wirkt.
 
 Auswirkung:
 
-- `/budgets` bleibt auf aktuelle Budgettoepfe fokussiert und vermeidet doppelte Sonderbudget-Zeilen fuer dasselbe Vorhaben.
+- `/budgets` bleibt auf aktuelle Kategorien und Sonderkategorien fokussiert und vermeidet doppelte Sonderkategorie-Zeilen fuer dasselbe Vorhaben.
 - `/einstellungen/kategorie-archiv` wird der neue Ort fuer deaktivierte Kategorien.
-- `/einstellungen/sonderbudget-archiv` bleibt der Ort fuer archivierte Sonderbudget-Vorhaben.
+- `/einstellungen/sonderbudget-archiv` bleibt der Ort fuer archivierte mehrmonatige Sonderkategorien.
 
-## 2026-06-10 - FIN-065 fuehrt Kategoriearchiv und Sonderbudgetpflege zusammen
+## 2026-06-10 - FIN-065 fuehrt Kategoriearchiv und Sonderkategoriepflege zusammen
 
 Quelle/Ticket: `FIN-065`
 
 Erkenntnis/Entscheidung:
 
-- Das Kategoriearchiv unter `/einstellungen/kategorie-archiv` wird zur gemeinsamen Archivsicht fuer archivierte Sonderbudget-Vorhaben und deaktivierte Kategorien.
-- Archivierte Sonderbudgets werden dort vor den normalen Kategorien gelistet, damit beide deaktivierten Budgettopf-Arten an einem Ort auffindbar sind.
+- Das Kategoriearchiv unter `/einstellungen/kategorie-archiv` wird zur gemeinsamen Archivsicht fuer archivierte mehrmonatige Sonderkategorien und deaktivierte Kategorien.
+- Archivierte Sonderkategorien werden dort vor den normalen Kategorien gelistet, damit beide deaktivierten Kategorie-Arten an einem Ort auffindbar sind.
 - Die separate Route `/einstellungen/sonderbudget-archiv` bleibt als Weiterleitung bestehen, wird aber nicht mehr als eigener Einstellungsbereich beworben.
-- Sonderbudget-Vorhaben erhalten ein optionales Icon auf Projektebene.
-- In der Budgetpflege koennen im Editiermodus die Planbetraege der einzelnen Monatsanteile eines Sonderbudget-Vorhabens angepasst werden.
+- Mehrmonatige Sonderkategorien erhalten ein optionales Icon auf Projektebene.
+- In der Budgetpflege koennen im Editiermodus die Planbetraege der einzelnen Monatsanteile einer mehrmonatigen Sonderkategorie angepasst werden.
 
 Auswirkung:
 
 - Nutzer muessen nicht zwischen zwei Archivseiten unterscheiden.
 - Deaktivierte Kategorien zeigen im Archiv nur noch den fachlich relevanten Namen; technische Zaehlwerte wie Buchungen oder Monatswerte werden ausgeblendet.
-- Transaktionszuordnungen bleiben weiterhin am konkreten Sonderbudget-Monatsanteil; die neue Icon-Angabe ist reine Darstellungsmetadaten.
+- Transaktionszuordnungen bleiben weiterhin am konkreten Monatsanteil der Sonderkategorie; die neue Icon-Angabe ist reine Darstellungsmetadaten.
 
 ## 2026-06-10 - FIN-072 fuehrt Sparen als geschuetzte Systemkategorie ein
 
@@ -1331,7 +1331,7 @@ Erkenntnis/Entscheidung:
 - Die Kategorie ist immer aktiv und kann nicht deaktiviert, archiviert, geloescht oder umbenannt werden.
 - `Sparen` bekommt im MVP keinen globalen oder monatsbezogenen Planwert.
 - Der Spar-Ist-Wert entsteht ausschliesslich aus echten Ausgaben, die dieser Kategorie zugeordnet sind.
-- Importierte und manuelle Ausgaben koennen `Sparen` wie eine normale Kategorie als Budgetzuordnung nutzen.
+- Importierte und manuelle Ausgaben koennen `Sparen` wie eine normale Kategorie als Kategoriezuordnung nutzen.
 
 Auswirkung:
 
@@ -1356,6 +1356,23 @@ Auswirkung:
 
 - Sparbuchungen bleiben weiterhin budgetwirksame Ausgaben und reduzieren die Monatsverfuegbarkeit.
 - Die neue Kachel macht Sparen sichtbar, ohne Sparziele, Transferlogik oder automatische Importerkennung einzufuehren.
+
+## 2026-06-11 - FIN-069 vereinheitlicht Kategorien- und Budget-Wording
+
+Quelle/Ticket: `FIN-069`
+
+Erkenntnis/Entscheidung:
+
+- Nutzerseitig heissen normale dauerhafte Ausgabearten weiterhin `Kategorien`.
+- Besondere zweck- oder monatsbezogene Ausgabeziele heissen nutzerseitig `Sonderkategorien`.
+- `Budget` bezeichnet in sichtbaren Texten den geplanten Betrag oder die Budgetpflege, nicht den besonderen Ausgabentopf selbst.
+- Technische Namen wie `specialBudget`, bestehende Routen und Datenbanktabellen bleiben unveraendert, weil dieses Ticket bewusst keine Datenmodell- oder Migrationsumbenennung ist.
+
+Auswirkung:
+
+- Monatsansicht, Budgetpflege, Einstellungen, Import-Regeln, Fehlermeldungen und UI-nahe Tests verwenden die neue Produktsprache.
+- Die Fachregel bleibt unveraendert: Eine Ausgabe hat genau eine Kategorie oder genau eine Sonderkategorie.
+- Bestehende Import-, Transaktions-, Archiv- und Monatslogik wird nicht veraendert.
 
 ## 2026-06-11 - FIN-073 reduziert Fixkosten auf Pflegeansicht
 

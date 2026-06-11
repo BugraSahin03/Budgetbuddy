@@ -248,7 +248,7 @@ Zusaetzlicher Fokus fuer UI-/Frontend-Themen:
 - Die App soll ruhig, klar, desktop-first und finanzfokussiert bleiben.
 - Keine Marketing-Landingpage und keine verspielte Optik.
 - Tabellen, Filter, klare Warnungen und gute Monatsuebersicht sind wichtiger als dekorative Kartenlayouts.
-- Zeige feste Kategorien und Sonderbudgets getrennt.
+- Zeige feste Kategorien und Sonderkategorien getrennt.
 - Stelle Transfers nicht als Ausgaben dar.
 - Mache unzugeordnete Ausgaben sichtbar.
 - Markiere Budgetueberschreitungen deutlich.
@@ -260,7 +260,7 @@ Zusaetzlicher Fokus fuer UI-/Frontend-Themen:
 Zusaetzlicher Fokus fuer Datenmodell- und Datenbankthemen:
 - Beachte `docs/domain-model.md` und die bestehenden ADRs.
 - Bewahre die Trennung zwischen `expense`, `income` und `transfer`.
-- Jede echte Ausgabe braucht genau eine Zuordnung zu Kategorie oder Sonderbudget.
+- Jede echte Ausgabe braucht genau eine Zuordnung zu Kategorie oder Sonderkategorie.
 - Transfers duerfen nicht als Ausgaben gezaehlt werden und brauchen ein Zielkonto.
 - Achte auf Migrationen, Constraints, Rueckwaertskompatibilitaet und Datenverlust-Risiken.
 - Dokumentiere neue fachliche oder technische Entscheidungen passend im Decision Log und bei Bedarf als ADR.
