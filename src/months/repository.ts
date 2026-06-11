@@ -35,7 +35,7 @@ export type MonthComparisonRow = {
   detailHref: string;
   incomeCents: number;
   expenseCents: number;
-  savedCents: number;
+  savingsCents: number;
 };
 
 export type MonthDetailNavigationLink = {
@@ -278,6 +278,21 @@ function getExpenseCents(
     .get(monthKey) as { total: number };
 
   return Math.max(0, row.total - fixedCostControlCents);
+}
+
+function getTotalExpenseCents(monthKey: string): number {
+  const row = getDb()
+    .prepare(
+      `
+        SELECT COALESCE(SUM(-amount_cents), 0) AS total
+        FROM transactions
+        WHERE transaction_type = 'expense'
+          AND effective_month_key = ?
+      `,
+    )
+    .get(monthKey) as { total: number };
+
+  return row.total;
 }
 
 function getPlannedFixedCostsCents(): number {
@@ -538,17 +553,13 @@ export function listMonthComparison(
 
   return buildMonthRange(firstMonthKey, normalizedCurrentMonthKey).map(
     (monthKey) => {
-      const snapshot = getMonthSnapshot(monthKey);
-      const incomeCents = snapshot.totals.incomeCents;
-      const expenseCents = snapshot.totals.expenseCents;
-
       return {
         monthKey,
         label: formatMonthLabel(monthKey),
         detailHref: buildMonthDetailHref(monthKey),
-        incomeCents,
-        expenseCents,
-        savedCents: incomeCents - expenseCents,
+        incomeCents: getIncomeCents(monthKey),
+        expenseCents: getTotalExpenseCents(monthKey),
+        savingsCents: getSavingsActualCents(monthKey),
       };
     },
   );
