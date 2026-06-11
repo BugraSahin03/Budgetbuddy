@@ -6,7 +6,7 @@ Der aktuelle Budgetplaner basiert auf Excel. Er enthaelt Monatsblaetter mit Tran
 
 Die manuelle Pflege ist aufwendig, weil jede Ausgabe eingetragen und mit Online-Banking abgeglichen werden muss. Auswertungen nach Kategorien, Trends und Monatsvergleichen sind nur eingeschraenkt moeglich.
 
-Die wichtigste Erkenntnis aus dem bisherigen Planner: Es gibt feste Kategorien, die jeden Monat existieren, und monatliche Sonderbudgets fuer konkrete Vorhaben. Sonderbudgets sind direkte Ausgaben, keine reinen Sparziele.
+Die wichtigste Erkenntnis aus dem bisherigen Planner: Es gibt feste Kategorien, die jeden Monat existieren, und monatliche Sonderkategorien fuer konkrete Vorhaben. Sonderkategorien sind direkte Ausgaben, keine reinen Sparziele.
 
 ## Produktziel
 
@@ -16,7 +16,7 @@ Eine private Finanz-App, die den Excel-Planer ersetzt und langfristig erweitert:
 - manuelle Erfassung von Barzahlungen und Sonderfaellen
 - automatische Zuordnung ueber Regeln
 - feste Kategorien fuer alle Monate
-- monatliche Sonderbudgets fuer direkte Ausgaben
+- monatliche Sonderkategorien fuer direkte Ausgaben
 - Fixkosten-Uebersicht ohne N26-Import
 - Bargeldbestand als eigener Topf
 - Monats-, Kategorie- und Trend-Auswertungen
@@ -28,7 +28,7 @@ Eine private Finanz-App, die den Excel-Planer ersetzt und langfristig erweitert:
 
 - Daten bleiben privat und lokal kontrollierbar.
 - Import soll manuelle Arbeit reduzieren, aber der Nutzer behaelt Kontrolle ueber Zuordnung.
-- Jede echte Ausgabe soll nachvollziehbar einer Kategorie oder einem Sonderbudget zugeordnet sein.
+- Jede echte Ausgabe soll nachvollziehbar einer Kategorie oder einer Sonderkategorie zugeordnet sein.
 - Budgets sind Orientierung, keine harten Sperren.
 - Der erste MVP muss nuetzlich sein, auch bevor Bankanbindung, Offline-Sync und Raspberry-Pi-Betrieb fertig sind.
 
@@ -55,8 +55,8 @@ Die neue UI-Sprache wird bewusst in kleine Pakete geschnitten:
 
 1. Dashboard als erster Referenzscreen fuer Hero, Primaerzahlen, ruhige KPI-Karten und reduzierte Listen.
 2. App-Shell und Navigation, damit die neue Sprache nicht nur innerhalb einzelner Seiten sichtbar ist.
-3. Monatsansicht als Hauptarbeitsort fuer Budgetpflege, Sonderbudgets, Fixkostenkontrolle und Zuordnung.
-4. Verwaltungsseiten, insbesondere `Budgets`, damit Kategorien, Standardbudgets und Sonderbudgets nicht wie ein abgekoppelter Admin-Bereich wirken.
+3. Monatsansicht als Hauptarbeitsort fuer Budgetpflege, Sonderkategorien, Fixkostenkontrolle und Zuordnung.
+4. Verwaltungsseiten, insbesondere `Budgets`, damit Kategorien, Standardbudgets und Sonderkategorien nicht wie ein abgekoppelter Admin-Bereich wirken.
 
 Dashboard und Monatsansicht sind beide prioritaer. Das Dashboard setzt die visuelle Referenz; die Monatsansicht beweist, dass dieselbe Sprache auch bei hoher Informationsdichte und echter Arbeitslast funktioniert.
 
@@ -64,19 +64,19 @@ Dashboard und Monatsansicht sind beide prioritaer. Das Dashboard setzt die visue
 
 ### Transaktionen
 
-Jede echte Ausgabe oder Einnahme wird als Transaktion gespeichert. Jede Ausgabe muss genau einer Kategorie oder einem Sonderbudget zugewiesen werden.
+Jede echte Ausgabe oder Einnahme wird als Transaktion gespeichert. Jede Ausgabe muss genau einer Kategorie oder einer Sonderkategorie zugewiesen werden.
 
 ### Feste Kategorien
 
 Feste Kategorien existieren jeden Monat, zum Beispiel Einkauf, Freizeit, Tanken oder Medikamente. Pro Monat kann ein Orientierungswert gepflegt werden. Dieser Wert ist kein hartes Limit.
 
-### Sonderbudgets
+### Sonderkategorien
 
-Sonderbudgets sind monatliche Ausgabeziele fuer konkrete Vorhaben, zum Beispiel Bali Flug, Raspberry Pi oder SSD. Wenn dazu eine Zahlung existiert, ist sie eine echte Ausgabe und wird diesem Sonderbudget zugeordnet.
+Sonderkategorien sind monatliche Ausgabeziele fuer konkrete Vorhaben, zum Beispiel Bali Flug, Raspberry Pi oder SSD. Wenn dazu eine Zahlung existiert, ist sie eine echte Ausgabe und wird der Sonderkategorie zugeordnet.
 
-Sonderbudgets koennen nur in bestimmten Monaten aktiv sein.
+Sonderkategorien koennen nur in bestimmten Monaten aktiv sein.
 
-Sie sind nicht als globale Kategorien gedacht. Wenn ein Vorhaben in mehreren Monaten geplant ist, kann es in mehreren Monaten als Sonderbudget auftauchen.
+Sie sind nicht als globale Kategorien gedacht. Wenn ein Vorhaben in mehreren Monaten geplant ist, kann es in mehreren Monaten als Sonderkategorie auftauchen.
 
 ### Budget-Hinweise
 
@@ -91,7 +91,7 @@ Budgets sind Leitplanken:
 
 Bargeld wird als eigenes Konto behandelt.
 
-Eine Bargeldabhebung ist keine Ausgabe, sondern ein Transfer von Sparkasse zu Bargeld. Erst die spaetere manuelle Barzahlung wird als Ausgabe einer Kategorie oder einem Sonderbudget zugeordnet.
+Eine Bargeldabhebung ist keine Ausgabe, sondern ein Transfer von Sparkasse zu Bargeld. Erst die spaetere manuelle Barzahlung wird als Ausgabe einer Kategorie oder einer Sonderkategorie zugeordnet.
 
 ### Fixkosten
 
@@ -115,7 +115,7 @@ Der Nutzer nutzt einen Dauerauftrag von Sparkasse zu N26, von wo die Fixkosten a
 - Transaktionen
 - Import
 - Kategorien
-- Sonderbudgets
+- Sonderkategorien
 - Fixkosten
 - Bargeld
 - Auswertungen

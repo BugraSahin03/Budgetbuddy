@@ -36,7 +36,7 @@ Wichtige Felder:
 - Beschreibung/Name
 - Konto
 - Transaktionstyp
-- Kategorie oder Sonderbudget
+- Kategorie oder Sonderkategorie
 - Quelle: manuell oder Import
 - Importreferenz fuer Duplikaterkennung
 
@@ -51,12 +51,12 @@ Moegliche Typen:
 
 Regel:
 
-- `expense` muss genau eine feste Kategorie oder genau ein Sonderbudget haben.
+- `expense` muss genau eine feste Kategorie oder genau eine Sonderkategorie haben.
 - `transfer` darf keine Ausgabe-Kategorie haben und muss ein Zielkonto haben.
 - `income` und `refund` haben keine Ausgabenkategorie.
 - Importierte `expense`-Buchungen duerfen temporaer noch offen sein, bis sie fachlich zugeordnet wurden.
 - Sobald eine importierte Ausgabe zugeordnet wird, gelten dieselben Fachregeln wie bei manuellen Ausgaben:
-  genau eine Kategorie oder genau ein Sonderbudget des `effective_month_key`.
+  genau eine Kategorie oder genau eine Sonderkategorie des `effective_month_key`.
 
 ### Feste Kategorie
 
@@ -101,9 +101,9 @@ Seit FIN-038 gilt fachlich eine zweistufige Budgetlogik:
 
 Ein Monatsbudget ist kein hartes Limit. Ueberschreitungen sind erlaubt, werden aber stark markiert.
 
-### Sonderbudget
+### Sonderkategorie
 
-Ein Sonderbudget ist ein konkretes Ausgabeziel fuer einen bestimmten Monat oder Zeitraum. Seit FIN-065 besteht ein mehrmonatiges Sonderbudget aus einem uebergeordneten Vorhaben und konkreten Monatsanteilen.
+Eine Sonderkategorie ist ein konkretes Ausgabeziel fuer einen bestimmten Monat oder Zeitraum. Seit FIN-065 besteht eine mehrmonatige Sonderkategorie aus einem uebergeordneten Vorhaben und konkreten Monatsanteilen.
 
 Beispiele:
 
@@ -111,28 +111,28 @@ Beispiele:
 - April 2026, Raspberry Pi, 80 EUR
 - Mai 2026, Raspberry Pi, 80 EUR
 
-Sonderbudgets sind direkte Ausgabeziele. Wenn eine Zahlung fuer den Zweck existiert, wird sie dem konkreten Monatsanteil des Sonderbudgets zugeordnet.
+Sonderkategorien sind direkte Ausgabeziele. Wenn eine Zahlung fuer den Zweck existiert, wird sie dem konkreten Monatsanteil der Sonderkategorie zugeordnet.
 
-Mehrmonatige Sonderbudgets werden als Vorhaben gebuendelt:
+Mehrmonatige Sonderkategorien werden als Vorhaben gebuendelt:
 
 - `special_budget_projects` beschreibt das Vorhaben, z. B. `Computer`.
 - `special_budgets` beschreibt den Monatsanteil, z. B. `2026-05`, `300 EUR`.
-- Gleichnamige Sonderbudgets in mehreren Monaten gehoeren zum selben Vorhaben.
+- Gleichnamige Sonderkategorien in mehreren Monaten gehoeren zum selben Vorhaben.
 - Transaktionen referenzieren weiter den konkreten Monatsanteil, damit historische Zuordnungen stabil bleiben.
 - Archivierte Vorhaben bleiben nachvollziehbar, werden aber aus der normalen Budgetpflege ausgeblendet.
 
-Sonderbudgets sind fachlich keine globale feste Kategorie.
+Sonderkategorien sind fachlich keine globale feste Kategorie.
 
-Seit FIN-039 gilt fuer bestehende Sonderbudgets im Monatskontext:
+Seit FIN-039 gilt fuer bestehende Sonderkategorien im Monatskontext:
 
-- der geplante Betrag bleibt direkt auf dem konkreten Sonderbudget des Monats editierbar
+- der geplante Betrag bleibt direkt auf dem konkreten Monatsanteil der Sonderkategorie editierbar
 - Aktiv/Inaktiv bleibt eine Eigenschaft dieses konkreten Monatseintrags
-- es entstehen dadurch keine globalen Sonderbudget-Vorlagen
+- es entstehen dadurch keine globalen Sonderkategorie-Vorlagen
 
 Seit FIN-065 gilt zusaetzlich:
 
 - Vorhaben mit keinem aktiven Monatsanteil gelten als archiviert.
-- Das Sonderbudget-Archiv unter `Einstellungen` zeigt archivierte Vorhaben mit Zeitraum, Plan- und Ist-Summe.
+- Das Sonderkategorie-Archiv unter `Einstellungen` zeigt archivierte Vorhaben mit Zeitraum, Plan- und Ist-Summe.
 - Reaktivieren aktiviert das Vorhaben wieder und stellt den juengsten Monatsanteil aktiv.
 - Es entsteht keine automatische Transfer- oder Sparlogik.
 
@@ -240,15 +240,15 @@ Fuer den aktuellen MVP gilt weiterhin:
 - Manuelle Buchungen erfassen den Zielmonat explizit (`YYYY-MM`), Standard bleibt der Monat aus `booking_date`.
 - Beim Import-Confirm kann ein Zielmonat fuer den gesamten Importlauf explizit gesetzt werden.
 - Ohne explizite Eingabe wird beim Import der Zielmonat aus den Buchungsdaten erkannt.
-- Sonderbudget-Pruefungen laufen gegen `effective_month_key`, nicht nur gegen `booking_date`.
+- Sonderkategorie-Pruefungen laufen gegen `effective_month_key`, nicht nur gegen `booking_date`.
 - Migrationen backfillen Bestandsdaten aus `booking_date`.
 - Folge-Tickets koennen die bewusste Abweichung zwischen Buchungsdatum und Zielmonat nutzen, ohne das Datenmodell erneut zu aendern.
 
-### Sonderbudget-Ist
+### Sonderkategorie-Ist
 
-Summe aller Ausgaben, die diesem konkreten Sonderbudget-Monatsanteil zugeordnet sind.
+Summe aller Ausgaben, die diesem konkreten Monatsanteil der Sonderkategorie zugeordnet sind.
 
-### Sonderbudget-Rest
+### Sonderkategorie-Rest
 
 `geplanter Betrag - Ist-Ausgaben`
 
@@ -278,7 +278,7 @@ Sie zeigt in einer zusammenhaengenden Ansicht:
 
 - Monats-KPIs
 - feste Kategorien mit Budget / Ist / Rest
-- Sonderbudgets des Monats
+- Sonderkategorien des Monats
 - Fixkostenblock aus Plan und Kontrollsicht
 - komplette Buchungsliste des Monats aus manuellen und importierten Transaktionen
 
@@ -286,7 +286,7 @@ Die Buchungsliste wird fachlich ueber `effective_month_key` bestimmt und nicht k
 
 Seit FIN-040 gilt fuer die Monatsarbeitsweise zusaetzlich:
 
-- Ausgaben koennen direkt in `/monate/[monthKey]` einer Kategorie oder einem aktiven Sonderbudget dieses Monats zugewiesen oder umzugewiesen werden.
+- Ausgaben koennen direkt in `/monate/[monthKey]` einer Kategorie oder einer aktiven Sonderkategorie dieses Monats zugewiesen oder umzugewiesen werden.
 - Einkommen, Transfers und Rueckerstattungen bleiben in dieser Tabelle read-only.
 - Die Monatsseite ist damit nicht nur Lesesicht, sondern auch die zentrale Arbeitsflaeche fuer fachliche Ausgaben-Zuordnung im Monatskontext.
 
@@ -298,7 +298,7 @@ Diese liefert pro `effective_month_key` in einer konsistenten Form:
 
 - Monats-KPIs
 - feste Kategorien mit Budget / Ist / Rest
-- Sonderbudgets des Monats
+- Sonderkategorien des Monats
 - Fixkosten-Planblock und erkannte Fixkosten-Kontrolltreffer
 - komplette Monatsbuchungsliste aus manuellen und importierten Buchungen
 
@@ -314,7 +314,7 @@ Damit verwenden Monatsliste, Monatsdetailseite und Dashboard dieselbe fachliche 
 - Jede Ausgabe muss zugeordnet sein.
 - Unzugeordnete importierte Ausgaben muessen im Import/Dashboard sichtbar sein.
 - Kategorien sollten deaktiviert statt historisch geloescht werden.
-- Sonderbudgets werden fuer historische Nachvollziehbarkeit archiviert/deaktiviert statt hart geloescht.
+- Sonderkategorien werden fuer historische Nachvollziehbarkeit archiviert/deaktiviert statt hart geloescht.
 - Importierte Transaktionen brauchen eine stabile Duplikatkennung.
 - Manuelle Transaktionen brauchen keine Importkennung.
 

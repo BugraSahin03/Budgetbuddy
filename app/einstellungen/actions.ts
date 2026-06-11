@@ -38,7 +38,7 @@ function parseProjectId(formData: FormData): number {
   const projectId = Number.parseInt(String(formData.get("projectId") ?? ""), 10);
 
   if (!Number.isInteger(projectId) || projectId <= 0) {
-    throw new Error("Sonderbudget-Vorhaben ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungueltig.");
   }
 
   return projectId;
@@ -145,7 +145,7 @@ export async function reactivateSpecialBudgetProjectAction(
 
   redirect(
     "/einstellungen/kategorie-archiv?notice=" +
-      encodeMessage("Sonderbudget-Vorhaben reaktiviert."),
+      encodeMessage("Sonderkategorie reaktiviert."),
   );
 }
 

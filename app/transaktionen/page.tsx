@@ -145,7 +145,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
             <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Transaktionen</p>
             <h2 className="text-lg font-semibold text-slate-900">Manuelle Buchungen erfassen</h2>
             <p className="mt-1 text-sm text-slate-600">
-              Ausgaben brauchen genau eine Zuordnung zu Kategorie oder Sonderbudget.
+              Ausgaben brauchen genau eine Zuordnung zu Kategorie oder Sonderkategorie.
             </p>
           </div>
 
@@ -274,7 +274,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
         </div>
 
         <div className="xl:col-span-3">
-          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-special-budget">Sonderbudget ({defaultMonthKey})</label>
+          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-special-budget">Sonderkategorie ({defaultMonthKey})</label>
           <select id="new-special-budget" name="specialBudgetId" defaultValue="" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
             <option value="">-</option>
             {defaultSpecialBudgetOptions.map((budget) => (

@@ -119,7 +119,7 @@ function assertSpecialBudgetBelongsToMonth(
     .get(specialBudgetId, normalizedMonthKey) as { id: number } | undefined;
 
   if (!row) {
-    throw new Error("Sonderbudget passt nicht zum ausgewaehlten Monat.");
+    throw new Error("Sonderkategorie passt nicht zum ausgewaehlten Monat.");
   }
 }
 
@@ -182,14 +182,14 @@ function mapSpecialBudgetPersistenceError(error: unknown): Error {
     error instanceof Error &&
     error.message.includes("UNIQUE constraint failed: special_budgets.name, special_budgets.month_key")
   ) {
-    return new Error("Dieses Sonderbudget existiert im gewaehlten Monat bereits.");
+    return new Error("Diese Sonderkategorie existiert im gewaehlten Monat bereits.");
   }
 
   if (error instanceof Error) {
     return error;
   }
 
-  return new Error("Sonderbudget konnte nicht gespeichert werden.");
+  return new Error("Sonderkategorie konnte nicht gespeichert werden.");
 }
 
 function ensureProjectForName(name: string, note: string | null, iconName: string | null): number {
@@ -225,7 +225,7 @@ function ensureProjectForName(name: string, note: string | null, iconName: strin
     .get(name) as { id: number } | undefined;
 
   if (!project) {
-    throw new Error("Sonderbudget-Vorhaben konnte nicht vorbereitet werden.");
+    throw new Error("Sonderkategorie konnte nicht vorbereitet werden.");
   }
 
   return project.id;
@@ -629,11 +629,11 @@ export function createSpecialBudgetShares(input: {
   )?.monthKey;
 
   if (normalizedShares.length === 0) {
-    throw new Error("Sonderbudget braucht mindestens einen Monatsanteil.");
+    throw new Error("Sonderkategorie braucht mindestens einen Monatsanteil.");
   }
 
   if (duplicateMonthKey) {
-    throw new Error("Ein Sonderbudget darf pro Vorhaben nur einen Anteil je Monat haben.");
+    throw new Error("Eine Sonderkategorie darf pro Vorhaben nur einen Anteil je Monat haben.");
   }
 
   try {
@@ -675,17 +675,17 @@ export function updateSpecialBudgetProject(input: {
   }>;
 }): void {
   if (!Number.isInteger(input.projectId) || input.projectId <= 0) {
-    throw new Error("Sonderbudget-Vorhaben ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungueltig.");
   }
 
   if (input.shares.length === 0) {
-    throw new Error("Sonderbudget braucht mindestens einen Monatsanteil.");
+    throw new Error("Sonderkategorie braucht mindestens einen Monatsanteil.");
   }
 
   const iconName = normalizeIconName(input.iconName);
   const normalizedShares = input.shares.map((share) => {
     if (!Number.isInteger(share.id) || share.id <= 0) {
-      throw new Error("Sonderbudget-Monatsanteil ist ungueltig.");
+      throw new Error("Monatsanteil der Sonderkategorie ist ungueltig.");
     }
 
     return {
@@ -707,7 +707,7 @@ export function updateSpecialBudgetProject(input: {
       .get(input.projectId) as { id: number } | undefined;
 
     if (!project) {
-      throw new Error("Sonderbudget-Vorhaben wurde nicht gefunden.");
+      throw new Error("Sonderkategorie wurde nicht gefunden.");
     }
 
     getDb()
@@ -741,7 +741,7 @@ export function updateSpecialBudgetProject(input: {
       );
 
       if (result.changes === 0) {
-        throw new Error("Sonderbudget-Monatsanteil wurde nicht gefunden.");
+        throw new Error("Monatsanteil der Sonderkategorie wurde nicht gefunden.");
       }
     }
   });
@@ -764,7 +764,7 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
     .get(specialBudgetId) as { projectId: number | null } | undefined;
 
   if (!existing) {
-    throw new Error("Sonderbudget wurde nicht gefunden.");
+    throw new Error("Sonderkategorie wurde nicht gefunden.");
   }
 
   const transaction = getDb().transaction(() => {
@@ -781,7 +781,7 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
       .run(isActive ? 1 : 0, specialBudgetId);
 
     if (result.changes === 0) {
-      throw new Error("Sonderbudget wurde nicht gefunden.");
+      throw new Error("Sonderkategorie wurde nicht gefunden.");
     }
 
     if (existing.projectId) {
@@ -808,7 +808,7 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
 
 export function reactivateSpecialBudgetProject(projectId: number): void {
   if (!Number.isInteger(projectId) || projectId <= 0) {
-    throw new Error("Sonderbudget-Vorhaben ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungueltig.");
   }
 
   const project = getDb()
@@ -823,7 +823,7 @@ export function reactivateSpecialBudgetProject(projectId: number): void {
     .get(projectId) as { id: number } | undefined;
 
   if (!project) {
-    throw new Error("Sonderbudget-Vorhaben wurde nicht gefunden.");
+    throw new Error("Sonderkategorie wurde nicht gefunden.");
   }
 
   const transaction = getDb().transaction(() => {
@@ -863,7 +863,7 @@ export function reactivateSpecialBudgetProject(projectId: number): void {
 
 export function setSpecialBudgetProjectActive(projectId: number, isActive: boolean): void {
   if (!Number.isInteger(projectId) || projectId <= 0) {
-    throw new Error("Sonderbudget-Vorhaben ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungueltig.");
   }
 
   const project = getDb()
@@ -878,7 +878,7 @@ export function setSpecialBudgetProjectActive(projectId: number, isActive: boole
     .get(projectId) as { id: number } | undefined;
 
   if (!project) {
-    throw new Error("Sonderbudget-Vorhaben wurde nicht gefunden.");
+    throw new Error("Sonderkategorie wurde nicht gefunden.");
   }
 
   const transaction = getDb().transaction(() => {
@@ -929,7 +929,7 @@ export function updateSpecialBudgetPlannedAmount(
     .run(normalizedPlannedAmountCents, specialBudgetId);
 
   if (result.changes === 0) {
-    throw new Error("Sonderbudget wurde nicht gefunden.");
+    throw new Error("Sonderkategorie wurde nicht gefunden.");
   }
 }
 

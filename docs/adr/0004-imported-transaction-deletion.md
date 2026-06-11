@@ -6,7 +6,7 @@ Angenommen
 
 ## Kontext
 
-Fuer `FIN-060` sollen importierte Monatsbuchungen im Editiermodus geloescht werden koennen. Bisher waren Import-Buchungen im Monatskontext bewusst geschuetzt: Importdaten blieben unveraendert, nur die Budgetzuordnung konnte bearbeitet werden.
+Fuer `FIN-060` sollen importierte Monatsbuchungen im Editiermodus geloescht werden koennen. Bisher waren Import-Buchungen im Monatskontext bewusst geschuetzt: Importdaten blieben unveraendert, nur die Kategoriezuordnung konnte bearbeitet werden.
 
 Technisch sind importierte Buchungen normale Eintraege in `transactions` mit `source_type = 'import'`. Die Importhistorie in `imported_transactions` verweist per `ON DELETE CASCADE` auf diese Transaktion.
 

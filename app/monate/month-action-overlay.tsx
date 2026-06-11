@@ -138,7 +138,7 @@ function AssignmentTiles({
       {specialBudgetOptions.length > 0 ? (
         <div className="mt-6">
           <div className="month-action-panel-title-row">
-            <p className="month-action-label text-amber-700">Sonderbudget</p>
+            <p className="month-action-label text-amber-700">Sonderkategorie</p>
             <span>Monatlich</span>
           </div>
           <div className="month-action-tile-grid">

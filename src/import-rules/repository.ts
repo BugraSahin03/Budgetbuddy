@@ -176,7 +176,7 @@ function normalizeInput(input: ImportRuleInput): ImportRuleInput {
 
   if (input.targetType === "special_budget") {
     if (!input.specialBudgetId) {
-      throw new Error("Sonderbudget-Regel braucht ein Sonderbudget.");
+      throw new Error("Sonderkategorie-Regel braucht eine Sonderkategorie.");
     }
 
     return {

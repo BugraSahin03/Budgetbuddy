@@ -30,7 +30,7 @@ function parseSpecialBudgetId(rawValue: FormDataEntryValue | null): number {
   const specialBudgetId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(specialBudgetId) || specialBudgetId <= 0) {
-    throw new Error("Sonderbudget-ID ist ungueltig.");
+    throw new Error("Sonderkategorie-ID ist ungueltig.");
   }
 
   return specialBudgetId;
@@ -49,7 +49,7 @@ export async function createSpecialBudgetAction(formData: FormData): Promise<nev
 
     revalidatePath("/budgets");
     revalidatePath("/sonderbudgets");
-    redirect("/budgets?notice=" + encodeMessage("Sonderbudget erstellt."));
+    redirect("/budgets?notice=" + encodeMessage("Sonderkategorie erstellt."));
   } catch (error) {
     redirect("/budgets?error=" + encodeMessage(toErrorMessage(error)));
   }
@@ -64,14 +64,14 @@ export async function updateSpecialBudgetStateAction(formData: FormData): Promis
       setSpecialBudgetActive(specialBudgetId, false);
       revalidatePath("/budgets");
       revalidatePath("/sonderbudgets");
-      redirect("/budgets?notice=" + encodeMessage("Sonderbudget deaktiviert."));
+      redirect("/budgets?notice=" + encodeMessage("Sonderkategorie deaktiviert."));
     }
 
     if (intent === "reactivate") {
       setSpecialBudgetActive(specialBudgetId, true);
       revalidatePath("/budgets");
       revalidatePath("/sonderbudgets");
-      redirect("/budgets?notice=" + encodeMessage("Sonderbudget reaktiviert."));
+      redirect("/budgets?notice=" + encodeMessage("Sonderkategorie reaktiviert."));
     }
 
     throw new Error("Unbekannte Aktion.");

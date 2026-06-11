@@ -69,7 +69,7 @@ Der Reviewer prueft:
 - Sind Tests, Linting oder Build ausgefuehrt, soweit sinnvoll?
 - Gibt es offensichtliche Bugs, Datenverlust-Risiken oder falsche Finanzlogik?
 - Ist die UI ruhig, klar, desktop-first und passend fuer eine Finanz-App?
-- Werden Transfers, Kategorien und Sonderbudgets korrekt getrennt?
+- Werden Transfers, Kategorien und Sonderkategorien korrekt getrennt?
 - Bei UI-/UX-nahen Tickets: Wurde der vorgeschaltete Visual Check entweder freigegeben oder bewusst als nicht erforderlich dokumentiert?
 
 ## Diff-Grenze

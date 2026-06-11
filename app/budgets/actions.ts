@@ -37,7 +37,7 @@ function parseSpecialBudgetProjectId(rawValue: FormDataEntryValue | null): numbe
   const specialBudgetProjectId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(specialBudgetProjectId) || specialBudgetProjectId <= 0) {
-    throw new Error("Sonderbudget-Vorhaben ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungueltig.");
   }
 
   return specialBudgetProjectId;
@@ -162,7 +162,7 @@ export async function createBudgetCategoryAction(formData: FormData): Promise<ne
     }
 
     refreshBudgetPaths();
-    redirectTarget = `/budgets?notice=${encodeMessage("Budgettopf angelegt.")}`;
+    redirectTarget = `/budgets?notice=${encodeMessage("Kategorie angelegt.")}`;
   } catch (error) {
     redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }
@@ -193,7 +193,7 @@ export async function createBudgetSpecialBudgetAction(formData: FormData): Promi
     )?.monthKey;
 
     if (duplicateMonthKey) {
-      throw new Error("Ein Sonderbudget darf pro Vorhaben nur einen Anteil je Monat haben.");
+      throw new Error("Eine Sonderkategorie darf pro Vorhaben nur einen Anteil je Monat haben.");
     }
 
     createSpecialBudgetShares({
@@ -204,7 +204,7 @@ export async function createBudgetSpecialBudgetAction(formData: FormData): Promi
     });
 
     refreshBudgetPaths();
-    redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget erstellt.")}`;
+    redirectTarget = `/budgets?notice=${encodeMessage("Sonderkategorie erstellt.")}`;
   } catch (error) {
     redirectTarget = `/budgets?error=${encodeMessage(toErrorMessage(error))}`;
   }
@@ -291,7 +291,7 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
       redirectTarget = `/budgets?edit=1&notice=${encodeMessage(
         categoryIdToDeactivate !== null
           ? "Kategorie deaktiviert."
-          : "Sonderbudget deaktiviert.",
+          : "Sonderkategorie deaktiviert.",
       )}`;
     } else {
       redirectTarget = `/budgets?notice=${encodeMessage("Budgetpflege gespeichert.")}`;
@@ -317,7 +317,7 @@ export async function updateBudgetSpecialBudgetStateAction(formData: FormData): 
       const shareIds = parseSpecialBudgetShareIds(formData);
 
       if (shareIds.length === 0) {
-        throw new Error("Keine Sonderbudget-Anteile zum Speichern gefunden.");
+        throw new Error("Keine Monatsanteile zum Speichern gefunden.");
       }
 
       updateSpecialBudgetProject({
@@ -332,11 +332,11 @@ export async function updateBudgetSpecialBudgetStateAction(formData: FormData): 
       });
 
       refreshBudgetPaths();
-      redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget gespeichert.")}`;
+      redirectTarget = `/budgets?notice=${encodeMessage("Sonderkategorie gespeichert.")}`;
     } else if (intent.startsWith(deactivateProjectPrefix)) {
       setSpecialBudgetProjectActive(specialBudgetProjectId, false);
       refreshBudgetPaths();
-      redirectTarget = `/budgets?notice=${encodeMessage("Sonderbudget deaktiviert.")}`;
+      redirectTarget = `/budgets?notice=${encodeMessage("Sonderkategorie deaktiviert.")}`;
     } else {
       throw new Error("Unbekannte Aktion.");
     }

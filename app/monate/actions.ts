@@ -40,7 +40,7 @@ function parseSpecialBudgetId(rawValue: FormDataEntryValue | null): number {
   const specialBudgetId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(specialBudgetId) || specialBudgetId <= 0) {
-    throw new Error("Sonderbudget-ID ist ungueltig.");
+    throw new Error("Sonderkategorie-ID ist ungueltig.");
   }
 
   return specialBudgetId;
@@ -104,7 +104,7 @@ function parseBudgetAssignment(rawValue: FormDataEntryValue | null): {
     };
   }
 
-  throw new Error("Budgetzuordnung ist ungueltig.");
+  throw new Error("Kategoriezuordnung ist ungueltig.");
 }
 
 function parseTransactionType(
@@ -233,7 +233,7 @@ export async function updateMonthlySpecialBudgetAction(
     revalidatePath("/auswertungen");
 
     redirect(
-      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderbudget gespeichert.")}`,
+      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderkategorie gespeichert.")}`,
     );
   } catch (error) {
     redirect(
@@ -260,7 +260,7 @@ export async function updateMonthlySpecialBudgetStateAction(
       revalidatePath(`/monate/${monthKey}`);
       revalidatePath("/sonderbudgets");
       redirect(
-        `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderbudget deaktiviert.")}`,
+        `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderkategorie deaktiviert.")}`,
       );
     }
 
@@ -271,7 +271,7 @@ export async function updateMonthlySpecialBudgetStateAction(
       revalidatePath(`/monate/${monthKey}`);
       revalidatePath("/sonderbudgets");
       redirect(
-        `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderbudget reaktiviert.")}`,
+        `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderkategorie reaktiviert.")}`,
       );
     }
 

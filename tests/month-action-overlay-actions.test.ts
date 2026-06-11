@@ -97,7 +97,7 @@ describe("FIN-057 monthly action cash toggle", () => {
 });
 
 describe("FIN-060 monthly booking edit actions", () => {
-  it("uses one Budgetzuordnung field for category assignments", async () => {
+  it("uses one Kategoriezuordnung field for category assignments", async () => {
     const formData = new FormData();
     formData.set("monthKey", "2026-06");
     formData.set("transactionId", "44");
@@ -120,7 +120,7 @@ describe("FIN-060 monthly booking edit actions", () => {
     );
   });
 
-  it("uses one Budgetzuordnung field for special budget assignments", async () => {
+  it("uses one Kategoriezuordnung field for special budget assignments", async () => {
     mocks.updateExpenseAssignmentForMonth.mockClear();
     const formData = new FormData();
     formData.set("monthKey", "2026-06");

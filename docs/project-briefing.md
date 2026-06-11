@@ -8,7 +8,7 @@ Wir bauen eine private Finanz-App als langfristigen Ersatz fuer einen bestehende
 
 Die App soll zuerst am Rechner laufen, spaeter als Web-App/PWA auf einem Raspberry Pi gehostet werden und ueber Tailscale privat von unterwegs erreichbar sein. Die Daten sind sensibel und sollen nicht unnoetig in eine fremde Cloud.
 
-Der erste echte Nutzen entsteht durch Sparkassen-Importe, manuelle Eintraege, Kategorien, monatliche Sonderbudgets, Fixkosten-Uebersicht, Bargeldbestand und Monatsauswertungen.
+Der erste echte Nutzen entsteht durch Sparkassen-Importe, manuelle Eintraege, Kategorien, monatliche Sonderkategorien, Fixkosten-Uebersicht, Bargeldbestand und Monatsauswertungen.
 
 Aktueller Navigationsfokus:
 
@@ -16,7 +16,7 @@ Aktueller Navigationsfokus:
 - Die Monatsarbeit bekommt zusaetzlich einen eigenen Haupttab `Monate` als lueckenlosen Einstieg ueber alle verfuegbaren Monate.
 - Die Monatsdetailseite unter `/monate/[monthKey]` ist die zentrale Vollsicht fuer einen einzelnen Monat.
 - Der Haupttab `Monatsvergleich` zeigt eine kompakte Vergleichsliste aller Monate seit der ersten Buchung bis zum aktuellen Monat.
-- Die Verwaltungslogik fuer Kategorien, Standardbudgets und Sonderbudgets wird unter dem Haupttab `Budgets` gebuendelt, damit die Navigation ruhiger und kompakter bleibt.
+- Die Verwaltungslogik fuer Kategorien, Standardbudgets und Sonderkategorien wird unter dem Haupttab `Budgets` gebuendelt, damit die Navigation ruhiger und kompakter bleibt.
 
 Aktuelles UI-Leitbild:
 
@@ -24,7 +24,7 @@ Aktuelles UI-Leitbild:
 - Die Oberflaeche priorisiert Monatsfokus, starke Primaerzahlen, klare Blickfuehrung und wenige eindeutige Hauptwege.
 - Dashboard und Monatsansicht sind beide prioritaer; die Monatsansicht bleibt der wichtigste Arbeitsort fuer Budgetpflege, Zuordnung und Monatskontrolle.
 - Karten, Listen und Tabellen sollen reduziert, elegant und gut lesbar sein. Tabellen bleiben erlaubt, wenn sie fuer dichte Monatsarbeit effizienter sind.
-- Visuelle Modernisierung darf keine Fachlogik zu Budgets, Sonderbudgets, Fixkosten, Transfers oder `effective_month_key` stillschweigend aendern.
+- Visuelle Modernisierung darf keine Fachlogik zu Budgets, Sonderkategorien, Fixkosten, Transfers oder `effective_month_key` stillschweigend aendern.
 
 ## Einstieg fuer neue Codex-Instanzen
 
@@ -97,7 +97,7 @@ Eine App, die:
 - Buchungen automatisch oder halbautomatisch Kategorien zuordnet
 - manuelle Barzahlungen und Sonderfaelle erlaubt
 - feste Kategorien jeden Monat wiederverwendet
-- Sonderbudgets pro Monat oder mehrmonatigem Vorhaben erlaubt
+- Sonderkategorien pro Monat oder mehrmonatigem Vorhaben erlaubt
 - Fixkosten separat plant
 - Bargeldbestand nachvollziehbar fuehrt
 - Monats-, Kategorie- und Trend-Auswertungen bietet
@@ -136,22 +136,22 @@ Startliste fuer den MVP (festgelegt am 2026-04-26):
 - Kleidung
 - Oeffis
 
-### Sonderbudgets
+### Sonderkategorien
 
-Sonderbudgets sind konkrete Ausgabeziele fuer einen Monat oder ein mehrmonatiges Vorhaben. Beispiele:
+Sonderkategorien sind konkrete Ausgabeziele fuer einen Monat oder ein mehrmonatiges Vorhaben. Beispiele:
 
 - Raspberry Pi
 - Bali Flug
 - SSD
 - Arzt Rechnung
 
-Wichtig: Sonderbudgets sind direkte Ausgaben, keine reinen virtuellen Sparziele. Wenn eine echte Zahlung existiert, wird diese Ausgabe dem konkreten Sonderbudget-Monatsanteil zugeordnet.
+Wichtig: Sonderkategorien sind direkte Ausgaben, keine reinen virtuellen Sparziele. Wenn eine echte Zahlung existiert, wird diese Ausgabe dem konkreten Monatsanteil der Sonderkategorie zugeordnet.
 
-Sonderbudgets sind nur fuer bestimmte Monate oder Zeitraeume aktiv. Mehrmonatige Vorhaben buendeln mehrere Monatsanteile, bleiben aber von Kategorien, Transfers und spaeterer Sparlogik getrennt. Erledigte Vorhaben werden archiviert und nicht in der normalen Budgetpflege angezeigt.
+Sonderkategorien sind nur fuer bestimmte Monate oder Zeitraeume aktiv. Mehrmonatige Vorhaben buendeln mehrere Monatsanteile, bleiben aber von Kategorien, Transfers und spaeterer Sparlogik getrennt. Erledigte Vorhaben werden archiviert und nicht in der normalen Budgetpflege angezeigt.
 
 ### Jede Ausgabe braucht eine Zuordnung
 
-Ziel ist: Jede echte Ausgabe wird genau einer festen Kategorie oder genau einem Sonderbudget zugeordnet. Unzugeordnete Ausgaben sollten sichtbar sein und abgearbeitet werden koennen.
+Ziel ist: Jede echte Ausgabe wird genau einer festen Kategorie oder genau einer Sonderkategorie zugeordnet. Unzugeordnete Ausgaben sollten sichtbar sein und abgearbeitet werden koennen.
 
 ### Bargeld ist ein Konto/Topf
 
@@ -215,7 +215,7 @@ Siehe auch:
 3. Grundnavigation/Layout
 4. Kategorien
 5. Monatsbudgets
-6. Sonderbudgets
+6. Sonderkategorien
 7. manuelle Transaktionen
 8. Bargeldkonto
 9. Sparkassen-Import analysieren

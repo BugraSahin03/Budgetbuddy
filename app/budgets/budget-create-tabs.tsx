@@ -29,7 +29,7 @@ export function BudgetCreateTabs({ categoryForm, specialBudgetForm }: BudgetCrea
           className="budget-create-tab"
           onClick={() => setActiveTab("special")}
         >
-          Sonderbudgets
+          Sonderkategorien
         </button>
       </div>
 
@@ -41,7 +41,7 @@ export function BudgetCreateTabs({ categoryForm, specialBudgetForm }: BudgetCrea
           </>
         ) : (
           <>
-            <h3>Sonderbudget erstellen</h3>
+            <h3>Sonderkategorie erstellen</h3>
             {specialBudgetForm}
           </>
         )}
