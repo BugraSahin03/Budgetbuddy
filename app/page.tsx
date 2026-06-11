@@ -30,6 +30,30 @@ function kpiAccent(label: string): string {
   return "bg-[#d9f7b5]";
 }
 
+function kpiMarkerStyle(label: string): CSSProperties {
+  if (label === "Einnahmen") {
+    return { color: "#055c52" };
+  }
+
+  if (label === "Ausgaben") {
+    return { color: "#ffffff" };
+  }
+
+  return { color: "#365f08" };
+}
+
+function kpiMarker(label: string): string {
+  if (label === "Einnahmen") {
+    return "↙";
+  }
+
+  if (label === "Ausgaben") {
+    return "↗";
+  }
+
+  return "↟";
+}
+
 function kpiValueStyle(label: string): CSSProperties {
   if (label === "Einnahmen") {
     return { color: "#08766b" };
@@ -58,24 +82,36 @@ export default async function HomePage() {
         <div className="absolute -left-16 top-8 h-44 w-44 rounded-full bg-cyan-200/20 blur-3xl" aria-hidden="true" />
         <div className="absolute -right-20 bottom-0 h-56 w-56 rounded-full bg-white/60 blur-3xl" aria-hidden="true" />
 
-        <div className="relative max-w-4xl">
-          <p className="month-eyebrow">Dashboard</p>
-          <h1 className="mt-4 text-[clamp(2.35rem,5.4vw,4.4rem)] font-black leading-[0.92] tracking-[-0.08em] text-[color:var(--month-ink)]">
-            {monthLabel}
-          </h1>
-          <p className="mt-7 text-sm font-bold uppercase tracking-[0.24em] text-[color:var(--month-ink-muted)]">
-            Aktueller Stand
-          </p>
-          <p className={`mt-3 text-[3.6rem] font-semibold leading-none tracking-[-0.075em] md:text-[5rem] ${amountTone(snapshot.totals.availableCents)}`}>
-            {formatEuro(snapshot.totals.availableCents)}
-          </p>
+        <div className="relative flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="month-eyebrow">Dashboard</p>
+            <h1 className="mt-4 text-[clamp(2.35rem,5.4vw,4.4rem)] font-black leading-[0.92] tracking-[-0.08em] text-[color:var(--month-ink)]">
+              {monthLabel}
+            </h1>
+          </div>
+
+          <div className="rounded-[1.45rem] border border-white/90 bg-white/70 p-4 text-left shadow-[0_18px_38px_rgba(7,27,70,0.07)] backdrop-blur md:min-w-[16rem] md:text-right">
+            <p className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--month-ink-muted)]">
+              Aktueller Stand
+            </p>
+            <p className={`mt-2 text-[2.25rem] font-semibold leading-none tracking-[-0.06em] md:text-[3rem] ${amountTone(snapshot.totals.availableCents)}`}>
+              {formatEuro(snapshot.totals.availableCents)}
+            </p>
+          </div>
         </div>
       </section>
 
       <section className="grid gap-3 md:grid-cols-3">
         {kpis.map((card) => (
           <article key={card.label} className="month-stat-card overflow-hidden">
-            <div className={`mb-4 h-1.5 w-16 rounded-full ${kpiAccent(card.label)}`} aria-hidden="true" />
+            <div
+              className={`mb-4 flex h-10 w-10 items-center justify-center rounded-2xl ${kpiAccent(card.label)}`}
+              aria-hidden="true"
+            >
+              <span className="text-lg font-bold leading-none" style={kpiMarkerStyle(card.label)}>
+                {kpiMarker(card.label)}
+              </span>
+            </div>
             <p className="month-stat-label">{card.label}</p>
             <p className="month-stat-value mt-3" style={kpiValueStyle(card.label)}>
               {card.value}
