@@ -6,6 +6,9 @@ import { describe, expect, it } from "vitest";
 const rootDir = process.cwd();
 const pageSource = readFileSync(join(rootDir, "app/fixkosten/page.tsx"), "utf8");
 const actionsSource = readFileSync(join(rootDir, "app/fixkosten/actions.ts"), "utf8");
+const settingsActionsSource = readFileSync(join(rootDir, "app/einstellungen/actions.ts"), "utf8");
+const settingsPageSource = readFileSync(join(rootDir, "app/einstellungen/page.tsx"), "utf8");
+const archivePageSource = readFileSync(join(rootDir, "app/einstellungen/fixkosten-archiv/page.tsx"), "utf8");
 const editorSource = readFileSync(join(rootDir, "app/components/fixed-cost-care-editor.tsx"), "utf8");
 const dialogSource = readFileSync(join(rootDir, "app/components/fixed-cost-dialog.tsx"), "utf8");
 const cssSource = readFileSync(join(rootDir, "app/globals.css"), "utf8");
@@ -53,6 +56,20 @@ describe("fixed costs page simplification", () => {
     expect(actionsSource).toContain("edit=1");
     expect(actionsSource).toContain("redirect(redirectTarget)");
     expect(actionsSource).not.toContain('redirect("/fixkosten?notice="');
+  });
+
+  it("keeps archived fixed costs out of care and reactivates them from settings", () => {
+    expect(pageSource).toContain("listFixedCosts().filter((fixedCost) => fixedCost.isActive)");
+    expect(editorSource).toContain("Deaktivieren");
+    expect(editorSource).not.toContain("Reaktivieren");
+    expect(settingsPageSource).toContain("/einstellungen/fixkosten-archiv");
+    expect(settingsPageSource).toContain("Fixkosten-Archiv");
+    expect(archivePageSource).toContain("Fixkostenarchiv");
+    expect(archivePageSource).toContain("listFixedCosts().filter((fixedCost) => !fixedCost.isActive)");
+    expect(archivePageSource).toContain("reactivateFixedCostAction");
+    expect(settingsActionsSource).toContain("reactivateFixedCostAction");
+    expect(settingsActionsSource).toContain("setFixedCostActive(parseFixedCostId(formData), true)");
+    expect(settingsActionsSource).toContain("/einstellungen/fixkosten-archiv");
   });
 
   it("uses a calm care surface instead of an admin table", () => {

@@ -10,6 +10,7 @@ import {
   updateImportDisplayAlias,
 } from "@/src/settings/import-display-aliases/repository";
 import { setCategoryActive } from "@/src/categories/repository";
+import { setFixedCostActive } from "@/src/fixed-costs/repository";
 import { reactivateSpecialBudgetProject } from "@/src/special-budgets/repository";
 
 function encodeMessage(message: string): string {
@@ -52,6 +53,16 @@ function parseCategoryId(formData: FormData): number {
   }
 
   return categoryId;
+}
+
+function parseFixedCostId(formData: FormData): number {
+  const fixedCostId = Number.parseInt(String(formData.get("fixedCostId") ?? ""), 10);
+
+  if (!Number.isInteger(fixedCostId) || fixedCostId <= 0) {
+    throw new Error("Fixkosten-ID ist ungueltig.");
+  }
+
+  return fixedCostId;
 }
 
 export async function createImportDisplayAliasAction(
@@ -169,5 +180,29 @@ export async function reactivateCategoryAction(formData: FormData): Promise<neve
   redirect(
     "/einstellungen/kategorie-archiv?notice=" +
       encodeMessage("Kategorie reaktiviert."),
+  );
+}
+
+export async function reactivateFixedCostAction(formData: FormData): Promise<never> {
+  let errorMessage: string | null = null;
+
+  try {
+    setFixedCostActive(parseFixedCostId(formData), true);
+    revalidatePath("/");
+    revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/fixkosten-archiv");
+    revalidatePath("/fixkosten");
+    revalidatePath("/monate");
+  } catch (error) {
+    errorMessage = toErrorMessage(error);
+  }
+
+  if (errorMessage) {
+    redirect("/einstellungen/fixkosten-archiv?error=" + encodeMessage(errorMessage));
+  }
+
+  redirect(
+    "/einstellungen/fixkosten-archiv?notice=" +
+      encodeMessage("Fixkosten-Eintrag reaktiviert."),
   );
 }

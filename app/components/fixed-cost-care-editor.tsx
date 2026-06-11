@@ -155,9 +155,9 @@ export function FixedCostCareEditor({
                         type="submit"
                         name="stateChangeFixedCostId"
                         value={row.id}
-                        className={row.isActive ? "fixed-cost-muted-action" : "fixed-cost-reactivate-action"}
+                        className="fixed-cost-muted-action"
                       >
-                        {row.isActive ? "Deaktivieren" : "Reaktivieren"}
+                        Deaktivieren
                       </button>
                     </div>
                   </div>

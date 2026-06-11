@@ -34,7 +34,7 @@ export default async function FixedCostsPage({ searchParams }: FixedCostsPagePro
   const error = toSingleParam(params.error);
   const initialIsEditing = toSingleParam(params.edit) === "1";
 
-  const fixedCosts = listFixedCosts();
+  const fixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
   const summary = getFixedCostsSummary();
 
   return (
