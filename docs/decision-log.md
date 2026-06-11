@@ -1411,3 +1411,22 @@ Auswirkung:
 - Es wird keine Fixkostenberechnung, Import-Matching-Logik, Monatsberechnung oder Datenstruktur geaendert.
 - Die Pflegeansicht wird ruhiger und entspricht besser der neuen App-Shell- und Monats-UI-Sprache.
 - Das Archiv nutzt den bestehenden `is_active`-Status; es entsteht keine neue Archivtabelle.
+
+## 2026-06-11 - FIN-077 schneidet Dashboard auf Monatscockpit zu
+
+Quelle/Ticket: `FIN-077`
+
+Erkenntnis/Entscheidung:
+
+- Das Dashboard beantwortet kuenftig primaer: aktueller Monat, aktueller Stand und offene Arbeit.
+- Die Haupt-KPIs sind bewusst nur `Einnahmen`, `Ausgaben` und `Gespart`.
+- `Gespart` verwendet weiterhin die FIN-068/FIN-072-Definition: echte Ausgaben mit der geschuetzten Kategorie `Sparen`.
+- Offene Arbeit zaehlt nur Ausgaben ohne notwendige Kategorie- oder Sonderkategorie-Zuordnung.
+- Transfers und erkannte Fixkosten-Kontrolltreffer zaehlen nicht als offene Arbeit.
+- Die kurze Buchungsliste zeigt nur Orientierung und ersetzt keine Monatsbuchungs- oder Pflegefunktion.
+
+Auswirkung:
+
+- Das Dashboard wird keine zweite Monatsdetailseite und keine Budget-, Sonderbudget-, Import- oder Fixkostenpflege.
+- Kategorienlisten, Sonderkategorienlisten, Warnbloecke und schwere Fixkostenkontrolle verschwinden aus der Startseite.
+- Die fachliche Monatsberechnung bleibt unveraendert; ergaenzt wird nur eine Lesemarkierung fuer Fixkosten-Kontrolltreffer im Monats-Readmodel.

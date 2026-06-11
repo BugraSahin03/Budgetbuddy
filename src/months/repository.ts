@@ -64,6 +64,7 @@ export type MonthDetailTransactionRow = {
   specialBudgetId: number | null;
   specialBudgetName: string | null;
   importRunId: number | null;
+  isFixedCostControl: boolean;
 };
 
 export type MonthTotals = {
@@ -227,10 +228,16 @@ function mapImportedExpenseToMatcherRow(
   };
 }
 
-function buildImportedFixedCostControlCents(monthKey: string): number {
+function buildImportedFixedCostControlSummary(monthKey: string): {
+  totalCents: number;
+  transactionIds: Set<number>;
+} {
   const importedExpenses = listImportedExpenseRowsForMonth(monthKey);
   if (importedExpenses.length === 0) {
-    return 0;
+    return {
+      totalCents: 0,
+      transactionIds: new Set(),
+    };
   }
 
   const rules = listActiveImportRules();
@@ -250,16 +257,21 @@ function buildImportedFixedCostControlCents(monthKey: string): number {
       .map((suggestion) => suggestion.rowIndex),
   );
 
-  let total = 0;
+  let totalCents = 0;
+  const transactionIds = new Set<number>();
   for (const index of controlledIndices) {
     const row = importedExpenses[index];
     if (!row) {
       continue;
     }
-    total += Math.max(0, -row.amountCents);
+    totalCents += Math.max(0, -row.amountCents);
+    transactionIds.add(row.id);
   }
 
-  return total;
+  return {
+    totalCents,
+    transactionIds,
+  };
 }
 
 function getExpenseCents(
@@ -401,7 +413,10 @@ function buildNavigationLink(monthKey: string): MonthDetailNavigationLink {
   };
 }
 
-function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
+function listMonthTransactions(
+  monthKey: string,
+  fixedCostControlTransactionIds = new Set<number>(),
+): MonthDetailTransactionRow[] {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
   const aliases = listImportDisplayAliases();
 
@@ -436,7 +451,9 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
         ORDER BY t.booking_date DESC, t.id DESC
       `,
     )
-    .all(normalizedMonthKey) as Array<Omit<MonthDetailTransactionRow, "displayName">>;
+    .all(normalizedMonthKey) as Array<
+    Omit<MonthDetailTransactionRow, "displayName" | "isFixedCostControl">
+  >;
 
   return rows.map((row) => ({
     ...row,
@@ -446,13 +463,14 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
       counterpartyName: row.counterpartyName,
       aliases,
     }),
+    isFixedCostControl: fixedCostControlTransactionIds.has(row.id),
   }));
 }
 
 export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
-  const actualFixedCostsCents =
-    buildImportedFixedCostControlCents(normalizedMonthKey);
+  const fixedCostControl = buildImportedFixedCostControlSummary(normalizedMonthKey);
+  const actualFixedCostsCents = fixedCostControl.totalCents;
   const incomeCents = getIncomeCents(normalizedMonthKey);
   const expenseCents = getExpenseCents(
     normalizedMonthKey,
@@ -483,7 +501,10 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
     planSummary,
     categoryRows,
     specialBudgetRows,
-    transactions: listMonthTransactions(normalizedMonthKey),
+    transactions: listMonthTransactions(
+      normalizedMonthKey,
+      fixedCostControl.transactionIds,
+    ),
   };
 }
 

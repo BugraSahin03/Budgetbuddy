@@ -372,6 +372,21 @@ describe("months repository", () => {
     expect(snapshot.totals.availableCents).toBe(
       200000 - 11700 - plannedFixedCostsCents,
     );
+    expect(
+      snapshot.transactions.find(
+        (transaction) => transaction.description === "TEST-FIN-063 N26-Fix. Monatsblock",
+      )?.isFixedCostControl,
+    ).toBe(true);
+    expect(
+      snapshot.transactions.find(
+        (transaction) => transaction.description === "TEST-FIN-063 Lastschrift Fitness",
+      )?.isFixedCostControl,
+    ).toBe(true);
+    expect(
+      snapshot.transactions.find(
+        (transaction) => transaction.description === "TEST-FIN-063 Nicht erkannte Fixkostenbuchung",
+      )?.isFixedCostControl,
+    ).toBe(false);
   });
 
   it("keeps the month budget stand negative when expenses and fixed costs exceed income", () => {

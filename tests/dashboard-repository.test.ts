@@ -159,6 +159,13 @@ describe("dashboard repository", () => {
     expect(snapshot.totals.availableCents).toBe(
       200000 - 17500 - (baselinePlannedFixedCostsCents + fixedCostPlanCents),
     );
+    expect(snapshot.openAssignmentCount).toBe(1);
+    expect(snapshot.recentTransactions).toHaveLength(5);
+    expect(
+      snapshot.recentTransactions.find(
+        (transaction) => transaction.description === `${PREFIX}Lastschrift Fitness`,
+      )?.isFixedCostControl,
+    ).toBe(true);
 
     const einkauf = snapshot.categoryRows.find((row) => row.categoryName === "Einkauf");
     expect(einkauf?.spentAmountCents).toBe(10000);
@@ -193,10 +200,12 @@ describe("dashboard repository", () => {
     const dashboardSnapshot = getDashboardMonthSnapshot("2031-02");
     const monthSnapshot = getMonthSnapshot("2031-02");
 
-    expect(dashboardSnapshot).toEqual({
+    expect(dashboardSnapshot).toMatchObject({
       totals: monthSnapshot.totals,
       categoryRows: monthSnapshot.categoryRows,
       specialBudgetRows: monthSnapshot.specialBudgetRows,
+      openAssignmentCount: 0,
     });
+    expect(dashboardSnapshot.recentTransactions).toEqual(monthSnapshot.transactions.slice(0, 5));
   });
 });

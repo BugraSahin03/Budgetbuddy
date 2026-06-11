@@ -1,10 +1,16 @@
-import type { DashboardMonthSnapshot, DashboardSpecialBudgetRow } from "@/src/dashboard/repository";
+import type { DashboardMonthSnapshot } from "@/src/dashboard/repository";
 import type { MonthlyBudgetCategoryRow } from "@/src/budgets/repository";
+import type { DashboardSpecialBudgetRow } from "@/src/dashboard/repository";
 
 export type DashboardKpiCard = {
   label: string;
   value: string;
   tone: string;
+};
+
+type BudgetWarningSnapshot = {
+  categoryRows: MonthlyBudgetCategoryRow[];
+  specialBudgetRows: DashboardSpecialBudgetRow[];
 };
 
 export function formatEuro(cents: number): string {
@@ -75,10 +81,6 @@ export function specialBudgetStatusTone(row: DashboardSpecialBudgetRow): string 
 }
 
 export function buildDashboardKpis(snapshot: DashboardMonthSnapshot): DashboardKpiCard[] {
-  const openCategoryAssignments = snapshot.categoryRows.filter(
-    (row) => row.budgetAmountCents === null,
-  ).length;
-
   return [
     {
       label: "Einnahmen",
@@ -91,34 +93,14 @@ export function buildDashboardKpis(snapshot: DashboardMonthSnapshot): DashboardK
       tone: "text-slate-900",
     },
     {
-      label: "Verfuegbar",
-      value: formatEuro(snapshot.totals.availableCents),
-      tone: snapshot.totals.availableCents < 0 ? "text-red-700" : "text-slate-900",
-    },
-    {
-      label: "Bargeldbestand",
-      value: formatEuro(snapshot.totals.cashBalanceCents),
+      label: "Gespart",
+      value: formatEuro(snapshot.totals.savingsCents),
       tone: "text-slate-900",
-    },
-    {
-      label: "Fixkosten (Plan)",
-      value: formatEuro(snapshot.totals.plannedFixedCostsCents),
-      tone: "text-slate-900",
-    },
-    {
-      label: "Fixkosten (Ist-Kontrolle)",
-      value: formatEuro(snapshot.totals.actualFixedCostsCents),
-      tone: "text-violet-700",
-    },
-    {
-      label: "Budgets ohne Wert",
-      value: String(openCategoryAssignments),
-      tone: openCategoryAssignments > 0 ? "text-amber-700" : "text-slate-900",
     },
   ];
 }
 
-export function countOverBudgetWarnings(snapshot: DashboardMonthSnapshot): number {
+export function countOverBudgetWarnings(snapshot: BudgetWarningSnapshot): number {
   const categoryWarnings = snapshot.categoryRows.filter(
     (row) => categoryStatusLabel(row) === "Ueber Budget",
   ).length;
