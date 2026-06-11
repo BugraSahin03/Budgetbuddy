@@ -47,6 +47,8 @@ describe("fixed costs page simplification", () => {
     expect(actionsSource).toContain("parseIndexedFixedCostInput");
     expect(actionsSource).toContain("stateChangeFixedCostId");
     expect(actionsSource).toContain("edit=1");
+    expect(actionsSource).toContain("redirect(redirectTarget)");
+    expect(actionsSource).not.toContain('redirect("/fixkosten?notice="');
   });
 
   it("uses a calm care surface instead of an admin table", () => {

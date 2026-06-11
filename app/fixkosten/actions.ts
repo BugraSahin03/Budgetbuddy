@@ -64,17 +64,21 @@ function parseFixedCostIds(formData: FormData): number[] {
 }
 
 export async function createFixedCostAction(formData: FormData): Promise<never> {
+  const redirectTarget = "/fixkosten?notice=" + encodeMessage("Fixkosten-Eintrag erstellt.");
+
   try {
     createFixedCost(parseFixedCostInput(formData));
-
     revalidatePath("/fixkosten");
-    redirect("/fixkosten?notice=" + encodeMessage("Fixkosten-Eintrag erstellt."));
   } catch (error) {
     redirect("/fixkosten?error=" + encodeMessage(toErrorMessage(error)));
   }
+
+  redirect(redirectTarget);
 }
 
 export async function updateFixedCostAction(formData: FormData): Promise<never> {
+  let redirectTarget = "/fixkosten?notice=" + encodeMessage("Fixkosten-Eintraege gespeichert.");
+
   try {
     const stateChangeFixedCostId = toSingleString(formData.get("stateChangeFixedCostId"));
 
@@ -82,20 +86,20 @@ export async function updateFixedCostAction(formData: FormData): Promise<never> 
       const fixedCostId = parsePositiveInt(stateChangeFixedCostId, "Fixkosten-ID");
       const currentlyActive = toSingleString(formData.get(`isActive-${fixedCostId}`)) === "on";
       setFixedCostActive(fixedCostId, !currentlyActive);
-      revalidatePath("/fixkosten");
-      redirect(
+      redirectTarget =
         "/fixkosten?edit=1&notice=" +
-          encodeMessage(currentlyActive ? "Fixkosten-Eintrag deaktiviert." : "Fixkosten-Eintrag reaktiviert."),
-      );
-    }
+        encodeMessage(currentlyActive ? "Fixkosten-Eintrag deaktiviert." : "Fixkosten-Eintrag reaktiviert.");
+      revalidatePath("/fixkosten");
+    } else {
+      for (const fixedCostId of parseFixedCostIds(formData)) {
+        updateFixedCost(fixedCostId, parseIndexedFixedCostInput(formData, fixedCostId));
+      }
 
-    for (const fixedCostId of parseFixedCostIds(formData)) {
-      updateFixedCost(fixedCostId, parseIndexedFixedCostInput(formData, fixedCostId));
+      revalidatePath("/fixkosten");
     }
-
-    revalidatePath("/fixkosten");
-    redirect("/fixkosten?notice=" + encodeMessage("Fixkosten-Eintraege gespeichert."));
   } catch (error) {
     redirect("/fixkosten?error=" + encodeMessage(toErrorMessage(error)));
   }
+
+  redirect(redirectTarget);
 }
