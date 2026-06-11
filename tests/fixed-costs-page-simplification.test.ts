@@ -36,10 +36,14 @@ describe("fixed costs page simplification", () => {
 
   it("keeps existing fixed costs read-only until edit mode is enabled", () => {
     expect(pageSource).toContain("FixedCostCareEditor");
-    expect(editorSource).toContain("useState");
     expect(editorSource).toContain("initialIsEditing");
     expect(editorSource).toContain("budget-icon-action");
+    expect(editorSource).toContain('key="edit-fixed-costs"');
+    expect(editorSource).toContain('key="save-fixed-costs"');
+    expect(editorSource).toContain('href="/fixkosten?edit=1"');
+    expect(editorSource).toContain('type="submit"');
     expect(editorSource).toContain("fixed-cost-read-card");
+    expect(editorSource).toContain("fixed-cost-state-dot");
     expect(editorSource).toContain("fixed-cost-edit-form");
     expect(editorSource).toContain('name="stateChangeFixedCostId"');
     expect(editorSource).toContain("fixedCostIds");
@@ -61,5 +65,6 @@ describe("fixed costs page simplification", () => {
     expect(cssSource).toContain(".fixed-cost-hero-panel");
     expect(cssSource).toContain(".fixed-cost-card");
     expect(cssSource).toContain(".fixed-cost-read-card");
+    expect(cssSource).toContain(".fixed-cost-state-dot");
   });
 });

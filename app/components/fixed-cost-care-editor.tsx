@@ -1,7 +1,3 @@
-"use client";
-
-import { useState } from "react";
-
 type FixedCostCareEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
   fixedCosts: FixedCostEditorRow[];
@@ -29,10 +25,6 @@ function toInputAmount(cents: number): string {
   return (cents / 100).toFixed(2).replace(".", ",");
 }
 
-function statusClass(isActive: boolean): string {
-  return isActive ? "fixed-cost-status-active" : "fixed-cost-status-muted";
-}
-
 function statusLabel(isActive: boolean): string {
   return isActive ? "Aktiv" : "Inaktiv";
 }
@@ -50,7 +42,7 @@ export function FixedCostCareEditor({
   fixedCosts,
   initialIsEditing = false,
 }: FixedCostCareEditorProps) {
-  const [isEditing, setIsEditing] = useState(initialIsEditing);
+  const isEditing = initialIsEditing;
 
   return (
     <section className={`fixed-cost-panel fixed-cost-care-editor ${isEditing ? "is-editing" : ""}`} aria-labelledby="fixed-cost-list-heading">
@@ -59,28 +51,35 @@ export function FixedCostCareEditor({
           <p className="month-eyebrow">Pflege</p>
           <h2 id="fixed-cost-list-heading">Bestehende Fixkosten</h2>
         </div>
-        {fixedCosts.length > 0 ? (
+        {fixedCosts.length > 0 && isEditing ? (
           <button
-            type={isEditing ? "submit" : "button"}
-            form={isEditing ? "fixed-cost-edit-form" : undefined}
-            className={`budget-icon-action ${isEditing ? "budget-icon-action-save" : ""}`}
-            aria-label={isEditing ? "Aenderungen speichern und Editiermodus beenden" : "Fixkosten bearbeiten"}
-            title={isEditing ? "Speichern" : "Bearbeiten"}
-            onClick={() => {
-              if (!isEditing) {
-                setIsEditing(true);
-              }
-            }}
+            key="save-fixed-costs"
+            type="submit"
+            form="fixed-cost-edit-form"
+            className="budget-icon-action budget-icon-action-save"
+            aria-label="Aenderungen speichern und Editiermodus beenden"
+            title="Speichern"
           >
-            {isEditing ? "✓" : "✎"}
+            ✓
           </button>
+        ) : null}
+        {fixedCosts.length > 0 && !isEditing ? (
+          <a
+            key="edit-fixed-costs"
+            href="/fixkosten?edit=1"
+            className="budget-icon-action"
+            aria-label="Fixkosten bearbeiten"
+            title="Bearbeiten"
+          >
+            ✎
+          </a>
         ) : null}
       </div>
 
       {fixedCosts.length === 0 ? (
         <p className="fixed-cost-empty-state">Noch keine Fixkosten vorhanden.</p>
       ) : (
-        <form id="fixed-cost-edit-form" action={action} onSubmit={() => setIsEditing(false)}>
+        <form id="fixed-cost-edit-form" action={action}>
           <div className="fixed-cost-list">
             {fixedCosts.map((row) => (
               <article key={row.id} className={`fixed-cost-card ${row.isActive ? "" : "is-inactive"}`}>
@@ -88,11 +87,11 @@ export function FixedCostCareEditor({
                 <input type="hidden" name={`isActive-${row.id}`} value={row.isActive ? "on" : ""} />
                 {!isEditing ? (
                   <div className="fixed-cost-read-card">
-                    <div>
-                      <span className={`fixed-cost-status ${statusClass(row.isActive)}`}>
+                    <div className="fixed-cost-read-title">
+                      <h3>{row.name}</h3>
+                      <span className={`fixed-cost-state-dot ${row.isActive ? "" : "is-muted"}`}>
                         {statusLabel(row.isActive)}
                       </span>
-                      <h3>{row.name}</h3>
                     </div>
                     <div className="fixed-cost-read-grid">
                       <span>
@@ -117,7 +116,7 @@ export function FixedCostCareEditor({
                   <div className="fixed-cost-edit-form">
                     <input type="hidden" name={`fixedCostId-${row.id}`} value={row.id} />
                     <div className="fixed-cost-card-title">
-                      <span className={`fixed-cost-status ${statusClass(row.isActive)}`}>
+                      <span className={`fixed-cost-state-dot ${row.isActive ? "" : "is-muted"}`}>
                         {statusLabel(row.isActive)}
                       </span>
                       <label>
