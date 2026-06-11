@@ -85,17 +85,17 @@ export function buildDashboardKpis(snapshot: DashboardMonthSnapshot): DashboardK
     {
       label: "Einnahmen",
       value: formatEuro(snapshot.totals.incomeCents),
-      tone: "text-slate-900",
+      tone: "text-emerald-700",
     },
     {
       label: "Ausgaben",
       value: formatEuro(snapshot.totals.expenseCents),
-      tone: "text-slate-900",
+      tone: "text-rose-700",
     },
     {
       label: "Gespart",
       value: formatEuro(snapshot.totals.savingsCents),
-      tone: "text-slate-900",
+      tone: "text-sky-700",
     },
   ];
 }

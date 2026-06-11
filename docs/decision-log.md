@@ -1430,3 +1430,20 @@ Auswirkung:
 - Das Dashboard wird keine zweite Monatsdetailseite und keine Budget-, Sonderbudget-, Import- oder Fixkostenpflege.
 - Kategorienlisten, Sonderkategorienlisten, Warnbloecke und schwere Fixkostenkontrolle verschwinden aus der Startseite.
 - Die fachliche Monatsberechnung bleibt unveraendert; ergaenzt wird nur eine Lesemarkierung fuer Fixkosten-Kontrolltreffer im Monats-Readmodel.
+
+## 2026-06-11 - FIN-077 Visual Check reduziert Dashboard weiter
+
+Quelle/Ticket: `FIN-077`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsauswahl wird aus dem Dashboard entfernt; die Startseite zeigt bewusst den aktuellen Monat.
+- Die kurze Buchungsliste wird im ersten Dashboard-Schnitt nicht angezeigt, weil sie den ruhigen Cockpit-Charakter wieder Richtung Monatsdetailseite verschiebt.
+- Die drei KPI-Kacheln bekommen dezente Farbakzente fuer Einnahmen, Ausgaben und Gespart.
+- Die Hauptkachel verwendet die dunklere App-Shell-/Header-Farbsprache, damit sie staerker als Startpunkt wirkt.
+
+Auswirkung:
+
+- Das Dashboard bleibt noch staerker auf Status und offene Arbeit fokussiert.
+- Die Buchungsdetailarbeit bleibt vollstaendig in der Monatsansicht.
+- Es wird keine Monats-, Import-, Transaktions- oder Sparlogik geaendert.
