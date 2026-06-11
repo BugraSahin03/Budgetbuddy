@@ -1356,3 +1356,19 @@ Auswirkung:
 
 - Sparbuchungen bleiben weiterhin budgetwirksame Ausgaben und reduzieren die Monatsverfuegbarkeit.
 - Die neue Kachel macht Sparen sichtbar, ohne Sparziele, Transferlogik oder automatische Importerkennung einzufuehren.
+
+## 2026-06-11 - FIN-073 reduziert Fixkosten auf Pflegeansicht
+
+Quelle/Ticket: `FIN-073`
+
+Erkenntnis/Entscheidung:
+
+- Die Seite `/fixkosten` dient kuenftig nur noch der Pflege von Fixkosten: anlegen, bearbeiten, deaktivieren und reaktivieren.
+- Import-/Fixkosten-Kontrolltreffer werden dort nicht mehr als Kachel oder Kontrollsicht angezeigt.
+- Die Fixkostenkontrolle bleibt fachlich bestehen, gehoert aber in den Monats-/Importkontext und nicht in die globale Pflegeansicht.
+- Die geplante aktive Fixkostensumme darf als ruhiger `Monatlicher Fixkostenblock` in der Pflegeansicht sichtbar bleiben.
+
+Auswirkung:
+
+- Es wird keine Fixkostenberechnung, Import-Matching-Logik, Monatsberechnung oder Datenstruktur geaendert.
+- Die Pflegeansicht wird ruhiger und entspricht besser der neuen App-Shell- und Monats-UI-Sprache.
