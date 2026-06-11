@@ -66,6 +66,19 @@ export type MonthDetailTransactionRow = {
   importRunId: number | null;
 };
 
+export type MonthFixedCostControlMatchRow = {
+  transactionId: number;
+  bookingDate: string;
+  description: string;
+  displayName: string;
+  counterpartyName: string | null;
+  amountCents: number;
+  controlAmountCents: number;
+  importRunId: number | null;
+  controlLabel: string;
+  ruleName: string;
+};
+
 export type MonthTotals = {
   monthKey: string;
   incomeCents: number;
@@ -90,6 +103,7 @@ export type MonthSpecialBudgetRow = {
 export type MonthSnapshot = {
   totals: MonthTotals;
   planSummary: MonthPlanSummary;
+  fixedCostControlMatches: MonthFixedCostControlMatchRow[];
   categoryRows: MonthlyBudgetCategoryRow[];
   specialBudgetRows: MonthSpecialBudgetRow[];
   transactions: MonthDetailTransactionRow[];
@@ -180,6 +194,7 @@ function listImportedExpenseRowsForMonth(monthKey: string): Array<{
   amountCents: number;
   description: string;
   counterpartyName: string | null;
+  importRunId: number | null;
 }> {
   return getDb()
     .prepare(
@@ -189,7 +204,8 @@ function listImportedExpenseRowsForMonth(monthKey: string): Array<{
           booking_date AS bookingDate,
           amount_cents AS amountCents,
           description,
-          counterparty_name AS counterpartyName
+          counterparty_name AS counterpartyName,
+          import_run_id AS importRunId
         FROM transactions
         WHERE source_type = 'import'
           AND transaction_type = 'expense'
@@ -203,6 +219,7 @@ function listImportedExpenseRowsForMonth(monthKey: string): Array<{
     amountCents: number;
     description: string;
     counterpartyName: string | null;
+    importRunId: number | null;
   }>;
 }
 
@@ -227,14 +244,17 @@ function mapImportedExpenseToMatcherRow(
   };
 }
 
-function buildImportedFixedCostControlCents(monthKey: string): number {
+function buildImportedFixedCostControlMatches(
+  monthKey: string,
+): MonthFixedCostControlMatchRow[] {
   const importedExpenses = listImportedExpenseRowsForMonth(monthKey);
   if (importedExpenses.length === 0) {
-    return 0;
+    return [];
   }
 
   const rules = listActiveImportRules();
   const fixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
+  const aliases = listImportDisplayAliases();
   const mappedRows = importedExpenses.map(mapImportedExpenseToMatcherRow);
   const suggestions = buildImportRuleSuggestions({
     rows: mappedRows,
@@ -242,24 +262,59 @@ function buildImportedFixedCostControlCents(monthKey: string): number {
     fixedCosts,
   });
 
-  const controlledIndices = new Set(
-    suggestions
-      .filter((suggestion) =>
-        suggestion.label.startsWith("Fixkosten-Kontrolle:"),
-      )
-      .map((suggestion) => suggestion.rowIndex),
-  );
+  const controlsByIndex = new Map<
+    number,
+    { label: string; ruleName: string }
+  >();
 
-  let total = 0;
-  for (const index of controlledIndices) {
+  for (const suggestion of suggestions) {
+    if (!suggestion.label.startsWith("Fixkosten-Kontrolle:")) {
+      continue;
+    }
+
+    if (controlsByIndex.has(suggestion.rowIndex)) {
+      continue;
+    }
+
+    controlsByIndex.set(suggestion.rowIndex, {
+      label: suggestion.label,
+      ruleName: suggestion.ruleName,
+    });
+  }
+
+  const result: MonthFixedCostControlMatchRow[] = [];
+  for (const [index, control] of controlsByIndex) {
     const row = importedExpenses[index];
     if (!row) {
       continue;
     }
-    total += Math.max(0, -row.amountCents);
+
+    result.push({
+      transactionId: row.id,
+      bookingDate: row.bookingDate,
+      description: row.description,
+      displayName: resolveImportDisplayName({
+        sourceType: "import",
+        description: row.description,
+        counterpartyName: row.counterpartyName,
+        aliases,
+      }),
+      counterpartyName: row.counterpartyName,
+      amountCents: row.amountCents,
+      controlAmountCents: Math.max(0, -row.amountCents),
+      importRunId: row.importRunId,
+      controlLabel: control.label,
+      ruleName: control.ruleName,
+    });
   }
 
-  return total;
+  return result;
+}
+
+function sumFixedCostControlMatches(
+  matches: MonthFixedCostControlMatchRow[],
+): number {
+  return matches.reduce((sum, match) => sum + match.controlAmountCents, 0);
 }
 
 function getExpenseCents(
@@ -451,8 +506,10 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
 
 export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
+  const fixedCostControlMatches =
+    buildImportedFixedCostControlMatches(normalizedMonthKey);
   const actualFixedCostsCents =
-    buildImportedFixedCostControlCents(normalizedMonthKey);
+    sumFixedCostControlMatches(fixedCostControlMatches);
   const incomeCents = getIncomeCents(normalizedMonthKey);
   const expenseCents = getExpenseCents(
     normalizedMonthKey,
@@ -481,6 +538,7 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
       cashBalanceCents,
     },
     planSummary,
+    fixedCostControlMatches,
     categoryRows,
     specialBudgetRows,
     transactions: listMonthTransactions(normalizedMonthKey),
@@ -589,6 +647,7 @@ export function getMonthDetail(
     dashboard: {
       totals: snapshot.totals,
       planSummary: snapshot.planSummary,
+      fixedCostControlMatches: snapshot.fixedCostControlMatches,
       categoryRows: snapshot.categoryRows,
       specialBudgetRows: snapshot.specialBudgetRows,
     },
