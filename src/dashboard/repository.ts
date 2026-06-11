@@ -2,6 +2,7 @@ import "server-only";
 
 import {
   getMonthSnapshot,
+  type MonthDetailTransactionRow,
   type MonthSnapshot,
   type MonthSpecialBudgetRow,
   type MonthTotals,
@@ -15,7 +16,17 @@ export type DashboardMonthSnapshot = {
   totals: DashboardTotals;
   categoryRows: MonthlyBudgetCategoryRow[];
   specialBudgetRows: DashboardSpecialBudgetRow[];
+  openAssignmentCount: number;
+  recentTransactions: MonthDetailTransactionRow[];
 };
+
+function needsAssignment(transaction: MonthDetailTransactionRow): boolean {
+  return (
+    transaction.transactionType === "expense" &&
+    transaction.categoryId === null &&
+    transaction.specialBudgetId === null
+  );
+}
 
 export function getDashboardMonthSnapshot(monthKey: string): DashboardMonthSnapshot {
   const snapshot: MonthSnapshot = getMonthSnapshot(monthKey);
@@ -24,5 +35,7 @@ export function getDashboardMonthSnapshot(monthKey: string): DashboardMonthSnaps
     totals: snapshot.totals,
     categoryRows: snapshot.categoryRows,
     specialBudgetRows: snapshot.specialBudgetRows,
+    openAssignmentCount: snapshot.transactions.filter(needsAssignment).length,
+    recentTransactions: snapshot.transactions.slice(0, 5),
   };
 }
