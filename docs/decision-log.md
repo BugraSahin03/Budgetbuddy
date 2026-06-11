@@ -86,7 +86,7 @@ Erkenntnis/Entscheidung:
 - Der Monatsvergleich ist ein eigener Hauptnavigationspunkt unter `/monatsvergleich`.
 - Die Vergleichsreihe nutzt alle Monate seit der ersten vorhandenen Buchung bis zum aktuellen Monat und bleibt lueckenlos.
 - Pro Monat werden Einnahmen, Ausgaben und `Gespart` angezeigt.
-- `Gespart` ist in Version 1 bewusst nur der einfache Ueberschuss `Einnahmen - Ausgaben`.
+- Historisch war `Gespart` in Version 1 bewusst nur der einfache Ueberschuss `Einnahmen - Ausgaben`; FIN-075 ersetzt das im Monatsvergleich durch echte Sparbuchungen der Kategorie `Sparen`.
 - Transfers zaehlen nicht als Ausgaben in der Vergleichsrechnung.
 
 Auswirkung:
@@ -1373,3 +1373,21 @@ Auswirkung:
 - Monatsansicht, Budgetpflege, Einstellungen, Import-Regeln, Fehlermeldungen und UI-nahe Tests verwenden die neue Produktsprache.
 - Die Fachregel bleibt unveraendert: Eine Ausgabe hat genau eine Kategorie oder genau eine Sonderkategorie.
 - Bestehende Import-, Transaktions-, Archiv- und Monatslogik wird nicht veraendert.
+
+## 2026-06-11 - FIN-075 vereinfacht Monatsvergleich auf drei Ist-Werte
+
+Quelle/Ticket: `FIN-075`
+
+Erkenntnis/Entscheidung:
+
+- Der Monatsvergleich zeigt pro Monat nur noch Monatsname, `Einnahmen`, `Ausgaben` und `Gespart`.
+- `Einnahmen` summiert echte Einnahmen und Rueckerstattungen des Monats.
+- `Ausgaben` summiert echte Ausgaben des Monats inklusive Sparbuchungen; Transfers bleiben ausgeschlossen.
+- `Gespart` kommt wie in FIN-068 aus echten Ausgaben, die der geschuetzten Kategorie `Sparen` zugeordnet sind.
+- `Gespart` ist im Monatsvergleich kein Ueberschuss mehr und wird nicht als `Einnahmen - Ausgaben` berechnet.
+
+Auswirkung:
+
+- Die Vergleichsseite wird ruhiger und zeigt keine technischen Monatskeys, Statusbewertungen oder Fortschrittslabels mehr.
+- Monatsansicht und Monatsvergleich verwenden dieselbe Definition fuer `Gespart`.
+- Es wird keine Sparziel-, Transfer-, Import- oder Transaktionslogik geaendert.

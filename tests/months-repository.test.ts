@@ -87,6 +87,9 @@ describe("months repository", () => {
     const einkaufId = (
       db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
     ).id;
+    const savingsId = (
+      db.prepare("SELECT id FROM categories WHERE system_key = 'savings'").get() as { id: number }
+    ).id;
 
     db.prepare(
       `
@@ -104,6 +107,7 @@ describe("months repository", () => {
           (?, NULL, 'income', '2032-01-05', '2032-01', 300000, 'EUR', 'Comparison Salary', 'manual', NULL, NULL),
           (?, NULL, 'refund', '2032-01-06', '2032-01', 2000, 'EUR', 'Comparison Refund', 'manual', NULL, NULL),
           (?, NULL, 'expense', '2032-01-10', '2032-01', -8500, 'EUR', 'Comparison Grocery', 'manual', ?, NULL),
+          (?, NULL, 'expense', '2032-01-11', '2032-01', -15000, 'EUR', 'Comparison Savings', 'manual', ?, NULL),
           (?, ?, 'transfer', '2032-01-12', '2032-01', -50000, 'EUR', 'Comparison Cash Transfer', 'manual', NULL, NULL),
           (?, NULL, 'expense', '2032-03-03', '2032-03', -12000, 'EUR', 'Comparison March Expense', 'manual', ?, NULL)
       `,
@@ -112,6 +116,8 @@ describe("months repository", () => {
       sparkasseId,
       sparkasseId,
       einkaufId,
+      sparkasseId,
+      savingsId,
       sparkasseId,
       bargeldId,
       sparkasseId,
@@ -130,20 +136,21 @@ describe("months repository", () => {
     const january = comparison.find((month) => month.monthKey === "2032-01");
     expect(january).toMatchObject({
       incomeCents: 302000,
-      expenseCents: 8500,
-      savedCents: 293500,
+      expenseCents: 23500,
+      savingsCents: 15000,
       detailHref: "/monate/2032-01",
     });
+    expect(january?.savingsCents).not.toBe((january?.incomeCents ?? 0) - (january?.expenseCents ?? 0));
 
     const february = comparison.find((month) => month.monthKey === "2032-02");
     expect(february).toMatchObject({
       incomeCents: 0,
       expenseCents: 0,
-      savedCents: 0,
+      savingsCents: 0,
     });
 
     const march = comparison.find((month) => month.monthKey === "2032-03");
-    expect(march?.savedCents).toBe(-12000);
+    expect(march?.savingsCents).toBe(0);
   });
 
   it("builds month detail with previous/next navigation and full transaction list", () => {
