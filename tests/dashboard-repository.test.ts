@@ -162,10 +162,12 @@ describe("dashboard repository", () => {
     expect(snapshot.openAssignmentCount).toBe(1);
     expect(snapshot.recentTransactions).toHaveLength(5);
     expect(
-      snapshot.recentTransactions.find(
-        (transaction) => transaction.description === `${PREFIX}Lastschrift Fitness`,
-      )?.isFixedCostControl,
-    ).toBe(true);
+      snapshot.recentTransactions.some(
+        (transaction) =>
+          transaction.description === `${PREFIX}Lastschrift Fitness` ||
+          transaction.description === `${PREFIX}UEBERWEISUNG | N26-Fix. Monatsblock`,
+      ),
+    ).toBe(false);
 
     const einkauf = snapshot.categoryRows.find((row) => row.categoryName === "Einkauf");
     expect(einkauf?.spentAmountCents).toBe(10000);

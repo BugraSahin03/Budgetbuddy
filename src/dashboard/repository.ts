@@ -24,8 +24,7 @@ function needsAssignment(transaction: MonthDetailTransactionRow): boolean {
   return (
     transaction.transactionType === "expense" &&
     transaction.categoryId === null &&
-    transaction.specialBudgetId === null &&
-    !transaction.isFixedCostControl
+    transaction.specialBudgetId === null
   );
 }
 

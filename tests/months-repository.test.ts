@@ -349,7 +349,8 @@ describe("months repository", () => {
           (?, ?, 'transfer', '2031-08-04', '2031-08', -50000, 'EUR', 'TEST-FIN-063 Cash Transfer', NULL, 'manual', NULL, NULL),
           (?, NULL, 'expense', '2031-08-05', '2031-08', -4000, 'EUR', 'TEST-FIN-063 N26-Fix. Monatsblock', 'N26 BANK', 'import', NULL, NULL),
           (?, NULL, 'expense', '2031-08-06', '2031-08', -3490, 'EUR', 'TEST-FIN-063 Lastschrift Fitness', 'FITNESS STUDIO', 'import', NULL, NULL),
-          (?, NULL, 'expense', '2031-08-07', '2031-08', -1700, 'EUR', 'TEST-FIN-063 Nicht erkannte Fixkostenbuchung', 'UNKNOWN PROVIDER', 'import', NULL, NULL)
+          (?, NULL, 'expense', '2031-08-07', '2031-08', -1700, 'EUR', 'TEST-FIN-063 Nicht erkannte Fixkostenbuchung', 'UNKNOWN PROVIDER', 'import', NULL, NULL),
+          (?, NULL, 'expense', '2031-09-01', '2031-09', -4000, 'EUR', 'TEST-FIN-063 N26-Fix. Folgemonat', 'N26 BANK', 'import', NULL, NULL)
       `,
     ).run(
       sparkasseId,
@@ -360,6 +361,7 @@ describe("months repository", () => {
       sparkasseId,
       sparkasseId,
       sparkasseId,
+      sparkasseId,
     );
 
     const plannedFixedCostsCents = baselinePlannedFixedCostsCents + 3490;
@@ -367,26 +369,36 @@ describe("months repository", () => {
 
     expect(snapshot.totals.incomeCents).toBe(200000);
     expect(snapshot.totals.actualFixedCostsCents).toBe(7490);
+    expect(snapshot.fixedCostControlMatches).toHaveLength(2);
+    expect(
+      snapshot.fixedCostControlMatches.reduce(
+        (sum, match) => sum + match.controlAmountCents,
+        0,
+      ),
+    ).toBe(snapshot.totals.actualFixedCostsCents);
+    expect(snapshot.fixedCostControlMatches.map((match) => match.bookingDate)).toEqual([
+      "2031-08-05",
+      "2031-08-06",
+    ]);
+    expect(snapshot.fixedCostControlMatches.map((match) => match.controlLabel)).toEqual([
+      "Fixkosten-Kontrolle: N26-Sammeltransfer",
+      "Fixkosten-Kontrolle: Direktabbuchung (TEST-FIN-063 Fitness Studio)",
+    ]);
+    expect(snapshot.fixedCostControlMatches.map((match) => match.displayName)).toEqual([
+      "Test-fin-063 N26-fix. Monatsblock",
+      "Test-fin-063 Lastschrift Fitness",
+    ]);
+    expect(snapshot.transactions.map((transaction) => transaction.description)).toEqual([
+      "TEST-FIN-063 Nicht erkannte Fixkostenbuchung",
+      "TEST-FIN-063 Cash Transfer",
+      "TEST-FIN-063 Groceries",
+      "TEST-FIN-063 Salary",
+    ]);
     expect(snapshot.totals.expenseCents).toBe(11700);
     expect(snapshot.totals.plannedFixedCostsCents).toBe(plannedFixedCostsCents);
     expect(snapshot.totals.availableCents).toBe(
       200000 - 11700 - plannedFixedCostsCents,
     );
-    expect(
-      snapshot.transactions.find(
-        (transaction) => transaction.description === "TEST-FIN-063 N26-Fix. Monatsblock",
-      )?.isFixedCostControl,
-    ).toBe(true);
-    expect(
-      snapshot.transactions.find(
-        (transaction) => transaction.description === "TEST-FIN-063 Lastschrift Fitness",
-      )?.isFixedCostControl,
-    ).toBe(true);
-    expect(
-      snapshot.transactions.find(
-        (transaction) => transaction.description === "TEST-FIN-063 Nicht erkannte Fixkostenbuchung",
-      )?.isFixedCostControl,
-    ).toBe(false);
   });
 
   it("keeps the month budget stand negative when expenses and fixed costs exceed income", () => {

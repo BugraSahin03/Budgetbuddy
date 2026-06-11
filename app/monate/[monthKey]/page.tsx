@@ -23,6 +23,7 @@ import {
 import { listCategories } from "@/src/categories/repository";
 import {
   getMonthDetail,
+  type MonthFixedCostControlMatchRow,
   type MonthDetailTransactionRow,
 } from "@/src/months/repository";
 import {
@@ -189,6 +190,12 @@ function transactionSubtitle(transaction: MonthDetailTransactionRow): string {
   return [transaction.bookingDate, account, assignmentLabel(transaction)]
     .filter(Boolean)
     .join(" · ");
+}
+
+function fixedCostControlReasonLabel(
+  match: MonthFixedCostControlMatchRow,
+): string {
+  return match.controlLabel.replace(/^Fixkosten-Kontrolle:\s*/, "");
 }
 
 function TransactionVisualMark({
@@ -530,6 +537,62 @@ export default async function MonthDetailPage({
                       ? "Importierte Fixkosten-Kontrolltreffer wurden erkannt."
                       : "Aktuell kein importierter Fixkosten-Kontrollhinweis."}
                   </p>
+                </div>
+              </div>
+
+              <div className="mt-5 rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/72 p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <p className="month-eyebrow">Kontrolltreffer</p>
+                    <h3 className="mt-1 text-lg font-black tracking-[-0.035em] text-[color:var(--month-ink)]">
+                      Erkannte Fixkosten-Buchungen
+                    </h3>
+                  </div>
+                  <MonthChip tone="neutral">
+                    {month.dashboard.fixedCostControlMatches.length} Treffer
+                  </MonthChip>
+                </div>
+
+                <div className="mt-4 space-y-2">
+                  {month.dashboard.fixedCostControlMatches.length === 0 ? (
+                    <div className="rounded-[1.1rem] border border-dashed border-[color:var(--month-line-strong)] bg-[#f8fcfe] px-4 py-5 text-sm font-semibold text-[color:var(--month-ink-soft)]">
+                      Keine Fixkosten-Kontrolltreffer in diesem Monat erkannt.
+                    </div>
+                  ) : (
+                    month.dashboard.fixedCostControlMatches.map((match) => (
+                      <article
+                        key={match.transactionId}
+                        className="rounded-[1.1rem] border border-[color:var(--month-line)] bg-[#f8fcfe] px-4 py-3"
+                      >
+                        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-start">
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
+                              <span className="text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
+                                {match.bookingDate}
+                              </span>
+                              <span className="rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-bold text-[color:var(--month-ink-soft)]">
+                                {fixedCostControlReasonLabel(match)}
+                              </span>
+                            </div>
+                            <p className="mt-2 truncate text-sm font-black text-[color:var(--month-ink)]">
+                              {match.displayName}
+                            </p>
+                            <p className="mt-1 text-xs font-semibold leading-5 text-[color:var(--month-ink-soft)]">
+                              {match.description}
+                            </p>
+                            {match.importRunId !== null ? (
+                              <p className="mt-2 text-[0.68rem] font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
+                                Importlauf #{match.importRunId}
+                              </p>
+                            ) : null}
+                          </div>
+                          <p className="text-right text-lg font-black tracking-[-0.045em] text-[color:var(--month-ink)]">
+                            {formatEuro(match.controlAmountCents)}
+                          </p>
+                        </div>
+                      </article>
+                    ))
+                  )}
                 </div>
               </div>
             </MonthDialog>
