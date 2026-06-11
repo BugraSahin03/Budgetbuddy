@@ -1367,6 +1367,7 @@ Erkenntnis/Entscheidung:
 - Import-/Fixkosten-Kontrolltreffer werden dort nicht mehr als Kachel oder Kontrollsicht angezeigt.
 - Die Fixkostenkontrolle bleibt fachlich bestehen, gehoert aber in den Monats-/Importkontext und nicht in die globale Pflegeansicht.
 - Die geplante aktive Fixkostensumme darf als ruhiger `Monatlicher Fixkostenblock` in der Pflegeansicht sichtbar bleiben.
+- Neue Fixkosten werden wie in den anderen Pflegebereichen ueber einen Plus-Dialog angelegt; bestehende Fixkosten bleiben zuerst lesbar und werden erst nach Klick auf den Stift bearbeitbar.
 
 Auswirkung:
 

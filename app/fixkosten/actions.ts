@@ -47,6 +47,22 @@ function parseFixedCostInput(formData: FormData): FixedCostInput {
   };
 }
 
+function parseIndexedFixedCostInput(formData: FormData, fixedCostId: number): FixedCostInput {
+  return {
+    name: toSingleString(formData.get(`name-${fixedCostId}`)),
+    plannedAmountInput: toSingleString(formData.get(`plannedAmount-${fixedCostId}`)),
+    bookingDayOfMonthInput: toSingleString(formData.get(`bookingDayOfMonth-${fixedCostId}`)),
+    paymentNote: toSingleString(formData.get(`paymentNote-${fixedCostId}`)),
+    note: toSingleString(formData.get(`note-${fixedCostId}`)),
+  };
+}
+
+function parseFixedCostIds(formData: FormData): number[] {
+  return formData
+    .getAll("fixedCostIds")
+    .map((value) => parsePositiveInt(value, "Fixkosten-ID"));
+}
+
 export async function createFixedCostAction(formData: FormData): Promise<never> {
   try {
     createFixedCost(parseFixedCostInput(formData));
@@ -60,24 +76,25 @@ export async function createFixedCostAction(formData: FormData): Promise<never> 
 
 export async function updateFixedCostAction(formData: FormData): Promise<never> {
   try {
-    const fixedCostId = parsePositiveInt(formData.get("fixedCostId"), "Fixkosten-ID");
-    const intent = toSingleString(formData.get("intent"));
+    const stateChangeFixedCostId = toSingleString(formData.get("stateChangeFixedCostId"));
 
-    if (intent === "deactivate") {
-      setFixedCostActive(fixedCostId, false);
+    if (stateChangeFixedCostId) {
+      const fixedCostId = parsePositiveInt(stateChangeFixedCostId, "Fixkosten-ID");
+      const currentlyActive = toSingleString(formData.get(`isActive-${fixedCostId}`)) === "on";
+      setFixedCostActive(fixedCostId, !currentlyActive);
       revalidatePath("/fixkosten");
-      redirect("/fixkosten?notice=" + encodeMessage("Fixkosten-Eintrag deaktiviert."));
+      redirect(
+        "/fixkosten?edit=1&notice=" +
+          encodeMessage(currentlyActive ? "Fixkosten-Eintrag deaktiviert." : "Fixkosten-Eintrag reaktiviert."),
+      );
     }
 
-    if (intent === "reactivate") {
-      setFixedCostActive(fixedCostId, true);
-      revalidatePath("/fixkosten");
-      redirect("/fixkosten?notice=" + encodeMessage("Fixkosten-Eintrag reaktiviert."));
+    for (const fixedCostId of parseFixedCostIds(formData)) {
+      updateFixedCost(fixedCostId, parseIndexedFixedCostInput(formData, fixedCostId));
     }
 
-    updateFixedCost(fixedCostId, parseFixedCostInput(formData));
     revalidatePath("/fixkosten");
-    redirect("/fixkosten?notice=" + encodeMessage("Fixkosten-Eintrag gespeichert."));
+    redirect("/fixkosten?notice=" + encodeMessage("Fixkosten-Eintraege gespeichert."));
   } catch (error) {
     redirect("/fixkosten?error=" + encodeMessage(toErrorMessage(error)));
   }
