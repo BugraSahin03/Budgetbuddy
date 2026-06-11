@@ -28,4 +28,14 @@ describe("FIN-075 month comparison UI", () => {
     expect(page).not.toContain("{month.monthKey}</");
     expect(page).not.toContain("Monat oeffnen");
   });
+
+  it("groups month rows into collapsible year books", () => {
+    const page = readProjectFile("app/monatsvergleich/page.tsx");
+
+    expect(page).toContain("groupMonthsByYear(months)");
+    expect(page).toContain("<details");
+    expect(page).toContain("open");
+    expect(page).toContain("Zahlenbuch");
+    expect(page).toContain("group.year");
+  });
 });

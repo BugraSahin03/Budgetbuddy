@@ -1381,6 +1381,7 @@ Quelle/Ticket: `FIN-075`
 Erkenntnis/Entscheidung:
 
 - Der Monatsvergleich zeigt pro Monat nur noch Monatsname, `Einnahmen`, `Ausgaben` und `Gespart`.
+- Die Monatskarten werden in standardmaessig aufgeklappte Jahresbereiche gruppiert, z. B. `Zahlenbuch 2026`.
 - `Einnahmen` summiert echte Einnahmen und Rueckerstattungen des Monats.
 - `Ausgaben` summiert echte Ausgaben des Monats inklusive Sparbuchungen; Transfers bleiben ausgeschlossen.
 - `Gespart` kommt wie in FIN-068 aus echten Ausgaben, die der geschuetzten Kategorie `Sparen` zugeordnet sind.
