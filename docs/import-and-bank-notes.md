@@ -171,7 +171,7 @@ Klassifikation dieser Zeile im MVP:
 - `transaction_type = transfer`
 - Quelle: Sparkasse-Konto (`Auftragskonto`)
 - Ziel: Bargeld-Konto (`Bargeld`)
-- Keine Kategorie/Sonderbudget-Zuordnung (weil keine Ausgabe, sondern Kontoumbuchung)
+- Keine Kategorie/Sonderkategorie-Zuordnung (weil keine Ausgabe, sondern Kontoumbuchung)
 
 Moegliche Suchbegriffe in `Buchungstext` oder `Verwendungszweck`:
 
@@ -184,7 +184,7 @@ Moegliche Suchbegriffe in `Buchungstext` oder `Verwendungszweck`:
 Zusatzregeln:
 
 - Bei erkannter Bargeldabhebung als `transfer` modellieren (`Sparkasse -> Bargeld`).
-- Keine Kategorie/Sonderbudget-Zuordnung am Importpunkt setzen.
+- Keine Kategorie/Sonderkategorie-Zuordnung am Importpunkt setzen.
 - Falls Regeln nicht eindeutig treffen: Buchung als unklare Import-Ausgabe sichtbar lassen statt hart zuzuordnen.
 
 ## N26-Kontrollmuster und Fixkosten-Kontrollsicht (FIN-024 bis FIN-029)
@@ -217,7 +217,7 @@ Stand ab FIN-029:
   - Ausgabe-Betrag (absolut) entspricht dem geplanten Fixkostenbetrag
   - und Beschreibung/Gegenpartei enthalten Abbuchungsinfo oder Fixkostenname.
 - Diese Treffer werden in der Import-Vorschau als eigene Fixkosten-Kontrollsicht dargestellt.
-- Die Kontrollmarkierung ist bewusst getrennt von normalen Kategorie-/Sonderbudget-Regelvorschlaegen.
+- Die Kontrollmarkierung ist bewusst getrennt von normalen Kategorie-/Sonderkategorie-Regelvorschlaegen.
 
 ## Bankanbindung spaeter
 

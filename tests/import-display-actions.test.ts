@@ -102,7 +102,7 @@ describe("FIN-059 import display alias actions", () => {
     formData.set("projectId", "42");
 
     await expect(reactivateSpecialBudgetProjectAction(formData)).rejects.toThrow(
-      "NEXT_REDIRECT:/einstellungen/kategorie-archiv?notice=Sonderbudget-Vorhaben%20reaktiviert.",
+      "NEXT_REDIRECT:/einstellungen/kategorie-archiv?notice=Sonderkategorie%20reaktiviert.",
     );
 
     expect(specialBudgetRepositoryMocks.reactivateSpecialBudgetProject).toHaveBeenCalledWith(42);

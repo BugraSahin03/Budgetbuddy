@@ -175,7 +175,7 @@ describe("transactions repository", () => {
         categoryId: null,
         specialBudgetId: null,
       }),
-    ).toThrow("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
+    ).toThrow("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderkategorie.");
   });
 
   it("creates transfer without category assignment", () => {
@@ -430,14 +430,14 @@ describe("transactions repository", () => {
         categoryId: einkaufId,
         specialBudgetId: specialBudgetMayId,
       }),
-    ).toThrow("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
+    ).toThrow("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderkategorie.");
 
     expect(() =>
       transactions.updateExpenseAssignmentForMonth(expense!.id, "2026-05", {
         categoryId: null,
         specialBudgetId: specialBudgetJuneId,
       }),
-    ).toThrow("Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.");
+    ).toThrow("Sonderkategorie muss im gleichen Monat wie die Ausgabe aktiv sein.");
 
     const incomeInsert = dbClient
       .getDb()
@@ -520,7 +520,7 @@ describe("transactions repository", () => {
         categoryId: null,
         specialBudgetId: null,
       }),
-    ).toThrow("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderbudget.");
+    ).toThrow("Ausgabe braucht genau eine Zuordnung: Kategorie oder Sonderkategorie.");
   });
 
   it("deletes imported transactions only inside the selected month", () => {
@@ -648,7 +648,7 @@ describe("transactions repository", () => {
         categoryId: null,
         specialBudgetId: specialBudgetMayId,
       }),
-    ).toThrow("Sonderbudget muss im gleichen Monat wie die Ausgabe aktiv sein.");
+    ).toThrow("Sonderkategorie muss im gleichen Monat wie die Ausgabe aktiv sein.");
 
     transactions.createManualTransaction({
       bookingDate: "2026-05-15",

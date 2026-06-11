@@ -22,13 +22,13 @@ describe("FIN-060 month bookings edit UI", () => {
     expect(page).toContain("isBookingEditMode ? (");
   });
 
-  it("uses one Budgetzuordnung control and explicit delete confirmation in edit mode", () => {
+  it("uses one Kategoriezuordnung control and explicit delete confirmation in edit mode", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
 
     expect(page).toContain('name="assignment"');
     expect(page).toContain('optgroup label="Kategorien"');
-    expect(page).toContain('optgroup label="Sonderbudgets"');
-    expect(page).toContain("Sonderbudget · {budget.name}");
+    expect(page).toContain('optgroup label="Sonderkategorien"');
+    expect(page).toContain("Sonderkategorie · {budget.name}");
     expect(page).toContain("deleteMonthlyManualTransactionAction");
     expect(page).toContain("deleteMonthlyImportedTransactionAction");
     expect(page).toContain('name="confirmDelete"');

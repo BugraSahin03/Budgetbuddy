@@ -15,11 +15,11 @@ describe("budgets page simplification", () => {
   it("uses one calm budget care area instead of three hard admin sections", () => {
     expect(pageSource).toContain("<h1>Budgetpflege</h1>");
     expect(editorSource).toContain("<h2>Kategorien</h2>");
-    expect(editorSource).not.toContain("Kategorien und Sonderbudgets");
+    expect(editorSource).toContain('aria-label="Kategorien und Sonderkategorien"');
     expect(pageSource).toContain("budget-care-shell");
     expect(editorSource).toContain("budget-category-editor-form");
-    expect(pageSource).not.toContain("Budgettoepfe und Standardwerte");
-    expect(pageSource).not.toContain("aktive Budgettoepfe");
+    expect(pageSource).not.toContain("Kategorien und Sonderkategorien und Standardwerte");
+    expect(pageSource).not.toContain("aktive Kategorien und Sonderkategorien");
     expect(pageSource).not.toContain("mit Standardwert");
     expect(pageSource).not.toContain("Kategorie = wofuer du Geld ausgibst");
     expect(pageSource).not.toContain("Gemeinsame Pflege");
@@ -55,14 +55,14 @@ describe("budgets page simplification", () => {
   it("creates categories through a dialog with optional icon and standard budget", () => {
     expect(pageSource).toContain("BudgetDialog");
     expect(dialogSource).toContain("showModal()");
-    expect(pageSource).toContain("Kategorie oder Sonderbudget anlegen");
+    expect(pageSource).toContain("Kategorie oder Sonderkategorie anlegen");
     expect(pageSource).toContain("BudgetCreateTabs");
     expect(createTabsSource).toContain("Kategorien");
-    expect(createTabsSource).toContain("Sonderbudgets");
+    expect(createTabsSource).toContain("Sonderkategorien");
     expect(createTabsSource).toContain("Kategorie erstellen");
-    expect(createTabsSource).toContain("Sonderbudget erstellen");
-    expect(pageSource).not.toContain("Lege entweder einen dauerhaften Budgettopf");
-    expect(createTabsSource).not.toContain("Dauerhafter Budgettopf");
+    expect(createTabsSource).toContain("Sonderkategorie erstellen");
+    expect(pageSource).not.toContain("Lege entweder einen dauerhaften Kategorie");
+    expect(createTabsSource).not.toContain("Dauerhafter Kategorie");
     expect(createTabsSource).not.toContain("Monatstopf fuer einmalige");
     expect(pageSource).not.toContain("In Standardlisten anzeigen");
     expect(pageSource).toContain("Betrag");
@@ -98,7 +98,7 @@ describe("budgets page simplification", () => {
   });
 
   it("keeps special budgets visible as marked monthly pots", () => {
-    expect(editorSource).toContain("Sonderbudgets");
+    expect(editorSource).toContain("Sonderkategorien");
     expect(pageSource).toContain("createBudgetSpecialBudgetAction");
     expect(pageSource).toContain("listCategories().filter((category) => category.isActive)");
     expect(pageSource).toContain("listActiveSpecialBudgetProjects()");
@@ -106,7 +106,7 @@ describe("budgets page simplification", () => {
     expect(editorSource).toContain("function SpecialBudgetList");
     expect(editorSource).toContain("budget-special-pot-card");
     expect(editorSource).toContain("{isEditing ? (");
-    expect(pageSource).not.toContain('triggerLabel="Sonderbudget anlegen"');
+    expect(pageSource).not.toContain('triggerLabel="Sonderkategorie anlegen"');
     expect(pageSource).not.toContain("aktive Monatstoepfe");
     expect(cssSource).not.toContain(".budget-special-panel");
     expect(actionSource).toContain("updateBudgetSpecialBudgetStateAction");

@@ -20,7 +20,7 @@ describe("FIN-066 month plan summary UI", () => {
       "month.dashboard.planSummary.planRestAfterBudgetPotsCents",
     );
     expect(page).toContain("activeSpecialBudgetRows");
-    expect(page).toContain("Sonderbudgets");
+    expect(page).toContain("Sonderkategorien");
     expect(page).toContain("getCategoryUsageState({");
     expect(page).toContain("categoryUsageProgressStyle");
     expect(page).not.toContain(

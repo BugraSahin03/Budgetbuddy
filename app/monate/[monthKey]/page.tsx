@@ -171,7 +171,7 @@ function assignmentChipLabel(row: MonthDetailTransactionRow): string {
   }
 
   if (row.specialBudgetName) {
-    return `${row.specialBudgetName} · Sonderbudget`;
+    return `${row.specialBudgetName} · Sonderkategorie`;
   }
 
   if (row.categoryName) {
@@ -556,7 +556,7 @@ export default async function MonthDetailPage({
       <section className="grid gap-7 xl:grid-cols-[1.08fr_1fr]">
         <article className="month-reference-panel bg-[#dff4fd]">
           <SectionHeader
-            eyebrow="Budget Breakdown"
+            eyebrow="Kategorieuebersicht"
             title="Kategorien"
             aside={
               <div className="flex flex-wrap items-center gap-3">
@@ -573,7 +573,7 @@ export default async function MonthDetailPage({
                 <MonthDialog
                   eyebrow="Monatsarbeit"
                   title="Budgetpflege"
-                  description="Normale Kategorienbudgets und Sonderbudgets bleiben fachlich getrennt, werden aber gemeinsam im Monatskontext gepflegt."
+                  description="Kategorien und Sonderkategorien bleiben fachlich getrennt, werden aber gemeinsam im Monatskontext gepflegt."
                   triggerLabel="Budgetpflege"
                 >
                   <div className="grid gap-5">
@@ -582,7 +582,7 @@ export default async function MonthDetailPage({
                         <div>
                           <p className="month-eyebrow">Kategorien</p>
                           <h3 className="mt-2 text-xl font-black tracking-[-0.04em] text-[color:var(--month-ink)]">
-                            Normale Kategorienbudgets
+                            Kategorien
                           </h3>
                         </div>
                         <MonthChip tone="accent">
@@ -680,13 +680,13 @@ export default async function MonthDetailPage({
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                           <p className="month-eyebrow text-amber-700">
-                            Sonderbudgets
+                            Sonderkategorien
                           </p>
                           <h3 className="mt-2 text-xl font-black tracking-[-0.04em] text-amber-950">
                             Monatsspezifische Ausgabenziele
                           </h3>
                           <p className="mt-2 text-sm leading-6 text-amber-900/80">
-                            Hell markiert, damit Sonderbudgets gemeinsam
+                            Hell markiert, damit Sonderkategorien gemeinsam
                             erreichbar bleiben, aber nicht mit normalen
                             Kategorien verschmelzen.
                           </p>
@@ -698,7 +698,7 @@ export default async function MonthDetailPage({
                       <div className="mt-5 space-y-4">
                         {month.dashboard.specialBudgetRows.length === 0 ? (
                           <EmptyReferenceCard>
-                            Keine Sonderbudgets fuer diesen Monat vorhanden.
+                            Keine Sonderkategorien fuer diesen Monat vorhanden.
                           </EmptyReferenceCard>
                         ) : (
                           month.dashboard.specialBudgetRows.map((row) => (
@@ -773,7 +773,7 @@ export default async function MonthDetailPage({
                                     value="deactivate"
                                     className="text-xs font-bold text-amber-800 underline decoration-amber-300 underline-offset-4"
                                   >
-                                    Sonderbudget deaktivieren
+                                    Sonderkategorie deaktivieren
                                   </button>
                                 ) : (
                                   <button
@@ -782,7 +782,7 @@ export default async function MonthDetailPage({
                                     value="reactivate"
                                     className="text-xs font-bold text-emerald-700 underline decoration-emerald-200 underline-offset-4"
                                   >
-                                    Sonderbudget reaktivieren
+                                    Sonderkategorie reaktivieren
                                   </button>
                                 )}
                               </form>
@@ -801,7 +801,7 @@ export default async function MonthDetailPage({
             {month.dashboard.categoryRows.length === 0 &&
             activeSpecialBudgetRows.length === 0 ? (
               <EmptyReferenceCard>
-                Noch keine Budgettoepfe fuer diesen Monat vorhanden.
+                Noch keine Kategorien und Sonderkategorien fuer diesen Monat vorhanden.
               </EmptyReferenceCard>
             ) : (
               <>
@@ -863,7 +863,7 @@ export default async function MonthDetailPage({
                 {activeSpecialBudgetRows.length > 0 ? (
                   <section className="pt-2">
                     <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-amber-700">
-                      Sonderbudgets
+                      Sonderkategorien
                     </p>
                     <div className="mt-4 space-y-5">
                       {activeSpecialBudgetRows.map((row) => {
@@ -1151,7 +1151,7 @@ export default async function MonthDetailPage({
 
                           {canEditAssignment ? (
                             <label className="grid gap-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
-                              Budgetzuordnung
+                              Kategoriezuordnung
                               <select
                                 name="assignment"
                                 defaultValue={currentAssignment}
@@ -1172,13 +1172,13 @@ export default async function MonthDetailPage({
                                   ))}
                                 </optgroup>
                                 {specialBudgetOptions.length > 0 ? (
-                                  <optgroup label="Sonderbudgets">
+                                  <optgroup label="Sonderkategorien">
                                     {specialBudgetOptions.map((budget) => (
                                       <option
                                         key={budget.id}
                                         value={`specialBudget:${budget.id}`}
                                       >
-                                        Sonderbudget · {budget.name}
+                                        Sonderkategorie · {budget.name}
                                       </option>
                                     ))}
                                   </optgroup>
@@ -1213,7 +1213,7 @@ export default async function MonthDetailPage({
                             value={transaction.id}
                           />
                           <label className="grid gap-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
-                            Budgetzuordnung
+                            Kategoriezuordnung
                             <select
                               name="assignment"
                               defaultValue={currentAssignment}
@@ -1234,13 +1234,13 @@ export default async function MonthDetailPage({
                                 ))}
                               </optgroup>
                               {specialBudgetOptions.length > 0 ? (
-                                <optgroup label="Sonderbudgets">
+                                <optgroup label="Sonderkategorien">
                                   {specialBudgetOptions.map((budget) => (
                                     <option
                                       key={budget.id}
                                       value={`specialBudget:${budget.id}`}
                                     >
-                                      Sonderbudget · {budget.name}
+                                      Sonderkategorie · {budget.name}
                                     </option>
                                   ))}
                                 </optgroup>
@@ -1256,7 +1256,7 @@ export default async function MonthDetailPage({
                         </form>
                       ) : (
                         <p className="text-sm font-semibold text-[color:var(--month-ink-soft)]">
-                          Diese Buchung hat keine Budgetzuordnung und wird hier
+                          Diese Buchung hat keine Kategoriezuordnung und wird hier
                           nur lesbar angezeigt.
                         </p>
                       )}
