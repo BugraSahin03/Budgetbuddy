@@ -388,6 +388,12 @@ describe("months repository", () => {
       "Test-fin-063 N26-fix. Monatsblock",
       "Test-fin-063 Lastschrift Fitness",
     ]);
+    expect(snapshot.transactions.map((transaction) => transaction.description)).toEqual([
+      "TEST-FIN-063 Nicht erkannte Fixkostenbuchung",
+      "TEST-FIN-063 Cash Transfer",
+      "TEST-FIN-063 Groceries",
+      "TEST-FIN-063 Salary",
+    ]);
     expect(snapshot.totals.expenseCents).toBe(11700);
     expect(snapshot.totals.plannedFixedCostsCents).toBe(plannedFixedCostsCents);
     expect(snapshot.totals.availableCents).toBe(

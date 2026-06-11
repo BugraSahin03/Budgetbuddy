@@ -22,6 +22,7 @@ describe("FIN-074 month fixed-cost control list UI", () => {
     expect(page).toContain("match.displayName");
     expect(page).toContain("match.description");
     expect(page).toContain("formatEuro(match.controlAmountCents)");
+    expect(page).toContain("month.transactions.map((transaction)");
     expect(page).not.toContain("fixed_cost_transaction_links");
   });
 });

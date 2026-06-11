@@ -504,6 +504,23 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
   }));
 }
 
+function excludeFixedCostControlTransactions(
+  transactions: MonthDetailTransactionRow[],
+  fixedCostControlMatches: MonthFixedCostControlMatchRow[],
+): MonthDetailTransactionRow[] {
+  if (fixedCostControlMatches.length === 0) {
+    return transactions;
+  }
+
+  const controlledTransactionIds = new Set(
+    fixedCostControlMatches.map((match) => match.transactionId),
+  );
+
+  return transactions.filter(
+    (transaction) => !controlledTransactionIds.has(transaction.id),
+  );
+}
+
 export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
   const fixedCostControlMatches =
@@ -541,7 +558,10 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
     fixedCostControlMatches,
     categoryRows,
     specialBudgetRows,
-    transactions: listMonthTransactions(normalizedMonthKey),
+    transactions: excludeFixedCostControlTransactions(
+      listMonthTransactions(normalizedMonthKey),
+      fixedCostControlMatches,
+    ),
   };
 }
 
