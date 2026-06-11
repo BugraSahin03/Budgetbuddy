@@ -1618,6 +1618,10 @@ select.month-action-input {
   transition: background 160ms ease, box-shadow 160ms ease, color 160ms ease;
 }
 
+a.budget-icon-action {
+  text-decoration: none;
+}
+
 .budget-icon-action:hover,
 .budget-icon-action-save {
   background: #071b46;
@@ -1930,5 +1934,371 @@ details[open] > .archive-section-summary::after {
 
   .budget-create-tab {
     justify-content: flex-start;
+  }
+}
+
+/* FIN-073: Fixkosten stays a calm care surface, not a control dashboard. */
+.fixed-cost-care-shell {
+  display: grid;
+  gap: 1.15rem;
+}
+
+.fixed-cost-hero-panel,
+.fixed-cost-panel {
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  box-shadow: 0 24px 58px rgba(7, 27, 70, 0.07);
+  backdrop-filter: blur(18px);
+}
+
+.fixed-cost-hero-panel {
+  align-items: end;
+  background:
+    radial-gradient(circle at 88% 14%, rgba(134, 239, 222, 0.16), transparent 22rem),
+    linear-gradient(180deg, rgba(234, 248, 255, 0.96), rgba(245, 251, 255, 0.84));
+  border-radius: 2.25rem;
+  display: grid;
+  gap: 1.2rem;
+  padding: clamp(1.35rem, 3vw, 2.25rem);
+}
+
+.fixed-cost-hero-panel h1 {
+  color: var(--month-ink);
+  font-size: clamp(2.25rem, 5vw, 4rem);
+  font-weight: 850;
+  letter-spacing: -0.075em;
+  line-height: 0.92;
+  margin-top: 0.45rem;
+}
+
+.fixed-cost-hero-panel p:not(.month-eyebrow) {
+  color: var(--month-ink-soft);
+  line-height: 1.75;
+  margin-top: 0.85rem;
+  max-width: 48rem;
+}
+
+.fixed-cost-hero-summary {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 255, 255, 0.88);
+  border-radius: 1.45rem;
+  box-shadow: 0 18px 38px rgba(7, 27, 70, 0.07);
+  min-width: min(100%, 16rem);
+  padding: 1rem;
+}
+
+.fixed-cost-hero-summary span,
+.fixed-cost-hero-summary small {
+  color: var(--month-ink-muted);
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.fixed-cost-hero-summary strong {
+  color: var(--month-ink);
+  display: block;
+  font-size: clamp(1.6rem, 3vw, 2.3rem);
+  font-weight: 850;
+  letter-spacing: -0.055em;
+  margin: 0.3rem 0;
+}
+
+.fixed-cost-hero-side {
+  align-items: stretch;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+
+.fixed-cost-hero-side .budget-dialog-plus {
+  min-height: 5rem;
+}
+
+.fixed-cost-panel {
+  background: rgba(255, 255, 255, 0.78);
+  border-radius: 1.85rem;
+  padding: clamp(1.1rem, 2.4vw, 1.55rem);
+}
+
+.fixed-cost-section-heading {
+  margin-bottom: 1rem;
+}
+
+.fixed-cost-section-heading h2 {
+  color: var(--month-ink);
+  font-size: clamp(1.25rem, 2vw, 1.8rem);
+  font-weight: 820;
+  letter-spacing: -0.05em;
+  margin-top: 0.25rem;
+}
+
+.fixed-cost-care-heading {
+  align-items: center;
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.fixed-cost-care-editor form {
+  margin: 0;
+}
+
+.fixed-cost-create-form,
+.fixed-cost-edit-form {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.fixed-cost-create-form label,
+.fixed-cost-edit-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.fixed-cost-create-form label span,
+.fixed-cost-edit-form label span {
+  color: var(--month-ink-muted);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.fixed-cost-create-form input,
+.fixed-cost-edit-form input {
+  background: rgba(255, 255, 255, 0.86);
+  border: 1px solid rgba(7, 27, 70, 0.12);
+  border-radius: 0.95rem;
+  color: var(--month-ink);
+  font-size: 0.92rem;
+  font-weight: 650;
+  min-width: 0;
+  padding: 0.78rem 0.9rem;
+}
+
+.fixed-cost-create-form input:focus,
+.fixed-cost-edit-form input:focus {
+  border-color: rgba(125, 211, 252, 0.72);
+  box-shadow: 0 0 0 0.22rem rgba(125, 211, 252, 0.16);
+  outline: none;
+}
+
+.fixed-cost-primary-action,
+.fixed-cost-secondary-action,
+.fixed-cost-muted-action,
+.fixed-cost-reactivate-action {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.76rem;
+  font-weight: 900;
+  justify-content: center;
+  letter-spacing: 0.08em;
+  min-height: 2.65rem;
+  padding: 0.78rem 1rem;
+  text-transform: uppercase;
+  transition: background 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.fixed-cost-primary-action,
+.fixed-cost-secondary-action {
+  background: #071b46;
+  border: 1px solid rgba(7, 27, 70, 0.1);
+  box-shadow: 0 16px 34px rgba(7, 27, 70, 0.14);
+  color: #ffffff;
+}
+
+.fixed-cost-primary-action:hover,
+.fixed-cost-secondary-action:hover {
+  background: #0d2b68;
+  box-shadow: 0 20px 40px rgba(7, 27, 70, 0.18);
+  transform: translateY(-1px);
+}
+
+.fixed-cost-muted-action {
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(7, 27, 70, 0.1);
+  color: var(--month-ink-soft);
+}
+
+.fixed-cost-reactivate-action {
+  background: rgba(209, 250, 229, 0.9);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #047857;
+}
+
+.fixed-cost-list {
+  display: grid;
+  gap: 0.8rem;
+}
+
+.fixed-cost-card {
+  background: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(226, 232, 240, 0.82);
+  border-radius: 1.4rem;
+  padding: 1rem;
+}
+
+.fixed-cost-card.is-inactive {
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.fixed-cost-card-title {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.fixed-cost-read-card {
+  align-items: center;
+  display: grid;
+  gap: 0.85rem;
+}
+
+.fixed-cost-read-title {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.fixed-cost-read-title h3 {
+  color: var(--month-ink);
+  font-size: 1.12rem;
+  font-weight: 820;
+  letter-spacing: -0.04em;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.fixed-cost-read-grid {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.fixed-cost-read-grid span {
+  background: rgba(248, 250, 252, 0.56);
+  border: 1px solid rgba(226, 232, 240, 0.62);
+  border-radius: 0.9rem;
+  display: grid;
+  gap: 0.25rem;
+  min-width: 0;
+  padding: 0.62rem 0.72rem;
+}
+
+.fixed-cost-read-grid small {
+  color: var(--month-ink-muted);
+  font-size: 0.66rem;
+  font-weight: 850;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.fixed-cost-read-grid strong {
+  color: var(--month-ink);
+  font-size: 0.9rem;
+  font-weight: 800;
+  overflow-wrap: anywhere;
+}
+
+.fixed-cost-state-dot {
+  align-items: center;
+  color: var(--month-ink-muted);
+  display: inline-flex;
+  font-size: 0.66rem;
+  font-weight: 800;
+  gap: 0.34rem;
+  justify-self: start;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.fixed-cost-state-dot::before {
+  background: rgba(20, 184, 166, 0.72);
+  border-radius: 999px;
+  box-shadow: 0 0 0 0.22rem rgba(20, 184, 166, 0.1);
+  content: "";
+  height: 0.46rem;
+  width: 0.46rem;
+}
+
+.fixed-cost-state-dot.is-muted::before {
+  background: rgba(148, 163, 184, 0.72);
+  box-shadow: 0 0 0 0.22rem rgba(148, 163, 184, 0.1);
+}
+
+.fixed-cost-card-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.fixed-cost-empty-state,
+.fixed-cost-notice {
+  border-radius: 1rem;
+  font-size: 0.92rem;
+  padding: 0.85rem 1rem;
+}
+
+.fixed-cost-empty-state {
+  background: rgba(255, 255, 255, 0.66);
+  color: var(--month-ink-soft);
+}
+
+.fixed-cost-notice-success {
+  background: rgba(209, 250, 229, 0.82);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #047857;
+}
+
+.fixed-cost-notice-error {
+  background: rgba(254, 226, 226, 0.86);
+  border: 1px solid rgba(248, 113, 113, 0.24);
+  color: #b91c1c;
+}
+
+@media (min-width: 760px) {
+  .fixed-cost-hero-panel {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .fixed-cost-hero-side {
+    justify-content: end;
+  }
+
+  .fixed-cost-create-form {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+  }
+
+  .fixed-cost-create-form label {
+    grid-column: span 2;
+  }
+
+  .fixed-cost-create-form .fixed-cost-form-wide {
+    grid-column: span 4;
+  }
+
+  .fixed-cost-primary-action {
+    align-self: end;
+    grid-column: span 2;
+  }
+
+  .fixed-cost-edit-form {
+    align-items: end;
+    grid-template-columns: 1.25fr 0.8fr 0.8fr 1fr 1fr auto;
+  }
+
+  .fixed-cost-read-card {
+    grid-template-columns: minmax(10rem, 0.78fr) minmax(0, 1fr);
+  }
+
+  .fixed-cost-read-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .fixed-cost-card-title {
+    align-self: stretch;
   }
 }

@@ -1,12 +1,7 @@
-import {
-  createFixedCostAction,
-  updateFixedCostAction,
-} from "@/app/fixkosten/actions";
-import {
-  getFixedCostsSummary,
-  listFixedCostControlMatches,
-  listFixedCosts,
-} from "@/src/fixed-costs/repository";
+import { createFixedCostAction, updateFixedCostAction } from "@/app/fixkosten/actions";
+import { FixedCostCareEditor } from "@/app/components/fixed-cost-care-editor";
+import { FixedCostDialog } from "@/app/components/fixed-cost-dialog";
+import { getFixedCostsSummary, listFixedCosts } from "@/src/fixed-costs/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -33,249 +28,75 @@ function formatEuro(cents: number): string {
   }).format(cents / 100);
 }
 
-function rowStatusTone(isActive: boolean): string {
-  if (!isActive) {
-    return "border-slate-300 bg-slate-100 text-slate-600";
-  }
-
-  return "border-emerald-200 bg-emerald-50 text-emerald-700";
-}
-
-function rowStatusLabel(isActive: boolean): string {
-  return isActive ? "Aktiv" : "Inaktiv";
-}
-
 export default async function FixedCostsPage({ searchParams }: FixedCostsPageProps) {
   const params = (await searchParams) ?? {};
   const notice = toSingleParam(params.notice);
   const error = toSingleParam(params.error);
+  const initialIsEditing = toSingleParam(params.edit) === "1";
 
-  const fixedCosts = listFixedCosts();
+  const fixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
   const summary = getFixedCostsSummary();
-  const controlMatches = listFixedCostControlMatches();
 
   return (
-    <section className="space-y-4">
-      <header className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Fixkosten</p>
-        <h2 className="text-lg font-semibold text-slate-900">Fixkostenliste pflegen</h2>
-        <p className="mt-1 text-sm text-slate-600">
-          Fixkosten werden separat gepflegt und als geplanter Monatsblock gefuehrt.
-        </p>
+    <section className="fixed-cost-care-shell">
+      <header className="fixed-cost-hero-panel">
+        <div>
+          <p className="month-eyebrow">Fixkosten</p>
+          <h1>Fixkostenpflege</h1>
+          <p>
+            Pflege wiederkehrende Monatskosten als ruhigen Planungsblock. Importhinweise bleiben im Monatskontext und ueberladen diese Pflegeansicht nicht.
+          </p>
+        </div>
+        <div className="fixed-cost-hero-side">
+          <aside className="fixed-cost-hero-summary" aria-label="Monatlicher Fixkostenblock">
+            <span>Monatlicher Fixkostenblock</span>
+            <strong>{formatEuro(summary.plannedTotalCents)}</strong>
+            <small>{summary.activeCount} aktive Fixkosten</small>
+          </aside>
+          <FixedCostDialog
+            triggerLabel="+"
+            triggerAriaLabel="Fixkosten anlegen"
+            triggerClassName="budget-dialog-plus"
+            eyebrow="Neue Fixkosten"
+            title="Fixkosten anlegen"
+          >
+            <form action={createFixedCostAction} className="budget-dialog-form">
+              <label>
+                Name
+                <input name="name" required maxLength={80} placeholder="Zum Beispiel Fitness Studio" />
+              </label>
+              <label>
+                Betrag
+                <input name="plannedAmount" required inputMode="decimal" placeholder="34,90" />
+              </label>
+              <label>
+                Abbuchungstag
+                <input name="bookingDayOfMonth" inputMode="numeric" placeholder="1-31 oder leer" />
+              </label>
+              <label>
+                Abbuchungsinfo
+                <input name="paymentNote" maxLength={60} placeholder="SEPA Lastschrift" />
+              </label>
+              <label>
+                Notiz
+                <input name="note" maxLength={240} placeholder="Optional" />
+              </label>
+              <button type="submit" className="budget-primary-button">
+                Fixkosten speichern
+              </button>
+            </form>
+          </FixedCostDialog>
+        </div>
       </header>
 
-      <section className="grid gap-3 md:grid-cols-3">
-        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Aktive Fixkosten</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{summary.activeCount}</p>
-        </article>
+      {notice ? <p className="fixed-cost-notice fixed-cost-notice-success">{notice}</p> : null}
+      {error ? <p className="fixed-cost-notice fixed-cost-notice-error">{error}</p> : null}
 
-        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Geplanter Monatsblock</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">{formatEuro(summary.plannedTotalCents)}</p>
-        </article>
-
-        <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">Kontrolltreffer</p>
-          <p className="mt-2 text-2xl font-semibold text-slate-900">
-            {controlMatches.length}
-          </p>
-        </article>
-      </section>
-
-      {notice ? (
-        <p className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">{notice}</p>
-      ) : null}
-
-      {error ? (
-        <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
-      ) : null}
-
-      <form
-        action={createFixedCostAction}
-        className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-12"
-      >
-        <div className="xl:col-span-3">
-          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-name">
-            Name
-          </label>
-          <input id="new-name" name="name" required maxLength={80} className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" placeholder="Fitness Studio" />
-        </div>
-
-        <div className="xl:col-span-2">
-          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-amount">
-            Betrag (EUR)
-          </label>
-          <input id="new-amount" name="plannedAmount" required inputMode="decimal" placeholder="34,90" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-        </div>
-
-        <div className="xl:col-span-2">
-          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-booking-day">
-            Abbuchungstag
-          </label>
-          <input id="new-booking-day" name="bookingDayOfMonth" inputMode="numeric" placeholder="1-31 oder leer" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-        </div>
-
-        <div className="xl:col-span-2">
-          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-payment-note">
-            Abbuchungsinfo
-          </label>
-          <input id="new-payment-note" name="paymentNote" maxLength={60} placeholder="SEPA Lastschrift" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-        </div>
-
-        <div className="xl:col-span-2">
-          <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-note">
-            Notiz
-          </label>
-          <input id="new-note" name="note" maxLength={240} placeholder="Optional" className="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm" />
-        </div>
-
-        <div className="xl:col-span-1 flex items-end">
-          <button type="submit" className="w-full rounded-lg border border-sky-300 bg-sky-100 px-3 py-2 text-sm font-semibold text-sky-800 hover:bg-sky-200">
-            Erstellen
-          </button>
-        </div>
-      </form>
-
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
-              <th className="px-3 py-2 font-semibold">Name</th>
-              <th className="px-3 py-2 font-semibold">Betrag</th>
-              <th className="px-3 py-2 font-semibold">Abbuchung</th>
-              <th className="px-3 py-2 font-semibold">Abbuchungsinfo</th>
-              <th className="px-3 py-2 font-semibold">Notiz</th>
-              <th className="px-3 py-2 font-semibold">Status</th>
-              <th className="px-3 py-2 font-semibold">Aktion</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {fixedCosts.length === 0 ? (
-              <tr>
-                <td colSpan={7} className="px-3 py-6 text-center text-sm text-slate-600">
-                  Noch keine Fixkosten vorhanden.
-                </td>
-              </tr>
-            ) : (
-              fixedCosts.map((row) => (
-                <tr key={row.id}>
-                  <td colSpan={7} className="px-3 py-2">
-                    <form action={updateFixedCostAction} className="grid gap-2 md:grid-cols-7">
-                      <input type="hidden" name="fixedCostId" value={row.id} />
-                      <input
-                        name="name"
-                        defaultValue={row.name}
-                        maxLength={80}
-                        className="rounded border border-slate-300 px-2 py-1 text-xs"
-                      />
-                      <input
-                        name="plannedAmount"
-                        defaultValue={(row.plannedAmountCents / 100).toFixed(2).replace(".", ",")}
-                        className="rounded border border-slate-300 px-2 py-1 text-xs"
-                      />
-                      <input
-                        name="bookingDayOfMonth"
-                        defaultValue={row.bookingDayOfMonth ? String(row.bookingDayOfMonth) : ""}
-                        placeholder="1-31"
-                        className="rounded border border-slate-300 px-2 py-1 text-xs"
-                      />
-                      <input
-                        name="paymentNote"
-                        defaultValue={row.paymentNote ?? ""}
-                        maxLength={60}
-                        className="rounded border border-slate-300 px-2 py-1 text-xs"
-                      />
-                      <input
-                        name="note"
-                        defaultValue={row.note ?? ""}
-                        maxLength={240}
-                        className="rounded border border-slate-300 px-2 py-1 text-xs"
-                      />
-                      <div className="flex items-center gap-2">
-                        <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${rowStatusTone(row.isActive)}`}>
-                          {rowStatusLabel(row.isActive)}
-                        </span>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <button
-                          type="submit"
-                          className="rounded border border-sky-300 bg-sky-100 px-2 py-1 text-xs font-semibold text-sky-800"
-                        >
-                          Speichern
-                        </button>
-                        <button
-                          type="submit"
-                          name="intent"
-                          value={row.isActive ? "deactivate" : "reactivate"}
-                          className={row.isActive
-                            ? "rounded border border-amber-300 bg-amber-100 px-2 py-1 text-xs font-semibold text-amber-800"
-                            : "rounded border border-emerald-300 bg-emerald-100 px-2 py-1 text-xs font-semibold text-emerald-800"}
-                        >
-                          {row.isActive ? "Deaktivieren" : "Reaktivieren"}
-                        </button>
-                      </div>
-                    </form>
-                  </td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 border-b border-slate-100 pb-2">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
-            Kontrollsicht
-          </p>
-          <h3 className="text-sm font-semibold text-slate-900">
-            Erkannte N26-Sammeltransfers und direkte Fixkostenmatches
-          </h3>
-          <p className="mt-1 text-xs text-slate-600">
-            Diese Treffer sind Kontrollinformationen und keine manuelle Markierung variabler Ausgaben.
-          </p>
-        </div>
-
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
-          <thead>
-            <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
-              <th className="px-3 py-2 font-semibold">Datum</th>
-              <th className="px-3 py-2 font-semibold">Buchung</th>
-              <th className="px-3 py-2 font-semibold">Gegenpartei</th>
-              <th className="px-3 py-2 font-semibold">Betrag</th>
-              <th className="px-3 py-2 font-semibold">Kontrolltyp</th>
-              <th className="px-3 py-2 font-semibold">Importlauf</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100">
-            {controlMatches.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-3 py-6 text-center text-sm text-slate-600">
-                  Keine Fixkosten-Kontrolltreffer vorhanden.
-                </td>
-              </tr>
-            ) : (
-              controlMatches.map((row) => (
-                <tr key={row.transactionId}>
-                  <td className="px-3 py-2 text-slate-700">{row.bookingDate}</td>
-                  <td className="px-3 py-2 font-medium text-slate-900">{row.description}</td>
-                  <td className="px-3 py-2">
-                    {row.counterpartyName ?? "-"}
-                  </td>
-                  <td className="px-3 py-2 text-slate-700">{formatEuro(row.amountCents)}</td>
-                  <td className="px-3 py-2">
-                    <span className="inline-flex rounded-full border border-violet-200 bg-violet-50 px-2 py-0.5 text-xs font-medium text-violet-700">
-                      {row.controlLabel}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2 text-slate-600">#{row.importRunId ?? "-"}</td>
-                </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+      <FixedCostCareEditor
+        action={updateFixedCostAction}
+        fixedCosts={fixedCosts}
+        initialIsEditing={initialIsEditing}
+      />
     </section>
   );
 }

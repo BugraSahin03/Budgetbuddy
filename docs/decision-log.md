@@ -1392,3 +1392,22 @@ Auswirkung:
 - Die Vergleichsseite wird ruhiger und zeigt keine technischen Monatskeys, Statusbewertungen oder Fortschrittslabels mehr.
 - Monatsansicht und Monatsvergleich verwenden dieselbe Definition fuer `Gespart`.
 - Es wird keine Sparziel-, Transfer-, Import- oder Transaktionslogik geaendert.
+
+## 2026-06-11 - FIN-073 reduziert Fixkosten auf Pflegeansicht
+
+Quelle/Ticket: `FIN-073`
+
+Erkenntnis/Entscheidung:
+
+- Die Seite `/fixkosten` dient kuenftig nur noch der Pflege von Fixkosten: anlegen, bearbeiten, deaktivieren und reaktivieren.
+- Import-/Fixkosten-Kontrolltreffer werden dort nicht mehr als Kachel oder Kontrollsicht angezeigt.
+- Die Fixkostenkontrolle bleibt fachlich bestehen, gehoert aber in den Monats-/Importkontext und nicht in die globale Pflegeansicht.
+- Die geplante aktive Fixkostensumme darf als ruhiger `Monatlicher Fixkostenblock` in der Pflegeansicht sichtbar bleiben.
+- Neue Fixkosten werden wie in den anderen Pflegebereichen ueber einen Plus-Dialog angelegt; bestehende Fixkosten bleiben zuerst lesbar und werden erst nach Klick auf den Stift bearbeitbar.
+- Deaktivierte Fixkosten werden aus der Pflegeansicht ausgeblendet und in einem eigenen Fixkostenarchiv unter `Einstellungen` reaktivierbar gemacht.
+
+Auswirkung:
+
+- Es wird keine Fixkostenberechnung, Import-Matching-Logik, Monatsberechnung oder Datenstruktur geaendert.
+- Die Pflegeansicht wird ruhiger und entspricht besser der neuen App-Shell- und Monats-UI-Sprache.
+- Das Archiv nutzt den bestehenden `is_active`-Status; es entsteht keine neue Archivtabelle.

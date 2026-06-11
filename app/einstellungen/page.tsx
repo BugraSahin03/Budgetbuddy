@@ -13,6 +13,12 @@ const GLOBAL_SETTINGS = [
     meta: "Kategorien & Sonderkategorien",
     icon: "◇",
   },
+  {
+    href: "/einstellungen/fixkosten-archiv",
+    title: "Fixkosten-Archiv",
+    meta: "Archivierte Fixkosten",
+    icon: "●",
+  },
 ] as const;
 
 export default function SettingsPage() {

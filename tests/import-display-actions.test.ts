@@ -18,6 +18,9 @@ const specialBudgetRepositoryMocks = vi.hoisted(() => ({
 const categoryRepositoryMocks = vi.hoisted(() => ({
   setCategoryActive: vi.fn(),
 }));
+const fixedCostRepositoryMocks = vi.hoisted(() => ({
+  setFixedCostActive: vi.fn(),
+}));
 
 vi.mock("server-only", () => ({}));
 
@@ -32,11 +35,13 @@ vi.mock("next/cache", () => ({
 vi.mock("@/src/settings/import-display-aliases/repository", () => repositoryMocks);
 vi.mock("@/src/special-budgets/repository", () => specialBudgetRepositoryMocks);
 vi.mock("@/src/categories/repository", () => categoryRepositoryMocks);
+vi.mock("@/src/fixed-costs/repository", () => fixedCostRepositoryMocks);
 
 import {
   createImportDisplayAliasAction,
   deleteImportDisplayAliasAction,
   reactivateCategoryAction,
+  reactivateFixedCostAction,
   reactivateSpecialBudgetProjectAction,
   updateImportDisplayAliasAction,
 } from "@/app/einstellungen/actions";
@@ -51,6 +56,7 @@ describe("FIN-059 import display alias actions", () => {
     repositoryMocks.updateImportDisplayAlias.mockReset();
     specialBudgetRepositoryMocks.reactivateSpecialBudgetProject.mockReset();
     categoryRepositoryMocks.setCategoryActive.mockReset();
+    fixedCostRepositoryMocks.setFixedCostActive.mockReset();
     repositoryMocks.parseImportDisplayAliasInputFromFormData.mockReturnValue({
       displayName: "Amazon",
       pattern: "AMZN",
@@ -122,5 +128,19 @@ describe("FIN-059 import display alias actions", () => {
     expect(categoryRepositoryMocks.setCategoryActive).toHaveBeenCalledWith(9, true);
     expect(revalidatePathMock).toHaveBeenCalledWith("/einstellungen/kategorie-archiv");
     expect(revalidatePathMock).toHaveBeenCalledWith("/budgets");
+  });
+
+  it("reactivates archived fixed costs from settings", async () => {
+    const formData = new FormData();
+    formData.set("fixedCostId", "11");
+
+    await expect(reactivateFixedCostAction(formData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/fixkosten-archiv?notice=Fixkosten-Eintrag%20reaktiviert.",
+    );
+
+    expect(fixedCostRepositoryMocks.setFixedCostActive).toHaveBeenCalledWith(11, true);
+    expect(revalidatePathMock).toHaveBeenCalledWith("/einstellungen/fixkosten-archiv");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/fixkosten");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/monate");
   });
 });
