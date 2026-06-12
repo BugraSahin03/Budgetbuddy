@@ -683,6 +683,162 @@ body {
   text-transform: uppercase;
 }
 
+.month-todo-dialog {
+  display: grid;
+  gap: 1rem;
+}
+
+.month-todo-summary {
+  align-items: center;
+  background: rgba(239, 246, 255, 0.78);
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  border-radius: 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+}
+
+.month-todo-summary span,
+.month-todo-form label span {
+  color: var(--month-ink-muted);
+  font-size: 0.68rem;
+  font-weight: 850;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.month-todo-summary strong {
+  color: var(--month-ink);
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.month-todo-list {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.month-todo-empty,
+.month-todo-row {
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid var(--month-line);
+  border-radius: 1rem;
+}
+
+.month-todo-empty {
+  color: var(--month-ink-soft);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.6;
+  padding: 1rem;
+}
+
+.month-todo-row {
+  align-items: center;
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: auto minmax(0, 1fr);
+  padding: 0.75rem 0.85rem;
+}
+
+.month-todo-row p {
+  color: var(--month-ink);
+  display: flex;
+  font-size: 0.95rem;
+  font-weight: 750;
+  gap: 0.55rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.month-todo-row.is-done p {
+  color: var(--month-ink-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 0.12rem;
+}
+
+.month-todo-number {
+  color: var(--month-ink-muted);
+  flex: 0 0 auto;
+  font-weight: 900;
+}
+
+.month-todo-toggle {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(125, 211, 252, 0.38);
+  border-radius: 999px;
+  color: var(--month-ink);
+  display: inline-flex;
+  font-size: 1.15rem;
+  font-weight: 900;
+  height: 2.15rem;
+  justify-content: center;
+  transition: background 160ms ease, transform 160ms ease;
+  width: 2.15rem;
+}
+
+.month-todo-toggle:hover,
+.month-todo-toggle:focus-visible {
+  background: rgba(219, 234, 254, 0.9);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.month-todo-form {
+  align-items: end;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.month-todo-form label {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.month-todo-form input {
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid var(--month-line);
+  border-radius: 0.95rem;
+  color: var(--month-ink);
+  font-size: 0.95rem;
+  font-weight: 700;
+  min-width: 0;
+  padding: 0.82rem 0.95rem;
+}
+
+.month-todo-form input:focus {
+  border-color: rgba(125, 211, 252, 0.72);
+  box-shadow: 0 0 0 0.22rem rgba(125, 211, 252, 0.16);
+  outline: none;
+}
+
+.month-todo-form button {
+  background: var(--month-ink);
+  border-radius: 0.95rem;
+  color: white;
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  min-height: 2.9rem;
+  padding: 0.82rem 1rem;
+  text-transform: uppercase;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.month-todo-form button:hover,
+.month-todo-form button:focus-visible {
+  background: #0d2b68;
+  outline: none;
+  transform: translateY(-1px);
+}
+
+@media (min-width: 640px) {
+  .month-todo-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
 .month-disclosure {
   display: block;
 }

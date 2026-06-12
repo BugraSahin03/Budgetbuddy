@@ -3,9 +3,11 @@ import Link from "next/link";
 
 import { CategoryVisualMark } from "@/app/components/category-visual";
 import {
+  createMonthlyTodoAction,
   deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
   setMonthlyBudgetOverrideAction,
+  toggleMonthlyTodoAction,
   updateMonthlyManualTransactionAction,
   updateMonthlySpecialBudgetAction,
   updateMonthlySpecialBudgetStateAction,
@@ -37,6 +39,7 @@ import {
   listActiveCategoryOptions,
   listActiveSpecialBudgetOptionsForMonth,
 } from "@/src/transactions/repository";
+import { listMonthlyTodos } from "@/src/month-todos/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -419,13 +422,77 @@ export default async function MonthDetailPage({
   const activeSpecialBudgetRows = month.dashboard.specialBudgetRows.filter(
     (row) => row.isActive,
   );
+  const monthlyTodos = listMonthlyTodos(month.monthKey);
+  const openTodoCount = monthlyTodos.filter((todo) => !todo.isDone).length;
 
   return (
     <MonthPageShell>
       <section className="month-reference-hero">
         <div className="flex items-center justify-between gap-4">
           <p className="month-eyebrow">Monatsueberblick</p>
-          <div className="flex justify-end">
+          <div className="flex flex-wrap justify-end gap-3">
+            <MonthDialog
+              eyebrow="Monats-ToDos"
+              title={`ToDos ${month.label}`}
+              triggerLabel="ToDos"
+              triggerClassName="month-dialog-trigger month-dialog-trigger-subtle"
+            >
+              <section className="month-todo-dialog">
+                <div className="month-todo-summary">
+                  <span>{monthlyTodos.length} Aufgaben</span>
+                  <strong>{openTodoCount} offen</strong>
+                </div>
+
+                <div className="month-todo-list" aria-label={`ToDos fuer ${month.label}`}>
+                  {monthlyTodos.length === 0 ? (
+                    <p className="month-todo-empty">
+                      Noch keine ToDos fuer diesen Monat. Kleine Aufgaben kannst du unten direkt anlegen.
+                    </p>
+                  ) : (
+                    monthlyTodos.map((todo, index) => (
+                      <article
+                        key={todo.id}
+                        className={`month-todo-row ${todo.isDone ? "is-done" : ""}`}
+                      >
+                        <form action={toggleMonthlyTodoAction}>
+                          <input type="hidden" name="monthKey" value={month.monthKey} />
+                          <input type="hidden" name="todoId" value={todo.id} />
+                          <button
+                            type="submit"
+                            className="month-todo-toggle"
+                            aria-label={
+                              todo.isDone
+                                ? `ToDo ${index + 1} wieder oeffnen`
+                                : `ToDo ${index + 1} erledigen`
+                            }
+                          >
+                            <span aria-hidden="true">{todo.isDone ? "●" : "○"}</span>
+                          </button>
+                        </form>
+                        <p>
+                          <span className="month-todo-number">{index + 1}.</span>
+                          <span>{todo.text}</span>
+                        </p>
+                      </article>
+                    ))
+                  )}
+                </div>
+
+                <form action={createMonthlyTodoAction} className="month-todo-form">
+                  <input type="hidden" name="monthKey" value={month.monthKey} />
+                  <label>
+                    <span>Neues ToDo</span>
+                    <input
+                      name="text"
+                      required
+                      maxLength={180}
+                      placeholder="z. B. Rechnung pruefen"
+                    />
+                  </label>
+                  <button type="submit">Hinzufuegen</button>
+                </form>
+              </section>
+            </MonthDialog>
             <MonthActionOverlay
               monthKey={month.monthKey}
               monthLabel={month.label}

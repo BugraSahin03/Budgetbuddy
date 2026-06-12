@@ -305,6 +305,7 @@ Sie zeigt in einer zusammenhaengenden Ansicht:
 - feste Kategorien mit Budget / Ist / Rest
 - Sonderkategorien des Monats
 - Fixkostenblock aus Plan und Kontrollsicht
+- einfache Monats-ToDos
 - komplette Buchungsliste des Monats aus manuellen und importierten Transaktionen
 
 Die Buchungsliste wird fachlich ueber `effective_month_key` bestimmt und nicht kuenstlich begrenzt.
@@ -314,6 +315,19 @@ Seit FIN-040 gilt fuer die Monatsarbeitsweise zusaetzlich:
 - Ausgaben koennen direkt in `/monate/[monthKey]` einer Kategorie oder einer aktiven Sonderkategorie dieses Monats zugewiesen oder umzugewiesen werden.
 - Einkommen, Transfers und Rueckerstattungen bleiben in dieser Tabelle read-only.
 - Die Monatsseite ist damit nicht nur Lesesicht, sondern auch die zentrale Arbeitsflaeche fuer fachliche Ausgaben-Zuordnung im Monatskontext.
+
+### Monats-ToDos (FIN-082)
+
+Monats-ToDos sind einfache Aufgabenhinweise fuer genau einen Monat.
+
+Fachregeln:
+
+- Ein ToDo gehoert genau zu einem `month_key` (`YYYY-MM`).
+- ToDos werden nicht automatisch in Folgemonate uebernommen.
+- Ein ToDo besteht im ersten Schnitt nur aus Text und Status (`offen` oder `erledigt`).
+- Die sichtbare Nummerierung wird aus der stabilen Erstellreihenfolge des jeweiligen Monats abgeleitet.
+- Erledigte ToDos bleiben im Monat sichtbar und koennen wieder auf offen gesetzt werden.
+- Monats-ToDos haben keine Faelligkeitsdaten, Prioritaeten, Erinnerungen, Wiederholungen oder Verbindung zu Transaktionen, Fixkosten und Importen.
 
 ### Zentrales Monats-Readmodel (FIN-034)
 

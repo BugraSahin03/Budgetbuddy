@@ -1549,3 +1549,19 @@ Auswirkung:
 - Historische Monatsstaende bleiben stabil, sobald ein Monat abgeschlossen wurde.
 - FIN-071 kann auf dem Monatsstatus aufbauen, ohne fuer Fixkosten eine separate Neuberechnung oder Reset-Logik einzufuehren.
 - Die bestehende Fixkosten-Kontrollsicht aus Importtreffern bleibt getrennt und wird nicht in den Plan-Snapshot gemischt.
+
+## 2026-06-12 - FIN-082 fuehrt einfache monatsbezogene ToDos ein
+
+Quelle/Ticket: `FIN-082`
+
+Erkenntnis/Entscheidung:
+
+- Monats-ToDos sind ein kleines eigenes Fachobjekt pro `month_key`.
+- Offene ToDos werden nicht automatisch in den Folgemonat uebernommen.
+- Im ersten Schnitt bestehen ToDos nur aus Text und Status `offen`/`erledigt`.
+- Die sichtbare Nummerierung entsteht aus der stabilen Erstellreihenfolge im jeweiligen Monat.
+
+Auswirkung:
+
+- Monats-ToDos bleiben von Transaktionen, Fixkosten, Importen, Kategorien, Faelligkeiten, Prioritaeten, Erinnerungen und Wiederholungen getrennt.
+- Die Monatsansicht bekommt nur einen Dialog-Einstieg, damit die Hauptansicht ruhig bleibt.
