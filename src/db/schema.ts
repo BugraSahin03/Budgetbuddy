@@ -742,6 +742,38 @@ ON CONFLICT(name) DO UPDATE SET
   updated_at = CURRENT_TIMESTAMP;
 `;
 
+const fin070MigrationSql = `
+CREATE TABLE IF NOT EXISTS monthly_statuses (
+  month_key TEXT PRIMARY KEY CHECK (length(month_key) = 7 AND substr(month_key, 5, 1) = '-'),
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+  fixed_cost_snapshot_created_at TEXT,
+  closed_at TEXT,
+  reopened_at TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS monthly_fixed_cost_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  month_key TEXT NOT NULL REFERENCES monthly_statuses(month_key) ON DELETE CASCADE,
+  fixed_cost_id INTEGER REFERENCES fixed_costs(id) ON DELETE SET NULL,
+  name_snapshot TEXT NOT NULL,
+  planned_amount_cents_snapshot INTEGER NOT NULL CHECK (planned_amount_cents_snapshot >= 0),
+  booking_day_of_month_snapshot INTEGER CHECK (booking_day_of_month_snapshot BETWEEN 1 AND 31),
+  payment_note_snapshot TEXT,
+  note_snapshot TEXT,
+  is_included INTEGER NOT NULL DEFAULT 1 CHECK (is_included IN (0, 1)),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_monthly_fixed_cost_snapshots_unique_cost
+ON monthly_fixed_cost_snapshots(month_key, fixed_cost_id)
+WHERE fixed_cost_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_monthly_fixed_cost_snapshots_month_key
+ON monthly_fixed_cost_snapshots(month_key);
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -797,6 +829,11 @@ export const migrations: readonly Migration[] = [
     id: "0011_fin_072",
     name: "FIN-072 add protected savings category",
     sql: fin072MigrationSql,
+  },
+  {
+    id: "0012_fin_070",
+    name: "FIN-070 freeze fixed-cost plan on month close",
+    sql: fin070MigrationSql,
   },
 ];
 

@@ -177,6 +177,16 @@ Technischer Migrationshinweis (FIN-025):
 - Fruehere manuelle Zuordnungslogik ueber `fixed_cost_transaction_links` wird fachlich stillgelegt.
 - Bestehende lokale Altdaten werden nicht destruktiv geloescht, aber im Zielmodell nicht mehr fuer neue Zuordnungen verwendet.
 
+Monatsabschluss-Regel (FIN-070):
+
+- Offene Monate ohne Abschluss-Snapshot verwenden weiterhin die aktuelle aktive Fixkostenliste.
+- Beim ersten Monatsabschluss wird der aktuelle Fixkosten-Planstand eingefroren.
+- Eingefroren werden Name, Planbetrag, Abbuchungstag, Abbuchungsinfo, Notiz und die Information, ob der Eintrag im Plan enthalten ist.
+- Geschlossene Monate verwenden diesen Snapshot statt der globalen Live-Fixkostenliste.
+- Spaetere Aenderungen an Betrag, Name oder Aktiv-Status globaler Fixkosten veraendern geschlossene Monate nicht rueckwirkend.
+- Ein wieder geoeffneter Monat behaelt den vorhandenen Snapshot; es gibt keine automatische Neuberechnung und keinen Reset.
+- Der Monatsstatus speichert den Snapshot-Marker auch dann, wenn beim Abschluss keine aktive Fixkostenposition existiert.
+
 ### Importlauf
 
 Ein Importlauf dokumentiert eine eingelesene Bankdatei.
