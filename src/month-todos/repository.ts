@@ -16,6 +16,20 @@ function mapSqliteBoolean(value: number): boolean {
   return value === 1;
 }
 
+function mapTodoRow(row: {
+  id: number;
+  monthKey: string;
+  text: string;
+  isDone: number;
+}): MonthTodoItem {
+  return {
+    id: row.id,
+    monthKey: row.monthKey,
+    text: row.text,
+    isDone: mapSqliteBoolean(row.isDone),
+  };
+}
+
 function normalizeTodoText(text: string): string {
   const normalized = text.trim();
 
@@ -30,7 +44,7 @@ function normalizeTodoText(text: string): string {
   return normalized;
 }
 
-function parseTodoId(todoId: number): number {
+function parseTodoId(todoId: number | string): number {
   const id = Number.parseInt(String(todoId), 10);
 
   if (!Number.isInteger(id) || id <= 0) {
@@ -62,19 +76,14 @@ export function listMonthlyTodos(monthKey: string): MonthTodoItem[] {
     isDone: number;
   }>;
 
-  return rows.map((row) => ({
-    id: row.id,
-    monthKey: row.monthKey,
-    text: row.text,
-    isDone: mapSqliteBoolean(row.isDone),
-  }));
+  return rows.map(mapTodoRow);
 }
 
-export function createMonthlyTodo(monthKey: string, text: string): void {
+export function createMonthlyTodo(monthKey: string, text: string): MonthTodoItem {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
   const normalizedText = normalizeTodoText(text);
 
-  getDb()
+  const result = getDb()
     .prepare(
       `
         INSERT INTO monthly_todos (
@@ -87,9 +96,43 @@ export function createMonthlyTodo(monthKey: string, text: string): void {
       `,
     )
     .run(normalizedMonthKey, normalizedText);
+
+  return getMonthlyTodo(result.lastInsertRowid, normalizedMonthKey);
 }
 
-export function toggleMonthlyTodo(todoId: number, monthKey: string): void {
+export function getMonthlyTodo(todoId: number | bigint | string, monthKey: string): MonthTodoItem {
+  const id = parseTodoId(String(todoId));
+  const normalizedMonthKey = normalizeMonthKey(monthKey);
+  const row = getDb()
+    .prepare(
+      `
+        SELECT
+          id,
+          month_key AS monthKey,
+          text,
+          is_done AS isDone
+        FROM monthly_todos
+        WHERE id = ?
+          AND month_key = ?
+      `,
+    )
+    .get(id, normalizedMonthKey) as
+    | {
+        id: number;
+        monthKey: string;
+        text: string;
+        isDone: number;
+      }
+    | undefined;
+
+  if (!row) {
+    throw new Error("ToDo wurde fuer diesen Monat nicht gefunden.");
+  }
+
+  return mapTodoRow(row);
+}
+
+export function toggleMonthlyTodo(todoId: number | string, monthKey: string): MonthTodoItem {
   const id = parseTodoId(todoId);
   const normalizedMonthKey = normalizeMonthKey(monthKey);
   const result = getDb()
@@ -108,4 +151,6 @@ export function toggleMonthlyTodo(todoId: number, monthKey: string): void {
   if (result.changes === 0) {
     throw new Error("ToDo wurde fuer diesen Monat nicht gefunden.");
   }
+
+  return getMonthlyTodo(id, normalizedMonthKey);
 }

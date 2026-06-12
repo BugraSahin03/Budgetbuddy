@@ -19,10 +19,6 @@ import {
   updateManualTransaction,
   updateExpenseAssignmentForMonth,
 } from "@/src/transactions/repository";
-import {
-  createMonthlyTodo,
-  toggleMonthlyTodo,
-} from "@/src/month-todos/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
   return typeof value === "string" ? value : "";
@@ -59,17 +55,6 @@ function parseTransactionId(rawValue: FormDataEntryValue | null): number {
   }
 
   return transactionId;
-}
-
-function parseTodoId(rawValue: FormDataEntryValue | null): number {
-  const value = toSingleString(rawValue).trim();
-  const todoId = Number.parseInt(value, 10);
-
-  if (!Number.isInteger(todoId) || todoId <= 0) {
-    throw new Error("ToDo-ID ist ungueltig.");
-  }
-
-  return todoId;
 }
 
 function parseOptionalPositiveInt(
@@ -472,36 +457,4 @@ export async function createMonthlyManualTransactionAction(
       `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
     );
   }
-}
-
-export async function createMonthlyTodoAction(formData: FormData): Promise<never> {
-  const monthKey = toSingleString(formData.get("monthKey")).trim();
-  let redirectTarget =
-    `/monate/${encodeMessage(monthKey)}?todoDialog=1&notice=${encodeMessage("Monats-ToDo erstellt.")}`;
-
-  try {
-    createMonthlyTodo(monthKey, toSingleString(formData.get("text")));
-    revalidatePath(`/monate/${monthKey}`);
-  } catch (error) {
-    redirectTarget =
-      `/monate/${encodeMessage(monthKey)}?todoDialog=1&error=${encodeMessage(toErrorMessage(error))}`;
-  }
-
-  redirect(redirectTarget);
-}
-
-export async function toggleMonthlyTodoAction(formData: FormData): Promise<never> {
-  const monthKey = toSingleString(formData.get("monthKey")).trim();
-  let redirectTarget =
-    `/monate/${encodeMessage(monthKey)}?todoDialog=1&notice=${encodeMessage("Monats-ToDo aktualisiert.")}`;
-
-  try {
-    toggleMonthlyTodo(parseTodoId(formData.get("todoId")), monthKey);
-    revalidatePath(`/monate/${monthKey}`);
-  } catch (error) {
-    redirectTarget =
-      `/monate/${encodeMessage(monthKey)}?todoDialog=1&error=${encodeMessage(toErrorMessage(error))}`;
-  }
-
-  redirect(redirectTarget);
 }
