@@ -1497,3 +1497,21 @@ Auswirkung:
 - Das Pattern `N26-Fix.` bleibt ohne Codeaenderung sichtbar, editierbar und deaktivierbar.
 - Aenderungen an Kontrollmustern wirken weiter auf zukuenftige Import-Vorschauen und Fixkosten-Kontrolltreffer.
 - Es entsteht keine neue Import-, Alias-, Duplikat- oder Fixkostenberechnungslogik.
+
+## 2026-06-12 - FIN-078 fuehrt Bargeldbestand als separate Monats-Transparenz ein
+
+Quelle/Ticket: `FIN-078`
+
+Erkenntnis/Entscheidung:
+
+- Bargeld bleibt ein eigenes Konto bzw. ein separater Bestand.
+- Bargeldabhebungen sind Transfers und keine Ausgaben.
+- Barzahlungen sind echte Ausgaben im jeweiligen Monat.
+- Nicht ausgegebenes Bargeld bleibt als Bestand erhalten und wird automatisch in Folgemonate mitgenommen.
+- Bargeldbestand wird nicht automatisch in Monatsrest, Ausgabe, Sparen oder Reserve umgebucht.
+- Die Monatsansicht zeigt den Bargeldbestand als eigene ruhige KPI-Kachel.
+
+Auswirkung:
+
+- Ein Monat kann fachlich bei `0 EUR` Monatsrest stehen, obwohl noch Bargeldbestand vorhanden ist.
+- Spaetere Monatsabschluss-Arbeit kann Bargeld transparent anzeigen, darf daraus aber nicht automatisch einen Blocker oder eine Buchung ableiten.

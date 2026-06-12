@@ -287,7 +287,7 @@ function ReferenceMetricCard({
   label: string;
   value: string;
   copy: string;
-  tone: "income" | "expense" | "savings" | "plan";
+  tone: "income" | "expense" | "savings" | "plan" | "cash";
   marker: string;
   action?: ReactNode;
   actionClassName?: string;
@@ -311,6 +311,10 @@ function ReferenceMetricCard({
     plan: {
       marker: { backgroundColor: "#d7edf8", color: "var(--month-ink)" },
       value: { color: "var(--month-ink)" },
+    },
+    cash: {
+      marker: { backgroundColor: "#e8f5d5", color: "#41620f" },
+      value: { color: "#2f5f18" },
     },
   }[tone];
 
@@ -494,7 +498,7 @@ export default async function MonthDetailPage({
         </section>
       ) : null}
 
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
         <ReferenceMetricCard
           label="Einnahmen"
           value={formatEuro(month.dashboard.totals.incomeCents)}
@@ -604,6 +608,13 @@ export default async function MonthDetailPage({
           copy="Echte Buchungen der Kategorie Sparen."
           tone="savings"
           marker="↟"
+        />
+        <ReferenceMetricCard
+          label="Bargeldbestand"
+          value={formatEuro(month.dashboard.totals.cashBalanceCents)}
+          copy="Separater Bestand, nicht automatisch Monatsrest."
+          tone="cash"
+          marker="€"
         />
         <ReferenceMetricCard
           label="Rest nach Planung"

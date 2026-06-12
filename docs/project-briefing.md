@@ -165,6 +165,15 @@ Beispiel:
 3. Spaeter wird eine Barzahlung manuell eingetragen, z. B. `-10 EUR Doener` aus Konto `Bargeld`, Kategorie `Freizeit`.
 4. Bargeldbestand sinkt um `10 EUR`.
 
+FIN-078 ergaenzt:
+
+- Nicht ausgegebenes Bargeld bleibt als separater Bestand bestehen und wird in
+  Folgemonate mitgenommen.
+- Bargeldbestand ist kein automatischer Monatsrest, keine automatische Ausgabe
+  und keine automatische Sparbuchung.
+- Die Monatsansicht zeigt den Bargeldbestand als ruhige Transparenz-Kachel,
+  ohne den Monatsrest dadurch zu erhoehen oder zu senken.
+
 ### Fixkosten
 
 Fixkosten werden im MVP als monatlicher Planungsblock aus der Fixkostenliste gefuehrt.

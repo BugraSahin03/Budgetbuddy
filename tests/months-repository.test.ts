@@ -445,6 +445,59 @@ describe("months repository", () => {
     expect(snapshot.totals.availableCents).toBeLessThan(0);
   });
 
+  it("keeps cash balance separate from the month budget stand across months", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const bargeldId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Bargeld'").get() as { id: number }
+    ).id;
+    const freizeitId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Freizeit'").get() as { id: number }
+    ).id;
+    const plannedFixedCostsCents = (
+      db
+        .prepare(
+          `
+            SELECT COALESCE(SUM(planned_amount_cents), 0) AS total
+            FROM fixed_costs
+            WHERE is_active = 1
+          `,
+        )
+        .get() as { total: number }
+    ).total;
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, currency_code, description, source_type, category_id, special_budget_id
+        ) VALUES
+          (?, ?, 'transfer', '2031-10-30', '2031-10', -5000, 'EUR', 'TEST-FIN-078 Cash Withdrawal', 'manual', NULL, NULL),
+          (?, NULL, 'income', '2031-11-01', '2031-11', ?, 'EUR', 'TEST-FIN-078 Balancing Income', 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2031-11-02', '2031-11', -2000, 'EUR', 'TEST-FIN-078 Cash Dinner', 'manual', ?, NULL)
+      `,
+    ).run(
+      sparkasseId,
+      bargeldId,
+      sparkasseId,
+      plannedFixedCostsCents + 2000,
+      bargeldId,
+      freizeitId,
+    );
+
+    const snapshot = getMonthSnapshot("2031-11");
+
+    expect(snapshot.totals.incomeCents).toBe(plannedFixedCostsCents + 2000);
+    expect(snapshot.totals.expenseCents).toBe(2000);
+    expect(snapshot.totals.availableCents).toBe(0);
+    expect(snapshot.totals.cashBalanceCents).toBe(3000);
+    expect(snapshot.transactions.map((transaction) => transaction.description)).toEqual([
+      "TEST-FIN-078 Cash Dinner",
+      "TEST-FIN-078 Balancing Income",
+    ]);
+  });
+
   it("uses the category default as month fallback until an explicit month override exists", () => {
     const einkaufId = (
       db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
