@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
+  closeMonth: vi.fn(),
   createManualTransaction: vi.fn(),
   deleteImportedTransactionForMonth: vi.fn(),
   deleteManualTransaction: vi.fn(),
@@ -9,6 +10,7 @@ const mocks = vi.hoisted(() => ({
     throw new Error(`redirect:${url}`);
   }),
   revalidatePath: vi.fn(),
+  reopenMonth: vi.fn(),
   updateExpenseAssignmentForMonth: vi.fn(),
   updateManualTransaction: vi.fn(),
 }));
@@ -22,6 +24,10 @@ vi.mock("next/navigation", () => ({
 }));
 vi.mock("@/src/budgets/repository", () => ({
   setMonthlyCategoryBudget: vi.fn(),
+}));
+vi.mock("@/src/months/repository", () => ({
+  closeMonth: mocks.closeMonth,
+  reopenMonth: mocks.reopenMonth,
 }));
 vi.mock("@/src/special-budgets/amounts", () => ({
   parsePlannedAmountCents: vi.fn(),
@@ -40,9 +46,11 @@ vi.mock("@/src/transactions/repository", () => ({
 }));
 
 const {
+  closeMonthAction,
   createMonthlyManualTransactionAction,
   deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
+  reopenMonthAction,
   updateMonthlyTransactionAssignmentAction,
 } = await import("@/app/monate/actions");
 
@@ -182,6 +190,34 @@ describe("FIN-060 monthly booking edit actions", () => {
     );
     expect(mocks.redirect).toHaveBeenCalledWith(
       "/monate/2026-06?bookingEdit=1&notice=Import-Buchung+geloescht.#monatsbuchungen",
+    );
+  });
+});
+
+describe("FIN-071 monthly close actions", () => {
+  it("closes a month only after explicit confirmation", async () => {
+    const formData = new FormData();
+    formData.set("monthKey", "2026-06");
+    formData.set("confirmClose", "on");
+
+    await expect(closeMonthAction(formData)).rejects.toThrow("redirect:");
+
+    expect(mocks.closeMonth).toHaveBeenCalledWith("2026-06");
+    expect(mocks.redirect).toHaveBeenLastCalledWith(
+      "/monate/2026-06?notice=Monat%20abgeschlossen.",
+    );
+  });
+
+  it("reopens a month only after explicit confirmation", async () => {
+    const formData = new FormData();
+    formData.set("monthKey", "2026-06");
+    formData.set("confirmReopen", "on");
+
+    await expect(reopenMonthAction(formData)).rejects.toThrow("redirect:");
+
+    expect(mocks.reopenMonth).toHaveBeenCalledWith("2026-06");
+    expect(mocks.redirect).toHaveBeenLastCalledWith(
+      "/monate/2026-06?notice=Monat%20wieder%20geoeffnet.",
     );
   });
 });

@@ -187,6 +187,17 @@ Monatsabschluss-Regel (FIN-070):
 - Ein wieder geoeffneter Monat behaelt den vorhandenen Snapshot; es gibt keine automatische Neuberechnung und keinen Reset.
 - Der Monatsstatus speichert den Snapshot-Marker auch dann, wenn beim Abschluss keine aktive Fixkostenposition existiert.
 
+Monatsabschluss-Sperrregel (FIN-071):
+
+- Ein offener Monat kann bewusst abgeschlossen und spaeter wieder geoeffnet werden.
+- Beim Abschluss werden vorhandene effektive Kategorie-Planwerte als Monatswerte gespeichert, damit spaetere globale Standardwert-Aenderungen geplante Werte mit vorhandenem Plan nicht rueckwirkend veraendern.
+- Ein geschlossener Monat sperrt monatsbezogene Schreiboperationen:
+  neue manuelle Buchungen, Buchungsbearbeitung, Buchungsloeschung, Importloeschung, Kategorie-/Sonderbudget-Zuordnung, CSV-Importe, Monatsbudget-Overrides und Sonderbudget-Monatsanteile.
+- Das Wieder-Oeffnen erlaubt diese Schreiboperationen wieder.
+- Offene importierte Ausgaben sind beim Abschluss ein Warnhinweis, aber kein harter Blocker.
+- Der vorhandene Fixkosten-Snapshot bleibt auch nach Wieder-Oeffnen erhalten und wird nicht automatisch neu berechnet.
+- Planlose Kategorien koennen technisch nicht als `NULL`-Monatswert eingefroren werden; sie bleiben planlos, bis ein expliziter Monatswert oder globaler Standard existiert.
+
 ### Importlauf
 
 Ein Importlauf dokumentiert eine eingelesene Bankdatei.

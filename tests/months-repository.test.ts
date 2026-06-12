@@ -628,6 +628,41 @@ describe("months repository", () => {
     expect(getMonthSnapshot("2032-06").totals.plannedFixedCostsCents).toBe(99000);
   });
 
+  it("freezes effective category budget values when a month is closed", () => {
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+
+    db.prepare(
+      `
+        UPDATE categories
+        SET default_budget_amount_cents = 25000
+        WHERE id = ?
+      `,
+    ).run(einkaufId);
+
+    closeMonth("2032-06");
+
+    db.prepare(
+      `
+        UPDATE categories
+        SET default_budget_amount_cents = 31000
+        WHERE id = ?
+      `,
+    ).run(einkaufId);
+
+    const closedRow = getMonthSnapshot("2032-06").categoryRows.find(
+      (row) => row.categoryId === einkaufId,
+    );
+    const openRow = getMonthSnapshot("2032-07").categoryRows.find(
+      (row) => row.categoryId === einkaufId,
+    );
+
+    expect(closedRow?.budgetAmountCents).toBe(25000);
+    expect(closedRow?.monthOverrideAmountCents).toBe(25000);
+    expect(openRow?.budgetAmountCents).toBe(31000);
+  });
+
   it("keeps the fixed-cost snapshot when a fixed cost is deactivated after close", () => {
     const fixedCostId = Number(
       db.prepare(

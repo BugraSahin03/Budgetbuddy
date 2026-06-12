@@ -2,6 +2,7 @@ import "server-only";
 
 import { getDb } from "@/src/db/client";
 import {
+  freezeMonthlyCategoryBudgetValues,
   listMonthlyBudgetCategories,
   type MonthlyBudgetCategoryRow,
 } from "@/src/budgets/repository";
@@ -18,16 +19,21 @@ import {
   buildMonthPlanSummary,
   type MonthPlanSummary,
 } from "@/src/months/plan-summary";
+import {
+  closeMonth as closeMonthStatus,
+  getMonthStatus,
+  normalizeMonthKey,
+  reopenMonth as reopenMonthStatus,
+  type MonthStatus,
+} from "@/src/months/status";
 
-export type MonthStatusValue = "open" | "closed";
-
-export type MonthStatus = {
-  monthKey: string;
-  status: MonthStatusValue;
-  hasFixedCostSnapshot: boolean;
-  closedAt: string | null;
-  reopenedAt: string | null;
-};
+export {
+  assertMonthIsOpen,
+  getMonthStatus,
+  normalizeMonthKey,
+  type MonthStatus,
+  type MonthStatusValue,
+} from "@/src/months/status";
 
 export type MonthTimelinePreview = {
   monthKey: string;
@@ -123,13 +129,13 @@ export type MonthDetailSnapshot = {
   monthKey: string;
   label: string;
   detailHref: string;
+  status: MonthStatus;
   previousMonth: MonthDetailNavigationLink;
   nextMonth: MonthDetailNavigationLink | null;
   dashboard: Omit<MonthSnapshot, "transactions">;
   transactions: MonthDetailTransactionRow[];
 };
 
-const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
 const MONTH_NAMES = [
   "Januar",
   "Februar",
@@ -144,16 +150,6 @@ const MONTH_NAMES = [
   "November",
   "Dezember",
 ] as const;
-
-export function normalizeMonthKey(monthKey: string): string {
-  const normalized = monthKey.trim();
-
-  if (!MONTH_KEY_PATTERN.test(normalized)) {
-    throw new Error("Monat muss im Format YYYY-MM vorliegen.");
-  }
-
-  return normalized;
-}
 
 function toComparableMonthValue(monthKey: string): number {
   const normalized = normalizeMonthKey(monthKey);
@@ -183,154 +179,23 @@ function mapSqliteBoolean(value: number): boolean {
   return value === 1;
 }
 
-function mapMonthStatusRow(row: {
-  monthKey: string;
-  status: MonthStatusValue;
-  fixedCostSnapshotCreatedAt: string | null;
-  closedAt: string | null;
-  reopenedAt: string | null;
-}): MonthStatus {
-  return {
-    monthKey: row.monthKey,
-    status: row.status,
-    hasFixedCostSnapshot: row.fixedCostSnapshotCreatedAt !== null,
-    closedAt: row.closedAt,
-    reopenedAt: row.reopenedAt,
-  };
-}
-
-export function getMonthStatus(monthKey: string): MonthStatus {
-  const normalizedMonthKey = normalizeMonthKey(monthKey);
-  const row = getDb()
-    .prepare(
-      `
-        SELECT
-          month_key AS monthKey,
-          status,
-          fixed_cost_snapshot_created_at AS fixedCostSnapshotCreatedAt,
-          closed_at AS closedAt,
-          reopened_at AS reopenedAt
-        FROM monthly_statuses
-        WHERE month_key = ?
-      `,
-    )
-    .get(normalizedMonthKey) as
-    | {
-        monthKey: string;
-        status: MonthStatusValue;
-        fixedCostSnapshotCreatedAt: string | null;
-        closedAt: string | null;
-        reopenedAt: string | null;
-      }
-    | undefined;
-
-  if (!row) {
-    return {
-      monthKey: normalizedMonthKey,
-      status: "open",
-      hasFixedCostSnapshot: false,
-      closedAt: null,
-      reopenedAt: null,
-    };
-  }
-
-  return mapMonthStatusRow(row);
-}
-
 function hasFixedCostSnapshot(monthKey: string): boolean {
   return getMonthStatus(monthKey).hasFixedCostSnapshot;
 }
 
-function insertFixedCostSnapshotRows(monthKey: string): void {
-  const fixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
-  const insertSnapshot = getDb().prepare(
-    `
-      INSERT OR IGNORE INTO monthly_fixed_cost_snapshots (
-        month_key,
-        fixed_cost_id,
-        name_snapshot,
-        planned_amount_cents_snapshot,
-        booking_day_of_month_snapshot,
-        payment_note_snapshot,
-        note_snapshot,
-        is_included
-      )
-      VALUES (?, ?, ?, ?, ?, ?, ?, 1)
-    `,
-  );
-
-  for (const fixedCost of fixedCosts) {
-    insertSnapshot.run(
-      monthKey,
-      fixedCost.id,
-      fixedCost.name,
-      fixedCost.plannedAmountCents,
-      fixedCost.bookingDayOfMonth,
-      fixedCost.paymentNote,
-      fixedCost.note,
-    );
-  }
-}
-
 export function closeMonth(monthKey: string): MonthStatus {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
-  const db = getDb();
+  const status = getMonthStatus(normalizedMonthKey);
 
-  const close = db.transaction(() => {
-    const beforeClose = getMonthStatus(normalizedMonthKey);
-    const shouldCreateFixedCostSnapshot =
-      !beforeClose.hasFixedCostSnapshot;
+  if (status.status === "open") {
+    freezeMonthlyCategoryBudgetValues(normalizedMonthKey);
+  }
 
-    db.prepare(
-      `
-        INSERT INTO monthly_statuses (
-          month_key,
-          status,
-          fixed_cost_snapshot_created_at,
-          closed_at,
-          updated_at
-        )
-        VALUES (?, 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT(month_key) DO UPDATE SET
-          status = 'closed',
-          fixed_cost_snapshot_created_at = COALESCE(monthly_statuses.fixed_cost_snapshot_created_at, CURRENT_TIMESTAMP),
-          closed_at = CURRENT_TIMESTAMP,
-          updated_at = CURRENT_TIMESTAMP
-      `,
-    ).run(normalizedMonthKey);
-
-    if (shouldCreateFixedCostSnapshot) {
-      insertFixedCostSnapshotRows(normalizedMonthKey);
-    }
-  });
-
-  close();
-
-  return getMonthStatus(normalizedMonthKey);
+  return closeMonthStatus(normalizedMonthKey);
 }
 
 export function reopenMonth(monthKey: string): MonthStatus {
-  const normalizedMonthKey = normalizeMonthKey(monthKey);
-
-  getDb()
-    .prepare(
-      `
-        INSERT INTO monthly_statuses (
-          month_key,
-          status,
-          reopened_at,
-          updated_at
-        )
-        VALUES (?, 'open', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-        ON CONFLICT(month_key) DO UPDATE SET
-          status = 'open',
-          reopened_at = CURRENT_TIMESTAMP,
-          updated_at = CURRENT_TIMESTAMP
-      `,
-    )
-    .run(normalizedMonthKey);
-
-  return getMonthStatus(normalizedMonthKey);
+  return reopenMonthStatus(monthKey);
 }
 
 function getIncomeCents(monthKey: string): number {
@@ -846,6 +711,7 @@ export function getMonthDetail(
     monthKey: normalizedMonthKey,
     label: formatMonthLabel(normalizedMonthKey),
     detailHref: buildMonthDetailHref(normalizedMonthKey),
+    status: getMonthStatus(normalizedMonthKey),
     previousMonth: buildNavigationLink(previousMonthKey),
     nextMonth: nextMonthKey ? buildNavigationLink(nextMonthKey) : null,
     dashboard: {

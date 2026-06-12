@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDb } from "@/src/db/client";
+import { assertMonthIsOpen } from "@/src/months/status";
 
 export type SpecialBudgetProjectStatus = "active" | "archived";
 
@@ -636,6 +637,10 @@ export function createSpecialBudgetShares(input: {
     throw new Error("Eine Sonderkategorie darf pro Vorhaben nur einen Anteil je Monat haben.");
   }
 
+  for (const share of normalizedShares) {
+    assertMonthIsOpen(share.monthKey);
+  }
+
   try {
     const transaction = getDb().transaction(() => {
       const projectId = ensureProjectForName(name, note, iconName);
@@ -734,6 +739,24 @@ export function updateSpecialBudgetProject(input: {
     );
 
     for (const share of normalizedShares) {
+      const existingShare = getDb()
+        .prepare(
+          `
+            SELECT month_key AS monthKey
+            FROM special_budgets
+            WHERE id = ?
+              AND project_id = ?
+            LIMIT 1
+          `,
+        )
+        .get(share.id, input.projectId) as { monthKey: string } | undefined;
+
+      if (!existingShare) {
+        throw new Error("Monatsanteil der Sonderkategorie wurde nicht gefunden.");
+      }
+
+      assertMonthIsOpen(existingShare.monthKey);
+
       const result = updateShare.run(
         share.plannedAmountCents,
         share.id,
@@ -755,17 +778,21 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
   const existing = getDb()
     .prepare(
       `
-        SELECT project_id AS projectId
+        SELECT
+          project_id AS projectId,
+          month_key AS monthKey
         FROM special_budgets
         WHERE id = ?
         LIMIT 1
       `,
     )
-    .get(specialBudgetId) as { projectId: number | null } | undefined;
+    .get(specialBudgetId) as { projectId: number | null; monthKey: string } | undefined;
 
   if (!existing) {
     throw new Error("Sonderkategorie wurde nicht gefunden.");
   }
+
+  assertMonthIsOpen(existing.monthKey);
 
   const transaction = getDb().transaction(() => {
     const result = getDb()
@@ -839,6 +866,24 @@ export function reactivateSpecialBudgetProject(projectId: number): void {
       )
       .run(projectId);
 
+    const share = getDb()
+      .prepare(
+        `
+          SELECT id, month_key AS monthKey
+          FROM special_budgets
+          WHERE project_id = ?
+          ORDER BY month_key DESC, id DESC
+          LIMIT 1
+        `,
+      )
+      .get(projectId) as { id: number; monthKey: string } | undefined;
+
+    if (!share) {
+      throw new Error("Monatsanteil der Sonderkategorie wurde nicht gefunden.");
+    }
+
+    assertMonthIsOpen(share.monthKey);
+
     getDb()
       .prepare(
         `
@@ -846,16 +891,10 @@ export function reactivateSpecialBudgetProject(projectId: number): void {
           SET
             is_active = 1,
             updated_at = CURRENT_TIMESTAMP
-          WHERE id = (
-            SELECT id
-            FROM special_budgets
-            WHERE project_id = ?
-            ORDER BY month_key DESC, id DESC
-            LIMIT 1
-          )
+          WHERE id = ?
         `,
       )
-      .run(projectId);
+      .run(share.id);
   });
 
   transaction();
@@ -879,6 +918,20 @@ export function setSpecialBudgetProjectActive(projectId: number, isActive: boole
 
   if (!project) {
     throw new Error("Sonderkategorie wurde nicht gefunden.");
+  }
+
+  const affectedShares = getDb()
+    .prepare(
+      `
+        SELECT month_key AS monthKey
+        FROM special_budgets
+        WHERE project_id = ?
+      `,
+    )
+    .all(projectId) as Array<{ monthKey: string }>;
+
+  for (const share of affectedShares) {
+    assertMonthIsOpen(share.monthKey);
   }
 
   const transaction = getDb().transaction(() => {
@@ -915,6 +968,22 @@ export function updateSpecialBudgetPlannedAmount(
   plannedAmountCents: number,
 ): void {
   const normalizedPlannedAmountCents = normalizePlannedAmountCents(plannedAmountCents);
+  const existing = getDb()
+    .prepare(
+      `
+        SELECT month_key AS monthKey
+        FROM special_budgets
+        WHERE id = ?
+        LIMIT 1
+      `,
+    )
+    .get(specialBudgetId) as { monthKey: string } | undefined;
+
+  if (!existing) {
+    throw new Error("Sonderkategorie wurde nicht gefunden.");
+  }
+
+  assertMonthIsOpen(existing.monthKey);
 
   const result = getDb()
     .prepare(

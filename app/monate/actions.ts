@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { setMonthlyCategoryBudget } from "@/src/budgets/repository";
+import { closeMonth, reopenMonth } from "@/src/months/repository";
 import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
   setSpecialBudgetActiveForMonth,
@@ -182,6 +183,61 @@ function monthBookingHref(
   const query = searchParams.toString();
 
   return `/monate/${encodeMessage(monthKey)}${query.length > 0 ? `?${query}` : ""}#monatsbuchungen`;
+}
+
+function revalidateMonthContext(monthKey: string): void {
+  revalidatePath("/");
+  revalidatePath("/monate");
+  revalidatePath(`/monate/${monthKey}`);
+  revalidatePath("/transaktionen");
+  revalidatePath("/import");
+  revalidatePath("/sonderbudgets");
+  revalidatePath("/budgets");
+  revalidatePath("/auswertungen");
+}
+
+export async function closeMonthAction(formData: FormData): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    const confirmClose = toSingleString(formData.get("confirmClose")).trim();
+
+    if (confirmClose !== "on") {
+      throw new Error("Monatsabschluss muss bewusst bestaetigt werden.");
+    }
+
+    closeMonth(monthKey);
+    revalidateMonthContext(monthKey);
+
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monat abgeschlossen.")}`;
+  } catch (error) {
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`;
+  }
+
+  redirect(redirectTarget);
+}
+
+export async function reopenMonthAction(formData: FormData): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    const confirmReopen = toSingleString(formData.get("confirmReopen")).trim();
+
+    if (confirmReopen !== "on") {
+      throw new Error("Wieder oeffnen muss bewusst bestaetigt werden.");
+    }
+
+    reopenMonth(monthKey);
+    revalidateMonthContext(monthKey);
+
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monat wieder geoeffnet.")}`;
+  } catch (error) {
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`;
+  }
+
+  redirect(redirectTarget);
 }
 
 export async function setMonthlyBudgetOverrideAction(
