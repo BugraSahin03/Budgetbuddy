@@ -64,3 +64,73 @@ describe("FIN-059 import display names", () => {
     ).toBe("Amazon Marketplace");
   });
 });
+
+describe("FIN-080 Sparkasse display-name heuristics", () => {
+  it("uses the counterparty for card and Apple Pay rows with technical purpose text", () => {
+    expect(
+      resolveImportDisplayName({
+        sourceType: "import",
+        description: "DIGITALE KARTE (APPLE PAY) | 2026-05-29T12:46 Debitk.10 2029-12",
+        counterpartyName: "LIDL SAGT DANKE",
+      }),
+    ).toBe("LIDL");
+
+    expect(
+      resolveImportDisplayName({
+        sourceType: "import",
+        description: "KARTENZAHLUNG | T12:46 2029-12 DebitMastercard",
+        counterpartyName: "REWE SAGT DANKE",
+      }),
+    ).toBe("REWE");
+  });
+
+  it("uses the counterparty for SEPA-ELV rows when the purpose is only technical noise", () => {
+    expect(
+      resolveImportDisplayName({
+        sourceType: "import",
+        description:
+          "SEPA-ELV-LASTSCHRIFT | ELV50700063 29.05 15.21 ME11()JC89ZPFT6GM74ZW3 Der Einzug erfolgt im Namen und auf Rechnung der PAYONE GmbH",
+        counterpartyName: "ALNATURA DANKT",
+      }),
+    ).toBe("Alnatura");
+  });
+
+  it("keeps meaningful transfer purposes as the visible name", () => {
+    expect(
+      resolveImportDisplayName({
+        sourceType: "import",
+        description: "UEBERWEISUNG | Garage Juni 2026",
+        counterpartyName: "Max Mustermann",
+      }),
+    ).toBe("Garage Juni 2026");
+
+    expect(
+      resolveImportDisplayName({
+        sourceType: "import",
+        description: "DAUERAUFTRAG | Miete Juni 2026",
+        counterpartyName: "Hausverwaltung Beispiel",
+      }),
+    ).toBe("Miete Juni 2026");
+  });
+
+  it("keeps N26 fixed-cost control text visible and alias-overridable without changing source text", () => {
+    const description = "UEBERWEISUNG | N26-Fix. Monatsblock Juni 2026";
+
+    expect(
+      resolveImportDisplayName({
+        sourceType: "import",
+        description,
+        counterpartyName: "N26 Bank",
+      }),
+    ).toBe("N26-Fix. Monatsblock Juni 2026");
+
+    expect(
+      resolveImportDisplayName({
+        sourceType: "import",
+        description,
+        counterpartyName: "N26 Bank",
+        aliases: [{ pattern: "N26-Fix.", displayName: "N26-Fixkostenblock" }],
+      }),
+    ).toBe("N26-Fixkostenblock");
+  });
+});
