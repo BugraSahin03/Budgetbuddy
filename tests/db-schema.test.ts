@@ -137,8 +137,20 @@ describe("schema migrations", () => {
     expect(sql).toContain("default_budget_amount_cents = NULL");
   });
 
+  it("contains migration for fixed-cost snapshots on month close", () => {
+    const sql = migrations.find((migration) => migration.id === "0012_fin_070")
+      ?.sql ?? "";
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS monthly_statuses");
+    expect(sql).toContain("status TEXT NOT NULL DEFAULT 'open'");
+    expect(sql).toContain("fixed_cost_snapshot_created_at TEXT");
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS monthly_fixed_cost_snapshots");
+    expect(sql).toContain("planned_amount_cents_snapshot");
+    expect(sql).toContain("idx_monthly_fixed_cost_snapshots_unique_cost");
+  });
+
   it("contains migration for manual fixed-cost ordering", () => {
-    const sql = migrations.find((migration) => migration.id === "0012_fin_081")
+    const sql = migrations.find((migration) => migration.id === "0013_fin_081")
       ?.sql ?? "";
 
     expect(sql).toContain("ALTER TABLE fixed_costs");
@@ -147,6 +159,6 @@ describe("schema migrations", () => {
   });
 
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0012_fin_081");
+    expect(getLatestSchemaVersion()).toBe("0013_fin_081");
   });
 });

@@ -1531,3 +1531,21 @@ Auswirkung:
 
 - Die aktive Fixkostensumme, Monatsberechnung, Import-Kontrolltreffer und Monatsabschluss-/Snapshotlogik bleiben unveraendert.
 - Eine ADR ist nicht noetig, weil keine neue Fachlogik entsteht; es ist eine enge Persistenzentscheidung fuer UI-/Pflegekomfort.
+
+## 2026-06-12 - FIN-070 friert Fixkostenplan beim Monatsabschluss ein
+
+Quelle/Ticket: `FIN-070`
+
+Erkenntnis/Entscheidung:
+
+- Offene Monate ohne Abschluss-Snapshot lesen den Fixkostenplan weiterhin live aus der aktiven Fixkostenliste.
+- Beim ersten Monatsabschluss wird der aktuelle Fixkostenplan als Monats-Snapshot gespeichert.
+- Geschlossene Monate und wieder geoeffnete Monate mit vorhandenem Snapshot verwenden diesen eingefrorenen Planstand.
+- Spaetere globale Aenderungen an Fixkostenbetrag, Name oder Aktiv-Status wirken dadurch nur auf Monate ohne Snapshot.
+- Ein leerer Snapshot wird ueber den Monatsstatus markiert, damit `0 EUR` Fixkosten beim Abschluss nicht spaeter wieder live berechnet werden.
+
+Auswirkung:
+
+- Historische Monatsstaende bleiben stabil, sobald ein Monat abgeschlossen wurde.
+- FIN-071 kann auf dem Monatsstatus aufbauen, ohne fuer Fixkosten eine separate Neuberechnung oder Reset-Logik einzufuehren.
+- Die bestehende Fixkosten-Kontrollsicht aus Importtreffern bleibt getrennt und wird nicht in den Plan-Snapshot gemischt.

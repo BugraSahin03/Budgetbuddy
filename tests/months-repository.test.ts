@@ -13,10 +13,13 @@ vi.mock("@/src/db/client", () => ({
 
 const {
   buildMonthRange,
+  closeMonth,
   getMonthDetail,
   getMonthSnapshot,
+  getMonthStatus,
   listMonthComparison,
   listMonthTimeline,
+  reopenMonth,
 } = await import("@/src/months/repository");
 
 describe("months repository", () => {
@@ -569,5 +572,106 @@ describe("months repository", () => {
     expect(specialBudget?.remainingAmountCents).toBe(18500);
     expect(specialBudget?.isActive).toBe(false);
     expect(snapshot.planSummary.plannedSpecialBudgetCents).toBe(0);
+  });
+
+  it("keeps open months on the live active fixed-cost plan until close", () => {
+    db.prepare(
+      `
+        INSERT INTO fixed_costs (name, planned_amount_cents, booking_day_of_month, payment_note, note, is_active)
+        VALUES ('TEST-FIN-070 Live Rent', 120000, 1, 'Rent', 'Initial live value', 1)
+      `,
+    ).run();
+
+    expect(getMonthStatus("2032-04")).toMatchObject({
+      status: "open",
+      hasFixedCostSnapshot: false,
+    });
+    expect(getMonthSnapshot("2032-04").totals.plannedFixedCostsCents).toBe(120000);
+
+    db.prepare(
+      `
+        UPDATE fixed_costs
+        SET planned_amount_cents = 135000
+        WHERE name = 'TEST-FIN-070 Live Rent'
+      `,
+    ).run();
+
+    expect(getMonthSnapshot("2032-04").totals.plannedFixedCostsCents).toBe(135000);
+  });
+
+  it("freezes the fixed-cost plan when a month is closed and ignores later amount changes", () => {
+    db.prepare(
+      `
+        INSERT INTO fixed_costs (name, planned_amount_cents, booking_day_of_month, payment_note, note, is_active)
+        VALUES ('TEST-FIN-070 Frozen Rent', 90000, 1, 'Rent', 'Snapshot value', 1)
+      `,
+    ).run();
+
+    const closedStatus = closeMonth("2032-05");
+
+    expect(closedStatus).toMatchObject({
+      monthKey: "2032-05",
+      status: "closed",
+      hasFixedCostSnapshot: true,
+    });
+    expect(getMonthSnapshot("2032-05").totals.plannedFixedCostsCents).toBe(90000);
+
+    db.prepare(
+      `
+        UPDATE fixed_costs
+        SET planned_amount_cents = 99000
+        WHERE name = 'TEST-FIN-070 Frozen Rent'
+      `,
+    ).run();
+
+    expect(getMonthSnapshot("2032-05").totals.plannedFixedCostsCents).toBe(90000);
+    expect(getMonthSnapshot("2032-06").totals.plannedFixedCostsCents).toBe(99000);
+  });
+
+  it("keeps the fixed-cost snapshot when a fixed cost is deactivated after close", () => {
+    const fixedCostId = Number(
+      db.prepare(
+        `
+          INSERT INTO fixed_costs (name, planned_amount_cents, booking_day_of_month, payment_note, note, is_active)
+          VALUES ('TEST-FIN-070 Archived Insurance', 4500, 15, 'Insurance', 'Snapshot value', 1)
+        `,
+      ).run().lastInsertRowid,
+    );
+
+    closeMonth("2032-07");
+    db.prepare("UPDATE fixed_costs SET is_active = 0 WHERE id = ?").run(fixedCostId);
+
+    expect(getMonthSnapshot("2032-07").totals.plannedFixedCostsCents).toBe(4500);
+    expect(getMonthSnapshot("2032-08").totals.plannedFixedCostsCents).toBe(0);
+  });
+
+  it("reopens a month without losing or recalculating the fixed-cost snapshot", () => {
+    db.prepare(
+      `
+        INSERT INTO fixed_costs (name, planned_amount_cents, booking_day_of_month, payment_note, note, is_active)
+        VALUES ('TEST-FIN-070 Reopen Internet', 3999, 5, 'Internet', 'Snapshot value', 1)
+      `,
+    ).run();
+
+    closeMonth("2032-09");
+
+    db.prepare(
+      `
+        UPDATE fixed_costs
+        SET planned_amount_cents = 4999
+        WHERE name = 'TEST-FIN-070 Reopen Internet'
+      `,
+    ).run();
+
+    const reopenedStatus = reopenMonth("2032-09");
+
+    expect(reopenedStatus).toMatchObject({
+      status: "open",
+      hasFixedCostSnapshot: true,
+    });
+    expect(getMonthSnapshot("2032-09").totals.plannedFixedCostsCents).toBe(3999);
+
+    closeMonth("2032-09");
+    expect(getMonthSnapshot("2032-09").totals.plannedFixedCostsCents).toBe(3999);
   });
 });

@@ -742,6 +742,38 @@ ON CONFLICT(name) DO UPDATE SET
   updated_at = CURRENT_TIMESTAMP;
 `;
 
+const fin070MigrationSql = `
+CREATE TABLE IF NOT EXISTS monthly_statuses (
+  month_key TEXT PRIMARY KEY CHECK (length(month_key) = 7 AND substr(month_key, 5, 1) = '-'),
+  status TEXT NOT NULL DEFAULT 'open' CHECK (status IN ('open', 'closed')),
+  fixed_cost_snapshot_created_at TEXT,
+  closed_at TEXT,
+  reopened_at TEXT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS monthly_fixed_cost_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  month_key TEXT NOT NULL REFERENCES monthly_statuses(month_key) ON DELETE CASCADE,
+  fixed_cost_id INTEGER REFERENCES fixed_costs(id) ON DELETE SET NULL,
+  name_snapshot TEXT NOT NULL,
+  planned_amount_cents_snapshot INTEGER NOT NULL CHECK (planned_amount_cents_snapshot >= 0),
+  booking_day_of_month_snapshot INTEGER CHECK (booking_day_of_month_snapshot BETWEEN 1 AND 31),
+  payment_note_snapshot TEXT,
+  note_snapshot TEXT,
+  is_included INTEGER NOT NULL DEFAULT 1 CHECK (is_included IN (0, 1)),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_monthly_fixed_cost_snapshots_unique_cost
+ON monthly_fixed_cost_snapshots(month_key, fixed_cost_id)
+WHERE fixed_cost_id IS NOT NULL;
+
+CREATE INDEX IF NOT EXISTS idx_monthly_fixed_cost_snapshots_month_key
+ON monthly_fixed_cost_snapshots(month_key);
+`;
+
 const fin081MigrationSql = `
 ALTER TABLE fixed_costs
 ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0);
@@ -811,7 +843,12 @@ export const migrations: readonly Migration[] = [
     sql: fin072MigrationSql,
   },
   {
-    id: "0012_fin_081",
+    id: "0012_fin_070",
+    name: "FIN-070 freeze fixed-cost plan on month close",
+    sql: fin070MigrationSql,
+  },
+  {
+    id: "0013_fin_081",
     name: "FIN-081 add manual fixed-cost ordering",
     sql: fin081MigrationSql,
   },
@@ -829,6 +866,11 @@ function upsertSchemaVersion(db: Database.Database, version: string): void {
       ON CONFLICT(key) DO UPDATE SET value = excluded.value
     `,
   ).run(version);
+}
+
+function tableColumnExists(db: Database.Database, tableName: string, columnName: string): boolean {
+  const rows = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+  return rows.some((row) => row.name === columnName);
 }
 
 export function getLatestSchemaVersion(): string {
@@ -849,7 +891,15 @@ export function applyMigrations(db: Database.Database): void {
     }
 
     const transaction = db.transaction((pendingMigration: Migration) => {
-      db.exec(pendingMigration.sql);
+      if (
+        pendingMigration.id === "0013_fin_081" &&
+        tableColumnExists(db, "fixed_costs", "sort_order")
+      ) {
+        db.exec("CREATE INDEX IF NOT EXISTS idx_fixed_costs_sort_order ON fixed_costs(sort_order);");
+      } else {
+        db.exec(pendingMigration.sql);
+      }
+
       db.prepare(
         "INSERT OR IGNORE INTO schema_migrations (id, name) VALUES (?, ?)",
       ).run(pendingMigration.id, pendingMigration.name);
