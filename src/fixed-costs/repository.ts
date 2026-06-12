@@ -13,6 +13,7 @@ export type FixedCostListItem = {
   paymentNote: string | null;
   note: string | null;
   isActive: boolean;
+  sortOrder: number;
   monthlyAssignmentCount: number;
 };
 
@@ -137,9 +138,10 @@ export function listFixedCosts(): FixedCostListItem[] {
           fc.payment_note AS paymentNote,
           fc.note,
           fc.is_active AS isActive,
+          fc.sort_order AS sortOrder,
           0 AS monthlyAssignmentCount
         FROM fixed_costs fc
-        ORDER BY fc.is_active DESC, fc.name COLLATE NOCASE ASC
+        ORDER BY fc.is_active DESC, fc.sort_order ASC, fc.name COLLATE NOCASE ASC, fc.id ASC
       `,
     )
     .all() as Array<{
@@ -150,6 +152,7 @@ export function listFixedCosts(): FixedCostListItem[] {
     paymentNote: string | null;
     note: string | null;
     isActive: number;
+    sortOrder: number;
     monthlyAssignmentCount: number;
   }>;
 
@@ -161,6 +164,7 @@ export function listFixedCosts(): FixedCostListItem[] {
     paymentNote: row.paymentNote,
     note: row.note,
     isActive: mapSqliteBoolean(row.isActive),
+    sortOrder: row.sortOrder,
     monthlyAssignmentCount: row.monthlyAssignmentCount,
   }));
 }
@@ -185,9 +189,14 @@ export function createFixedCost(input: FixedCostInput): void {
             payment_note,
             note,
             is_active,
+            sort_order,
             updated_at
           )
-          VALUES (?, ?, ?, ?, ?, 1, CURRENT_TIMESTAMP)
+          VALUES (
+            ?, ?, ?, ?, ?, 1,
+            (SELECT COALESCE(MAX(sort_order), 0) + 1000 FROM fixed_costs),
+            CURRENT_TIMESTAMP
+          )
         `,
       )
       .run(name, plannedAmountCents, bookingDayOfMonth, paymentNote, note);
@@ -260,6 +269,48 @@ export function setFixedCostActive(fixedCostId: number, isActive: boolean): void
   if (result.changes === 0) {
     throw new Error("Fixkosten-Eintrag wurde nicht gefunden.");
   }
+}
+
+export function updateFixedCostSortOrder(fixedCostIds: number[]): void {
+  ensureRuntimeTables();
+
+  const normalizedIds = fixedCostIds.map((fixedCostId) => {
+    const id = Number.parseInt(String(fixedCostId), 10);
+
+    if (!Number.isInteger(id) || id <= 0) {
+      throw new Error("Fixkosten-ID ist ungueltig.");
+    }
+
+    return id;
+  });
+  const uniqueIds = new Set(normalizedIds);
+
+  if (uniqueIds.size !== normalizedIds.length) {
+    throw new Error("Fixkosten-Reihenfolge enthaelt doppelte Eintraege.");
+  }
+
+  const db = getDb();
+  const transaction = db.transaction((ids: number[]) => {
+    const update = db.prepare(
+      `
+        UPDATE fixed_costs
+        SET
+          sort_order = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+    );
+
+    ids.forEach((id, index) => {
+      const result = update.run((index + 1) * 1000, id);
+
+      if (result.changes === 0) {
+        throw new Error("Fixkosten-Eintrag wurde nicht gefunden.");
+      }
+    });
+  });
+
+  transaction(normalizedIds);
 }
 
 export function getFixedCostsSummary(): { activeCount: number; plannedTotalCents: number } {

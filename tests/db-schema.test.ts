@@ -137,7 +137,16 @@ describe("schema migrations", () => {
     expect(sql).toContain("default_budget_amount_cents = NULL");
   });
 
+  it("contains migration for manual fixed-cost ordering", () => {
+    const sql = migrations.find((migration) => migration.id === "0012_fin_081")
+      ?.sql ?? "";
+
+    expect(sql).toContain("ALTER TABLE fixed_costs");
+    expect(sql).toContain("ADD COLUMN sort_order INTEGER");
+    expect(sql).toContain("idx_fixed_costs_sort_order");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0011_fin_072");
+    expect(getLatestSchemaVersion()).toBe("0012_fin_081");
   });
 });

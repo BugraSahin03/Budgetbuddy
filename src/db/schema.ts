@@ -742,6 +742,18 @@ ON CONFLICT(name) DO UPDATE SET
   updated_at = CURRENT_TIMESTAMP;
 `;
 
+const fin081MigrationSql = `
+ALTER TABLE fixed_costs
+ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0);
+
+UPDATE fixed_costs
+SET sort_order = id * 1000
+WHERE sort_order = 0;
+
+CREATE INDEX IF NOT EXISTS idx_fixed_costs_sort_order
+ON fixed_costs(sort_order);
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -797,6 +809,11 @@ export const migrations: readonly Migration[] = [
     id: "0011_fin_072",
     name: "FIN-072 add protected savings category",
     sql: fin072MigrationSql,
+  },
+  {
+    id: "0012_fin_081",
+    name: "FIN-081 add manual fixed-cost ordering",
+    sql: fin081MigrationSql,
   },
 ];
 
