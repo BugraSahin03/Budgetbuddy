@@ -1195,6 +1195,24 @@ Auswirkung:
 - Manuell gepflegte Kategorie-Farben bleiben nicht die Hauptlogik fuer Monatsverbrauch.
 - Sonderkategorien behalten ihre eigene visuelle Logik und werden nicht in diese Kategorie-Farblogik gezwungen.
 
+## 2026-06-12 - FIN-080 verbessert sichtbare Sparkassen-Anzeigenamen ohne Rohdatenaenderung
+
+Quelle/Ticket: `FIN-080`
+
+Erkenntnis/Entscheidung:
+
+- Die sichtbare Import-Anzeige bleibt eine reine Darstellungsschicht in `src/import/display-name.ts`.
+- Sparkassen-`description`, Verwendungszweck, Gegenpartei, Import-Fingerprint, Duplikaterkennung und Import-/Fixkosten-Regelmatching werden nicht veraendert.
+- Bei Karten-/Apple-Pay-Zahlungen wird die Gegenpartei bevorzugt, wenn der Verwendungszweck nur technische Karten-/Zeit-/Laufzeitdaten enthaelt.
+- Bei SEPA-ELV-Zahlungen wird die Gegenpartei bevorzugt, wenn der Verwendungszweck nur technische ELV-/Referenzfragmente enthaelt.
+- Ueberweisungen, Dauerauftraege und N26-/Fixkosten-Kontrollmuster behalten sinnvolle Verwendungszwecke als sichtbaren Anzeigenamen-Kandidaten.
+- Import-Aliasse bleiben die letzte sichtbare Ueberschreibung nach der Grundheuristik.
+
+Auswirkung:
+
+- Monats- und Importlisten zeigen weniger technische Fragmente wie `T12:46 2029-12`.
+- Die fachlich wichtige Rohtextbasis fuer Fixkostenkontrolle, Import-Regeln und Duplikaterkennung bleibt stabil.
+
 ## 2026-06-07 - FIN-048 vereinfacht Budgetpflege als Kategorie-Oberflaeche
 
 Quelle/Ticket: `FIN-048`

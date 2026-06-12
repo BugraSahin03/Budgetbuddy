@@ -385,7 +385,7 @@ describe("months repository", () => {
       "Fixkosten-Kontrolle: Direktabbuchung (TEST-FIN-063 Fitness Studio)",
     ]);
     expect(snapshot.fixedCostControlMatches.map((match) => match.displayName)).toEqual([
-      "Test-fin-063 N26-fix. Monatsblock",
+      "Test-fin-063 N26-Fix. Monatsblock",
       "Test-fin-063 Lastschrift Fitness",
     ]);
     expect(snapshot.transactions.map((transaction) => transaction.description)).toEqual([

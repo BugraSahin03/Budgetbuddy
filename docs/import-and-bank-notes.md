@@ -149,6 +149,27 @@ Empfohlener Fingerprint fuer Sparkassen-CSV:
 
 Praktisch: Die normalisierten Werte mit `|` joinen und als SHA-256 hashen.
 
+## Sichtbare Import-Anzeigenamen (FIN-080)
+
+Die gespeicherten Importdaten bleiben unveraendert. Insbesondere bleiben
+`Verwendungszweck`, zusammengesetzte `description`, Import-Fingerprint und
+Regel-Matching Rohtext-basiert erhalten.
+
+Fuer sichtbare Listen wird eine separate Anzeigenamen-Heuristik genutzt:
+
+- Karten-/Apple-Pay-Zahlungen bevorzugen `Beguenstigter/Zahlungspflichtiger`,
+  weil der Verwendungszweck haeufig nur Zeit-, Karten- und Laufzeitfragmente
+  enthaelt.
+- SEPA-ELV-Zahlungen bevorzugen ebenfalls die Gegenpartei, wenn der
+  Verwendungszweck nur technische ELV-/Referenzfragmente enthaelt.
+- Ueberweisungen und Dauerauftraege behalten einen sinnvollen Verwendungszweck
+  als Anzeigenamen.
+- N26-/Fixkosten-Kontrollmuster behalten den Verwendungszweck als starken
+  Anzeigenamen-Kandidaten, damit Kontrolltexte sichtbar und fuer bestehende
+  Erkennung nachvollziehbar bleiben.
+- Globale Import-Aliasse greifen nach dieser Grundheuristik weiter als letzte
+  sichtbare Ueberschreibung.
+
 ## Bargeldabhebungen
 
 Ziel:
