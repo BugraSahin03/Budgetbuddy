@@ -476,34 +476,32 @@ export async function createMonthlyManualTransactionAction(
 
 export async function createMonthlyTodoAction(formData: FormData): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget =
+    `/monate/${encodeMessage(monthKey)}?todoDialog=1&notice=${encodeMessage("Monats-ToDo erstellt.")}`;
 
   try {
     createMonthlyTodo(monthKey, toSingleString(formData.get("text")));
     revalidatePath(`/monate/${monthKey}`);
-
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monats-ToDo erstellt.")}`,
-    );
   } catch (error) {
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
-    );
+    redirectTarget =
+      `/monate/${encodeMessage(monthKey)}?todoDialog=1&error=${encodeMessage(toErrorMessage(error))}`;
   }
+
+  redirect(redirectTarget);
 }
 
 export async function toggleMonthlyTodoAction(formData: FormData): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget =
+    `/monate/${encodeMessage(monthKey)}?todoDialog=1&notice=${encodeMessage("Monats-ToDo aktualisiert.")}`;
 
   try {
     toggleMonthlyTodo(parseTodoId(formData.get("todoId")), monthKey);
     revalidatePath(`/monate/${monthKey}`);
-
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monats-ToDo aktualisiert.")}`,
-    );
   } catch (error) {
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
-    );
+    redirectTarget =
+      `/monate/${encodeMessage(monthKey)}?todoDialog=1&error=${encodeMessage(toErrorMessage(error))}`;
   }
+
+  redirect(redirectTarget);
 }

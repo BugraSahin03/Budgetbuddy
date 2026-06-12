@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 
 type MonthDialogProps = {
   title: string;
@@ -9,6 +9,7 @@ type MonthDialogProps = {
   description?: string;
   triggerLabel: string;
   triggerClassName?: string;
+  initialOpen?: boolean;
   children: ReactNode;
 };
 
@@ -18,9 +19,18 @@ export function MonthDialog({
   description,
   triggerLabel,
   triggerClassName,
+  initialOpen = false,
   children,
 }: MonthDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
+
+  useEffect(() => {
+    const dialog = dialogRef.current;
+
+    if (initialOpen && dialog && !dialog.open) {
+      dialog.showModal();
+    }
+  }, [initialOpen]);
 
   return (
     <>

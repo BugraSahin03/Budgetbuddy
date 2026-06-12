@@ -395,6 +395,8 @@ export default async function MonthDetailPage({
   const error = toSingleParam(resolvedSearchParams.error);
   const isBookingEditMode =
     toSingleParam(resolvedSearchParams.bookingEdit) === "1";
+  const shouldOpenTodoDialog =
+    toSingleParam(resolvedSearchParams.todoDialog) === "1";
   const month = getMonthDetail(monthKey);
   const allCategories = listCategories();
   const categoryVisuals = categoryVisualById(allCategories);
@@ -436,6 +438,7 @@ export default async function MonthDetailPage({
               title={`ToDos ${month.label}`}
               triggerLabel="ToDos"
               triggerClassName="month-dialog-trigger month-dialog-trigger-subtle"
+              initialOpen={shouldOpenTodoDialog}
             >
               <section className="month-todo-dialog">
                 <div className="month-todo-summary">
