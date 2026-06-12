@@ -774,6 +774,18 @@ CREATE INDEX IF NOT EXISTS idx_monthly_fixed_cost_snapshots_month_key
 ON monthly_fixed_cost_snapshots(month_key);
 `;
 
+const fin081MigrationSql = `
+ALTER TABLE fixed_costs
+ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0 CHECK (sort_order >= 0);
+
+UPDATE fixed_costs
+SET sort_order = id * 1000
+WHERE sort_order = 0;
+
+CREATE INDEX IF NOT EXISTS idx_fixed_costs_sort_order
+ON fixed_costs(sort_order);
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -835,6 +847,11 @@ export const migrations: readonly Migration[] = [
     name: "FIN-070 freeze fixed-cost plan on month close",
     sql: fin070MigrationSql,
   },
+  {
+    id: "0013_fin_081",
+    name: "FIN-081 add manual fixed-cost ordering",
+    sql: fin081MigrationSql,
+  },
 ];
 
 type MigrationRow = {
@@ -849,6 +866,11 @@ function upsertSchemaVersion(db: Database.Database, version: string): void {
       ON CONFLICT(key) DO UPDATE SET value = excluded.value
     `,
   ).run(version);
+}
+
+function tableColumnExists(db: Database.Database, tableName: string, columnName: string): boolean {
+  const rows = db.prepare(`PRAGMA table_info(${tableName})`).all() as Array<{ name: string }>;
+  return rows.some((row) => row.name === columnName);
 }
 
 export function getLatestSchemaVersion(): string {
@@ -869,7 +891,15 @@ export function applyMigrations(db: Database.Database): void {
     }
 
     const transaction = db.transaction((pendingMigration: Migration) => {
-      db.exec(pendingMigration.sql);
+      if (
+        pendingMigration.id === "0013_fin_081" &&
+        tableColumnExists(db, "fixed_costs", "sort_order")
+      ) {
+        db.exec("CREATE INDEX IF NOT EXISTS idx_fixed_costs_sort_order ON fixed_costs(sort_order);");
+      } else {
+        db.exec(pendingMigration.sql);
+      }
+
       db.prepare(
         "INSERT OR IGNORE INTO schema_migrations (id, name) VALUES (?, ?)",
       ).run(pendingMigration.id, pendingMigration.name);

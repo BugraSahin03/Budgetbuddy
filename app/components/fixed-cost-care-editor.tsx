@@ -1,3 +1,7 @@
+"use client";
+
+import { useMemo, useState } from "react";
+
 type FixedCostCareEditorProps = {
   action: (formData: FormData) => void | Promise<void>;
   fixedCosts: FixedCostEditorRow[];
@@ -12,6 +16,7 @@ type FixedCostEditorRow = {
   paymentNote: string | null;
   note: string | null;
   isActive: boolean;
+  sortOrder: number;
 };
 
 function formatEuro(cents: number): string {
@@ -43,6 +48,51 @@ export function FixedCostCareEditor({
   initialIsEditing = false,
 }: FixedCostCareEditorProps) {
   const isEditing = initialIsEditing;
+  const [orderedIds, setOrderedIds] = useState(() => fixedCosts.map((row) => row.id));
+  const [draggedId, setDraggedId] = useState<number | null>(null);
+  const fixedCostsById = useMemo(
+    () => new Map(fixedCosts.map((row) => [row.id, row])),
+    [fixedCosts],
+  );
+  const orderedFixedCosts = orderedIds
+    .map((id) => fixedCostsById.get(id))
+    .filter((row): row is FixedCostEditorRow => Boolean(row));
+
+  function moveFixedCost(fromId: number, toId: number): void {
+    if (fromId === toId) {
+      return;
+    }
+
+    setOrderedIds((currentIds) => {
+      const fromIndex = currentIds.indexOf(fromId);
+      const toIndex = currentIds.indexOf(toId);
+
+      if (fromIndex === -1 || toIndex === -1) {
+        return currentIds;
+      }
+
+      const nextIds = [...currentIds];
+      const [movedId] = nextIds.splice(fromIndex, 1);
+      nextIds.splice(toIndex, 0, movedId);
+      return nextIds;
+    });
+  }
+
+  function moveFixedCostByOffset(fixedCostId: number, offset: number): void {
+    setOrderedIds((currentIds) => {
+      const fromIndex = currentIds.indexOf(fixedCostId);
+      const toIndex = fromIndex + offset;
+
+      if (fromIndex === -1 || toIndex < 0 || toIndex >= currentIds.length) {
+        return currentIds;
+      }
+
+      const nextIds = [...currentIds];
+      const [movedId] = nextIds.splice(fromIndex, 1);
+      nextIds.splice(toIndex, 0, movedId);
+      return nextIds;
+    });
+  }
 
   return (
     <section className={`fixed-cost-panel fixed-cost-care-editor ${isEditing ? "is-editing" : ""}`} aria-labelledby="fixed-cost-list-heading">
@@ -81,9 +131,33 @@ export function FixedCostCareEditor({
       ) : (
         <form id="fixed-cost-edit-form" action={action}>
           <div className="fixed-cost-list">
-            {fixedCosts.map((row) => (
-              <article key={row.id} className={`fixed-cost-card ${row.isActive ? "" : "is-inactive"}`}>
+            {orderedFixedCosts.map((row, index) => (
+              <article
+                key={row.id}
+                className={`fixed-cost-card ${row.isActive ? "" : "is-inactive"} ${isEditing ? "is-sortable" : ""} ${draggedId === row.id ? "is-dragging" : ""}`}
+                draggable={isEditing}
+                onDragStart={() => {
+                  if (isEditing) {
+                    setDraggedId(row.id);
+                  }
+                }}
+                onDragEnd={() => setDraggedId(null)}
+                onDragOver={(event) => {
+                  if (isEditing && draggedId !== null) {
+                    event.preventDefault();
+                  }
+                }}
+                onDrop={(event) => {
+                  event.preventDefault();
+
+                  if (isEditing && draggedId !== null) {
+                    moveFixedCost(draggedId, row.id);
+                    setDraggedId(null);
+                  }
+                }}
+              >
                 <input type="hidden" name="fixedCostIds" value={row.id} />
+                <input type="hidden" name="sortOrderIds" value={row.id} />
                 <input type="hidden" name={`isActive-${row.id}`} value={row.isActive ? "on" : ""} />
                 {!isEditing ? (
                   <div className="fixed-cost-read-card">
@@ -114,6 +188,29 @@ export function FixedCostCareEditor({
                   </div>
                 ) : (
                   <div className="fixed-cost-edit-form">
+                    <div className="fixed-cost-sort-controls" aria-label={`Reihenfolge fuer ${row.name}`}>
+                      <span className="fixed-cost-drag-handle" aria-hidden="true">
+                        ↕
+                      </span>
+                      <button
+                        type="button"
+                        className="fixed-cost-sort-button"
+                        onClick={() => moveFixedCostByOffset(row.id, -1)}
+                        disabled={index === 0}
+                        aria-label={`${row.name} nach oben verschieben`}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        className="fixed-cost-sort-button"
+                        onClick={() => moveFixedCostByOffset(row.id, 1)}
+                        disabled={index === orderedFixedCosts.length - 1}
+                        aria-label={`${row.name} nach unten verschieben`}
+                      >
+                        ↓
+                      </button>
+                    </div>
                     <input type="hidden" name={`fixedCostId-${row.id}`} value={row.id} />
                     <div className="fixed-cost-card-title">
                       <span className={`fixed-cost-state-dot ${row.isActive ? "" : "is-muted"}`}>

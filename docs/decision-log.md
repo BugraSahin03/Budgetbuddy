@@ -1516,6 +1516,22 @@ Auswirkung:
 - Ein Monat kann fachlich bei `0 EUR` Monatsrest stehen, obwohl noch Bargeldbestand vorhanden ist.
 - Spaetere Monatsabschluss-Arbeit kann Bargeld transparent anzeigen, darf daraus aber nicht automatisch einen Blocker oder eine Buchung ableiten.
 
+## 2026-06-12 - FIN-081 speichert Fixkosten-Pflegereihenfolge separat
+
+Quelle/Ticket: `FIN-081`
+
+Erkenntnis/Entscheidung:
+
+- Fixkosten erhalten ein eigenes technisches Sortierfeld `sort_order` fuer die manuelle Pflege-Reihenfolge.
+- Die Reihenfolge beeinflusst nur die Anzeige und Bearbeitung in der Fixkostenpflege.
+- Neue Fixkosten werden am Ende der bestehenden Reihenfolge einsortiert.
+- Deaktivieren, Reaktivieren und normales Bearbeiten sollen die gespeicherte Reihenfolge nicht unnoetig veraendern.
+
+Auswirkung:
+
+- Die aktive Fixkostensumme, Monatsberechnung, Import-Kontrolltreffer und Monatsabschluss-/Snapshotlogik bleiben unveraendert.
+- Eine ADR ist nicht noetig, weil keine neue Fachlogik entsteht; es ist eine enge Persistenzentscheidung fuer UI-/Pflegekomfort.
+
 ## 2026-06-12 - FIN-070 friert Fixkostenplan beim Monatsabschluss ein
 
 Quelle/Ticket: `FIN-070`

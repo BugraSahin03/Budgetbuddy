@@ -2139,15 +2139,73 @@ details[open] > .archive-section-summary::after {
   border: 1px solid rgba(226, 232, 240, 0.82);
   border-radius: 1.4rem;
   padding: 1rem;
+  transition: border-color 160ms ease, box-shadow 160ms ease, opacity 160ms ease, transform 160ms ease;
 }
 
 .fixed-cost-card.is-inactive {
   background: rgba(248, 250, 252, 0.72);
 }
 
+.fixed-cost-card.is-sortable {
+  cursor: grab;
+}
+
+.fixed-cost-card.is-sortable:active {
+  cursor: grabbing;
+}
+
+.fixed-cost-card.is-dragging {
+  border-color: rgba(14, 116, 144, 0.28);
+  box-shadow: 0 18px 42px rgba(14, 116, 144, 0.12);
+  opacity: 0.7;
+  transform: scale(0.995);
+}
+
 .fixed-cost-card-title {
   display: grid;
   gap: 0.65rem;
+}
+
+.fixed-cost-sort-controls {
+  align-items: center;
+  display: flex;
+  gap: 0.35rem;
+}
+
+.fixed-cost-drag-handle,
+.fixed-cost-sort-button {
+  align-items: center;
+  background: rgba(239, 246, 255, 0.88);
+  border: 1px solid rgba(125, 211, 252, 0.3);
+  border-radius: 999px;
+  color: var(--month-ink-soft);
+  display: inline-flex;
+  font-size: 0.85rem;
+  font-weight: 850;
+  height: 2.25rem;
+  justify-content: center;
+  width: 2.25rem;
+}
+
+.fixed-cost-drag-handle {
+  cursor: grab;
+}
+
+.fixed-cost-sort-button {
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.fixed-cost-sort-button:hover:not(:disabled),
+.fixed-cost-sort-button:focus-visible {
+  background: rgba(219, 234, 254, 0.95);
+  border-color: rgba(14, 116, 144, 0.34);
+  color: var(--month-ink);
+  outline: none;
+}
+
+.fixed-cost-sort-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
 }
 
 .fixed-cost-read-card {
@@ -2287,7 +2345,7 @@ details[open] > .archive-section-summary::after {
 
   .fixed-cost-edit-form {
     align-items: end;
-    grid-template-columns: 1.25fr 0.8fr 0.8fr 1fr 1fr auto;
+    grid-template-columns: auto 1.25fr 0.8fr 0.8fr 1fr 1fr auto;
   }
 
   .fixed-cost-read-card {

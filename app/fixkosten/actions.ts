@@ -8,6 +8,7 @@ import {
   setFixedCostActive,
   type FixedCostInput,
   updateFixedCost,
+  updateFixedCostSortOrder,
 } from "@/src/fixed-costs/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
@@ -63,6 +64,12 @@ function parseFixedCostIds(formData: FormData): number[] {
     .map((value) => parsePositiveInt(value, "Fixkosten-ID"));
 }
 
+function parseSortOrderIds(formData: FormData): number[] {
+  return formData
+    .getAll("sortOrderIds")
+    .map((value) => parsePositiveInt(value, "Fixkosten-ID"));
+}
+
 export async function createFixedCostAction(formData: FormData): Promise<never> {
   const redirectTarget = "/fixkosten?notice=" + encodeMessage("Fixkosten-Eintrag erstellt.");
 
@@ -91,6 +98,8 @@ export async function updateFixedCostAction(formData: FormData): Promise<never> 
         encodeMessage(currentlyActive ? "Fixkosten-Eintrag deaktiviert." : "Fixkosten-Eintrag reaktiviert.");
       revalidatePath("/fixkosten");
     } else {
+      updateFixedCostSortOrder(parseSortOrderIds(formData));
+
       for (const fixedCostId of parseFixedCostIds(formData)) {
         updateFixedCost(fixedCostId, parseIndexedFixedCostInput(formData, fixedCostId));
       }

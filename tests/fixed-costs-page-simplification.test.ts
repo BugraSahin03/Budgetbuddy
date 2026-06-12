@@ -48,10 +48,14 @@ describe("fixed costs page simplification", () => {
     expect(editorSource).toContain("fixed-cost-read-card");
     expect(editorSource).toContain("fixed-cost-state-dot");
     expect(editorSource).toContain("fixed-cost-edit-form");
+    expect(editorSource).toContain("draggable={isEditing}");
+    expect(editorSource).toContain("sortOrderIds");
+    expect(editorSource).toContain("fixed-cost-sort-controls");
     expect(editorSource).toContain('name="stateChangeFixedCostId"');
     expect(editorSource).toContain("fixedCostIds");
     expect(editorSource).toContain("name={`plannedAmount-${row.id}`}");
     expect(actionsSource).toContain("parseIndexedFixedCostInput");
+    expect(actionsSource).toContain("updateFixedCostSortOrder");
     expect(actionsSource).toContain("stateChangeFixedCostId");
     expect(actionsSource).toContain("edit=1");
     expect(actionsSource).toContain("redirect(redirectTarget)");
