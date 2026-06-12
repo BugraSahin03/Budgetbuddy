@@ -10,27 +10,35 @@ function readProjectFile(path: string): string {
 }
 
 describe("FIN-079 import rule settings UI", () => {
-  it("exposes import rules as a dedicated settings area next to aliases", () => {
+  it("exposes control pattern recognition as a dedicated settings area next to aliases", () => {
     const settingsPage = readProjectFile("app/einstellungen/page.tsx");
     const importRulesPage = readProjectFile("app/einstellungen/import-regeln/page.tsx");
     const settingsActions = readProjectFile("app/einstellungen/actions.ts");
 
-    expect(settingsPage).toContain("Import-Regeln");
+    expect(settingsPage).toContain("Import-Erkennung");
     expect(settingsPage).toContain('href: "/einstellungen/import-regeln"');
     expect(settingsPage).toContain("Import-Aliasse");
     expect(importRulesPage).toContain("Import-Erkennung");
-    expect(importRulesPage).toContain("Import-Regeln");
+    expect(importRulesPage).toContain("Kontrollmuster");
     expect(importRulesPage).toContain("Import-Aliasse bleiben separat");
     expect(importRulesPage).toContain("N26-Fix.");
-    expect(importRulesPage).toContain("Bargeld-Transfer / Fixkosten-Kontrolle");
+    expect(importRulesPage).toContain("N26-Sammeltransfer als Fixkosten-Kontrolle");
     expect(importRulesPage).toContain("createImportRuleSettingsAction");
     expect(importRulesPage).toContain("updateImportRuleSettingsAction");
     expect(importRulesPage).toContain('name="pattern"');
     expect(importRulesPage).toContain('name="matchField"');
-    expect(importRulesPage).toContain('name="targetType"');
     expect(importRulesPage).toContain('name="isActive"');
+    expect(importRulesPage).not.toContain('name="targetType"');
+    expect(importRulesPage).not.toContain('name="categoryId"');
+    expect(importRulesPage).not.toContain('name="specialBudgetId"');
+    expect(importRulesPage).not.toContain("Sonderkategorie</option>");
+    expect(importRulesPage).not.toContain("Kategorie</option>");
+    expect(importRulesPage).not.toContain("Bargeld-Transfer / Fixkosten-Kontrolle");
     expect(settingsActions).toContain("createImportRuleSettingsAction");
     expect(settingsActions).toContain("updateImportRuleSettingsAction");
+    expect(settingsActions).toContain('normalizedFormData.set("targetType", "transfer_cash")');
+    expect(settingsActions).toContain('normalizedFormData.delete("categoryId")');
+    expect(settingsActions).toContain('normalizedFormData.delete("specialBudgetId")');
     expect(settingsActions).toContain("/einstellungen/import-regeln");
   });
 

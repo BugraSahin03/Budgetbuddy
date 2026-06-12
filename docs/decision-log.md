@@ -1462,19 +1462,20 @@ Auswirkung:
 - Das Dashboard bleibt aufgeraeumt, wirkt aber weniger extrem und konsistenter mit den bestehenden Pflege- und Monatsseiten.
 - Es wird weiterhin keine Monats-, Transaktions- oder Berechnungslogik geaendert.
 
-## 2026-06-12 - FIN-079 verschiebt Import-Regeln in die Einstellungen
+## 2026-06-12 - FIN-079 verschiebt Kontrollmuster in die Einstellungen
 
 Quelle/Ticket: `FIN-079`
 
 Erkenntnis/Entscheidung:
 
-- Import-Regeln und Fixkosten-Kontrollmuster werden als eigener Einstellungsbereich `/einstellungen/import-regeln` gefuehrt.
+- Import-Erkennung fuer Kontrollmuster wird als eigener Einstellungsbereich `/einstellungen/import-regeln` gefuehrt.
 - Die alte `/import`-Seite bleibt fuer CSV-Vorschau und Importausfuehrung zustaendig, ist aber nicht mehr der primaere Ort fuer Regelpflege.
 - Import-Aliasse bleiben getrennt unter `/einstellungen/import-aliase`, weil sie nur Anzeigenamen veraendern.
 - Die bestehende `import_rules`-Persistenz und die Seed-Regel `N26 Sammeltransfer Kontrolle` werden weiterverwendet.
+- Kategorie- und Sonderkategorie-Zuordnungsregeln bleiben im ersten UI-Schnitt bewusst nicht prominent sichtbar.
 
 Auswirkung:
 
 - Das Pattern `N26-Fix.` bleibt ohne Codeaenderung sichtbar, editierbar und deaktivierbar.
-- Aenderungen an Import-Regeln wirken weiter auf zukuenftige Import-Vorschauen und Fixkosten-Kontrolltreffer.
+- Aenderungen an Kontrollmustern wirken weiter auf zukuenftige Import-Vorschauen und Fixkosten-Kontrolltreffer.
 - Es entsteht keine neue Import-, Alias-, Duplikat- oder Fixkostenberechnungslogik.

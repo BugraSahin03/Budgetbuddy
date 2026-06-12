@@ -50,6 +50,20 @@ function parseImportRuleId(formData: FormData): number {
   return ruleId;
 }
 
+function parseImportControlPatternInput(formData: FormData) {
+  const normalizedFormData = new FormData();
+
+  for (const [key, value] of formData.entries()) {
+    normalizedFormData.set(key, value);
+  }
+
+  normalizedFormData.set("targetType", "transfer_cash");
+  normalizedFormData.delete("categoryId");
+  normalizedFormData.delete("specialBudgetId");
+
+  return parseRuleInputFromFormData(normalizedFormData);
+}
+
 function parseProjectId(formData: FormData): number {
   const projectId = Number.parseInt(String(formData.get("projectId") ?? ""), 10);
 
@@ -155,7 +169,7 @@ export async function createImportRuleSettingsAction(
   let errorMessage: string | null = null;
 
   try {
-    createImportRule(parseRuleInputFromFormData(formData));
+    createImportRule(parseImportControlPatternInput(formData));
     revalidatePath("/einstellungen");
     revalidatePath("/einstellungen/import-regeln");
     revalidatePath("/import");
@@ -177,7 +191,7 @@ export async function updateImportRuleSettingsAction(
   let errorMessage: string | null = null;
 
   try {
-    updateImportRule(parseImportRuleId(formData), parseRuleInputFromFormData(formData));
+    updateImportRule(parseImportRuleId(formData), parseImportControlPatternInput(formData));
     revalidatePath("/einstellungen");
     revalidatePath("/einstellungen/import-regeln");
     revalidatePath("/import");

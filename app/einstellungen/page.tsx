@@ -9,8 +9,8 @@ const GLOBAL_SETTINGS = [
   },
   {
     href: "/einstellungen/import-regeln",
-    title: "Import-Regeln",
-    meta: "Erkennung & Kontrollmuster",
+    title: "Import-Erkennung",
+    meta: "Kontrollmuster",
     icon: "⌁",
   },
   {

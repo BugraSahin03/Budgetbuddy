@@ -128,6 +128,9 @@ describe("FIN-059 import display alias actions", () => {
     const createData = new FormData();
     const updateData = new FormData();
     updateData.set("ruleId", "5");
+    updateData.set("targetType", "category");
+    updateData.set("categoryId", "2");
+    updateData.set("specialBudgetId", "3");
 
     await expect(createImportRuleSettingsAction(createData)).rejects.toThrow(
       "NEXT_REDIRECT:/einstellungen/import-regeln?notice=Import-Regel%20erstellt.",
@@ -159,6 +162,11 @@ describe("FIN-059 import display alias actions", () => {
     expect(revalidatePathMock).toHaveBeenCalledWith("/einstellungen/import-regeln");
     expect(revalidatePathMock).toHaveBeenCalledWith("/import");
     expect(redirectMock).not.toHaveBeenCalledWith(expect.stringMatching(/^\/import\?/));
+    const parsedUpdateFormData =
+      importRuleRepositoryMocks.parseRuleInputFromFormData.mock.calls[1][0] as FormData;
+    expect(parsedUpdateFormData.get("targetType")).toBe("transfer_cash");
+    expect(parsedUpdateFormData.get("categoryId")).toBeNull();
+    expect(parsedUpdateFormData.get("specialBudgetId")).toBeNull();
   });
 
   it("reactivates archived special budget projects from settings", async () => {
