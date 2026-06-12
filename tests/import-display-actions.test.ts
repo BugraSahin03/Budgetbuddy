@@ -12,6 +12,11 @@ const repositoryMocks = vi.hoisted(() => ({
   parseImportDisplayAliasInputFromFormData: vi.fn(),
   updateImportDisplayAlias: vi.fn(),
 }));
+const importRuleRepositoryMocks = vi.hoisted(() => ({
+  createImportRule: vi.fn(),
+  parseRuleInputFromFormData: vi.fn(),
+  updateImportRule: vi.fn(),
+}));
 const specialBudgetRepositoryMocks = vi.hoisted(() => ({
   reactivateSpecialBudgetProject: vi.fn(),
 }));
@@ -33,17 +38,20 @@ vi.mock("next/cache", () => ({
 }));
 
 vi.mock("@/src/settings/import-display-aliases/repository", () => repositoryMocks);
+vi.mock("@/src/import-rules/repository", () => importRuleRepositoryMocks);
 vi.mock("@/src/special-budgets/repository", () => specialBudgetRepositoryMocks);
 vi.mock("@/src/categories/repository", () => categoryRepositoryMocks);
 vi.mock("@/src/fixed-costs/repository", () => fixedCostRepositoryMocks);
 
 import {
   createImportDisplayAliasAction,
+  createImportRuleSettingsAction,
   deleteImportDisplayAliasAction,
   reactivateCategoryAction,
   reactivateFixedCostAction,
   reactivateSpecialBudgetProjectAction,
   updateImportDisplayAliasAction,
+  updateImportRuleSettingsAction,
 } from "@/app/einstellungen/actions";
 
 describe("FIN-059 import display alias actions", () => {
@@ -54,12 +62,25 @@ describe("FIN-059 import display alias actions", () => {
     repositoryMocks.deleteImportDisplayAlias.mockReset();
     repositoryMocks.parseImportDisplayAliasInputFromFormData.mockReset();
     repositoryMocks.updateImportDisplayAlias.mockReset();
+    importRuleRepositoryMocks.createImportRule.mockReset();
+    importRuleRepositoryMocks.parseRuleInputFromFormData.mockReset();
+    importRuleRepositoryMocks.updateImportRule.mockReset();
     specialBudgetRepositoryMocks.reactivateSpecialBudgetProject.mockReset();
     categoryRepositoryMocks.setCategoryActive.mockReset();
     fixedCostRepositoryMocks.setFixedCostActive.mockReset();
     repositoryMocks.parseImportDisplayAliasInputFromFormData.mockReturnValue({
       displayName: "Amazon",
       pattern: "AMZN",
+    });
+    importRuleRepositoryMocks.parseRuleInputFromFormData.mockReturnValue({
+      name: "N26 Sammeltransfer Kontrolle",
+      pattern: "N26-Fix.",
+      matchField: "description",
+      targetType: "transfer_cash",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 60,
     });
   });
 
@@ -101,6 +122,43 @@ describe("FIN-059 import display alias actions", () => {
     expect(redirectMock).toHaveBeenCalledWith(
       "/einstellungen/import-aliase?error=Muster%20existiert%20bereits.",
     );
+  });
+
+  it("redirects successful import rule writes to the dedicated settings page", async () => {
+    const createData = new FormData();
+    const updateData = new FormData();
+    updateData.set("ruleId", "5");
+
+    await expect(createImportRuleSettingsAction(createData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/import-regeln?notice=Import-Regel%20erstellt.",
+    );
+    await expect(updateImportRuleSettingsAction(updateData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/import-regeln?notice=Import-Regel%20gespeichert.",
+    );
+
+    expect(importRuleRepositoryMocks.createImportRule).toHaveBeenCalledWith({
+      name: "N26 Sammeltransfer Kontrolle",
+      pattern: "N26-Fix.",
+      matchField: "description",
+      targetType: "transfer_cash",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 60,
+    });
+    expect(importRuleRepositoryMocks.updateImportRule).toHaveBeenCalledWith(5, {
+      name: "N26 Sammeltransfer Kontrolle",
+      pattern: "N26-Fix.",
+      matchField: "description",
+      targetType: "transfer_cash",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 60,
+    });
+    expect(revalidatePathMock).toHaveBeenCalledWith("/einstellungen/import-regeln");
+    expect(revalidatePathMock).toHaveBeenCalledWith("/import");
+    expect(redirectMock).not.toHaveBeenCalledWith(expect.stringMatching(/^\/import\?/));
   });
 
   it("reactivates archived special budget projects from settings", async () => {

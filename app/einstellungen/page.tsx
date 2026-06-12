@@ -8,6 +8,12 @@ const GLOBAL_SETTINGS = [
     icon: "⚙",
   },
   {
+    href: "/einstellungen/import-regeln",
+    title: "Import-Regeln",
+    meta: "Erkennung & Kontrollmuster",
+    icon: "⌁",
+  },
+  {
     href: "/einstellungen/kategorie-archiv",
     title: "Kategorie-Archiv",
     meta: "Kategorien & Sonderkategorien",

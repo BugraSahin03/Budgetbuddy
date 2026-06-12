@@ -11,6 +11,11 @@ import {
 } from "@/src/settings/import-display-aliases/repository";
 import { setCategoryActive } from "@/src/categories/repository";
 import { setFixedCostActive } from "@/src/fixed-costs/repository";
+import {
+  createImportRule,
+  parseRuleInputFromFormData,
+  updateImportRule,
+} from "@/src/import-rules/repository";
 import { reactivateSpecialBudgetProject } from "@/src/special-budgets/repository";
 
 function encodeMessage(message: string): string {
@@ -33,6 +38,16 @@ function parseAliasId(formData: FormData): number {
   }
 
   return aliasId;
+}
+
+function parseImportRuleId(formData: FormData): number {
+  const ruleId = Number.parseInt(String(formData.get("ruleId") ?? ""), 10);
+
+  if (!Number.isInteger(ruleId) || ruleId <= 0) {
+    throw new Error("Regel-ID ist ungueltig.");
+  }
+
+  return ruleId;
 }
 
 function parseProjectId(formData: FormData): number {
@@ -132,6 +147,53 @@ export async function deleteImportDisplayAliasAction(
   }
 
   redirect("/einstellungen/import-aliase?notice=" + encodeMessage("Import-Alias geloescht."));
+}
+
+export async function createImportRuleSettingsAction(
+  formData: FormData,
+): Promise<never> {
+  let errorMessage: string | null = null;
+
+  try {
+    createImportRule(parseRuleInputFromFormData(formData));
+    revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/import-regeln");
+    revalidatePath("/import");
+    revalidatePath("/monate");
+  } catch (error) {
+    errorMessage = toErrorMessage(error);
+  }
+
+  if (errorMessage) {
+    redirect("/einstellungen/import-regeln?error=" + encodeMessage(errorMessage));
+  }
+
+  redirect("/einstellungen/import-regeln?notice=" + encodeMessage("Import-Regel erstellt."));
+}
+
+export async function updateImportRuleSettingsAction(
+  formData: FormData,
+): Promise<never> {
+  let errorMessage: string | null = null;
+
+  try {
+    updateImportRule(parseImportRuleId(formData), parseRuleInputFromFormData(formData));
+    revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/import-regeln");
+    revalidatePath("/import");
+    revalidatePath("/monate");
+  } catch (error) {
+    errorMessage = toErrorMessage(error);
+  }
+
+  if (errorMessage) {
+    redirect("/einstellungen/import-regeln?error=" + encodeMessage(errorMessage));
+  }
+
+  redirect(
+    "/einstellungen/import-regeln?notice=" +
+      encodeMessage("Import-Regel gespeichert."),
+  );
 }
 
 export async function reactivateSpecialBudgetProjectAction(
