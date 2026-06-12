@@ -258,6 +258,21 @@ Summe aller echten Ausgaben im Monat, ohne Transfers.
 
 Bargeldabhebungen sind Transfers und zaehlen nicht als Ausgabe. Die spaeteren manuellen Barzahlungen zaehlen als Ausgabe.
 
+### Bargeldbestand (FIN-078)
+
+Bargeld ist ein separater Konto-/Topfbestand und kein ungeplanter Monatsrest.
+
+Fachregeln:
+
+- Bargeldabhebungen bleiben Transfers von Sparkasse nach Bargeld.
+- Barzahlungen sind echte Ausgaben im jeweiligen Monat.
+- Nicht ausgegebenes Bargeld bleibt als Bargeldbestand bestehen und wird in
+  Folgemonate mitgenommen.
+- Bargeldbestand wird nicht automatisch als Ausgabe, Sparen, Reserve oder
+  Restverwertung gebucht.
+- Bargeldbestand wird in der Monatsansicht als Transparenzinformation gezeigt,
+  veraendert aber `Verfuegbar`/Monatsrest nicht automatisch.
+
 ### Verfuegbar (FIN-027)
 
 `Verfuegbar = Einkommen - aktive Fixkostensumme (Plan) - variable Ausgaben`
