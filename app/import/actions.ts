@@ -3,7 +3,6 @@
 import { randomUUID } from "node:crypto";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 
 import {
   detectDefaultImportMonthKey,
@@ -12,12 +11,7 @@ import {
 import { parseSparkasseCsvToPreview } from "@/src/import/sparkasse-csv";
 import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
 import { listFixedCosts } from "@/src/fixed-costs/repository";
-import {
-  createImportRule,
-  listActiveImportRules,
-  parseRuleInputFromFormData,
-  updateImportRule,
-} from "@/src/import-rules/repository";
+import { listActiveImportRules } from "@/src/import-rules/repository";
 
 import { type ImportPreviewState, importPreviewInitialState } from "@/app/import/state";
 
@@ -182,43 +176,5 @@ export async function parseSparkasseCsvAction(
       ...importPreviewInitialState,
       fatalError: message,
     };
-  }
-}
-
-function toErrorMessage(error: unknown): string {
-  if (error instanceof Error && error.message.trim().length > 0) {
-    return error.message;
-  }
-
-  return "Regel konnte nicht gespeichert werden.";
-}
-
-function encodeMessage(message: string): string {
-  return encodeURIComponent(message);
-}
-
-export async function createImportRuleAction(formData: FormData): Promise<never> {
-  try {
-    createImportRule(parseRuleInputFromFormData(formData));
-    revalidatePath("/import");
-    redirect("/import?notice=" + encodeMessage("Import-Regel erstellt."));
-  } catch (error) {
-    redirect("/import?error=" + encodeMessage(toErrorMessage(error)));
-  }
-}
-
-export async function updateImportRuleAction(formData: FormData): Promise<never> {
-  try {
-    const ruleId = Number.parseInt(String(formData.get("ruleId") ?? ""), 10);
-
-    if (!Number.isInteger(ruleId) || ruleId <= 0) {
-      throw new Error("Regel-ID ist ungueltig.");
-    }
-
-    updateImportRule(ruleId, parseRuleInputFromFormData(formData));
-    revalidatePath("/import");
-    redirect("/import?notice=" + encodeMessage("Import-Regel gespeichert."));
-  } catch (error) {
-    redirect("/import?error=" + encodeMessage(toErrorMessage(error)));
   }
 }
