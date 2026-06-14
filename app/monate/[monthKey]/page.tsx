@@ -568,12 +568,23 @@ export default async function MonthDetailPage({
             </div>
           </div>
           <article className="month-budget-stand-card">
-            <p className="month-eyebrow">Aktueller Budgetstand</p>
-            <p
-              className={`mt-3 text-[clamp(2.05rem,4.6vw,3.4rem)] font-black tracking-[-0.075em] ${budgetStandTone(month.dashboard.totals.availableCents)}`}
-            >
-              {formatEuro(month.dashboard.totals.availableCents)}
-            </p>
+            <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between lg:flex-col lg:items-start">
+              <div>
+                <p className="month-eyebrow">Aktueller Budgetstand</p>
+                <p
+                  className={`mt-3 text-[clamp(2.05rem,4.6vw,3.4rem)] font-black tracking-[-0.075em] ${budgetStandTone(month.dashboard.totals.availableCents)}`}
+                >
+                  {formatEuro(month.dashboard.totals.availableCents)}
+                </p>
+              </div>
+              <div className="month-cash-inline">
+                <span aria-hidden="true">€</span>
+                <div>
+                  <p>Bargeldbestand</p>
+                  <strong>{formatEuro(month.dashboard.totals.cashBalanceCents)}</strong>
+                </div>
+              </div>
+            </div>
           </article>
         </div>
       </section>
@@ -619,7 +630,7 @@ export default async function MonthDetailPage({
         </section>
       ) : null}
 
-      <section className="grid gap-6 md:grid-cols-2 xl:grid-cols-5">
+      <section className="grid gap-6 md:grid-cols-3">
         <ReferenceMetricCard
           label="Einnahmen"
           value={formatEuro(month.dashboard.totals.incomeCents)}
@@ -730,22 +741,6 @@ export default async function MonthDetailPage({
           tone="savings"
           marker="↟"
         />
-        <ReferenceMetricCard
-          label="Bargeldbestand"
-          value={formatEuro(month.dashboard.totals.cashBalanceCents)}
-          copy="Separater Bestand, nicht automatisch Monatsrest."
-          tone="cash"
-          marker="€"
-        />
-        <ReferenceMetricCard
-          label="Rest nach Planung"
-          value={formatEuro(
-            month.dashboard.planSummary.planRestAfterBudgetPotsCents,
-          )}
-          copy="Einnahmen minus Kategorien."
-          tone="plan"
-          marker="≈"
-        />
       </section>
 
       <section className="grid gap-7 xl:grid-cols-[1.08fr_1fr]">
@@ -793,6 +788,7 @@ export default async function MonthDetailPage({
                         {month.dashboard.categoryRows.map((row) => {
                           const category = categoryVisuals.get(row.categoryId);
                           const usageState = getCategoryUsageState(row);
+                          const isSavingsCategory = category?.isSavings === true;
 
                           return (
                             <article
@@ -827,45 +823,47 @@ export default async function MonthDetailPage({
                                   {usageState.label}
                                 </span>
                               </div>
-                              <form
-                                action={setMonthlyBudgetOverrideAction}
-                                className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
-                              >
-                                <input
-                                  type="hidden"
-                                  name="monthKey"
-                                  value={month.monthKey}
-                                />
-                                <input
-                                  type="hidden"
-                                  name="categoryId"
-                                  value={row.categoryId}
-                                />
-                                <input
-                                  name="budgetAmount"
-                                  inputMode="decimal"
-                                  defaultValue={toInputAmount(
-                                    row.monthOverrideAmountCents ??
-                                      row.budgetAmountCents,
-                                  )}
-                                  placeholder={
-                                    row.defaultBudgetAmountCents === null
-                                      ? "z. B. 250.00"
-                                      : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`
-                                  }
-                                  className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
-                                />
-                                <button
-                                  type="submit"
-                                  className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                              {!isSavingsCategory ? (
+                                <form
+                                  action={setMonthlyBudgetOverrideAction}
+                                  className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
                                 >
-                                  Speichern
-                                </button>
-                              </form>
-                              <p className="mt-3 text-xs leading-5 text-[color:var(--month-ink-soft)]">
-                                Leerer Wert entfernt nur den Monats-Override fuer{" "}
-                                {month.label}.
-                              </p>
+                                  <input
+                                    type="hidden"
+                                    name="monthKey"
+                                    value={month.monthKey}
+                                  />
+                                  <input
+                                    type="hidden"
+                                    name="categoryId"
+                                    value={row.categoryId}
+                                  />
+                                  <input
+                                    name="budgetAmount"
+                                    inputMode="decimal"
+                                    defaultValue={toInputAmount(
+                                      row.monthOverrideAmountCents ??
+                                        row.budgetAmountCents,
+                                    )}
+                                    placeholder={
+                                      row.defaultBudgetAmountCents === null
+                                        ? "z. B. 250.00"
+                                        : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`
+                                    }
+                                    className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
+                                  />
+                                  <button
+                                    type="submit"
+                                    className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                                  >
+                                    Speichern
+                                  </button>
+                                </form>
+                              ) : (
+                                <p className="mt-5 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs font-bold leading-5 text-emerald-800">
+                                  Sparen entsteht durch echte Buchungen und bekommt keinen Planbetrag.
+                                </p>
+                              )}
                             </article>
                           );
                         })}
@@ -1058,6 +1056,22 @@ export default async function MonthDetailPage({
                     </div>
                   );
                 })}
+
+                <div className="flex justify-end">
+                  <div className="inline-flex w-fit rounded-[1.25rem] border border-white/70 bg-white/72 px-4 py-3 shadow-[0_12px_28px_rgba(7,27,70,0.06)]">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
+                        Rest nach Planung
+                      </p>
+                      <p className="text-sm font-black text-[color:var(--month-ink)]">
+                        {formatEuro(
+                          month.dashboard.planSummary
+                            .planRestAfterBudgetPotsCents,
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
 
                 {activeSpecialBudgetRows.length > 0 ? (
                   <section className="pt-2">

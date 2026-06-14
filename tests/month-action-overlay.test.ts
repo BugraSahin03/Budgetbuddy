@@ -56,6 +56,8 @@ describe("FIN-052 month action overlay", () => {
     expect(overlay).toContain("category:${category.id}");
     expect(overlay).toContain("specialBudget:${budget.id}");
     expect(overlay).toContain("month-action-choice-icon");
+    expect(overlay).toContain('variant="neutral"');
+    expect(overlay).not.toContain("categorySoftStyle(category.colorHex)");
     expect(actions).toContain("categoryMatch");
     expect(actions).toContain("specialBudgetMatch");
   });
@@ -116,6 +118,17 @@ describe("FIN-052 month action overlay", () => {
     expect(importForm).toContain('surface === "embedded"');
     expect(importForm).toContain('name="effectiveMonthKey" type="hidden"');
     expect(importForm).not.toContain("Der geoeffnete Monat wird automatisch fuer diesen Import verwendet.");
+  });
+
+  it("presents the embedded CSV import as a clear upload choice", () => {
+    const importForm = readProjectFile("app/import/import-form.tsx");
+    const globals = readProjectFile("app/globals.css");
+
+    expect(importForm).toContain("CSV auswaehlen");
+    expect(importForm).toContain("selectedFilename");
+    expect(importForm).toContain("Noch keine Datei ausgewaehlt");
+    expect(importForm).toContain("month-import-upload-box");
+    expect(globals).toContain(".month-import-upload-box");
   });
 
   it("shows the monthly budget stand in the header and reduces the add action to a plus button", () => {

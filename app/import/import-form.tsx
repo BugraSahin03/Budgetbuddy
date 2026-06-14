@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 
 import { parseSparkasseCsvAction } from "@/app/import/actions";
 import { importPreviewInitialState } from "@/app/import/state";
@@ -48,6 +48,7 @@ export function ImportForm({
     parseSparkasseCsvAction,
     importPreviewInitialState,
   );
+  const [selectedFilename, setSelectedFilename] = useState<string | null>(null);
   const fallbackMonthKey = new Date().toISOString().slice(0, 7);
   const effectiveMonthDefault = resolveEffectiveMonthDefault({
     detectedMonthKey: state.detectedMonthKey,
@@ -70,19 +71,46 @@ export function ImportForm({
   return (
     <div className="space-y-4">
       <form action={formAction} className={formSurfaceClass}>
-        {returnMonthKey ? <input type="hidden" name="returnMonthKey" value={returnMonthKey} /> : null}
+        {returnMonthKey ? (
+          <input type="hidden" name="returnMonthKey" value={returnMonthKey} />
+        ) : null}
         <div>
-          <label htmlFor="sparkasseCsv" className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500">
+          <label
+            htmlFor="sparkasseCsv"
+            className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500"
+          >
             Sparkassen-CSV Datei
           </label>
+          {surface === "embedded" ? (
+            <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
+              Waehle einen originalen Sparkassen-CSV-Export aus. Nach der Vorschau kannst du den
+              Import direkt fuer diesen Monat bestaetigen.
+            </p>
+          ) : null}
           <input
             id="sparkasseCsv"
             name="sparkasseCsv"
             type="file"
             accept=".csv,.CSV,text/csv"
-            className="mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+            className={
+              surface === "embedded"
+                ? "sr-only"
+                : "mt-1 block w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm text-slate-900"
+            }
             required={!hasPreviewFile}
+            onChange={(event) => {
+              setSelectedFilename(event.currentTarget.files?.[0]?.name ?? null);
+            }}
           />
+          {surface === "embedded" ? (
+            <label htmlFor="sparkasseCsv" className="month-import-upload-box">
+              <span aria-hidden="true">CSV</span>
+              <strong>CSV auswaehlen</strong>
+              <em>
+                {selectedFilename ?? state.previewFilename ?? "Noch keine Datei ausgewaehlt"}
+              </em>
+            </label>
+          ) : null}
           {hasPreviewFile ? (
             <p className="mt-1 text-xs text-slate-500">
               Vorschau geladen: {state.previewFilename}. Du kannst direkt bestaetigen oder eine
