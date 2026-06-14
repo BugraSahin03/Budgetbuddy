@@ -53,9 +53,6 @@ export default function LifetimeStatsPage() {
             <h2 className="mt-1 text-4xl font-black tracking-[-0.07em] text-[color:var(--month-ink)] md:text-5xl">
               BudgetBuddy in Zahlen
             </h2>
-            <p className="mt-3 max-w-2xl text-sm font-medium leading-6 text-[color:var(--month-ink-soft)]">
-              Eine ruhige Gesamtuebersicht ueber echte Einnahmen, Ausgaben und Sparbuchungen seit Beginn der erfassten Daten.
-            </p>
           </div>
           <span className="inline-flex w-fit rounded-full border border-[color:var(--month-line)] bg-white/78 px-3.5 py-2 text-xs font-black uppercase tracking-[0.16em] text-[color:var(--month-ink-soft)]">
             Read-only Insights
