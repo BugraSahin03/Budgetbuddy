@@ -2,6 +2,7 @@ import "server-only";
 
 import { isSavingsCategoryId } from "@/src/categories/repository";
 import { getDb } from "@/src/db/client";
+import { assertMonthIsOpen } from "@/src/months/status";
 
 export type MonthlyBudgetCategoryRow = {
   categoryId: number;
@@ -204,6 +205,7 @@ export function setMonthlyCategoryBudget(
   const normalizedMonthKey = normalizeMonthKey(monthKey);
   const normalizedAmountCents = normalizeBudgetAmountCents(budgetAmount);
 
+  assertMonthIsOpen(normalizedMonthKey);
   assertCategoryExists(categoryId);
   assertCategoryCanHavePlannedBudget(categoryId, normalizedAmountCents);
 
@@ -238,4 +240,39 @@ export function setMonthlyCategoryBudget(
       `,
     )
     .run(normalizedMonthKey, categoryId, normalizedAmountCents);
+}
+
+export function freezeMonthlyCategoryBudgetValues(monthKey: string): void {
+  const normalizedMonthKey = normalizeMonthKey(monthKey);
+  const rows = listMonthlyBudgetCategories(normalizedMonthKey).filter(
+    (row) => row.budgetAmountCents !== null,
+  );
+
+  const upsertBudget = getDb().prepare(
+    `
+      INSERT INTO monthly_category_budgets (
+        month_key,
+        category_id,
+        budget_amount_cents,
+        updated_at
+      )
+      VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+      ON CONFLICT(month_key, category_id)
+      DO UPDATE SET
+        budget_amount_cents = excluded.budget_amount_cents,
+        updated_at = CURRENT_TIMESTAMP
+    `,
+  );
+
+  const transaction = getDb().transaction(() => {
+    for (const row of rows) {
+      upsertBudget.run(
+        normalizedMonthKey,
+        row.categoryId,
+        row.budgetAmountCents,
+      );
+    }
+  });
+
+  transaction();
 }

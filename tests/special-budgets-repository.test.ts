@@ -19,6 +19,10 @@ function cleanupSpecialBudgets(): void {
     .getDb()
     .prepare("DELETE FROM special_budget_projects WHERE name LIKE ?")
     .run(`${TEST_NAME_PREFIX}%`);
+  dbClient
+    .getDb()
+    .prepare("DELETE FROM monthly_statuses WHERE month_key LIKE '2099-%'")
+    .run();
 }
 
 beforeAll(async () => {
@@ -450,5 +454,88 @@ describe("special budgets repository", () => {
     expect(() =>
       repository.setSpecialBudgetActiveForMonth(created.id, "2026-11", false),
     ).toThrow("Sonderkategorie passt nicht zum ausgewaehlten Monat.");
+  });
+
+  it("blocks special budget month shares in closed months", () => {
+    cleanupSpecialBudgets();
+
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+          VALUES ('2099-04', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+      )
+      .run();
+
+    expect(() =>
+      repository.createSpecialBudget({
+        name: `${TEST_NAME_PREFIX}ClosedCreate`,
+        monthKey: "2099-04",
+        plannedAmountCents: 20000,
+        note: "",
+      }),
+    ).toThrow("Monat ist abgeschlossen und kann nicht bearbeitet werden.");
+
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+          VALUES ('2099-05', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+      )
+      .run();
+
+    const projectId = Number(
+      dbClient
+        .getDb()
+        .prepare(
+          `
+            INSERT INTO special_budget_projects (name, status)
+            VALUES (?, 'active')
+          `,
+        )
+        .run(`${TEST_NAME_PREFIX}ClosedProject`).lastInsertRowid,
+    );
+    const shareId = Number(
+      dbClient
+        .getDb()
+        .prepare(
+          `
+            INSERT INTO special_budgets (
+              project_id,
+              name,
+              month_key,
+              planned_amount_cents,
+              note,
+              is_active
+            )
+            VALUES (?, ?, '2099-05', 20000, '', 1)
+          `,
+        )
+        .run(projectId, `${TEST_NAME_PREFIX}ClosedProject`).lastInsertRowid,
+    );
+
+    expect(() =>
+      repository.updateSpecialBudgetPlannedAmountForMonth(
+        shareId,
+        "2099-05",
+        25000,
+      ),
+    ).toThrow("Monat ist abgeschlossen und kann nicht bearbeitet werden.");
+
+    expect(() =>
+      repository.setSpecialBudgetActiveForMonth(shareId, "2099-05", false),
+    ).toThrow("Monat ist abgeschlossen und kann nicht bearbeitet werden.");
+
+    expect(() =>
+      repository.updateSpecialBudgetProject({
+        projectId,
+        iconName: null,
+        shares: [{ id: shareId, plannedAmountCents: 25000 }],
+      }),
+    ).toThrow("Monat ist abgeschlossen und kann nicht bearbeitet werden.");
   });
 });

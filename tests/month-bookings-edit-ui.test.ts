@@ -19,7 +19,19 @@ describe("FIN-060 month bookings edit UI", () => {
     expect(page).toContain('id="monatsbuchungen"');
     expect(page).toContain("#monatsbuchungen");
     expect(page).toContain('title={isBookingEditMode ? "Fertig" : "Bearbeiten"}');
-    expect(page).toContain("isBookingEditMode ? (");
+    expect(page).toContain("canEditBookings ? (");
+  });
+
+  it("surfaces closed month controls and blocks edit mode when the month is closed", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+
+    expect(page).toContain("MonthCloseControl");
+    expect(page).toContain("Monat abschliessen");
+    expect(page).toContain("Wieder oeffnen");
+    expect(page).toContain("Abgeschlossen");
+    expect(page).toContain("Budgetpflege gesperrt");
+    expect(page).toContain("const canEditBookings = isBookingEditMode && canEditMonth");
+    expect(page).toContain("{canEditMonth ? (");
   });
 
   it("uses one Kategoriezuordnung control and explicit delete confirmation in edit mode", () => {

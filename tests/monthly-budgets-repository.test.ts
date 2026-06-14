@@ -174,6 +174,23 @@ describe("monthly budget repository", () => {
     );
   });
 
+  it("blocks monthly budget overrides for closed months", () => {
+    const einkauf = db
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf' LIMIT 1")
+      .get() as { id: number };
+
+    db.prepare(
+      `
+        INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+        VALUES ('2026-05', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `,
+    ).run();
+
+    expect(() => setMonthlyCategoryBudget("2026-05", einkauf.id, "20.00")).toThrow(
+      "Monat ist abgeschlossen und kann nicht bearbeitet werden.",
+    );
+  });
+
   it("lists editable global defaults separately from month data", () => {
     const einkauf = db
       .prepare("SELECT id FROM categories WHERE name = 'Einkauf' LIMIT 1")

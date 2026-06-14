@@ -1549,3 +1549,21 @@ Auswirkung:
 - Historische Monatsstaende bleiben stabil, sobald ein Monat abgeschlossen wurde.
 - FIN-071 kann auf dem Monatsstatus aufbauen, ohne fuer Fixkosten eine separate Neuberechnung oder Reset-Logik einzufuehren.
 - Die bestehende Fixkosten-Kontrollsicht aus Importtreffern bleibt getrennt und wird nicht in den Plan-Snapshot gemischt.
+
+## 2026-06-12 - FIN-071 definiert Monatsabschluss-Sperrregeln
+
+Quelle/Ticket: `FIN-071`
+
+Erkenntnis/Entscheidung:
+
+- Ein Monat kann aus der Monatsdetailseite bewusst abgeschlossen und wieder geoeffnet werden.
+- Geschlossene Monate sperren monatsbezogene Schreibpfade: neue manuelle Buchungen, Bearbeiten/Loeschen von Buchungen, Importloeschung, Kategorie-/Sonderbudget-Zuordnung, CSV-Importe, Monatsbudget-Overrides und Sonderbudget-Monatsanteile.
+- Offene Zuordnungen sind beim Abschluss ein Warnhinweis, aber kein harter Blocker.
+- Beim Abschluss werden vorhandene effektive Kategorie-Planwerte als Monatswerte gesichert; der FIN-070-Fixkosten-Snapshot bleibt erhalten.
+- Das Wieder-Oeffnen erlaubt die gesperrten Schreibpfade wieder, rechnet aber keine Fixkosten-Snapshots zurueck oder neu.
+
+Auswirkung:
+
+- Die Sperre liegt nicht nur in der UI, sondern in den relevanten Repository-Schreibpfaden.
+- Die Monatsseite zeigt geschlossene Monate mit Status-Badge, Sperrhinweis und Wieder-Oeffnen-Dialog.
+- Planlose Kategorien bleiben planlos, weil `monthly_category_budgets` keine `NULL`-Overrides speichern kann.

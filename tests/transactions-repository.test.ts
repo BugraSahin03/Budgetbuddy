@@ -13,6 +13,7 @@ const PREFIX = "TEST-FIN-007-";
 function cleanupTestTransactions(): void {
   dbClient.getDb().prepare("DELETE FROM transactions WHERE description LIKE ?").run(`${PREFIX}%`);
   dbClient.getDb().prepare("DELETE FROM fixed_costs WHERE name LIKE ?").run(`${PREFIX}%`);
+  dbClient.getDb().prepare("DELETE FROM monthly_statuses WHERE month_key LIKE '2099-%'").run();
   dbClient
     .getDb()
     .prepare("UPDATE categories SET is_active = 1 WHERE name IN ('Einkauf', 'Freizeit')")
@@ -800,6 +801,146 @@ describe("transactions repository", () => {
       .listManualTransactions()
       .find((row) => row.description === `${PREFIX}StreamingCharge`);
     expect(created).toBeDefined();
+  });
+
+  it("blocks manual transaction writes in closed months", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const categoryId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as { id: number }).id;
+
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+          VALUES ('2099-01', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+      )
+      .run();
+
+    expect(() =>
+      transactions.createManualTransaction({
+        bookingDate: "2099-01-10",
+        description: `${PREFIX}ClosedCreate`,
+        transactionType: "expense",
+        amountInput: "10.00",
+        accountId,
+        destinationAccountId: null,
+        categoryId,
+        specialBudgetId: null,
+      }),
+    ).toThrow("Monat ist abgeschlossen und kann nicht bearbeitet werden.");
+
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+          VALUES ('2099-02', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+      )
+      .run();
+
+    const transactionId = Number(
+      dbClient
+        .getDb()
+        .prepare(
+          `
+            INSERT INTO transactions (
+              account_id,
+              transaction_type,
+              booking_date,
+              effective_month_key,
+              amount_cents,
+              currency_code,
+              description,
+              source_type,
+              category_id
+            )
+            VALUES (?, 'expense', '2099-02-10', '2099-02', -1000, 'EUR', ?, 'manual', ?)
+          `,
+        )
+        .run(accountId, `${PREFIX}ClosedExisting`, categoryId).lastInsertRowid,
+    );
+
+    expect(() =>
+      transactions.updateManualTransaction(transactionId, {
+        bookingDate: "2099-02-11",
+        description: `${PREFIX}ClosedExistingUpdated`,
+        transactionType: "expense",
+        amountInput: "11.00",
+        accountId,
+        destinationAccountId: null,
+        categoryId,
+        specialBudgetId: null,
+      }),
+    ).toThrow("Monat ist abgeschlossen und kann nicht bearbeitet werden.");
+
+    expect(() => transactions.deleteManualTransaction(transactionId)).toThrow(
+      "Monat ist abgeschlossen und kann nicht bearbeitet werden.",
+    );
+  });
+
+  it("blocks imported transaction assignment and deletion in closed months", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+    const categoryId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as { id: number }).id;
+
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+          VALUES ('2099-03', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+      )
+      .run();
+
+    const transactionId = Number(
+      dbClient
+        .getDb()
+        .prepare(
+          `
+            INSERT INTO transactions (
+              account_id,
+              transaction_type,
+              booking_date,
+              effective_month_key,
+              amount_cents,
+              currency_code,
+              description,
+              source_type
+            )
+            VALUES (?, 'expense', '2099-03-10', '2099-03', -1000, 'EUR', ?, 'import')
+          `,
+        )
+        .run(accountId, `${PREFIX}ClosedImported`).lastInsertRowid,
+    );
+
+    expect(() =>
+      transactions.updateExpenseAssignmentForMonth(transactionId, "2099-03", {
+        categoryId,
+        specialBudgetId: null,
+      }),
+    ).toThrow("Monat ist abgeschlossen und kann nicht bearbeitet werden.");
+
+    expect(() =>
+      transactions.deleteImportedTransactionForMonth(transactionId, "2099-03"),
+    ).toThrow("Monat ist abgeschlossen und kann nicht bearbeitet werden.");
   });
 
   it("rejects invalid fixed cost booking day", async () => {
