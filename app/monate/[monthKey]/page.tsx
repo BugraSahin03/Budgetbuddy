@@ -1057,7 +1057,7 @@ export default async function MonthDetailPage({
                   );
                 })}
 
-                <div className="inline-flex w-fit rounded-[1.25rem] border border-white/70 bg-white/72 px-4 py-3 shadow-[0_12px_28px_rgba(7,27,70,0.06)]">
+                <div className="ml-auto inline-flex w-fit rounded-[1.25rem] border border-white/70 bg-white/72 px-4 py-3 shadow-[0_12px_28px_rgba(7,27,70,0.06)]">
                   <div className="flex flex-wrap items-center gap-3">
                     <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
                       Rest nach Planung
