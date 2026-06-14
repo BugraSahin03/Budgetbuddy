@@ -14,11 +14,10 @@ describe("FIN-066 month plan summary UI", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
 
     expect(page).toContain("Rest nach Planung");
-    expect(page).toContain("Einnahmen minus Kategorien.");
     expect(page).toContain("month.dashboard.planSummary.plannedBudgetPotCents");
-    expect(page).toContain(
-      "month.dashboard.planSummary.planRestAfterBudgetPotsCents",
-    );
+    expect(page).toContain("planRestAfterBudgetPotsCents");
+    expect(page).not.toContain('label="Rest nach Planung"');
+    expect(page).not.toContain("Einnahmen minus Kategorien.");
     expect(page).toContain("activeSpecialBudgetRows");
     expect(page).toContain("Sonderkategorien");
     expect(page).toContain("getCategoryUsageState({");
