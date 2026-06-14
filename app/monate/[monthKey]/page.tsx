@@ -760,17 +760,6 @@ export default async function MonthDetailPage({
                     )}
                   </p>
                 </div>
-                <div className="rounded-[1.2rem] border border-white/70 bg-white/72 px-4 py-3 text-right shadow-[0_12px_28px_rgba(7,27,70,0.06)]">
-                  <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
-                    Rest nach Planung
-                  </p>
-                  <p className="mt-1 text-sm font-black text-[color:var(--month-ink)]">
-                    {formatEuro(
-                      month.dashboard.planSummary
-                        .planRestAfterBudgetPotsCents,
-                    )}
-                  </p>
-                </div>
                 {canEditMonth ? (
                   <MonthDialog
                     eyebrow="Monatsarbeit"
@@ -1067,6 +1056,20 @@ export default async function MonthDetailPage({
                     </div>
                   );
                 })}
+
+                <div className="rounded-[1.25rem] border border-white/70 bg-white/72 px-4 py-3 shadow-[0_12px_28px_rgba(7,27,70,0.06)]">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
+                      Rest nach Planung
+                    </p>
+                    <p className="text-sm font-black text-[color:var(--month-ink)]">
+                      {formatEuro(
+                        month.dashboard.planSummary
+                          .planRestAfterBudgetPotsCents,
+                      )}
+                    </p>
+                  </div>
+                </div>
 
                 {activeSpecialBudgetRows.length > 0 ? (
                   <section className="pt-2">
