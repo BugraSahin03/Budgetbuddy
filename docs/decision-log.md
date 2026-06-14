@@ -1565,3 +1565,21 @@ Auswirkung:
 
 - Monats-ToDos bleiben von Transaktionen, Fixkosten, Importen, Kategorien, Faelligkeiten, Prioritaeten, Erinnerungen und Wiederholungen getrennt.
 - Die Monatsansicht bekommt nur einen Dialog-Einstieg, damit die Hauptansicht ruhig bleibt.
+
+## 2026-06-12 - FIN-071 definiert Monatsabschluss-Sperrregeln
+
+Quelle/Ticket: `FIN-071`
+
+Erkenntnis/Entscheidung:
+
+- Ein Monat kann aus der Monatsdetailseite bewusst abgeschlossen und wieder geoeffnet werden.
+- Geschlossene Monate sperren monatsbezogene Schreibpfade: neue manuelle Buchungen, Bearbeiten/Loeschen von Buchungen, Importloeschung, Kategorie-/Sonderbudget-Zuordnung, CSV-Importe, Monatsbudget-Overrides und Sonderbudget-Monatsanteile.
+- Offene Zuordnungen sind beim Abschluss ein Warnhinweis, aber kein harter Blocker.
+- Beim Abschluss werden vorhandene effektive Kategorie-Planwerte als Monatswerte gesichert; der FIN-070-Fixkosten-Snapshot bleibt erhalten.
+- Das Wieder-Oeffnen erlaubt die gesperrten Schreibpfade wieder, rechnet aber keine Fixkosten-Snapshots zurueck oder neu.
+
+Auswirkung:
+
+- Die Sperre liegt nicht nur in der UI, sondern in den relevanten Repository-Schreibpfaden.
+- Die Monatsseite zeigt geschlossene Monate mit Status-Badge, Sperrhinweis und Wieder-Oeffnen-Dialog.
+- Planlose Kategorien bleiben planlos, weil `monthly_category_budgets` keine `NULL`-Overrides speichern kann.

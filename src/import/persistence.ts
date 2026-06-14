@@ -4,6 +4,7 @@ import { createHash } from "node:crypto";
 
 import { getDb } from "@/src/db/client";
 import { parseSparkasseCsvToPreview, type SparkasseCsvRow } from "@/src/import/sparkasse-csv";
+import { assertMonthIsOpen } from "@/src/months/status";
 
 export type ImportPersistenceResult = {
   importRunId: number;
@@ -186,6 +187,7 @@ export function persistSparkasseCsvImport(params: {
     params.effectiveMonthKey,
     parseResult.rows,
   );
+  assertMonthIsOpen(importEffectiveMonthKey);
 
   const db = getDb();
   const runInsert = db

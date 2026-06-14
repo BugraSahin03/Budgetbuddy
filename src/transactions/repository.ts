@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDb } from "@/src/db/client";
+import { assertMonthIsOpen } from "@/src/months/status";
 import { ensureProjectsForUnlinkedMonthlyShares } from "@/src/special-budgets/repository";
 
 export type TransactionType = "expense" | "income" | "transfer" | "refund";
@@ -538,6 +539,7 @@ export function getCashAccountSnapshot(): CashAccountSnapshot {
 
 export function createManualTransaction(input: ManualTransactionInput): void {
   const shaped = validateAndShapeInput(input);
+  assertMonthIsOpen(shaped.effectiveMonthKey);
 
   try {
     getDb()
@@ -582,6 +584,24 @@ export function updateManualTransaction(
 ): void {
   const shaped = validateAndShapeInput(input);
   const id = ensurePositiveInt(transactionId, "Transaktion");
+  const existing = getDb()
+    .prepare(
+      `
+        SELECT effective_month_key AS effectiveMonthKey
+        FROM transactions
+        WHERE id = ?
+          AND source_type = 'manual'
+        LIMIT 1
+      `,
+    )
+    .get(id) as { effectiveMonthKey: string } | undefined;
+
+  if (!existing) {
+    throw new Error("Transaktion wurde nicht gefunden.");
+  }
+
+  assertMonthIsOpen(existing.effectiveMonthKey);
+  assertMonthIsOpen(shaped.effectiveMonthKey);
 
   try {
     const result = getDb()
@@ -626,6 +646,23 @@ export function updateManualTransaction(
 
 export function deleteManualTransaction(transactionId: number): void {
   const id = ensurePositiveInt(transactionId, "Transaktion");
+  const existing = getDb()
+    .prepare(
+      `
+        SELECT effective_month_key AS effectiveMonthKey
+        FROM transactions
+        WHERE id = ?
+          AND source_type = 'manual'
+        LIMIT 1
+      `,
+    )
+    .get(id) as { effectiveMonthKey: string } | undefined;
+
+  if (!existing) {
+    throw new Error("Transaktion wurde nicht gefunden.");
+  }
+
+  assertMonthIsOpen(existing.effectiveMonthKey);
 
   const result = getDb()
     .prepare("DELETE FROM transactions WHERE id = ? AND source_type = 'manual'")
@@ -642,6 +679,7 @@ export function deleteImportedTransactionForMonth(
 ): void {
   const id = ensurePositiveInt(transactionId, "Transaktion");
   const effectiveMonthKey = normalizeEffectiveMonthKey(monthKey, monthKey);
+  assertMonthIsOpen(effectiveMonthKey);
 
   const result = getDb()
     .prepare(
@@ -666,6 +704,7 @@ export function updateExpenseAssignmentForMonth(
 ): void {
   const id = ensurePositiveInt(transactionId, "Transaktion");
   const effectiveMonthKey = normalizeEffectiveMonthKey(monthKey, monthKey);
+  assertMonthIsOpen(effectiveMonthKey);
 
   const existing = getDb()
     .prepare(

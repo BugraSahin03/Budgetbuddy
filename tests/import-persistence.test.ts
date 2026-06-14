@@ -143,6 +143,27 @@ describe("import persistence and dedupe", () => {
     expect(rows.every((row) => row.effectiveMonthKey === "2026-05")).toBe(true);
   });
 
+  it("blocks imports into closed months", () => {
+    db.prepare(
+      `
+        INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+        VALUES ('2026-04', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `,
+    ).run();
+
+    expect(() =>
+      persistSparkasseCsvImport({
+        sourceFilename: "sparkasse.csv",
+        fileContent: SAMPLE_CSV,
+      }),
+    ).toThrow("Monat ist abgeschlossen und kann nicht bearbeitet werden.");
+
+    const importRunCount = db
+      .prepare("SELECT COUNT(*) AS count FROM import_runs")
+      .get() as { count: number };
+    expect(importRunCount.count).toBe(0);
+  });
+
   it("rejects invalid target month format for import confirm", () => {
     expect(() =>
       persistSparkasseCsvImport({

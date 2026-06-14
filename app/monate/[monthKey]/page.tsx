@@ -3,8 +3,10 @@ import Link from "next/link";
 
 import { CategoryVisualMark } from "@/app/components/category-visual";
 import {
+  closeMonthAction,
   deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
+  reopenMonthAction,
   setMonthlyBudgetOverrideAction,
   updateMonthlyManualTransactionAction,
   updateMonthlySpecialBudgetAction,
@@ -384,6 +386,87 @@ function SectionHeader({
   );
 }
 
+function MonthCloseControl({
+  monthKey,
+  isClosed,
+  openAssignmentCount,
+}: {
+  monthKey: string;
+  isClosed: boolean;
+  openAssignmentCount: number;
+}) {
+  if (isClosed) {
+    return (
+      <MonthDialog
+        eyebrow="Monatsstatus"
+        title="Monat wieder oeffnen"
+        description="Nach dem Wieder-Oeffnen koennen Buchungen, Zuordnungen, Importe und Monatsbudgets wieder veraendert werden. Der Fixkosten-Snapshot bleibt erhalten."
+        triggerLabel="Wieder oeffnen"
+        triggerClassName="month-dialog-trigger"
+      >
+        <form action={reopenMonthAction} className="grid gap-5">
+          <input type="hidden" name="monthKey" value={monthKey} />
+          <label className="flex gap-3 rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/78 p-4 text-sm font-semibold leading-6 text-[color:var(--month-ink-soft)]">
+            <input
+              type="checkbox"
+              name="confirmReopen"
+              className="mt-1 h-4 w-4 rounded border-[color:var(--month-line-strong)]"
+            />
+            Ich moechte diesen Monat wieder oeffnen und Bearbeitungen bewusst
+            erlauben.
+          </label>
+          <button
+            type="submit"
+            className="w-fit rounded-2xl bg-[color:var(--month-ink)] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+          >
+            Wieder oeffnen
+          </button>
+        </form>
+      </MonthDialog>
+    );
+  }
+
+  return (
+    <MonthDialog
+      eyebrow="Monatsstatus"
+      title="Monat abschliessen"
+      description="Der Abschluss sperrt diesen Monat gegen versehentliche Aenderungen. Offene Zuordnungen werden nur gewarnt, nicht hart blockiert."
+      triggerLabel="Monat abschliessen"
+      triggerClassName="month-dialog-trigger"
+    >
+      <form action={closeMonthAction} className="grid gap-5">
+        <input type="hidden" name="monthKey" value={monthKey} />
+        <div className="rounded-[1.2rem] border border-amber-200 bg-amber-50/82 p-4 text-sm leading-6 text-amber-950">
+          <p className="font-black">Vor dem Abschluss kurz pruefen</p>
+          <p className="mt-2">
+            {openAssignmentCount > 0
+              ? `${openAssignmentCount} Ausgabe(n) sind noch offen zugeordnet. Du kannst trotzdem abschliessen, wenn das fachlich passt.`
+              : "Alle Ausgaben haben aktuell eine Kategorie- oder Sonderbudget-Zuordnung."}
+          </p>
+          <p className="mt-2">
+            Gesperrt werden neue Buchungen, Buchungsbearbeitung, Importe,
+            Kategoriezuordnungen, Monatsbudgets und Sonderbudget-Monatsanteile.
+          </p>
+        </div>
+        <label className="flex gap-3 rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/78 p-4 text-sm font-semibold leading-6 text-[color:var(--month-ink-soft)]">
+          <input
+            type="checkbox"
+            name="confirmClose"
+            className="mt-1 h-4 w-4 rounded border-[color:var(--month-line-strong)]"
+          />
+          Ich habe die Hinweise geprueft und moechte den Monat abschliessen.
+        </label>
+        <button
+          type="submit"
+          className="w-fit rounded-2xl bg-[color:var(--month-ink)] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+        >
+          Monat abschliessen
+        </button>
+      </form>
+    </MonthDialog>
+  );
+}
+
 export default async function MonthDetailPage({
   params,
   searchParams,
@@ -422,26 +505,45 @@ export default async function MonthDetailPage({
     (row) => row.isActive,
   );
   const monthlyTodos = listMonthlyTodos(month.monthKey);
+  const isMonthClosed = month.status.status === "closed";
+  const canEditMonth = !isMonthClosed;
+  const canEditBookings = isBookingEditMode && canEditMonth;
+  const openAssignmentCount = month.transactions.filter(
+    (transaction) =>
+      transaction.transactionType === "expense" &&
+      transaction.categoryId === null &&
+      transaction.specialBudgetId === null,
+  ).length;
 
   return (
     <MonthPageShell>
       <section className="month-reference-hero">
         <div className="flex items-center justify-between gap-4">
           <p className="month-eyebrow">Monatsueberblick</p>
-          <div className="flex flex-wrap justify-end gap-3">
+          <div className="flex flex-wrap items-center justify-end gap-3">
             <MonthTodoDialog
               monthKey={month.monthKey}
               monthLabel={month.label}
               initialTodos={monthlyTodos}
             />
-            <MonthActionOverlay
+            {isMonthClosed ? (
+              <MonthChip tone="neutral">Abgeschlossen</MonthChip>
+            ) : null}
+            <MonthCloseControl
               monthKey={month.monthKey}
-              monthLabel={month.label}
-              accountOptions={accountOptions}
-              categoryOptions={visualCategoryOptions}
-              specialBudgetOptions={specialBudgetOptions}
-              defaultAccountId={defaultAccountId}
+              isClosed={isMonthClosed}
+              openAssignmentCount={openAssignmentCount}
             />
+            {canEditMonth ? (
+              <MonthActionOverlay
+                monthKey={month.monthKey}
+                monthLabel={month.label}
+                accountOptions={accountOptions}
+                categoryOptions={visualCategoryOptions}
+                specialBudgetOptions={specialBudgetOptions}
+                defaultAccountId={defaultAccountId}
+              />
+            ) : null}
           </div>
         </div>
 
@@ -503,6 +605,17 @@ export default async function MonthDetailPage({
       {error ? (
         <section className="rounded-[1.3rem] border border-red-200 bg-red-50/90 px-4 py-3 text-sm text-red-800">
           {error}
+        </section>
+      ) : null}
+
+      {isMonthClosed ? (
+        <section className="rounded-[1.7rem] border border-sky-200 bg-[linear-gradient(135deg,rgba(240,249,255,0.98),rgba(255,255,255,0.94))] p-5 text-sm leading-6 text-sky-950 shadow-[0_16px_40px_rgba(7,27,70,0.06)]">
+          <p className="month-eyebrow text-sky-700">Monat abgeschlossen</p>
+          <p className="mt-2 font-semibold">
+            Dieser Monat ist gegen neue Buchungen, Importe, Zuordnungen,
+            Loeschungen und Monatsbudget-Aenderungen gesperrt. Zum Bearbeiten
+            bitte bewusst wieder oeffnen.
+          </p>
         </section>
       ) : null}
 
@@ -652,12 +765,13 @@ export default async function MonthDetailPage({
                     )}
                   </p>
                 </div>
-                <MonthDialog
-                  eyebrow="Monatsarbeit"
-                  title="Budgetpflege"
-                  description="Kategorien und Sonderkategorien bleiben fachlich getrennt, werden aber gemeinsam im Monatskontext gepflegt."
-                  triggerLabel="Budgetpflege"
-                >
+                {canEditMonth ? (
+                  <MonthDialog
+                    eyebrow="Monatsarbeit"
+                    title="Budgetpflege"
+                    description="Kategorien und Sonderkategorien bleiben fachlich getrennt, werden aber gemeinsam im Monatskontext gepflegt."
+                    triggerLabel="Budgetpflege"
+                  >
                   <div className="grid gap-5">
                     <section>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
@@ -874,7 +988,10 @@ export default async function MonthDetailPage({
                       </div>
                     </section>
                   </div>
-                </MonthDialog>
+                  </MonthDialog>
+                ) : (
+                  <MonthChip tone="neutral">Budgetpflege gesperrt</MonthChip>
+                )}
               </div>
             }
           />
@@ -1056,7 +1173,7 @@ export default async function MonthDetailPage({
       <details
         id="monatsbuchungen"
         className="month-reference-panel month-disclosure min-w-0 overflow-hidden bg-white/78"
-        open={isBookingEditMode || undefined}
+        open={canEditBookings || undefined}
       >
         <summary className="month-disclosure-summary">
           <span className="mt-2 block text-2xl font-extrabold tracking-[-0.045em] text-[color:var(--month-ink)]">
@@ -1066,18 +1183,24 @@ export default async function MonthDetailPage({
             <MonthChip tone="neutral">
               {month.transactions.length} Eintraege
             </MonthChip>
-            <Link
-              href={bookingEditHref(month.monthKey, isBookingEditMode)}
-              className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--month-line-strong)] bg-white text-lg font-black text-[color:var(--month-ink)] shadow-[0_10px_22px_rgba(7,27,70,0.06)] transition hover:-translate-y-0.5"
-              aria-label={
-                isBookingEditMode
-                  ? "Editiermodus fuer Monatsbuchungen beenden"
-                  : "Editiermodus fuer Monatsbuchungen aktivieren"
-              }
-              title={isBookingEditMode ? "Fertig" : "Bearbeiten"}
-            >
-              <span aria-hidden="true">{isBookingEditMode ? "✓" : "✎"}</span>
-            </Link>
+            {canEditMonth ? (
+              <Link
+                href={bookingEditHref(month.monthKey, isBookingEditMode)}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--month-line-strong)] bg-white text-lg font-black text-[color:var(--month-ink)] shadow-[0_10px_22px_rgba(7,27,70,0.06)] transition hover:-translate-y-0.5"
+                aria-label={
+                  isBookingEditMode
+                    ? "Editiermodus fuer Monatsbuchungen beenden"
+                    : "Editiermodus fuer Monatsbuchungen aktivieren"
+                }
+                title={isBookingEditMode ? "Fertig" : "Bearbeiten"}
+              >
+                <span aria-hidden="true">
+                  {isBookingEditMode ? "✓" : "✎"}
+                </span>
+              </Link>
+            ) : (
+              <MonthChip tone="neutral">Gesperrt</MonthChip>
+            )}
             <span className="month-disclosure-chevron" aria-hidden="true">
               ›
             </span>
@@ -1139,7 +1262,7 @@ export default async function MonthDetailPage({
                     </p>
                   </div>
 
-                  {isBookingEditMode ? (
+                  {canEditBookings ? (
                     <div className="mt-5 grid gap-4 rounded-[1.2rem] border border-[color:var(--month-line)] bg-[#f7fbfe] p-4">
                       <div className="flex flex-wrap gap-2">
                         <span className="inline-flex rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-semibold text-[color:var(--month-ink-soft)]">
