@@ -13,18 +13,18 @@ type StatCardProps = {
 };
 
 const STAT_TONES: Record<StatCardProps["tone"], string> = {
-  income: "bg-emerald-50 text-emerald-700 border-emerald-100",
-  expense: "bg-rose-50 text-rose-600 border-rose-100",
-  savings: "bg-lime-50 text-[#4f7d12] border-lime-100",
+  income: "border-emerald-200 bg-emerald-50/90 text-emerald-700 shadow-emerald-100/70",
+  expense: "border-rose-200 bg-rose-50/90 text-rose-600 shadow-rose-100/70",
+  savings: "border-lime-200 bg-lime-50/90 text-[#4f7d12] shadow-lime-100/70",
 };
 
 function StatCard({ eyebrow, title, value, tone }: StatCardProps) {
   return (
-    <article className="rounded-[1.45rem] border border-[color:var(--month-line)] bg-white/86 p-5 shadow-sm">
+    <article className="min-h-36 rounded-[1.65rem] border border-[color:var(--month-line)] bg-white/88 p-6 shadow-[0_18px_42px_rgba(15,23,42,0.06)]">
       <p className="month-eyebrow">{eyebrow}</p>
       <h3 className="mt-2 text-base font-semibold text-[color:var(--month-ink)]">{title}</h3>
       <p
-        className={`mt-5 inline-flex rounded-2xl border px-3.5 py-2 text-2xl font-black tracking-[-0.05em] ${STAT_TONES[tone]}`}
+        className={`mt-5 inline-flex rounded-2xl border px-4 py-2.5 text-3xl font-black tracking-[-0.06em] shadow-sm ${STAT_TONES[tone]}`}
       >
         {value}
       </p>
@@ -38,10 +38,10 @@ export default function LifetimeStatsPage() {
 
   return (
     <section className="month-page-shell space-y-5">
-      <header className="month-section-panel relative overflow-hidden">
+      <header className="month-section-panel relative min-h-40 overflow-hidden md:min-h-44">
         <span className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-emerald-100/60 blur-3xl" aria-hidden="true" />
         <span className="absolute bottom-0 left-12 h-28 w-28 rounded-full bg-sky-100/70 blur-2xl" aria-hidden="true" />
-        <div className="relative flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+        <div className="relative flex h-full flex-col gap-5 md:flex-row md:items-start md:justify-between">
           <div>
             <Link
               href="/einstellungen"
@@ -50,7 +50,7 @@ export default function LifetimeStatsPage() {
               ← Einstellungen
             </Link>
             <p className="month-eyebrow mt-6">Gesamtstatistik</p>
-            <h2 className="mt-1 text-4xl font-black tracking-[-0.07em] text-[color:var(--month-ink)] md:text-5xl">
+            <h2 className="mt-1 text-5xl font-black leading-[0.92] tracking-[-0.08em] text-[color:var(--month-ink)] md:text-6xl">
               BudgetBuddy in Zahlen
             </h2>
           </div>
