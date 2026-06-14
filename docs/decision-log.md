@@ -1599,3 +1599,8 @@ Auswirkung:
 
 - Monatsansicht, Monatsvergleich, Budgetpflege und Importlogik bleiben unveraendert.
 - Die Seite ist eine reine Read-only-Insights-Sicht und keine operative Arbeitsflaeche.
+
+Nachtrag:
+
+- Die Statistik zaehlt standardmaessig nur Buchungen bis zum aktuellen Monat.
+- Zukunftsmonate in lokalen Test-/Altdaten werden dadurch nicht als reale Statistikjahre angezeigt.

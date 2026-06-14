@@ -69,7 +69,7 @@ describe("lifetime stats", () => {
       savingsId,
     );
 
-    const stats = listLifetimeStats();
+    const stats = listLifetimeStats("2032-12");
 
     expect(stats.totals).toEqual({
       incomeCents: 702500,
@@ -90,5 +90,34 @@ describe("lifetime stats", () => {
         savingsCents: 50000,
       },
     ]);
+  });
+
+  it("hides future years until their months are reached", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, currency_code, description, source_type, category_id, special_budget_id
+        ) VALUES
+          (?, NULL, 'income', '2026-06-05', '2026-06', 100000, 'EUR', 'Current Salary', 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2031-02-10', '2031-02', -4000, 'EUR', 'Future Test Expense', 'manual', ?, NULL)
+      `,
+    ).run(sparkasseId, sparkasseId, einkaufId);
+
+    const stats = listLifetimeStats("2026-06");
+
+    expect(stats.totals).toEqual({
+      incomeCents: 100000,
+      expenseCents: 0,
+      savingsCents: 0,
+    });
+    expect(stats.years.map((year) => year.year)).toEqual(["2026"]);
   });
 });
