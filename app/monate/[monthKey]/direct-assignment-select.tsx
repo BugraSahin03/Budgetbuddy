@@ -25,6 +25,9 @@ export function DirectAssignmentSelect({
   specialBudgetOptions,
 }: DirectAssignmentSelectProps) {
   const selectRef = useRef<HTMLSelectElement>(null);
+  const assignmentTone = hasAssignment
+    ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:border-emerald-300 focus:border-emerald-300"
+    : "border-red-200 bg-red-50 text-red-700 hover:border-red-300 focus:border-red-300";
   const hasCurrentAssignmentOption =
     currentAssignment.length > 0 &&
     [
@@ -39,7 +42,7 @@ export function DirectAssignmentSelect({
         name="assignment"
         defaultValue={currentAssignment}
         aria-label="Kategoriezuordnung direkt aendern"
-        className="max-w-full appearance-none rounded-full border border-[color:var(--month-line)] bg-white/82 py-1 pl-2.5 pr-7 text-xs font-black text-[color:var(--month-ink)] shadow-[0_8px_18px_rgba(7,27,70,0.035)] transition hover:-translate-y-0.5 hover:border-[color:var(--month-line-strong)] focus:border-sky-300 focus:outline-none"
+        className={`max-w-full appearance-none rounded-full border py-1 pl-2.5 pr-7 text-xs font-black shadow-[0_8px_18px_rgba(7,27,70,0.035)] transition hover:-translate-y-0.5 focus:outline-none ${assignmentTone}`}
         onChange={() => {
           selectRef.current?.form?.requestSubmit();
         }}
@@ -72,7 +75,7 @@ export function DirectAssignmentSelect({
       </select>
       <span
         aria-hidden="true"
-        className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[0.85rem] font-black text-[color:var(--month-ink-muted)]"
+        className={`pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[0.85rem] font-black ${hasAssignment ? "text-emerald-700/70" : "text-red-700/70"}`}
       >
         ›
       </span>

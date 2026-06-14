@@ -29,6 +29,8 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("currentAssignmentLabel");
     expect(directSelect).toContain("requestSubmit");
     expect(directSelect).toContain("Kategoriezuordnung direkt aendern");
+    expect(directSelect).toContain("border-red-200 bg-red-50 text-red-700");
+    expect(directSelect).toContain("border-emerald-200 bg-emerald-50 text-emerald-800");
   });
 
   it("surfaces closed month controls and blocks edit mode when the month is closed", () => {
@@ -74,6 +76,19 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(directSelect).toContain("<option value=\"\" disabled>");
     expect(directSelect).toContain("hasCurrentAssignmentOption");
     expect(directSelect).toContain("<option value={currentAssignment}>{currentAssignmentLabel}</option>");
+  });
+
+  it("keeps successful assignment redirects outside the catch block", () => {
+    const actions = readProjectFile("app/monate/actions.ts");
+    const updateAction = actions.slice(
+      actions.indexOf("export async function updateMonthlyTransactionAssignmentAction"),
+      actions.indexOf("export async function updateMonthlyManualTransactionAction"),
+    );
+
+    expect(updateAction).toContain("let redirectTarget: string;");
+    expect(updateAction).toContain("redirectTarget = monthBookingHref");
+    expect(updateAction).toContain("redirect(redirectTarget);");
+    expect(updateAction).not.toContain("redirect(\n      monthBookingHref");
   });
 
   it("renders quiet read-only chips and semantic symbol tiles instead of permanent type/source fields", () => {
