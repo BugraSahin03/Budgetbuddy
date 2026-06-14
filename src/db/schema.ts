@@ -786,6 +786,20 @@ CREATE INDEX IF NOT EXISTS idx_fixed_costs_sort_order
 ON fixed_costs(sort_order);
 `;
 
+const fin082MigrationSql = `
+CREATE TABLE IF NOT EXISTS monthly_todos (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  month_key TEXT NOT NULL CHECK (length(month_key) = 7 AND substr(month_key, 5, 1) = '-'),
+  text TEXT NOT NULL CHECK (length(trim(text)) > 0),
+  is_done INTEGER NOT NULL DEFAULT 0 CHECK (is_done IN (0, 1)),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_monthly_todos_month_key
+ON monthly_todos(month_key, id);
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -851,6 +865,11 @@ export const migrations: readonly Migration[] = [
     id: "0013_fin_081",
     name: "FIN-081 add manual fixed-cost ordering",
     sql: fin081MigrationSql,
+  },
+  {
+    id: "0014_fin_082",
+    name: "FIN-082 add month-scoped todos",
+    sql: fin082MigrationSql,
   },
 ];
 

@@ -158,7 +158,17 @@ describe("schema migrations", () => {
     expect(sql).toContain("idx_fixed_costs_sort_order");
   });
 
+  it("contains migration for month-scoped todos", () => {
+    const sql = migrations.find((migration) => migration.id === "0014_fin_082")
+      ?.sql ?? "";
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS monthly_todos");
+    expect(sql).toContain("month_key TEXT NOT NULL");
+    expect(sql).toContain("is_done INTEGER NOT NULL DEFAULT 0");
+    expect(sql).toContain("idx_monthly_todos_month_key");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0013_fin_081");
+    expect(getLatestSchemaVersion()).toBe("0014_fin_082");
   });
 });

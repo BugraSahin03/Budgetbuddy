@@ -13,6 +13,7 @@ import {
   updateMonthlySpecialBudgetStateAction,
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
+import { MonthTodoDialog } from "@/app/monate/[monthKey]/month-todo-dialog";
 import { MonthActionOverlay } from "@/app/monate/month-action-overlay";
 import { MonthDialog } from "@/app/monate/month-dialog";
 import { MonthChip, MonthPageShell } from "@/app/monate/months-ui";
@@ -39,6 +40,7 @@ import {
   listActiveCategoryOptions,
   listActiveSpecialBudgetOptionsForMonth,
 } from "@/src/transactions/repository";
+import { listMonthlyTodos } from "@/src/month-todos/repository";
 
 export const dynamic = "force-dynamic";
 
@@ -502,6 +504,7 @@ export default async function MonthDetailPage({
   const activeSpecialBudgetRows = month.dashboard.specialBudgetRows.filter(
     (row) => row.isActive,
   );
+  const monthlyTodos = listMonthlyTodos(month.monthKey);
   const isMonthClosed = month.status.status === "closed";
   const canEditMonth = !isMonthClosed;
   const canEditBookings = isBookingEditMode && canEditMonth;
@@ -518,6 +521,11 @@ export default async function MonthDetailPage({
         <div className="flex items-center justify-between gap-4">
           <p className="month-eyebrow">Monatsueberblick</p>
           <div className="flex flex-wrap items-center justify-end gap-3">
+            <MonthTodoDialog
+              monthKey={month.monthKey}
+              monthLabel={month.label}
+              initialTodos={monthlyTodos}
+            />
             {isMonthClosed ? (
               <MonthChip tone="neutral">Abgeschlossen</MonthChip>
             ) : null}
