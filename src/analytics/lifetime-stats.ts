@@ -18,6 +18,10 @@ export type LifetimeStats = {
   years: LifetimeStatsYear[];
 };
 
+function getCurrentMonthKey(): string {
+  return new Date().toISOString().slice(0, 7);
+}
+
 type LifetimeStatsRow = {
   year: string;
   incomeCents: number | null;
@@ -25,7 +29,7 @@ type LifetimeStatsRow = {
   savingsCents: number | null;
 };
 
-export function listLifetimeStats(): LifetimeStats {
+export function listLifetimeStats(currentMonthKey = getCurrentMonthKey()): LifetimeStats {
   const rows = getDb()
     .prepare(
       `
@@ -63,11 +67,12 @@ export function listLifetimeStats(): LifetimeStats {
         FROM transactions t
         LEFT JOIN categories c ON c.id = t.category_id
         WHERE t.transaction_type IN ('income', 'refund', 'expense')
+          AND t.effective_month_key <= ?
         GROUP BY year
         ORDER BY year DESC
       `,
     )
-    .all() as LifetimeStatsRow[];
+    .all(currentMonthKey) as LifetimeStatsRow[];
 
   const years = rows.map((row) => ({
     year: row.year,

@@ -23,5 +23,6 @@ describe("FIN-076 lifetime stats UI", () => {
     expect(statsPage).toContain("Gespart gesamt");
     expect(statsPage).toContain("<details");
     expect(statsPage).toContain("Zahlenbuch nach Jahren");
+    expect(statsPage).not.toContain("Eine ruhige Gesamtuebersicht");
   });
 });
