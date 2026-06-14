@@ -37,4 +37,12 @@ describe("FIN-068 month savings KPI UI", () => {
     expect(page).toContain("Budget fehlt");
     expect(page).toContain("Kein Planwert");
   });
+
+  it("does not offer a monthly budget amount field for savings in budget care", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+
+    expect(page).toContain("Sparen entsteht durch echte Buchungen");
+    expect(page).toContain("{!isSavingsCategory ? (");
+    expect(page).not.toContain("Leerer Wert entfernt nur den Monats-Override");
+  });
 });

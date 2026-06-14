@@ -7,11 +7,15 @@ function readProjectFile(path: string): string {
 }
 
 describe("FIN-078 month cash balance UI", () => {
-  it("shows cash balance as a separate KPI in the month view", () => {
+  it("shows cash balance as a subtle header context instead of a large KPI", () => {
     const monthPage = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const globals = readProjectFile("app/globals.css");
 
-    expect(monthPage).toContain('label="Bargeldbestand"');
+    expect(monthPage).toContain("month-cash-inline");
+    expect(monthPage).toContain("Bargeldbestand");
     expect(monthPage).toContain("month.dashboard.totals.cashBalanceCents");
-    expect(monthPage).toContain("Separater Bestand, nicht automatisch Monatsrest.");
+    expect(monthPage).not.toContain('label="Bargeldbestand"');
+    expect(monthPage).not.toContain("Separater Bestand, nicht automatisch Monatsrest.");
+    expect(globals).toContain(".month-cash-inline");
   });
 });

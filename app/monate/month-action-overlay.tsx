@@ -4,10 +4,7 @@ import type { ReactNode } from "react";
 import { useId, useRef } from "react";
 
 import { ImportForm } from "@/app/import/import-form";
-import {
-  CategoryVisualMark,
-  categorySoftStyle,
-} from "@/app/components/category-visual";
+import { CategoryVisualMark } from "@/app/components/category-visual";
 import { createMonthlyManualTransactionAction } from "@/app/monate/actions";
 import type {
   AccountOption,
@@ -121,7 +118,6 @@ function AssignmentTiles({
           <label
             key={category.id}
             className="month-action-choice"
-            style={categorySoftStyle(category.colorHex)}
           >
             <input type="radio" name="assignment" value={`category:${category.id}`} />
             <CategoryVisualMark
@@ -129,6 +125,7 @@ function AssignmentTiles({
               iconName={category.iconName}
               colorHex={category.colorHex}
               className="month-action-choice-icon"
+              variant="neutral"
             />
             <span>{category.name}</span>
           </label>
