@@ -27,7 +27,8 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("!canEditBookings");
     expect(page).toContain("DirectAssignmentSelect");
     expect(page).toContain("currentAssignmentLabel");
-    expect(directSelect).toContain("requestSubmit");
+    expect(directSelect).toContain("useTransition");
+    expect(directSelect).toContain("fetch(`/monate/${monthKey}/assignments`");
     expect(directSelect).toContain("Kategoriezuordnung direkt aendern");
     expect(directSelect).toContain("border-red-200 bg-red-50 text-red-700");
     expect(directSelect).toContain("border-emerald-200 bg-emerald-50 text-emerald-800");
@@ -69,13 +70,27 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     );
     expect(page).toContain("canEditMonth && canEditAssignment && !canEditBookings");
     expect(page).toContain("action={updateMonthlyTransactionAssignmentAction}");
-    expect(page).not.toContain('name="bookingEdit" value="1" />\\n                        <DirectAssignmentSelect');
+    expect(page).not.toContain('action={updateMonthlyTransactionAssignmentAction}\n                        className="inline-flex max-w-full"\n                      >\n                        <DirectAssignmentSelect');
     expect(directSelect).toContain('<optgroup label="Kategorien">');
     expect(directSelect).toContain('<optgroup label="Sonderkategorien">');
     expect(directSelect).toContain("Sonderkategorie · {budget.name}");
     expect(directSelect).toContain("<option value=\"\" disabled>");
     expect(directSelect).toContain("hasCurrentAssignmentOption");
-    expect(directSelect).toContain("<option value={currentAssignment}>{currentAssignmentLabel}</option>");
+    expect(directSelect).toContain("<option value={savedAssignment}>{currentAssignmentLabel}</option>");
+  });
+
+  it("saves direct assignments through a month API route without page navigation", () => {
+    const route = readProjectFile("app/monate/[monthKey]/assignments/route.ts");
+    const directSelect = readProjectFile(
+      "app/monate/[monthKey]/direct-assignment-select.tsx",
+    );
+
+    expect(route).toContain("export async function PATCH");
+    expect(route).toContain("updateExpenseAssignmentForMonth");
+    expect(route).toContain("NextResponse.json");
+    expect(directSelect).toContain("setSelectedAssignment(assignment)");
+    expect(directSelect).toContain("setSavedAssignment(assignment)");
+    expect(directSelect).not.toContain("requestSubmit");
   });
 
   it("keeps successful assignment redirects outside the catch block", () => {

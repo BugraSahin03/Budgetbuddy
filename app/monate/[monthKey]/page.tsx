@@ -1267,33 +1267,17 @@ export default async function MonthDetailPage({
                       {transaction.bookingDate}
                     </p>
                     {canDirectlyEditAssignment ? (
-                      <form
-                        action={updateMonthlyTransactionAssignmentAction}
-                        className="inline-flex max-w-full"
-                      >
-                        <input
-                          type="hidden"
-                          name="monthKey"
-                          value={month.monthKey}
-                        />
-                        <input
-                          type="hidden"
-                          name="transactionId"
-                          value={transaction.id}
-                        />
-                        <DirectAssignmentSelect
-                          currentAssignment={currentAssignment}
-                          currentAssignmentLabel={assignmentChipLabel(
-                            transaction,
-                          )}
-                          hasAssignment={hasAssignment}
-                          categoryOptions={categoryOptions}
-                          specialBudgetOptions={specialBudgetOptions}
-                        />
-                        <button type="submit" className="sr-only">
-                          Zuordnung speichern
-                        </button>
-                      </form>
+                      <DirectAssignmentSelect
+                        currentAssignment={currentAssignment}
+                        currentAssignmentLabel={assignmentChipLabel(
+                          transaction,
+                        )}
+                        hasAssignment={hasAssignment}
+                        monthKey={month.monthKey}
+                        transactionId={transaction.id}
+                        categoryOptions={categoryOptions}
+                        specialBudgetOptions={specialBudgetOptions}
+                      />
                     ) : (
                       <span
                         className={`inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-black ${assignmentTone(transaction)}`}
