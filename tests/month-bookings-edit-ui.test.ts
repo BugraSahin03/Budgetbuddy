@@ -9,9 +9,12 @@ function readProjectFile(path: string): string {
   return readFileSync(join(ROOT, path), "utf8");
 }
 
-describe("FIN-060 month bookings edit UI", () => {
-  it("keeps all bookings read-only until the explicit edit mode is active", () => {
+describe("FIN-060/FIN-084 month bookings edit UI", () => {
+  it("keeps full booking edits behind edit mode while allowing direct assignment", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const directSelect = readProjectFile(
+      "app/monate/[monthKey]/direct-assignment-select.tsx",
+    );
 
     expect(page).toContain("bookingEdit");
     expect(page).not.toContain("Read-only Ansicht fuer schnelles Pruefen");
@@ -20,6 +23,12 @@ describe("FIN-060 month bookings edit UI", () => {
     expect(page).toContain("#monatsbuchungen");
     expect(page).toContain('title={isBookingEditMode ? "Fertig" : "Bearbeiten"}');
     expect(page).toContain("canEditBookings ? (");
+    expect(page).toContain("canDirectlyEditAssignment");
+    expect(page).toContain("!canEditBookings");
+    expect(page).toContain("DirectAssignmentSelect");
+    expect(page).toContain("currentAssignmentLabel");
+    expect(directSelect).toContain("requestSubmit");
+    expect(directSelect).toContain("Kategoriezuordnung direkt aendern");
   });
 
   it("surfaces closed month controls and blocks edit mode when the month is closed", () => {
@@ -45,6 +54,26 @@ describe("FIN-060 month bookings edit UI", () => {
     expect(page).toContain("deleteMonthlyImportedTransactionAction");
     expect(page).toContain('name="confirmDelete"');
     expect(page).toContain("Import-Buchung loeschen");
+  });
+
+  it("limits direct assignment to editable expense rows and keeps options grouped", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const directSelect = readProjectFile(
+      "app/monate/[monthKey]/direct-assignment-select.tsx",
+    );
+
+    expect(page).toContain(
+      'transaction.transactionType === "expense"',
+    );
+    expect(page).toContain("canEditMonth && canEditAssignment && !canEditBookings");
+    expect(page).toContain("action={updateMonthlyTransactionAssignmentAction}");
+    expect(page).not.toContain('name="bookingEdit" value="1" />\\n                        <DirectAssignmentSelect');
+    expect(directSelect).toContain('<optgroup label="Kategorien">');
+    expect(directSelect).toContain('<optgroup label="Sonderkategorien">');
+    expect(directSelect).toContain("Sonderkategorie · {budget.name}");
+    expect(directSelect).toContain("<option value=\"\" disabled>");
+    expect(directSelect).toContain("hasCurrentAssignmentOption");
+    expect(directSelect).toContain("<option value={currentAssignment}>{currentAssignmentLabel}</option>");
   });
 
   it("renders quiet read-only chips and semantic symbol tiles instead of permanent type/source fields", () => {

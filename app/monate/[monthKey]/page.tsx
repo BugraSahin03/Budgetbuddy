@@ -13,6 +13,7 @@ import {
   updateMonthlySpecialBudgetStateAction,
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
+import { DirectAssignmentSelect } from "@/app/monate/[monthKey]/direct-assignment-select";
 import { MonthTodoDialog } from "@/app/monate/[monthKey]/month-todo-dialog";
 import { MonthActionOverlay } from "@/app/monate/month-action-overlay";
 import { MonthDialog } from "@/app/monate/month-dialog";
@@ -1236,6 +1237,9 @@ export default async function MonthDetailPage({
               const isManual = transaction.sourceType === "manual";
               const canEditAssignment =
                 transaction.transactionType === "expense";
+              const canDirectlyEditAssignment =
+                canEditMonth && canEditAssignment && !canEditBookings;
+              const hasAssignment = currentAssignment.length > 0;
 
               return (
                 <article
@@ -1262,13 +1266,43 @@ export default async function MonthDetailPage({
                     <p className="text-sm font-extrabold tracking-[-0.015em] text-[color:var(--month-ink-soft)] sm:text-left">
                       {transaction.bookingDate}
                     </p>
-                    <span
-                      className={`inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-black ${assignmentTone(transaction)}`}
-                    >
-                      <span className="truncate">
-                        {assignmentChipLabel(transaction)}
+                    {canDirectlyEditAssignment ? (
+                      <form
+                        action={updateMonthlyTransactionAssignmentAction}
+                        className="inline-flex max-w-full"
+                      >
+                        <input
+                          type="hidden"
+                          name="monthKey"
+                          value={month.monthKey}
+                        />
+                        <input
+                          type="hidden"
+                          name="transactionId"
+                          value={transaction.id}
+                        />
+                        <DirectAssignmentSelect
+                          currentAssignment={currentAssignment}
+                          currentAssignmentLabel={assignmentChipLabel(
+                            transaction,
+                          )}
+                          hasAssignment={hasAssignment}
+                          categoryOptions={categoryOptions}
+                          specialBudgetOptions={specialBudgetOptions}
+                        />
+                        <button type="submit" className="sr-only">
+                          Zuordnung speichern
+                        </button>
+                      </form>
+                    ) : (
+                      <span
+                        className={`inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-black ${assignmentTone(transaction)}`}
+                      >
+                        <span className="truncate">
+                          {assignmentChipLabel(transaction)}
+                        </span>
                       </span>
-                    </span>
+                    )}
                     <p
                       className={`shrink-0 text-left text-lg font-black tracking-[-0.045em] sm:text-right ${amountTone(transaction.amountCents)}`}
                     >
