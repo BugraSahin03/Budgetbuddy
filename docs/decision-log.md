@@ -1583,3 +1583,19 @@ Auswirkung:
 - Die Sperre liegt nicht nur in der UI, sondern in den relevanten Repository-Schreibpfaden.
 - Die Monatsseite zeigt geschlossene Monate mit Status-Badge, Sperrhinweis und Wieder-Oeffnen-Dialog.
 - Planlose Kategorien bleiben planlos, weil `monthly_category_budgets` keine `NULL`-Overrides speichern kann.
+
+## 2026-06-14 - FIN-076 startet Gesamtstatistik unter Einstellungen
+
+Quelle/Ticket: `FIN-076`
+
+Erkenntnis/Entscheidung:
+
+- Die Lifetime-/Jahresstatistik startet als eigener ruhiger Nebenbereich unter `Einstellungen`.
+- Sichtbarer Einstieg ist `Gesamtstatistik`; die Seite selbst nutzt das motivierendere Wording `BudgetBuddy in Zahlen`.
+- Einnahmen und Ausgaben werden aus echten Transaktionen berechnet; Transfers bleiben ausgeschlossen.
+- `Gespart` wird ueber echte Ausgaben mit der geschuetzten Systemkategorie `Sparen` berechnet.
+
+Auswirkung:
+
+- Monatsansicht, Monatsvergleich, Budgetpflege und Importlogik bleiben unveraendert.
+- Die Seite ist eine reine Read-only-Insights-Sicht und keine operative Arbeitsflaeche.
