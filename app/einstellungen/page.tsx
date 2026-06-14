@@ -2,6 +2,12 @@ import Link from "next/link";
 
 const GLOBAL_SETTINGS = [
   {
+    href: "/einstellungen/gesamtstatistik",
+    title: "Gesamtstatistik",
+    meta: "BudgetBuddy in Zahlen",
+    icon: "∑",
+  },
+  {
     href: "/einstellungen/import-aliase",
     title: "Import-Aliasse",
     meta: "Anzeigenamen",
@@ -47,7 +53,7 @@ export default function SettingsPage() {
               Globale Einstellungen
             </h3>
           </div>
-          <span className="month-chip month-chip-accent">{GLOBAL_SETTINGS.length} Bereich</span>
+          <span className="month-chip month-chip-accent">{GLOBAL_SETTINGS.length} Bereiche</span>
         </header>
 
         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
