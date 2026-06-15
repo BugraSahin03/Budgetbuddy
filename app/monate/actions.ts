@@ -344,6 +344,7 @@ export async function updateMonthlyTransactionAssignmentAction(
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
   const keepBookingEdit = formData.has("bookingEdit");
+  let redirectTarget: string;
 
   try {
     const transactionId = parseTransactionId(formData.get("transactionId"));
@@ -365,20 +366,18 @@ export async function updateMonthlyTransactionAssignmentAction(
     revalidatePath("/sonderbudgets");
     revalidatePath("/auswertungen");
 
-    redirect(
-      monthBookingHref(monthKey, {
-        ...(keepBookingEdit ? { bookingEdit: "1" } : {}),
-        notice: "Zuordnung gespeichert.",
-      }),
-    );
+    redirectTarget = monthBookingHref(monthKey, {
+      ...(keepBookingEdit ? { bookingEdit: "1" } : {}),
+      notice: "Zuordnung gespeichert.",
+    });
   } catch (error) {
-    redirect(
-      monthBookingHref(monthKey, {
-        ...(keepBookingEdit ? { bookingEdit: "1" } : {}),
-        error: toErrorMessage(error),
-      }),
-    );
+    redirectTarget = monthBookingHref(monthKey, {
+      ...(keepBookingEdit ? { bookingEdit: "1" } : {}),
+      error: toErrorMessage(error),
+    });
   }
+
+  redirect(redirectTarget);
 }
 
 export async function updateMonthlyManualTransactionAction(
