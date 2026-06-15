@@ -23,19 +23,25 @@ describe("FIN-068 month savings KPI UI", () => {
   });
 
   it("keeps category marks neutral so savings is not singled out in category lists", () => {
-    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const overview = readProjectFile(
+      "app/monate/[monthKey]/month-category-overview.tsx",
+    );
 
-    expect(page).toContain('variant="neutral"');
-    expect(page).not.toContain("categoryMarkVariant");
+    expect(overview).toContain('variant="neutral"');
+    expect(overview).not.toContain("categoryMarkVariant");
   });
 
   it("hides missing plan copy for savings in the category overview", () => {
-    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const overview = readProjectFile(
+      "app/monate/[monthKey]/month-category-overview.tsx",
+    );
 
-    expect(page).toContain("const isSavingsCategory = category?.isSavings === true");
-    expect(page).toContain("{!isSavingsCategory ? (");
-    expect(page).toContain("Budget fehlt");
-    expect(page).toContain("Kein Planwert");
+    expect(overview).toContain(
+      "const isSavingsCategory = category?.isSavings === true",
+    );
+    expect(overview).toContain("{!isSavingsCategory ? (");
+    expect(overview).toContain("Budget fehlt");
+    expect(overview).toContain("Kein Planwert");
   });
 
   it("does not offer a monthly budget amount field for savings in budget care", () => {
