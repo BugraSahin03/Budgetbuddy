@@ -14,6 +14,7 @@ import {
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
 import { DirectAssignmentSelect } from "@/app/monate/[monthKey]/direct-assignment-select";
+import { MonthCategoryOverview } from "@/app/monate/[monthKey]/month-category-overview";
 import { MonthTodoDialog } from "@/app/monate/[monthKey]/month-todo-dialog";
 import { MonthActionOverlay } from "@/app/monate/month-action-overlay";
 import { MonthDialog } from "@/app/monate/month-dialog";
@@ -32,7 +33,6 @@ import {
 } from "@/src/months/repository";
 import {
   categoryUsageChipClassName,
-  categoryUsageProgressStyle,
   categoryUsageSurfaceStyle,
   getCategoryUsageState,
 } from "@/src/months/category-usage";
@@ -996,148 +996,19 @@ export default async function MonthDetailPage({
           />
 
           <div className="mt-7 space-y-5">
-            {month.dashboard.categoryRows.length === 0 &&
-            activeSpecialBudgetRows.length === 0 ? (
-              <EmptyReferenceCard>
-                Noch keine Kategorien und Sonderkategorien fuer diesen Monat vorhanden.
-              </EmptyReferenceCard>
-            ) : (
-              <>
-                {month.dashboard.categoryRows.map((row) => {
-                  const category = categoryVisuals.get(row.categoryId);
-                  const usageState = getCategoryUsageState(row);
-                  const hasPlannedBudget =
-                    row.budgetAmountCents !== null &&
-                    row.budgetAmountCents > 0;
-                  const isSavingsCategory = category?.isSavings === true;
-
-                  return (
-                    <div key={row.categoryId} className="grid gap-3">
-                      <div className="flex items-center gap-4">
-                        <CategoryVisualMark
-                          name={category?.name ?? row.categoryName}
-                          iconName={category?.iconName}
-                          className="h-12 w-12 text-sm"
-                          variant="neutral"
-                        />
-                        <div className="min-w-0 flex-1">
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
-                              {row.categoryName}
-                            </p>
-                            <p className="shrink-0 text-sm font-extrabold text-[color:var(--month-ink)]">
-                              {formatEuro(row.spentAmountCents)}
-                            </p>
-                          </div>
-                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/85">
-                            <div
-                              className="h-full rounded-full"
-                              style={{
-                                width: `${usageState.progressPercent}%`,
-                                ...categoryUsageProgressStyle(usageState),
-                              }}
-                            />
-                          </div>
-                          {!isSavingsCategory ? (
-                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-                              <span>
-                                {!hasPlannedBudget
-                                  ? "Budget fehlt"
-                                  : `${usageState.percent}% genutzt`}
-                              </span>
-                              <span>
-                                {!hasPlannedBudget
-                                  ? "Kein Planwert"
-                                  : `Plan ${formatEuro(row.budgetAmountCents ?? 0)}`}
-                              </span>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-
-                <div className="flex justify-end">
-                  <div className="inline-flex w-fit rounded-[1.25rem] border border-white/70 bg-white/72 px-4 py-3 shadow-[0_12px_28px_rgba(7,27,70,0.06)]">
-                    <div className="flex flex-wrap items-center gap-3">
-                      <p className="text-[0.62rem] font-black uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
-                        Rest nach Planung
-                      </p>
-                      <p className="text-sm font-black text-[color:var(--month-ink)]">
-                        {formatEuro(
-                          month.dashboard.planSummary
-                            .planRestAfterBudgetPotsCents,
-                        )}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {activeSpecialBudgetRows.length > 0 ? (
-                  <section className="pt-2">
-                    <p className="text-[0.66rem] font-black uppercase tracking-[0.18em] text-amber-700">
-                      Sonderkategorien
-                    </p>
-                    <div className="mt-4 space-y-5">
-                      {activeSpecialBudgetRows.map((row) => {
-                        const usageState = getCategoryUsageState({
-                          budgetAmountCents: row.plannedAmountCents,
-                          spentAmountCents: row.actualExpenseCents,
-                        });
-                        const hasPlannedBudget = row.plannedAmountCents > 0;
-
-                        return (
-                          <div
-                            key={row.id}
-                            className="grid gap-3"
-                          >
-                            <div className="flex items-center gap-4">
-                              <span className="category-visual-mark h-12 w-12 text-xs">
-                                SB
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <div className="flex items-center justify-between gap-3">
-                                  <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
-                                    {row.name}
-                                  </p>
-                                  <p className="shrink-0 text-sm font-extrabold text-[color:var(--month-ink)]">
-                                    {formatEuro(row.actualExpenseCents)}
-                                  </p>
-                                </div>
-                                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/85">
-                                  <div
-                                    className="h-full rounded-full"
-                                    style={{
-                                      width: `${usageState.progressPercent}%`,
-                                      ...categoryUsageProgressStyle(
-                                        usageState,
-                                      ),
-                                    }}
-                                  />
-                                </div>
-                                <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-                                  <span>
-                                    {!hasPlannedBudget
-                                      ? "Budget fehlt"
-                                      : `${usageState.percent}% genutzt`}
-                                  </span>
-                                  <span>
-                                    {!hasPlannedBudget
-                                      ? "Kein Planwert"
-                                      : `Plan ${formatEuro(row.plannedAmountCents)}`}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </section>
-                ) : null}
-              </>
-            )}
+            <MonthCategoryOverview
+              categoryRows={month.dashboard.categoryRows}
+              categoryVisuals={Array.from(categoryVisuals, ([id, category]) => ({
+                id,
+                name: category.name,
+                iconName: category.iconName,
+                isSavings: category.isSavings,
+              }))}
+              planRestAfterBudgetPotsCents={
+                month.dashboard.planSummary.planRestAfterBudgetPotsCents
+              }
+              specialBudgetRows={activeSpecialBudgetRows}
+            />
           </div>
         </article>
 
@@ -1268,6 +1139,7 @@ export default async function MonthDetailPage({
                     </p>
                     {canDirectlyEditAssignment ? (
                       <DirectAssignmentSelect
+                        amountCents={transaction.amountCents}
                         currentAssignment={currentAssignment}
                         currentAssignmentLabel={assignmentChipLabel(
                           transaction,

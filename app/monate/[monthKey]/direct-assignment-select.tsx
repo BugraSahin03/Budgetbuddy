@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState } from "react";
 
 type DirectAssignmentSelectProps = {
+  amountCents: number;
   currentAssignment: string;
   currentAssignmentLabel: string;
   hasAssignment: boolean;
@@ -19,7 +20,145 @@ type DirectAssignmentSelectProps = {
   }>;
 };
 
+type ParsedAssignment =
+  | { type: "category"; id: number }
+  | { type: "specialBudget"; id: number }
+  | null;
+
+function formatEuro(cents: number): string {
+  return new Intl.NumberFormat("de-DE", {
+    style: "currency",
+    currency: "EUR",
+  }).format(cents / 100);
+}
+
+function parseAssignment(assignment: string): ParsedAssignment {
+  const categoryMatch = assignment.match(/^category:(\d+)$/);
+  if (categoryMatch) {
+    return { type: "category", id: Number.parseInt(categoryMatch[1], 10) };
+  }
+
+  const specialBudgetMatch = assignment.match(/^specialBudget:(\d+)$/);
+  if (specialBudgetMatch) {
+    return {
+      type: "specialBudget",
+      id: Number.parseInt(specialBudgetMatch[1], 10),
+    };
+  }
+
+  return null;
+}
+
+function progressBackground(
+  budgetCents: number | null,
+  spentCents: number,
+): string {
+  if (budgetCents === null || budgetCents <= 0) {
+    return "linear-gradient(90deg, #CBD5E1, #E2E8F0)";
+  }
+
+  const percent = Math.max(
+    0,
+    Math.round((Math.max(0, spentCents) / budgetCents) * 100),
+  );
+
+  if (spentCents > budgetCents) {
+    return "linear-gradient(90deg, #F87171, #FB7185)";
+  }
+
+  if (percent >= 90) {
+    return "linear-gradient(90deg, #FB923C, #FDBA74)";
+  }
+
+  if (percent >= 70) {
+    return "linear-gradient(90deg, #FACC15, #FDE68A)";
+  }
+
+  return "linear-gradient(90deg, #34D399, #5EEAD4)";
+}
+
+function updateLiveOverviewRow(row: HTMLElement, deltaCents: number): void {
+  const currentSpentCents = Number.parseInt(
+    row.dataset.liveSpentCents ?? "0",
+    10,
+  );
+  const rawBudgetCents = row.dataset.liveBudgetCents ?? "";
+  const budgetCents =
+    rawBudgetCents.length > 0 ? Number.parseInt(rawBudgetCents, 10) : null;
+  const spentCents = currentSpentCents + deltaCents;
+  const progressPercent =
+    budgetCents === null || budgetCents <= 0
+      ? 0
+      : Math.min(
+          100,
+          Math.max(
+            0,
+            Math.round((Math.max(0, spentCents) / budgetCents) * 100),
+          ),
+        );
+
+  row.dataset.liveSpentCents = String(spentCents);
+
+  const amount = row.querySelector<HTMLElement>("[data-live-amount]");
+  if (amount) {
+    amount.textContent = formatEuro(spentCents);
+  }
+
+  const progress = row.querySelector<HTMLElement>("[data-live-progress]");
+  if (progress) {
+    progress.style.width = `${progressPercent}%`;
+    progress.style.background = progressBackground(budgetCents, spentCents);
+  }
+
+  const usageLabel = row.querySelector<HTMLElement>("[data-live-usage-label]");
+  if (usageLabel && budgetCents !== null && budgetCents > 0) {
+    usageLabel.textContent = `${Math.max(
+      0,
+      Math.round((Math.max(0, spentCents) / budgetCents) * 100),
+    )}% genutzt`;
+  }
+}
+
+function updateLiveAssignmentOverview(
+  previousAssignment: string,
+  assignment: string,
+  amountCents: number,
+): void {
+  const expenseCents = Math.abs(amountCents);
+  const previous = parseAssignment(previousAssignment);
+  const next = parseAssignment(assignment);
+
+  if (previous?.type === "category") {
+    const row = document.querySelector<HTMLElement>(
+      `[data-live-category-id="${previous.id}"]`,
+    );
+    if (row) updateLiveOverviewRow(row, -expenseCents);
+  }
+
+  if (previous?.type === "specialBudget") {
+    const row = document.querySelector<HTMLElement>(
+      `[data-live-special-budget-id="${previous.id}"]`,
+    );
+    if (row) updateLiveOverviewRow(row, -expenseCents);
+  }
+
+  if (next?.type === "category") {
+    const row = document.querySelector<HTMLElement>(
+      `[data-live-category-id="${next.id}"]`,
+    );
+    if (row) updateLiveOverviewRow(row, expenseCents);
+  }
+
+  if (next?.type === "specialBudget") {
+    const row = document.querySelector<HTMLElement>(
+      `[data-live-special-budget-id="${next.id}"]`,
+    );
+    if (row) updateLiveOverviewRow(row, expenseCents);
+  }
+}
+
 export function DirectAssignmentSelect({
+  amountCents,
   currentAssignment,
   currentAssignmentLabel,
   hasAssignment,
@@ -31,7 +170,9 @@ export function DirectAssignmentSelect({
   const [selectedAssignment, setSelectedAssignment] = useState(currentAssignment);
   const [savedAssignment, setSavedAssignment] = useState(currentAssignment);
   const [error, setError] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [isPending, setIsPending] = useState(false);
+  const latestAssignmentRef = useRef(currentAssignment);
+  const pendingAssignmentRef = useRef<string | null>(null);
   const hasSavedAssignment = savedAssignment.length > 0 || hasAssignment;
   const assignmentTone = hasSavedAssignment
     ? "border-emerald-200 bg-emerald-50 text-emerald-800 hover:border-emerald-300 focus:border-emerald-300"
@@ -43,37 +184,51 @@ export function DirectAssignmentSelect({
       ...specialBudgetOptions.map((budget) => `specialBudget:${budget.id}`),
     ].includes(savedAssignment);
 
-  function updateAssignment(assignment: string): void {
-    const previousAssignment = savedAssignment;
+  async function updateAssignment(assignment: string): Promise<void> {
+    if (
+      assignment === latestAssignmentRef.current ||
+      assignment === pendingAssignmentRef.current
+    ) {
+      return;
+    }
 
+    const previousAssignment = latestAssignmentRef.current;
+
+    latestAssignmentRef.current = assignment;
+    pendingAssignmentRef.current = assignment;
     setSelectedAssignment(assignment);
     setSavedAssignment(assignment);
     setError(null);
+    setIsPending(true);
+    updateLiveAssignmentOverview(previousAssignment, assignment, amountCents);
 
-    startTransition(async () => {
-      try {
-        const response = await fetch(`/monate/${monthKey}/assignments`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ assignment, transactionId }),
-        });
-        const body = (await response.json()) as { error?: string };
+    try {
+      const response = await fetch(`/monate/${monthKey}/assignments`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ assignment, transactionId }),
+      });
+      const body = (await response.json()) as { error?: string };
 
-        if (!response.ok) {
-          throw new Error(
-            body.error ?? "Zuordnung konnte nicht gespeichert werden.",
-          );
-        }
-      } catch (caughtError) {
-        setSelectedAssignment(previousAssignment);
-        setSavedAssignment(previousAssignment);
-        setError(
-          caughtError instanceof Error
-            ? caughtError.message
-            : "Zuordnung konnte nicht gespeichert werden.",
+      if (!response.ok) {
+        throw new Error(
+          body.error ?? "Zuordnung konnte nicht gespeichert werden.",
         );
       }
-    });
+    } catch (caughtError) {
+      latestAssignmentRef.current = previousAssignment;
+      updateLiveAssignmentOverview(assignment, previousAssignment, amountCents);
+      setSelectedAssignment(previousAssignment);
+      setSavedAssignment(previousAssignment);
+      setError(
+        caughtError instanceof Error
+          ? caughtError.message
+          : "Zuordnung konnte nicht gespeichert werden.",
+      );
+    } finally {
+      pendingAssignmentRef.current = null;
+      setIsPending(false);
+    }
   }
 
   return (
@@ -86,7 +241,8 @@ export function DirectAssignmentSelect({
           aria-busy={isPending}
           className={`max-w-full appearance-none rounded-full border py-1 pl-2.5 pr-7 text-xs font-black shadow-[0_8px_18px_rgba(7,27,70,0.035)] transition hover:-translate-y-0.5 focus:outline-none disabled:cursor-wait disabled:opacity-75 ${assignmentTone}`}
           disabled={isPending}
-          onChange={(event) => updateAssignment(event.target.value)}
+          onInput={(event) => void updateAssignment(event.currentTarget.value)}
+          onChange={(event) => void updateAssignment(event.target.value)}
         >
           {!hasSavedAssignment ? (
             <option value="" disabled>

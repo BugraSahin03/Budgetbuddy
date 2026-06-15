@@ -27,7 +27,7 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("!canEditBookings");
     expect(page).toContain("DirectAssignmentSelect");
     expect(page).toContain("currentAssignmentLabel");
-    expect(directSelect).toContain("useTransition");
+    expect(directSelect).toContain("setIsPending(true)");
     expect(directSelect).toContain("fetch(`/monate/${monthKey}/assignments`");
     expect(directSelect).toContain("Kategoriezuordnung direkt aendern");
     expect(directSelect).toContain("border-red-200 bg-red-50 text-red-700");
@@ -91,6 +91,26 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(directSelect).toContain("setSelectedAssignment(assignment)");
     expect(directSelect).toContain("setSavedAssignment(assignment)");
     expect(directSelect).not.toContain("requestSubmit");
+  });
+
+  it("updates the visible category overview after direct assignment changes", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const directSelect = readProjectFile(
+      "app/monate/[monthKey]/direct-assignment-select.tsx",
+    );
+    const overview = readProjectFile(
+      "app/monate/[monthKey]/month-category-overview.tsx",
+    );
+
+    expect(page).toContain("MonthCategoryOverview");
+    expect(page).toContain("amountCents={transaction.amountCents}");
+    expect(directSelect).toContain("updateLiveAssignmentOverview");
+    expect(directSelect).toContain("updateLiveOverviewRow");
+    expect(directSelect).toContain("Math.abs(amountCents)");
+    expect(overview).toContain("data-live-category-id");
+    expect(overview).toContain("data-live-special-budget-id");
+    expect(overview).toContain("data-live-spent-cents");
+    expect(overview).toContain("data-live-amount");
   });
 
   it("keeps successful assignment redirects outside the catch block", () => {
