@@ -15,7 +15,7 @@ export function parsePlannedAmountCents(rawInput: string): number {
   const parsed = Number.parseFloat(canonical);
 
   if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error("Geplanter Betrag muss 0 oder groesser sein.");
+    throw new Error("Geplanter Betrag muss 0 oder größer sein.");
   }
 
   const cents = Math.round(parsed * 100);

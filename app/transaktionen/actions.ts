@@ -55,7 +55,7 @@ function toErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "Aktion konnte nicht ausgefuehrt werden.";
+  return "Aktion konnte nicht ausgeführt werden.";
 }
 
 function encodeMessage(message: string): string {

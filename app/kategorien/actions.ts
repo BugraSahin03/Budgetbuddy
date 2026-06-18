@@ -33,7 +33,7 @@ function toErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "Aktion konnte nicht ausgefuehrt werden.";
+  return "Aktion konnte nicht ausgeführt werden.";
 }
 
 export async function createCategoryAction(formData: FormData): Promise<never> {

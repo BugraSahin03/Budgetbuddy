@@ -403,7 +403,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
               Importierte Buchungen
             </p>
             <h3 className="text-base font-semibold text-slate-900">
-              Ergebnisse aus bestätigten Importlaeufen
+              Ergebnisse aus bestätigten Importläufen
             </h3>
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
@@ -440,7 +440,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
                   const assignment =
                     row.transactionType === "expense"
                       ? row.categoryName ?? row.specialBudgetName ?? "Zuordnen"
-                      : "Keine Zuordnung noetig";
+                      : "Keine Zuordnung nötig";
 
                   return (
                     <tr key={`imported-main-${row.id}`}>

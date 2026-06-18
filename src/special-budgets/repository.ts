@@ -126,7 +126,7 @@ function assertSpecialBudgetBelongsToMonth(
 
 function normalizePlannedAmountCents(plannedAmountCents: number): number {
   if (!Number.isInteger(plannedAmountCents) || plannedAmountCents < 0) {
-    throw new Error("Geplanter Betrag muss 0 oder groesser sein.");
+    throw new Error("Geplanter Betrag muss 0 oder größer sein.");
   }
 
   return plannedAmountCents;

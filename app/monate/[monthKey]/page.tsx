@@ -152,7 +152,7 @@ function assignmentLabel(row: {
     return "Transfer";
   }
 
-  return "Keine Zuordnung noetig";
+  return "Keine Zuordnung nötig";
 }
 
 function assignmentTone(row: MonthDetailTransactionRow): string {
@@ -264,7 +264,7 @@ function MonthNavLink({
 }) {
   const arrow = direction === "previous" ? "←" : "→";
   const description =
-    direction === "previous" ? "Vorheriger Monat" : "Naechster Monat";
+    direction === "previous" ? "Vorheriger Monat" : "Nächster Monat";
 
   return (
     <Link

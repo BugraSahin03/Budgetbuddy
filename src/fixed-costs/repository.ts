@@ -82,7 +82,7 @@ function parseAmountCents(plannedAmountInput: string): number {
   const parsed = Number.parseFloat(normalized.replace(",", "."));
 
   if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error("Betrag muss 0 oder groesser sein.");
+    throw new Error("Betrag muss 0 oder größer sein.");
   }
 
   const cents = Math.round(parsed * 100);
