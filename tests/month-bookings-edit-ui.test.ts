@@ -17,8 +17,8 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     );
 
     expect(page).toContain("bookingEdit");
-    expect(page).not.toContain("Read-only Ansicht fuer schnelles Pruefen");
-    expect(page).toContain("Editiermodus fuer Monatsbuchungen aktivieren");
+    expect(page).not.toContain("Read-only Ansicht für schnelles Prüfen");
+    expect(page).toContain("Editiermodus für Monatsbuchungen aktivieren");
     expect(page).toContain('id="monatsbuchungen"');
     expect(page).toContain("#monatsbuchungen");
     expect(page).toContain('title={isBookingEditMode ? "Fertig" : "Bearbeiten"}');
@@ -29,7 +29,7 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("currentAssignmentLabel");
     expect(directSelect).toContain("setIsPending(true)");
     expect(directSelect).toContain("fetch(`/monate/${monthKey}/assignments`");
-    expect(directSelect).toContain("Kategoriezuordnung direkt aendern");
+    expect(directSelect).toContain("Kategoriezuordnung direkt ändern");
     expect(directSelect).toContain("border-red-200 bg-red-50 text-red-700");
     expect(directSelect).toContain("border-emerald-200 bg-emerald-50 text-emerald-800");
   });
@@ -38,8 +38,8 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
 
     expect(page).toContain("MonthCloseControl");
-    expect(page).toContain("Monat abschliessen");
-    expect(page).toContain("Wieder oeffnen");
+    expect(page).toContain("Monat abschließen");
+    expect(page).toContain("Wieder öffnen");
     expect(page).toContain("Abgeschlossen");
     expect(page).toContain("Budgetpflege gesperrt");
     expect(page).toContain("const canEditBookings = isBookingEditMode && canEditMonth");
@@ -56,7 +56,7 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("deleteMonthlyManualTransactionAction");
     expect(page).toContain("deleteMonthlyImportedTransactionAction");
     expect(page).toContain('name="confirmDelete"');
-    expect(page).toContain("Import-Buchung loeschen");
+    expect(page).toContain("Import-Buchung löschen");
   });
 
   it("limits direct assignment to editable expense rows and keeps options grouped", () => {

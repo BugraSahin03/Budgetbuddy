@@ -18,7 +18,7 @@ function parseCategoryId(rawValue: FormDataEntryValue | null): number {
   const categoryId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(categoryId) || categoryId <= 0) {
-    throw new Error("Kategorie-ID ist ungueltig.");
+    throw new Error("Kategorie-ID ist ungültig.");
   }
 
   return categoryId;
@@ -33,7 +33,7 @@ function toErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "Aktion konnte nicht ausgefuehrt werden.";
+  return "Aktion konnte nicht ausgeführt werden.";
 }
 
 export async function createCategoryAction(formData: FormData): Promise<never> {

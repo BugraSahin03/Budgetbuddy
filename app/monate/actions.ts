@@ -30,7 +30,7 @@ function parseCategoryId(rawValue: FormDataEntryValue | null): number {
   const categoryId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(categoryId) || categoryId <= 0) {
-    throw new Error("Kategorie-ID ist ungueltig.");
+    throw new Error("Kategorie-ID ist ungültig.");
   }
 
   return categoryId;
@@ -41,7 +41,7 @@ function parseSpecialBudgetId(rawValue: FormDataEntryValue | null): number {
   const specialBudgetId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(specialBudgetId) || specialBudgetId <= 0) {
-    throw new Error("Sonderkategorie-ID ist ungueltig.");
+    throw new Error("Sonderkategorie-ID ist ungültig.");
   }
 
   return specialBudgetId;
@@ -52,7 +52,7 @@ function parseTransactionId(rawValue: FormDataEntryValue | null): number {
   const transactionId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(transactionId) || transactionId <= 0) {
-    throw new Error("Transaktions-ID ist ungueltig.");
+    throw new Error("Transaktions-ID ist ungültig.");
   }
 
   return transactionId;
@@ -70,7 +70,7 @@ function parseOptionalPositiveInt(
   const parsed = Number.parseInt(value, 10);
 
   if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error("Auswahl ist ungueltig.");
+    throw new Error("Auswahl ist ungültig.");
   }
 
   return parsed;
@@ -105,7 +105,7 @@ function parseBudgetAssignment(rawValue: FormDataEntryValue | null): {
     };
   }
 
-  throw new Error("Kategoriezuordnung ist ungueltig.");
+  throw new Error("Kategoriezuordnung ist ungültig.");
 }
 
 function parseTransactionType(
@@ -122,7 +122,7 @@ function parseTransactionType(
     return value;
   }
 
-  throw new Error("Transaktionstyp ist ungueltig.");
+  throw new Error("Transaktionstyp ist ungültig.");
 }
 
 function parseAccountId(rawValue: FormDataEntryValue | null): number {
@@ -130,7 +130,7 @@ function parseAccountId(rawValue: FormDataEntryValue | null): number {
   const accountId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(accountId) || accountId <= 0) {
-    throw new Error("Konto ist ungueltig.");
+    throw new Error("Konto ist ungültig.");
   }
 
   return accountId;
@@ -204,7 +204,7 @@ export async function closeMonthAction(formData: FormData): Promise<never> {
     const confirmClose = toSingleString(formData.get("confirmClose")).trim();
 
     if (confirmClose !== "on") {
-      throw new Error("Monatsabschluss muss bewusst bestaetigt werden.");
+      throw new Error("Monatsabschluss muss bewusst bestätigt werden.");
     }
 
     closeMonth(monthKey);
@@ -226,13 +226,13 @@ export async function reopenMonthAction(formData: FormData): Promise<never> {
     const confirmReopen = toSingleString(formData.get("confirmReopen")).trim();
 
     if (confirmReopen !== "on") {
-      throw new Error("Wieder oeffnen muss bewusst bestaetigt werden.");
+      throw new Error("Wieder öffnen muss bewusst bestätigt werden.");
     }
 
     reopenMonth(monthKey);
     revalidateMonthContext(monthKey);
 
-    redirectTarget = `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monat wieder geoeffnet.")}`;
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monat wieder geöffnet.")}`;
   } catch (error) {
     redirectTarget = `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`;
   }
@@ -426,7 +426,7 @@ export async function deleteMonthlyManualTransactionAction(
     const confirmDelete = toSingleString(formData.get("confirmDelete")).trim();
 
     if (confirmDelete !== "on") {
-      throw new Error("Loeschen muss bewusst bestaetigt werden.");
+      throw new Error("Löschen muss bewusst bestätigt werden.");
     }
 
     deleteManualTransaction(transactionId);
@@ -440,7 +440,7 @@ export async function deleteMonthlyManualTransactionAction(
     redirect(
       monthBookingHref(monthKey, {
         bookingEdit: "1",
-        notice: "Buchung geloescht.",
+        notice: "Buchung gelöscht.",
       }),
     );
   } catch (error) {
@@ -463,7 +463,7 @@ export async function deleteMonthlyImportedTransactionAction(
     const confirmDelete = toSingleString(formData.get("confirmDelete")).trim();
 
     if (confirmDelete !== "on") {
-      throw new Error("Loeschen muss bewusst bestaetigt werden.");
+      throw new Error("Löschen muss bewusst bestätigt werden.");
     }
 
     deleteImportedTransactionForMonth(transactionId, monthKey);
@@ -477,7 +477,7 @@ export async function deleteMonthlyImportedTransactionAction(
     redirect(
       monthBookingHref(monthKey, {
         bookingEdit: "1",
-        notice: "Import-Buchung geloescht.",
+        notice: "Import-Buchung gelöscht.",
       }),
     );
   } catch (error) {

@@ -143,7 +143,7 @@ function toNullablePositiveInt(raw: string): number | null {
 
   const value = Number.parseInt(normalized, 10);
   if (!Number.isInteger(value) || value <= 0) {
-    throw new Error("ID-Wert ist ungueltig.");
+    throw new Error("ID-Wert ist ungültig.");
   }
 
   return value;

@@ -189,7 +189,7 @@ describe("FIN-060 monthly booking edit actions", () => {
       "2026-06",
     );
     expect(mocks.redirect).toHaveBeenCalledWith(
-      "/monate/2026-06?bookingEdit=1&notice=Import-Buchung+geloescht.#monatsbuchungen",
+      "/monate/2026-06?bookingEdit=1&notice=Import-Buchung+gel%C3%B6scht.#monatsbuchungen",
     );
   });
 });
@@ -217,7 +217,7 @@ describe("FIN-071 monthly close actions", () => {
 
     expect(mocks.reopenMonth).toHaveBeenCalledWith("2026-06");
     expect(mocks.redirect).toHaveBeenLastCalledWith(
-      "/monate/2026-06?notice=Monat%20wieder%20geoeffnet.",
+      "/monate/2026-06?notice=Monat%20wieder%20ge%C3%B6ffnet.",
     );
   });
 });

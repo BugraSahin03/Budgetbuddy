@@ -12,7 +12,7 @@ export function BudgetCreateTabs({ categoryForm, specialBudgetForm }: BudgetCrea
 
   return (
     <div className="budget-create-tabs">
-      <div className="budget-create-tab-list" role="tablist" aria-label="Eintragstyp waehlen">
+      <div className="budget-create-tab-list" role="tablist" aria-label="Eintragstyp wählen">
         <button
           type="button"
           role="tab"

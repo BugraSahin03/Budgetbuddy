@@ -83,7 +83,7 @@ function statusBadgeClass(status: string): string {
 function toTypeLabel(transactionType: TransactionType): string {
   if (transactionType === "expense") return "Ausgabe";
   if (transactionType === "income") return "Einkommen";
-  if (transactionType === "refund") return "Rueckerstattung";
+  if (transactionType === "refund") return "Rückerstattung";
   return "Transfer";
 }
 
@@ -383,7 +383,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
                             Speichern
                           </button>
                           <button type="submit" name="intent" value="delete" className="rounded border border-red-300 bg-red-100 px-2 py-1 text-xs font-semibold text-red-800">
-                            Loeschen
+                            Löschen
                           </button>
                         </div>
                       </form>
@@ -403,7 +403,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
               Importierte Buchungen
             </p>
             <h3 className="text-base font-semibold text-slate-900">
-              Ergebnisse aus bestaetigten Importlaeufen
+              Ergebnisse aus bestätigten Importläufen
             </h3>
           </div>
           <div className="flex flex-wrap gap-2 text-xs">
@@ -440,7 +440,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
                   const assignment =
                     row.transactionType === "expense"
                       ? row.categoryName ?? row.specialBudgetName ?? "Zuordnen"
-                      : "Keine Zuordnung noetig";
+                      : "Keine Zuordnung nötig";
 
                   return (
                     <tr key={`imported-main-${row.id}`}>

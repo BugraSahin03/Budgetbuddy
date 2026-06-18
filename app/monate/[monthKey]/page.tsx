@@ -127,7 +127,7 @@ function transactionTypeLabel(type: string): string {
   }
 
   if (type === "refund") {
-    return "Rueckerstattung";
+    return "Rückerstattung";
   }
 
   return "Ausgabe";
@@ -152,7 +152,7 @@ function assignmentLabel(row: {
     return "Transfer";
   }
 
-  return "Keine Zuordnung noetig";
+  return "Keine Zuordnung nötig";
 }
 
 function assignmentTone(row: MonthDetailTransactionRow): string {
@@ -264,7 +264,7 @@ function MonthNavLink({
 }) {
   const arrow = direction === "previous" ? "←" : "→";
   const description =
-    direction === "previous" ? "Vorheriger Monat" : "Naechster Monat";
+    direction === "previous" ? "Vorheriger Monat" : "Nächster Monat";
 
   return (
     <Link
@@ -400,9 +400,9 @@ function MonthCloseControl({
     return (
       <MonthDialog
         eyebrow="Monatsstatus"
-        title="Monat wieder oeffnen"
-        description="Nach dem Wieder-Oeffnen koennen Buchungen, Zuordnungen, Importe und Monatsbudgets wieder veraendert werden. Der Fixkosten-Snapshot bleibt erhalten."
-        triggerLabel="Wieder oeffnen"
+        title="Monat wieder öffnen"
+        description="Nach dem Wieder-Öffnen können Buchungen, Zuordnungen, Importe und Monatsbudgets wieder verändert werden. Der Fixkosten-Snapshot bleibt erhalten."
+        triggerLabel="Wieder öffnen"
         triggerClassName="month-dialog-trigger"
       >
         <form action={reopenMonthAction} className="grid gap-5">
@@ -413,14 +413,14 @@ function MonthCloseControl({
               name="confirmReopen"
               className="mt-1 h-4 w-4 rounded border-[color:var(--month-line-strong)]"
             />
-            Ich moechte diesen Monat wieder oeffnen und Bearbeitungen bewusst
+            Ich möchte diesen Monat wieder öffnen und Bearbeitungen bewusst
             erlauben.
           </label>
           <button
             type="submit"
             className="w-fit rounded-2xl bg-[color:var(--month-ink)] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
           >
-            Wieder oeffnen
+            Wieder öffnen
           </button>
         </form>
       </MonthDialog>
@@ -430,18 +430,18 @@ function MonthCloseControl({
   return (
     <MonthDialog
       eyebrow="Monatsstatus"
-      title="Monat abschliessen"
-      description="Der Abschluss sperrt diesen Monat gegen versehentliche Aenderungen. Offene Zuordnungen werden nur gewarnt, nicht hart blockiert."
-      triggerLabel="Monat abschliessen"
+      title="Monat abschließen"
+      description="Der Abschluss sperrt diesen Monat gegen versehentliche Änderungen. Offene Zuordnungen werden nur gewarnt, nicht hart blockiert."
+      triggerLabel="Monat abschließen"
       triggerClassName="month-dialog-trigger"
     >
       <form action={closeMonthAction} className="grid gap-5">
         <input type="hidden" name="monthKey" value={monthKey} />
         <div className="rounded-[1.2rem] border border-amber-200 bg-amber-50/82 p-4 text-sm leading-6 text-amber-950">
-          <p className="font-black">Vor dem Abschluss kurz pruefen</p>
+          <p className="font-black">Vor dem Abschluss kurz prüfen</p>
           <p className="mt-2">
             {openAssignmentCount > 0
-              ? `${openAssignmentCount} Ausgabe(n) sind noch offen zugeordnet. Du kannst trotzdem abschliessen, wenn das fachlich passt.`
+              ? `${openAssignmentCount} Ausgabe(n) sind noch offen zugeordnet. Du kannst trotzdem abschließen, wenn das fachlich passt.`
               : "Alle Ausgaben haben aktuell eine Kategorie- oder Sonderbudget-Zuordnung."}
           </p>
           <p className="mt-2">
@@ -455,13 +455,13 @@ function MonthCloseControl({
             name="confirmClose"
             className="mt-1 h-4 w-4 rounded border-[color:var(--month-line-strong)]"
           />
-          Ich habe die Hinweise geprueft und moechte den Monat abschliessen.
+          Ich habe die Hinweise geprüft und möchte den Monat abschließen.
         </label>
         <button
           type="submit"
           className="w-fit rounded-2xl bg-[color:var(--month-ink)] px-5 py-3 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
         >
-          Monat abschliessen
+          Monat abschließen
         </button>
       </form>
     </MonthDialog>
@@ -520,7 +520,7 @@ export default async function MonthDetailPage({
     <MonthPageShell>
       <section className="month-reference-hero">
         <div className="flex items-center justify-between gap-4">
-          <p className="month-eyebrow">Monatsueberblick</p>
+          <p className="month-eyebrow">Monatsüberblick</p>
           <div className="flex flex-wrap items-center justify-end gap-3">
             <MonthTodoDialog
               monthKey={month.monthKey}
@@ -596,14 +596,14 @@ export default async function MonthDetailPage({
             <div>
               <p className="month-eyebrow text-red-700">Warnbereich</p>
               <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-red-950">
-                {warningCount} Budgetueberschreitung(en) aktiv
+                {warningCount} Budgetüberschreitung(en) aktiv
               </h2>
               <p className="mt-2 max-w-2xl text-sm leading-6 text-red-900/80">
-                Dieser Monat enthaelt mindestens eine klare Budgetwarnung und
-                sollte zuerst auf Monatsseite geprueft werden.
+                Dieser Monat enthält mindestens eine klare Budgetwarnung und
+                sollte zuerst auf Monatsseite geprüft werden.
               </p>
             </div>
-            <MonthChip tone="warn">Bitte zuerst pruefen</MonthChip>
+            <MonthChip tone="warn">Bitte zuerst prüfen</MonthChip>
           </div>
         </section>
       ) : null}
@@ -625,8 +625,8 @@ export default async function MonthDetailPage({
           <p className="month-eyebrow text-sky-700">Monat abgeschlossen</p>
           <p className="mt-2 font-semibold">
             Dieser Monat ist gegen neue Buchungen, Importe, Zuordnungen,
-            Loeschungen und Monatsbudget-Aenderungen gesperrt. Zum Bearbeiten
-            bitte bewusst wieder oeffnen.
+            Löschungen und Monatsbudget-Änderungen gesperrt. Zum Bearbeiten
+            bitte bewusst wieder öffnen.
           </p>
         </section>
       ) : null}
@@ -635,7 +635,7 @@ export default async function MonthDetailPage({
         <ReferenceMetricCard
           label="Einnahmen"
           value={formatEuro(month.dashboard.totals.incomeCents)}
-          copy="Alle Einkommen und Rueckerstattungen dieses Monats."
+          copy="Alle Einkommen und Rückerstattungen dieses Monats."
           tone="income"
           marker="↙"
         />
@@ -650,7 +650,7 @@ export default async function MonthDetailPage({
             <MonthDialog
               eyebrow="Fixkostenkontrolle"
               title="Plan und Ist-Kontrolle"
-              description="Die Kontrolle bleibt im Monatskontext erreichbar, nimmt aber keinen dauerhaften Platz in der Uebersicht ein."
+              description="Die Kontrolle bleibt im Monatskontext erreichbar, nimmt aber keinen dauerhaften Platz in der Übersicht ein."
               triggerLabel="Fixkostenkontrolle"
               triggerClassName="month-dialog-trigger month-dialog-trigger-rose"
             >
@@ -661,7 +661,7 @@ export default async function MonthDetailPage({
                     {formatEuro(month.dashboard.totals.plannedFixedCostsCents)}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
-                    Stabiler Planblock fuer die Verfuegbarkeit dieses Monats.
+                    Stabiler Planblock für die Verfügbarkeit dieses Monats.
                   </p>
                 </div>
                 <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
@@ -747,7 +747,7 @@ export default async function MonthDetailPage({
       <section className="grid gap-7 xl:grid-cols-[1.08fr_1fr]">
         <article className="month-reference-panel bg-[#dff4fd]">
           <SectionHeader
-            eyebrow="Kategorieuebersicht"
+            eyebrow="Kategorieübersicht"
             title="Kategorien"
             aside={
               <div className="flex flex-wrap items-center gap-3">
@@ -887,13 +887,13 @@ export default async function MonthDetailPage({
                           </p>
                         </div>
                         <MonthChip tone="warn">
-                          {month.dashboard.specialBudgetRows.length} Eintraege
+                          {month.dashboard.specialBudgetRows.length} Einträge
                         </MonthChip>
                       </div>
                       <div className="mt-5 space-y-4">
                         {month.dashboard.specialBudgetRows.length === 0 ? (
                           <EmptyReferenceCard>
-                            Keine Sonderkategorien fuer diesen Monat vorhanden.
+                            Keine Sonderkategorien für diesen Monat vorhanden.
                           </EmptyReferenceCard>
                         ) : (
                           month.dashboard.specialBudgetRows.map((row) => (
@@ -1026,7 +1026,7 @@ export default async function MonthDetailPage({
           <div className="mt-7 space-y-4">
             {recentExpenses.length === 0 ? (
               <EmptyReferenceCard>
-                Keine Ausgaben fuer diesen Monat vorhanden.
+                Keine Ausgaben für diesen Monat vorhanden.
               </EmptyReferenceCard>
             ) : (
               recentExpenses.map((transaction) => (
@@ -1067,7 +1067,7 @@ export default async function MonthDetailPage({
           </span>
           <span className="flex flex-wrap items-center gap-3">
             <MonthChip tone="neutral">
-              {month.transactions.length} Eintraege
+              {month.transactions.length} Einträge
             </MonthChip>
             {canEditMonth ? (
               <Link
@@ -1075,8 +1075,8 @@ export default async function MonthDetailPage({
                 className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-[color:var(--month-line-strong)] bg-white text-lg font-black text-[color:var(--month-ink)] shadow-[0_10px_22px_rgba(7,27,70,0.06)] transition hover:-translate-y-0.5"
                 aria-label={
                   isBookingEditMode
-                    ? "Editiermodus fuer Monatsbuchungen beenden"
-                    : "Editiermodus fuer Monatsbuchungen aktivieren"
+                    ? "Editiermodus für Monatsbuchungen beenden"
+                    : "Editiermodus für Monatsbuchungen aktivieren"
                 }
                 title={isBookingEditMode ? "Fertig" : "Bearbeiten"}
               >
@@ -1096,7 +1096,7 @@ export default async function MonthDetailPage({
         <div className="mt-6 space-y-2.5">
           {month.transactions.length === 0 ? (
             <EmptyReferenceCard>
-              Keine Buchungen fuer diesen Monat vorhanden.
+              Keine Buchungen für diesen Monat vorhanden.
             </EmptyReferenceCard>
           ) : (
             month.transactions.map((transaction) => {
@@ -1391,13 +1391,13 @@ export default async function MonthDetailPage({
                               name="confirmDelete"
                               className="h-4 w-4 rounded border-red-300"
                             />
-                            Loeschen bestaetigen
+                            Löschen bestätigen
                           </label>
                           <button
                             type="submit"
                             className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-red-700 transition hover:-translate-y-0.5"
                           >
-                            Buchung loeschen
+                            Buchung löschen
                           </button>
                         </form>
                       ) : transaction.sourceType === "import" ? (
@@ -1421,13 +1421,13 @@ export default async function MonthDetailPage({
                               name="confirmDelete"
                               className="h-4 w-4 rounded border-red-300"
                             />
-                            Import-Loeschen bestaetigen
+                            Import-Löschen bestätigen
                           </label>
                           <button
                             type="submit"
                             className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-red-700 transition hover:-translate-y-0.5"
                           >
-                            Import-Buchung loeschen
+                            Import-Buchung löschen
                           </button>
                         </form>
                       ) : null}

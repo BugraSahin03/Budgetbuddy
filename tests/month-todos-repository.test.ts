@@ -29,21 +29,21 @@ describe("month todos repository", () => {
   });
 
   it("stores todos per month and keeps other months separate", () => {
-    createMonthlyTodo("2033-06", "Stromanbieter pruefen");
-    createMonthlyTodo("2033-06", "Bargeld pruefen");
-    createMonthlyTodo("2033-07", "Versicherung ueberweisen");
+    createMonthlyTodo("2033-06", "Stromanbieter prüfen");
+    createMonthlyTodo("2033-06", "Bargeld prüfen");
+    createMonthlyTodo("2033-07", "Versicherung überweisen");
 
     expect(listMonthlyTodos("2033-06").map((todo) => todo.text)).toEqual([
-      "Stromanbieter pruefen",
-      "Bargeld pruefen",
+      "Stromanbieter prüfen",
+      "Bargeld prüfen",
     ]);
     expect(listMonthlyTodos("2033-07").map((todo) => todo.text)).toEqual([
-      "Versicherung ueberweisen",
+      "Versicherung überweisen",
     ]);
   });
 
   it("toggles a todo between open and done inside its month", () => {
-    createMonthlyTodo("2033-06", "Rechnung pruefen");
+    createMonthlyTodo("2033-06", "Rechnung prüfen");
 
     const [todo] = listMonthlyTodos("2033-06");
     expect(todo.isDone).toBe(false);
@@ -61,7 +61,7 @@ describe("month todos repository", () => {
     const [todo] = listMonthlyTodos("2033-06");
 
     expect(() => toggleMonthlyTodo(todo.id, "2033-07")).toThrow(
-      "ToDo wurde fuer diesen Monat nicht gefunden.",
+      "ToDo wurde für diesen Monat nicht gefunden.",
     );
     expect(listMonthlyTodos("2033-06")[0].isDone).toBe(false);
   });

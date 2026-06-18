@@ -12,13 +12,13 @@ describe("special budget amount parsing", () => {
 
   it("rejects malformed inputs with trailing text or multiple separators", () => {
     expect(() => parsePlannedAmountCents("120abc")).toThrow(
-      "Geplanter Betrag ist ungueltig formatiert.",
+      "Geplanter Betrag ist ungültig formatiert.",
     );
     expect(() => parsePlannedAmountCents("1.2.3")).toThrow(
-      "Geplanter Betrag ist ungueltig formatiert.",
+      "Geplanter Betrag ist ungültig formatiert.",
     );
     expect(() => parsePlannedAmountCents("12,34,56")).toThrow(
-      "Geplanter Betrag ist ungueltig formatiert.",
+      "Geplanter Betrag ist ungültig formatiert.",
     );
   });
 
@@ -30,7 +30,7 @@ describe("special budget amount parsing", () => {
       "Geplanter Betrag ist erforderlich.",
     );
     expect(() => parsePlannedAmountCents("-1")).toThrow(
-      "Geplanter Betrag ist ungueltig formatiert.",
+      "Geplanter Betrag ist ungültig formatiert.",
     );
   });
 });

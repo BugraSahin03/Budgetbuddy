@@ -27,7 +27,7 @@ export default async function ImportPage({ searchParams }: ImportPageProps) {
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Import</p>
         <h2 className="text-lg font-semibold text-slate-900">Sparkassen-CSV Vorschau</h2>
         <p className="mt-1 text-sm text-slate-600">
-          CSV-Datei einlesen und relevante Felder gemaess FIN-010 vor dem spaeteren Import pruefen.
+          CSV-Datei einlesen und relevante Felder gemäß FIN-010 vor dem späteren Import prüfen.
         </p>
       </header>
 

@@ -56,7 +56,7 @@ function assertNoDuplicatePattern(pattern: string, exceptId?: number): void {
     .get(pattern, exceptId ?? null, exceptId ?? null) as { id: number } | undefined;
 
   if (row) {
-    throw new Error("Fuer dieses Alias-Muster existiert bereits eine Regel.");
+    throw new Error("Für dieses Alias-Muster existiert bereits eine Regel.");
   }
 }
 

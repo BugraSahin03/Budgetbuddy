@@ -107,10 +107,10 @@ export function MonthTodoDialog({
 
         {error ? <p className="month-todo-error">{error}</p> : null}
 
-        <div className="month-todo-list" aria-label={`ToDos fuer ${monthLabel}`}>
+        <div className="month-todo-list" aria-label={`ToDos für ${monthLabel}`}>
           {todos.length === 0 ? (
             <p className="month-todo-empty">
-              Noch keine ToDos fuer diesen Monat. Kleine Aufgaben kannst du unten direkt anlegen.
+              Noch keine ToDos für diesen Monat. Kleine Aufgaben kannst du unten direkt anlegen.
             </p>
           ) : (
             todos.map((todo, index) => (
@@ -125,7 +125,7 @@ export function MonthTodoDialog({
                   onClick={() => toggleTodo(todo.id)}
                   aria-label={
                     todo.isDone
-                      ? `ToDo ${index + 1} wieder oeffnen`
+                      ? `ToDo ${index + 1} wieder öffnen`
                       : `ToDo ${index + 1} erledigen`
                   }
                 >
@@ -147,13 +147,13 @@ export function MonthTodoDialog({
               name="text"
               required
               maxLength={180}
-              placeholder="z. B. Rechnung pruefen"
+              placeholder="z. B. Rechnung prüfen"
               value={text}
               onChange={(event) => setText(event.target.value)}
             />
           </label>
           <button type="submit" disabled={isPending}>
-            Hinzufuegen
+            Hinzufügen
           </button>
         </form>
       </section>

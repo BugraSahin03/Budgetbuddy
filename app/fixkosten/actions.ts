@@ -20,7 +20,7 @@ function toErrorMessage(error: unknown): string {
     return error.message;
   }
 
-  return "Aktion konnte nicht ausgefuehrt werden.";
+  return "Aktion konnte nicht ausgeführt werden.";
 }
 
 function encodeMessage(message: string): string {
@@ -32,7 +32,7 @@ function parsePositiveInt(rawValue: FormDataEntryValue | null, label: string): n
   const parsed = Number.parseInt(value, 10);
 
   if (!Number.isInteger(parsed) || parsed <= 0) {
-    throw new Error(`${label} ist ungueltig.`);
+    throw new Error(`${label} ist ungültig.`);
   }
 
   return parsed;
@@ -84,7 +84,7 @@ export async function createFixedCostAction(formData: FormData): Promise<never> 
 }
 
 export async function updateFixedCostAction(formData: FormData): Promise<never> {
-  let redirectTarget = "/fixkosten?notice=" + encodeMessage("Fixkosten-Eintraege gespeichert.");
+  let redirectTarget = "/fixkosten?notice=" + encodeMessage("Fixkosten-Einträge gespeichert.");
 
   try {
     const stateChangeFixedCostId = toSingleString(formData.get("stateChangeFixedCostId"));

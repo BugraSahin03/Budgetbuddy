@@ -20,11 +20,11 @@ describe("FIN-059 import display alias UI", () => {
     expect(settingsPage).not.toContain('name="pattern"');
     expect(settingsPage).not.toContain('name="displayName"');
     expect(importAliasesPage).toContain("Import-Aliasse");
-    expect(importAliasesPage).toContain("Aliasse aendern nur den sichtbaren Namen");
+    expect(importAliasesPage).toContain("Aliasse ändern nur den sichtbaren Namen");
     expect(importAliasesPage).toContain("Aktive Aliasse");
-    expect(importAliasesPage).toContain('aria-label="Zurueck zu Einstellungen"');
-    expect(importAliasesPage).not.toContain("Anzeigenamen fuer importierte Buchungen");
-    expect(importAliasesPage).not.toContain("Global gueltig ueber alle Monate");
+    expect(importAliasesPage).toContain('aria-label="Zurück zu Einstellungen"');
+    expect(importAliasesPage).not.toContain("Anzeigenamen für importierte Buchungen");
+    expect(importAliasesPage).not.toContain("Global gültig über alle Monate");
     expect(importAliasesPage).not.toContain("Getrennt von Import-Regelvorschlaegen");
     expect(importAliasesPage).not.toContain("Wenn der originale oder bereinigte Importtext");
     expect(importAliasesPage).toContain('name="pattern"');

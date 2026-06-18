@@ -142,14 +142,14 @@ export default async function HomePage() {
             <p className="month-eyebrow">Offene Arbeit</p>
             <h2 className="month-section-title mt-2">{openWorkLabel}</h2>
             <p className="month-section-copy mt-3 max-w-2xl">
-              Gezaehlt werden nur Buchungen, die wirklich eine Kategorie oder Sonderkategorie brauchen. Transfers und Fixkosten-Kontrolltreffer bleiben draussen.
+              Gezählt werden nur Buchungen, die wirklich eine Kategorie oder Sonderkategorie brauchen. Transfers und Fixkosten-Kontrolltreffer bleiben draußen.
             </p>
           </div>
           <a
             href={monthHref}
             className="inline-flex w-fit rounded-full bg-[color:var(--month-ink)] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(20,33,61,0.18)] transition hover:-translate-y-0.5"
           >
-            Monatsansicht oeffnen
+            Monatsansicht öffnen
           </a>
         </div>
       </section>

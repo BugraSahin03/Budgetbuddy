@@ -466,14 +466,14 @@ describe("transactions repository", () => {
         categoryId: einkaufId,
         specialBudgetId: null,
       }),
-    ).toThrow("Nur Ausgaben koennen direkt zugeordnet werden.");
+    ).toThrow("Nur Ausgaben können direkt zugeordnet werden.");
 
     expect(() =>
       transactions.updateExpenseAssignmentForMonth(expense!.id, "2026-06", {
         categoryId: einkaufId,
         specialBudgetId: null,
       }),
-    ).toThrow("Buchung passt nicht zum ausgewaehlten Monat.");
+    ).toThrow("Buchung passt nicht zum ausgewählten Monat.");
   });
 
   it("does not allow already assigned imported expenses to become open again", () => {

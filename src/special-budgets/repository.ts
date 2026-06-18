@@ -120,13 +120,13 @@ function assertSpecialBudgetBelongsToMonth(
     .get(specialBudgetId, normalizedMonthKey) as { id: number } | undefined;
 
   if (!row) {
-    throw new Error("Sonderkategorie passt nicht zum ausgewaehlten Monat.");
+    throw new Error("Sonderkategorie passt nicht zum ausgewählten Monat.");
   }
 }
 
 function normalizePlannedAmountCents(plannedAmountCents: number): number {
   if (!Number.isInteger(plannedAmountCents) || plannedAmountCents < 0) {
-    throw new Error("Geplanter Betrag muss 0 oder groesser sein.");
+    throw new Error("Geplanter Betrag muss 0 oder größer sein.");
   }
 
   return plannedAmountCents;
@@ -183,7 +183,7 @@ function mapSpecialBudgetPersistenceError(error: unknown): Error {
     error instanceof Error &&
     error.message.includes("UNIQUE constraint failed: special_budgets.name, special_budgets.month_key")
   ) {
-    return new Error("Diese Sonderkategorie existiert im gewaehlten Monat bereits.");
+    return new Error("Diese Sonderkategorie existiert im gewählten Monat bereits.");
   }
 
   if (error instanceof Error) {
@@ -680,7 +680,7 @@ export function updateSpecialBudgetProject(input: {
   }>;
 }): void {
   if (!Number.isInteger(input.projectId) || input.projectId <= 0) {
-    throw new Error("Sonderkategorie ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungültig.");
   }
 
   if (input.shares.length === 0) {
@@ -690,7 +690,7 @@ export function updateSpecialBudgetProject(input: {
   const iconName = normalizeIconName(input.iconName);
   const normalizedShares = input.shares.map((share) => {
     if (!Number.isInteger(share.id) || share.id <= 0) {
-      throw new Error("Monatsanteil der Sonderkategorie ist ungueltig.");
+      throw new Error("Monatsanteil der Sonderkategorie ist ungültig.");
     }
 
     return {
@@ -835,7 +835,7 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
 
 export function reactivateSpecialBudgetProject(projectId: number): void {
   if (!Number.isInteger(projectId) || projectId <= 0) {
-    throw new Error("Sonderkategorie ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungültig.");
   }
 
   const project = getDb()
@@ -902,7 +902,7 @@ export function reactivateSpecialBudgetProject(projectId: number): void {
 
 export function setSpecialBudgetProjectActive(projectId: number, isActive: boolean): void {
   if (!Number.isInteger(projectId) || projectId <= 0) {
-    throw new Error("Sonderkategorie ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungültig.");
   }
 
   const project = getDb()

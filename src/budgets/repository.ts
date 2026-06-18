@@ -49,7 +49,7 @@ function normalizeBudgetAmountCents(rawAmount: string): number | null {
   const amount = Number.parseFloat(normalized);
 
   if (!Number.isFinite(amount) || amount < 0) {
-    throw new Error("Budget muss groesser oder gleich 0 sein.");
+    throw new Error("Budget muss größer oder gleich 0 sein.");
   }
 
   return Math.round(amount * 100);

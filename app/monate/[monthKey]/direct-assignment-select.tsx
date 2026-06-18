@@ -237,7 +237,7 @@ export function DirectAssignmentSelect({
         <select
           name="assignment"
           value={selectedAssignment}
-          aria-label="Kategoriezuordnung direkt aendern"
+          aria-label="Kategoriezuordnung direkt ändern"
           aria-busy={isPending}
           className={`max-w-full appearance-none rounded-full border py-1 pl-2.5 pr-7 text-xs font-black shadow-[0_8px_18px_rgba(7,27,70,0.035)] transition hover:-translate-y-0.5 focus:outline-none disabled:cursor-wait disabled:opacity-75 ${assignmentTone}`}
           disabled={isPending}

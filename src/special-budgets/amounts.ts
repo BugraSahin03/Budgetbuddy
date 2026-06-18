@@ -8,20 +8,20 @@ export function parsePlannedAmountCents(rawInput: string): number {
   }
 
   if (!STRICT_EURO_AMOUNT_PATTERN.test(normalizedInput)) {
-    throw new Error("Geplanter Betrag ist ungueltig formatiert.");
+    throw new Error("Geplanter Betrag ist ungültig formatiert.");
   }
 
   const canonical = normalizedInput.replace(",", ".");
   const parsed = Number.parseFloat(canonical);
 
   if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new Error("Geplanter Betrag muss 0 oder groesser sein.");
+    throw new Error("Geplanter Betrag muss 0 oder größer sein.");
   }
 
   const cents = Math.round(parsed * 100);
 
   if (cents > 99_999_999) {
-    throw new Error("Geplanter Betrag ist zu gross.");
+    throw new Error("Geplanter Betrag ist zu groß.");
   }
 
   return cents;

@@ -66,7 +66,7 @@ function statusLabel(budgetAmountCents: number | null, remainingAmountCents: num
   }
 
   if (remainingAmountCents < 0) {
-    return "Ueber Budget";
+    return "Über Budget";
   }
 
   if (remainingAmountCents === 0) {
@@ -145,7 +145,7 @@ export default async function CategoryReportsPage({ searchParams }: CategoryRepo
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Auswertungen</p>
         <h2 className="text-lg font-semibold text-slate-900">Kategorie-Auswertung</h2>
         <p className="mt-1 text-sm text-slate-600">
-          Monatliche Kategorie-Summen inkl. Budgetvergleich fuer den gewaehlten Zeitraum.
+          Monatliche Kategorie-Summen inkl. Budgetvergleich für den gewählten Zeitraum.
         </p>
       </header>
 
@@ -191,7 +191,7 @@ export default async function CategoryReportsPage({ searchParams }: CategoryRepo
         <h3 className="text-sm font-semibold text-slate-900">Diagramm: Ausgaben je Kategorie (Zeitraum)</h3>
 
         {report.chartSeries.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-600">Keine Kategorie-Ausgaben im gewaehlten Zeitraum.</p>
+          <p className="mt-3 text-sm text-slate-600">Keine Kategorie-Ausgaben im gewählten Zeitraum.</p>
         ) : (
           <ul className="mt-3 space-y-2">
             {report.chartSeries.map((series) => {
@@ -215,11 +215,11 @@ export default async function CategoryReportsPage({ searchParams }: CategoryRepo
       <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <h3 className="text-sm font-semibold text-slate-900">Trendvergleich je Kategorie</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Vergleich aktueller Monat gegen Vormonat und Durchschnitt im ausgewaehlten Zeitraum. Ausreisser sind markiert.
+          Vergleich aktueller Monat gegen Vormonat und Durchschnitt im ausgewählten Zeitraum. Ausreißer sind markiert.
         </p>
 
         {trendReport.rows.length === 0 ? (
-          <p className="mt-3 text-sm text-slate-600">Keine Trenddaten im gewaehlten Zeitraum.</p>
+          <p className="mt-3 text-sm text-slate-600">Keine Trenddaten im gewählten Zeitraum.</p>
         ) : (
           <div className="mt-3 overflow-x-auto">
             <table className="min-w-full divide-y divide-slate-200 text-sm">
@@ -230,7 +230,7 @@ export default async function CategoryReportsPage({ searchParams }: CategoryRepo
                   <th className="px-3 py-2 font-semibold">Durchschnitt</th>
                   <th className="px-3 py-2 font-semibold">Delta zu Vormonat</th>
                   <th className="px-3 py-2 font-semibold">Delta zu Schnitt</th>
-                  <th className="px-3 py-2 font-semibold">Ausreisser</th>
+                  <th className="px-3 py-2 font-semibold">Ausreißer</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -275,7 +275,7 @@ export default async function CategoryReportsPage({ searchParams }: CategoryRepo
                           </div>
                           <span className="text-right text-slate-700">{formatEuro(point.spentAmountCents)}</span>
                           <span className={point.isOutlier ? "text-right font-semibold text-red-700" : "text-right text-slate-500"}>
-                            {point.isOutlier ? "Ausreisser" : ""}
+                            {point.isOutlier ? "Ausreißer" : ""}
                           </span>
                         </li>
                       );
@@ -304,7 +304,7 @@ export default async function CategoryReportsPage({ searchParams }: CategoryRepo
             {report.rows.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-3 py-6 text-center text-sm text-slate-600">
-                  Keine Daten im gewaehlten Zeitraum.
+                  Keine Daten im gewählten Zeitraum.
                 </td>
               </tr>
             ) : (

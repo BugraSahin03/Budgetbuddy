@@ -36,7 +36,7 @@ export function BudgetDialog({
       <dialog ref={dialogRef} className="budget-dialog">
         <div className="budget-dialog-surface">
           <form method="dialog" className="budget-dialog-close-row">
-            <button type="submit" className="budget-dialog-close" aria-label="Dialog schliessen">
+            <button type="submit" className="budget-dialog-close" aria-label="Dialog schließen">
               ×
             </button>
           </form>

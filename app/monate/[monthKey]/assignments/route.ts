@@ -20,7 +20,7 @@ function parseTransactionId(value: unknown): number {
     typeof value === "number" ? value : Number.parseInt(String(value ?? ""), 10);
 
   if (!Number.isInteger(transactionId) || transactionId <= 0) {
-    throw new Error("Transaktions-ID ist ungueltig.");
+    throw new Error("Transaktions-ID ist ungültig.");
   }
 
   return transactionId;
@@ -55,7 +55,7 @@ function parseAssignment(value: unknown): {
     };
   }
 
-  throw new Error("Kategoriezuordnung ist ungueltig.");
+  throw new Error("Kategoriezuordnung ist ungültig.");
 }
 
 function revalidateMonthContext(monthKey: string): void {

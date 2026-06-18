@@ -98,7 +98,7 @@ describe("FIN-059 import display alias actions", () => {
       "NEXT_REDIRECT:/einstellungen/import-aliase?notice=Import-Alias%20gespeichert.",
     );
     await expect(deleteImportDisplayAliasAction(deleteData)).rejects.toThrow(
-      "NEXT_REDIRECT:/einstellungen/import-aliase?notice=Import-Alias%20geloescht.",
+      "NEXT_REDIRECT:/einstellungen/import-aliase?notice=Import-Alias%20gel%C3%B6scht.",
     );
 
     expect(repositoryMocks.createImportDisplayAlias).toHaveBeenCalledOnce();

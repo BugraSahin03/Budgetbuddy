@@ -68,17 +68,17 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
         <span className="month-hero-orb month-hero-orb-right" aria-hidden="true" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Link href="/einstellungen" aria-label="Zurueck zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
+            <Link href="/einstellungen" aria-label="Zurück zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
               &larr;
             </Link>
             <p className="month-eyebrow">Archiv</p>
             <h2 className="month-hero-title mt-2">Kategoriearchiv</h2>
             <p className="month-hero-copy mt-4">
-              Deaktivierte Sonderkategorien und Kategorien bleiben erhalten und koennen hier reaktiviert werden.
+              Deaktivierte Sonderkategorien und Kategorien bleiben erhalten und können hier reaktiviert werden.
             </p>
           </div>
           <div className="month-stat-card month-stat-card-calm min-w-64">
-            <p className="month-stat-label">Archivierte Eintraege</p>
+            <p className="month-stat-label">Archivierte Einträge</p>
             <p className="month-stat-value mt-2">{archiveCount}</p>
           </div>
         </div>
@@ -103,7 +103,7 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
             <span className="month-section-title mt-1 block">Archivierte Sonderkategorien</span>
           </span>
           <span className="month-chip month-chip-neutral w-fit">
-            {archivedProjects.length} Eintraege
+            {archivedProjects.length} Einträge
           </span>
         </summary>
 
@@ -166,7 +166,7 @@ export default async function CategoryArchivePage({ searchParams }: CategoryArch
             <span className="month-section-title mt-1 block">Archivierte Kategorien</span>
           </span>
           <span className="month-chip month-chip-neutral w-fit">
-            {inactiveCategories.length} Eintraege
+            {inactiveCategories.length} Einträge
           </span>
         </summary>
 

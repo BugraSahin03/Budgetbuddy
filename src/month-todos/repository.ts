@@ -48,7 +48,7 @@ function parseTodoId(todoId: number | string): number {
   const id = Number.parseInt(String(todoId), 10);
 
   if (!Number.isInteger(id) || id <= 0) {
-    throw new Error("ToDo-ID ist ungueltig.");
+    throw new Error("ToDo-ID ist ungültig.");
   }
 
   return id;
@@ -126,7 +126,7 @@ export function getMonthlyTodo(todoId: number | bigint | string, monthKey: strin
     | undefined;
 
   if (!row) {
-    throw new Error("ToDo wurde fuer diesen Monat nicht gefunden.");
+    throw new Error("ToDo wurde für diesen Monat nicht gefunden.");
   }
 
   return mapTodoRow(row);
@@ -149,7 +149,7 @@ export function toggleMonthlyTodo(todoId: number | string, monthKey: string): Mo
     .run(id, normalizedMonthKey);
 
   if (result.changes === 0) {
-    throw new Error("ToDo wurde fuer diesen Monat nicht gefunden.");
+    throw new Error("ToDo wurde für diesen Monat nicht gefunden.");
   }
 
   return getMonthlyTodo(id, normalizedMonthKey);

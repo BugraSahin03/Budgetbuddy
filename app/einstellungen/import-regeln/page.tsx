@@ -50,14 +50,14 @@ export default async function ImportRulesPage({ searchParams }: ImportRulesPageP
         <span className="month-hero-orb month-hero-orb-right" aria-hidden="true" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Link href="/einstellungen" aria-label="Zurueck zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
+            <Link href="/einstellungen" aria-label="Zurück zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
               &larr;
             </Link>
             <p className="month-eyebrow">Import-Erkennung</p>
             <h2 className="month-hero-title mt-2">Kontrollmuster</h2>
             <p className="month-hero-copy mt-4">
-              Pflege schlanke Suchmuster fuer Import-Kontrollen, zum Beispiel den N26-Fixkostenblock.
-              Import-Aliasse bleiben separat und aendern nur Anzeigenamen.
+              Pflege schlanke Suchmuster für Import-Kontrollen, zum Beispiel den N26-Fixkostenblock.
+              Import-Aliasse bleiben separat und ändern nur Anzeigenamen.
             </p>
           </div>
           <div className="month-stat-card month-stat-card-calm min-w-64">
@@ -118,7 +118,7 @@ export default async function ImportRulesPage({ searchParams }: ImportRulesPageP
           </label>
 
           <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-2">
-            Prioritaet
+            Priorität
             <input
               name="priority"
               type="number"
@@ -150,7 +150,7 @@ export default async function ImportRulesPage({ searchParams }: ImportRulesPageP
             <p className="month-eyebrow">Musterliste</p>
             <h3 className="month-section-title mt-1">Bestehende Kontrollmuster</h3>
           </div>
-          <span className="month-chip month-chip-neutral w-fit">{rules.length} Eintraege</span>
+          <span className="month-chip month-chip-neutral w-fit">{rules.length} Einträge</span>
         </header>
 
         {rules.length === 0 ? (
@@ -196,7 +196,7 @@ export default async function ImportRulesPage({ searchParams }: ImportRulesPageP
                   </label>
 
                   <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-2">
-                    Prioritaet
+                    Priorität
                     <input name="priority" type="number" min={1} max={999} defaultValue={rule.priority} className="rounded-[1rem] border border-[color:var(--month-line)] bg-white px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]" />
                   </label>
 
