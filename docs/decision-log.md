@@ -1604,3 +1604,22 @@ Nachtrag:
 
 - Die Statistik zaehlt standardmaessig nur Buchungen bis zum aktuellen Monat.
 - Zukunftsmonate in lokalen Test-/Altdaten werden dadurch nicht als reale Statistikjahre angezeigt.
+
+## 2026-06-18 - FIN-088 legt privates VPS-Produktionsprofil fest
+
+Quelle/Ticket: `FIN-088`
+
+Erkenntnis/Entscheidung:
+
+- Der erste private Produktivbetrieb nutzt einen kleinen Hetzner-Cloud-VPS statt eines dauerhaft laufenden Macs oder eines aktuell nicht vorhandenen Raspberry Pi.
+- Default ist ein kleiner x86 Shared-vCPU Server in Deutschland, bevorzugt `CX23` oder die kleinste aktuelle x86-CX-Instanz mit mindestens 2 vCPU, 4 GB RAM und 40 GB SSD.
+- Ziel-OS ist Ubuntu 24.04 LTS.
+- BudgetBuddy bleibt zum Start Tailscale-only erreichbar: keine oeffentliche BudgetBuddy-URL, kein public HTTP/HTTPS/3000-Port und kein Tailscale Funnel.
+- Standardpfade fuer den Betrieb sind `/opt/budgetbuddy`, `/var/lib/budgetbuddy/budgetbuddy.db` und `/var/backups/budgetbuddy`.
+- Cloudflare bleibt spaetere Komfortoption, Vercel/Cloud-DB wird fuer den ersten Schritt ausgeschlossen.
+
+Auswirkung:
+
+- Deployment- und Betriebsfolgearbeiten bauen auf dem VPS-Profil auf.
+- Die SQLite-Datei bleibt zentrales Datenobjekt und muss vor echter Produktivnutzung robust gesichert und per Restore getestet werden.
+- Die grundlegende Entscheidung ist in `docs/adr/0009-private-vps-tailscale-hosting.md` festgehalten.

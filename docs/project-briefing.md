@@ -6,7 +6,7 @@ Dieses Dokument ist der beste Einstiegspunkt fuer neue Codex-Instanzen. Es fasst
 
 Wir bauen eine private Finanz-App als langfristigen Ersatz fuer einen bestehenden Excel-Budgetplaner.
 
-Die App soll zuerst am Rechner laufen, spaeter als Web-App/PWA auf einem Raspberry Pi gehostet werden und ueber Tailscale privat von unterwegs erreichbar sein. Die Daten sind sensibel und sollen nicht unnoetig in eine fremde Cloud.
+Die App soll zuerst am Rechner laufen und fuer den ersten privaten Produktivbetrieb auf einem kleinen Hetzner-Cloud-VPS gehostet werden. Der Zugriff bleibt zum Start Tailscale-only; es gibt keine oeffentliche BudgetBuddy-URL und keine Cloud-DB-Migration. Die Daten sind sensibel und sollen nicht unnoetig in eine fremde Cloud.
 
 Der erste echte Nutzen entsteht durch Sparkassen-Importe, manuelle Eintraege, Kategorien, monatliche Sonderkategorien, Fixkosten-Uebersicht, Bargeldbestand und Monatsauswertungen.
 
@@ -61,8 +61,8 @@ Neue Erkenntnisse oder Entscheidungen muessen dokumentiert werden. Kleine oder l
 - Langfristig: Laptop, Handy, Tablet
 - Offline-Ziel: manuelle Eintraege sollen spaeter offline moeglich sein
 - Cloud-Ziel: keine fremde Finanz-Cloud als Kernspeicher
-- Betrieb: zuerst lokal, spaeter Raspberry Pi
-- Externer Zugriff: spaeter ueber Tailscale
+- Betrieb: zuerst lokal, erster privater Produktivbetrieb auf kleinem Hetzner-Cloud-VPS
+- Externer Zugriff: Tailscale-only, keine oeffentliche BudgetBuddy-URL zum Start
 
 ## Ausgangspunkt
 
@@ -207,13 +207,16 @@ Aktuelle Zielrichtung:
 - Next.js auf Node.js Runtime
 - SQLite
 - Sparkassen-CSV-Import zuerst
-- Docker spaeter fuer Raspberry Pi
-- Tailscale fuer privaten Zugriff von unterwegs
+- erster Produktivbetrieb: kleiner Hetzner-Cloud-VPS mit Ubuntu 24.04 LTS
+- Produktionspfade: App `/opt/budgetbuddy`, DB `/var/lib/budgetbuddy/budgetbuddy.db`, Backups `/var/backups/budgetbuddy`
+- Tailscale-only fuer privaten Zugriff von unterwegs
+- Docker/Raspberry Pi bleibt spaetere Option, ist aber nicht mehr der erste Produktivpfad
 - Goldene Quelle: `/Volumes/Intenso/Dev/Budgetbuddy`
 
 Siehe auch:
 
 - `docs/adr/0001-tech-stack.md`
+- `docs/adr/0009-private-vps-tailscale-hosting.md`
 - `docs/domain-model.md`
 - `docs/import-and-bank-notes.md`
 
