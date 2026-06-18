@@ -56,8 +56,8 @@ export function MonthDialog({
               ) : null}
             </div>
             <form method="dialog">
-              <button type="submit" className="month-dialog-close" aria-label="Dialog schliessen">
-                Schliessen
+              <button type="submit" className="month-dialog-close" aria-label="Dialog schließen">
+                Schließen
               </button>
             </form>
           </div>

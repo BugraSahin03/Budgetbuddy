@@ -23,11 +23,11 @@ describe("FIN-064 category usage colors", () => {
 
     expect(
       getCategoryUsageState({ budgetAmountCents: 10000, spentAmountCents: 10001 }),
-    ).toMatchObject({ label: "Ueber Budget", percent: 100, progressPercent: 100, tone: "over" });
+    ).toMatchObject({ label: "Über Budget", percent: 100, progressPercent: 100, tone: "over" });
 
     expect(
       getCategoryUsageState({ budgetAmountCents: 10000, spentAmountCents: 12000 }),
-    ).toMatchObject({ label: "Ueber Budget", percent: 120, progressPercent: 100, tone: "over" });
+    ).toMatchObject({ label: "Über Budget", percent: 120, progressPercent: 100, tone: "over" });
   });
 
   it("handles missing or zero budgets defensively", () => {

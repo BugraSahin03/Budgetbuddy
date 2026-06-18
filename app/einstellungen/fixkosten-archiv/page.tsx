@@ -49,13 +49,13 @@ export default async function FixedCostArchivePage({ searchParams }: FixedCostAr
         <span className="month-hero-orb month-hero-orb-right" aria-hidden="true" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Link href="/einstellungen" aria-label="Zurueck zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
+            <Link href="/einstellungen" aria-label="Zurück zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
               &larr;
             </Link>
             <p className="month-eyebrow">Archiv</p>
             <h2 className="month-hero-title mt-2">Fixkostenarchiv</h2>
             <p className="month-hero-copy mt-4">
-              Deaktivierte Fixkosten bleiben nachvollziehbar und koennen hier bei Bedarf wieder aktiviert werden.
+              Deaktivierte Fixkosten bleiben nachvollziehbar und können hier bei Bedarf wieder aktiviert werden.
             </p>
           </div>
           <div className="month-stat-card month-stat-card-calm min-w-64">
@@ -84,7 +84,7 @@ export default async function FixedCostArchivePage({ searchParams }: FixedCostAr
             <h3 className="month-section-title mt-1">Archivierte Fixkosten</h3>
           </div>
           <span className="month-chip month-chip-neutral w-fit">
-            {inactiveFixedCosts.length} Eintraege
+            {inactiveFixedCosts.length} Einträge
           </span>
         </header>
 

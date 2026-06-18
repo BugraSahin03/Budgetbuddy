@@ -107,7 +107,7 @@ export function FixedCostCareEditor({
             type="submit"
             form="fixed-cost-edit-form"
             className="budget-icon-action budget-icon-action-save"
-            aria-label="Aenderungen speichern und Editiermodus beenden"
+            aria-label="Änderungen speichern und Editiermodus beenden"
             title="Speichern"
           >
             ✓
@@ -188,7 +188,7 @@ export function FixedCostCareEditor({
                   </div>
                 ) : (
                   <div className="fixed-cost-edit-form">
-                    <div className="fixed-cost-sort-controls" aria-label={`Reihenfolge fuer ${row.name}`}>
+                    <div className="fixed-cost-sort-controls" aria-label={`Reihenfolge für ${row.name}`}>
                       <span className="fixed-cost-drag-handle" aria-hidden="true">
                         ↕
                       </span>

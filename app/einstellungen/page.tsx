@@ -75,7 +75,7 @@ export default function SettingsPage() {
                     <h4 className="mt-1 text-base font-semibold text-[color:var(--month-ink)]">{setting.title}</h4>
                   </div>
                   <span className="rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-semibold text-[color:var(--month-ink-soft)] transition group-hover:border-[color:var(--month-line-strong)] group-hover:text-[#0f4c6d]">
-                    Oeffnen
+                    Öffnen
                   </span>
                 </div>
               </div>

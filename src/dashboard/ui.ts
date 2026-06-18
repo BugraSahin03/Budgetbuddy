@@ -26,7 +26,7 @@ export function categoryStatusLabel(row: MonthlyBudgetCategoryRow): string {
   }
 
   if (row.remainingAmountCents !== null && row.remainingAmountCents < 0) {
-    return "Ueber Budget";
+    return "Über Budget";
   }
 
   if (row.remainingAmountCents !== null && row.remainingAmountCents <= 1000) {
@@ -39,7 +39,7 @@ export function categoryStatusLabel(row: MonthlyBudgetCategoryRow): string {
 export function categoryStatusTone(row: MonthlyBudgetCategoryRow): string {
   const label = categoryStatusLabel(row);
 
-  if (label === "Ueber Budget") {
+  if (label === "Über Budget") {
     return "border-red-200 bg-red-50 text-red-700";
   }
 
@@ -56,7 +56,7 @@ export function categoryStatusTone(row: MonthlyBudgetCategoryRow): string {
 
 export function specialBudgetStatusLabel(row: DashboardSpecialBudgetRow): string {
   if (row.remainingAmountCents < 0) {
-    return "Ueber Budget";
+    return "Über Budget";
   }
 
   if (row.remainingAmountCents <= 1000) {
@@ -69,7 +69,7 @@ export function specialBudgetStatusLabel(row: DashboardSpecialBudgetRow): string
 export function specialBudgetStatusTone(row: DashboardSpecialBudgetRow): string {
   const label = specialBudgetStatusLabel(row);
 
-  if (label === "Ueber Budget") {
+  if (label === "Über Budget") {
     return "border-red-200 bg-red-50 text-red-700";
   }
 
@@ -102,11 +102,11 @@ export function buildDashboardKpis(snapshot: DashboardMonthSnapshot): DashboardK
 
 export function countOverBudgetWarnings(snapshot: BudgetWarningSnapshot): number {
   const categoryWarnings = snapshot.categoryRows.filter(
-    (row) => categoryStatusLabel(row) === "Ueber Budget",
+    (row) => categoryStatusLabel(row) === "Über Budget",
   ).length;
 
   const specialBudgetWarnings = snapshot.specialBudgetRows.filter(
-    (row) => specialBudgetStatusLabel(row) === "Ueber Budget",
+    (row) => specialBudgetStatusLabel(row) === "Über Budget",
   ).length;
 
   return categoryWarnings + specialBudgetWarnings;

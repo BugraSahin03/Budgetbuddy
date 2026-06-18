@@ -85,7 +85,7 @@ function parseGermanDate(rawDate: string): string {
   const match = /^(\d{2})\.(\d{2})\.(\d{2})$/.exec(normalized);
 
   if (!match) {
-    throw new Error(`Ungueltiges Datumsformat: ${rawDate}`);
+    throw new Error(`Ungültiges Datumsformat: ${rawDate}`);
   }
 
   const day = match[1];
@@ -100,13 +100,13 @@ function parseAmountCents(rawAmount: string): number {
   const normalized = rawAmount.trim().replace(".", "").replace(",", ".");
 
   if (!/^-?\d+(\.\d{1,2})?$/.test(normalized)) {
-    throw new Error(`Ungueltiges Betragsformat: ${rawAmount}`);
+    throw new Error(`Ungültiges Betragsformat: ${rawAmount}`);
   }
 
   const asNumber = Number.parseFloat(normalized);
 
   if (!Number.isFinite(asNumber) || asNumber === 0) {
-    throw new Error(`Betrag darf nicht 0 oder ungueltig sein: ${rawAmount}`);
+    throw new Error(`Betrag darf nicht 0 oder ungültig sein: ${rawAmount}`);
   }
 
   return Math.round(asNumber * 100);
@@ -126,7 +126,7 @@ export function parseSparkasseCsvToPreview(fileContent: string): SparkasseParseR
   if (lines.length < 2) {
     return {
       rows: [],
-      errors: ["CSV enthaelt keine Buchungszeilen."],
+      errors: ["CSV enthält keine Buchungszeilen."],
     };
   }
 

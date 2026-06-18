@@ -114,7 +114,7 @@ export default async function BudgetsPage({ searchParams }: BudgetsPageProps) {
                       placeholder="Zum Beispiel 350.00"
                       aria-describedby="new-budget-help"
                     />
-                    <span id="new-budget-help">Optionaler Betrag fuer neue Monate.</span>
+                    <span id="new-budget-help">Optionaler Betrag für neue Monate.</span>
                   </label>
                   <input type="hidden" name="colorHex" value="" />
                   <input type="hidden" name="isDefault" value="on" />

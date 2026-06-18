@@ -30,7 +30,7 @@ function parseSpecialBudgetId(rawValue: FormDataEntryValue | null): number {
   const specialBudgetId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(specialBudgetId) || specialBudgetId <= 0) {
-    throw new Error("Sonderkategorie-ID ist ungueltig.");
+    throw new Error("Sonderkategorie-ID ist ungültig.");
   }
 
   return specialBudgetId;

@@ -65,7 +65,7 @@ export function ImportForm({
       ? "space-y-3 rounded-[1.5rem] border border-[color:var(--month-line)] bg-white/78 p-5"
       : "space-y-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm";
   const targetMonthHint = state.detectedMonthKey
-    ? `Automatisch erkannt: ${state.detectedMonthKey}. Du kannst bei Bedarf ueberschreiben.`
+    ? `Automatisch erkannt: ${state.detectedMonthKey}. Du kannst bei Bedarf überschreiben.`
     : "Ohne Eingabe wird der Zielmonat aus den Buchungen automatisch erkannt.";
 
   return (
@@ -83,8 +83,8 @@ export function ImportForm({
           </label>
           {surface === "embedded" ? (
             <p className="mt-1 text-sm font-semibold leading-6 text-slate-600">
-              Waehle einen originalen Sparkassen-CSV-Export aus. Nach der Vorschau kannst du den
-              Import direkt fuer diesen Monat bestaetigen.
+              Wähle einen originalen Sparkassen-CSV-Export aus. Nach der Vorschau kannst du den
+              Import direkt für diesen Monat bestätigen.
             </p>
           ) : null}
           <input
@@ -105,16 +105,16 @@ export function ImportForm({
           {surface === "embedded" ? (
             <label htmlFor="sparkasseCsv" className="month-import-upload-box">
               <span aria-hidden="true">CSV</span>
-              <strong>CSV auswaehlen</strong>
+              <strong>CSV auswählen</strong>
               <em>
-                {selectedFilename ?? state.previewFilename ?? "Noch keine Datei ausgewaehlt"}
+                {selectedFilename ?? state.previewFilename ?? "Noch keine Datei ausgewählt"}
               </em>
             </label>
           ) : null}
           {hasPreviewFile ? (
             <p className="mt-1 text-xs text-slate-500">
-              Vorschau geladen: {state.previewFilename}. Du kannst direkt bestaetigen oder eine
-              neue Datei auswaehlen.
+              Vorschau geladen: {state.previewFilename}. Du kannst direkt bestätigen oder eine
+              neue Datei auswählen.
             </p>
           ) : null}
         </div>
@@ -163,7 +163,7 @@ export function ImportForm({
             disabled={isPending}
             className="rounded-lg border border-emerald-300 bg-emerald-100 px-3 py-2 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-200 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? "Import laeuft..." : "Import bestaetigen"}
+            {isPending ? "Import läuft..." : "Import bestätigen"}
           </button>
         </div>
       </form>

@@ -24,7 +24,7 @@ describe("FIN-052 month action overlay", () => {
     const monthPage = readProjectFile("app/monate/[monthKey]/page.tsx");
 
     expect(monthPage).toContain("MonthActionOverlay");
-    expect(overlay).toContain("Hinzufuegen");
+    expect(overlay).toContain("Hinzufügen");
     expect(overlay).toContain(">Ausgabe<");
     expect(overlay).toContain(">Einnahme<");
     expect(overlay).toContain(">Import CSV<");
@@ -35,7 +35,7 @@ describe("FIN-052 month action overlay", () => {
     expect(overlay).toContain("month-action-page");
     expect(overlay).toContain("month-action-budget-pill");
     expect(overlay).toContain("month-action-save-dock");
-    expect(overlay).toContain("Buchung hinzufuegen");
+    expect(overlay).toContain("Buchung hinzufügen");
     expect(overlay).toContain("toLocaleDateString");
     expect(overlay).not.toContain("month-action-stepper");
     expect(overlay).not.toContain("<p>BudgetBuddy</p>");
@@ -117,16 +117,16 @@ describe("FIN-052 month action overlay", () => {
     expect(overlay).toContain('type="hidden" name="effectiveMonthKey" value={monthKey}');
     expect(importForm).toContain('surface === "embedded"');
     expect(importForm).toContain('name="effectiveMonthKey" type="hidden"');
-    expect(importForm).not.toContain("Der geoeffnete Monat wird automatisch fuer diesen Import verwendet.");
+    expect(importForm).not.toContain("Der geöffnete Monat wird automatisch für diesen Import verwendet.");
   });
 
   it("presents the embedded CSV import as a clear upload choice", () => {
     const importForm = readProjectFile("app/import/import-form.tsx");
     const globals = readProjectFile("app/globals.css");
 
-    expect(importForm).toContain("CSV auswaehlen");
+    expect(importForm).toContain("CSV auswählen");
     expect(importForm).toContain("selectedFilename");
-    expect(importForm).toContain("Noch keine Datei ausgewaehlt");
+    expect(importForm).toContain("Noch keine Datei ausgewählt");
     expect(importForm).toContain("month-import-upload-box");
     expect(globals).toContain(".month-import-upload-box");
   });
@@ -148,7 +148,7 @@ describe("FIN-052 month action overlay", () => {
     );
     expect(monthPage).not.toContain("md:ml-16");
     expect(monthPage).not.toContain(">BudgetBuddy<");
-    expect(overlay).toContain('aria-label="Buchung hinzufuegen"');
+    expect(overlay).toContain('aria-label="Buchung hinzufügen"');
     expect(overlay).toContain('<span aria-hidden="true">+</span>');
     expect(overlay).toContain("month-action-primary-label");
     expect(globals).toContain(".month-budget-stand-card");

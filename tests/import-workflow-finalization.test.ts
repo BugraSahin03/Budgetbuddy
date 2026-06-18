@@ -169,7 +169,7 @@ describe("import workflow finalization", () => {
     expect(expiredState.persisted).toBeNull();
     expect(expiredState.previewFileToken).toBeNull();
     expect(expiredState.fatalError).toBe(
-      "Die geladene Vorschau ist abgelaufen. Bitte die CSV-Datei erneut auswaehlen.",
+      "Die geladene Vorschau ist abgelaufen. Bitte die CSV-Datei erneut auswählen.",
     );
   });
 

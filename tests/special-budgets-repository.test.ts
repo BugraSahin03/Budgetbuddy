@@ -386,7 +386,7 @@ describe("special budgets repository", () => {
         plannedAmountCents: 2000,
         note: "",
       }),
-    ).toThrow("Diese Sonderkategorie existiert im gewaehlten Monat bereits.");
+    ).toThrow("Diese Sonderkategorie existiert im gewählten Monat bereits.");
   });
 
   it("builds a 12 month selectable window from a base date", () => {
@@ -449,11 +449,11 @@ describe("special budgets repository", () => {
 
     expect(() =>
       repository.updateSpecialBudgetPlannedAmountForMonth(created.id, "2026-11", 18000),
-    ).toThrow("Sonderkategorie passt nicht zum ausgewaehlten Monat.");
+    ).toThrow("Sonderkategorie passt nicht zum ausgewählten Monat.");
 
     expect(() =>
       repository.setSpecialBudgetActiveForMonth(created.id, "2026-11", false),
-    ).toThrow("Sonderkategorie passt nicht zum ausgewaehlten Monat.");
+    ).toThrow("Sonderkategorie passt nicht zum ausgewählten Monat.");
   });
 
   it("blocks special budget month shares in closed months", () => {

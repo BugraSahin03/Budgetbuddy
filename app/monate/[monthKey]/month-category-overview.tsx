@@ -46,7 +46,7 @@ export function MonthCategoryOverview({
   if (categoryRows.length === 0 && specialBudgetRows.length === 0) {
     return (
       <div className="rounded-[1.25rem] border border-dashed border-[color:var(--month-line-strong)] bg-white/72 p-5 text-center text-sm font-bold text-[color:var(--month-ink-soft)]">
-        Noch keine Kategorien und Sonderkategorien fuer diesen Monat vorhanden.
+        Noch keine Kategorien und Sonderkategorien für diesen Monat vorhanden.
       </div>
     );
   }

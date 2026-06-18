@@ -78,7 +78,7 @@ function parseAmountCents(amountInput: string): number {
   }
 
   if (!AMOUNT_PATTERN.test(normalized)) {
-    throw new Error("Betrag ist ungueltig formatiert.");
+    throw new Error("Betrag ist ungültig formatiert.");
   }
 
   const parsed = Number.parseFloat(normalized.replace(",", "."));
@@ -90,7 +90,7 @@ function parseAmountCents(amountInput: string): number {
   const cents = Math.round(parsed * 100);
 
   if (cents > 99_999_999) {
-    throw new Error("Betrag ist zu gross.");
+    throw new Error("Betrag ist zu groß.");
   }
 
   return cents;
@@ -139,7 +139,7 @@ function normalizeDescription(description: string): string {
 
 function ensurePositiveInt(value: number, label: string): number {
   if (!Number.isInteger(value) || value <= 0) {
-    throw new Error(`${label} ist ungueltig.`);
+    throw new Error(`${label} ist ungültig.`);
   }
 
   return value;
@@ -179,7 +179,7 @@ function getActiveCategoryById(categoryId: number): { id: number } {
   }
 
   if (category.isActive !== 1) {
-    throw new Error("Kategorie ist deaktiviert und nicht auswaehlbar.");
+    throw new Error("Kategorie ist deaktiviert und nicht auswählbar.");
   }
 
   return category;
@@ -215,7 +215,7 @@ function getActiveSpecialBudgetById(specialBudgetId: number): {
   }
 
   if (specialBudget.isActive !== 1 || specialBudget.projectStatus !== "active") {
-    throw new Error("Sonderkategorie ist deaktiviert und nicht auswaehlbar.");
+    throw new Error("Sonderkategorie ist deaktiviert und nicht auswählbar.");
   }
 
   return specialBudget;
@@ -731,11 +731,11 @@ export function updateExpenseAssignmentForMonth(
     | undefined;
 
   if (!existing) {
-    throw new Error("Buchung passt nicht zum ausgewaehlten Monat.");
+    throw new Error("Buchung passt nicht zum ausgewählten Monat.");
   }
 
   if (existing.transactionType !== "expense") {
-    throw new Error("Nur Ausgaben koennen direkt zugeordnet werden.");
+    throw new Error("Nur Ausgaben können direkt zugeordnet werden.");
   }
 
   const assignment = validateExpenseAssignment(input, effectiveMonthKey, {

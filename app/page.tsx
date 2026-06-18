@@ -149,7 +149,7 @@ export default async function HomePage() {
             href={monthHref}
             className="inline-flex w-fit rounded-full bg-[color:var(--month-ink)] px-5 py-3 text-sm font-semibold text-white shadow-[0_16px_34px_rgba(20,33,61,0.18)] transition hover:-translate-y-0.5"
           >
-            Monatsansicht oeffnen
+            Monatsansicht öffnen
           </a>
         </div>
       </section>

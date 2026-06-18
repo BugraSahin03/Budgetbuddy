@@ -259,10 +259,10 @@ function ImportPanel({ monthKey }: { monthKey: string }) {
     <div className="month-action-import-shell">
       <div className="month-action-import-intro">
         <p className="month-action-label">Import</p>
-        <h3>CSV pruefen und uebernehmen</h3>
+        <h3>CSV prüfen und übernehmen</h3>
         <p>
-          Sparkassen-Import bleibt im selben Dialog verfuegbar. Der geoeffnete Monat wird hidden
-          uebernommen, ohne zusaetzliche Monatsauswahl.
+          Sparkassen-Import bleibt im selben Dialog verfügbar. Der geöffnete Monat wird hidden
+          übernommen, ohne zusätzliche Monatsauswahl.
         </p>
       </div>
       <ImportForm
@@ -289,21 +289,21 @@ export function MonthActionOverlay({
       <button
         type="button"
         className="month-action-primary"
-        aria-label="Buchung hinzufuegen"
+        aria-label="Buchung hinzufügen"
         onClick={() => dialogRef.current?.showModal()}
       >
         <span aria-hidden="true">+</span>
-        <span className="month-action-primary-label">Hinzufuegen</span>
+        <span className="month-action-primary-label">Hinzufügen</span>
       </button>
       <dialog ref={dialogRef} className="month-action-dialog">
         <div className="month-action-surface">
           <header className="month-action-topbar">
             <form method="dialog">
-              <button type="submit" className="month-action-back" aria-label="Overlay schliessen">
-                Zurueck
+              <button type="submit" className="month-action-back" aria-label="Overlay schließen">
+                Zurück
               </button>
             </form>
-            <h2>Buchung hinzufuegen</h2>
+            <h2>Buchung hinzufügen</h2>
           </header>
 
           <div className="month-action-page">

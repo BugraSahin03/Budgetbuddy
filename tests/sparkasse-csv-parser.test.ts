@@ -44,6 +44,6 @@ describe("sparkasse csv parser", () => {
 
     expect(result.rows).toHaveLength(0);
     expect(result.errors[0]).toContain("Zeile 2");
-    expect(result.errors[0]).toContain("Ungueltiges Datumsformat");
+    expect(result.errors[0]).toContain("Ungültiges Datumsformat");
   });
 });

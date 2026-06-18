@@ -34,7 +34,7 @@ function parseAliasId(formData: FormData): number {
   const aliasId = Number.parseInt(String(formData.get("aliasId") ?? ""), 10);
 
   if (!Number.isInteger(aliasId) || aliasId <= 0) {
-    throw new Error("Alias-ID ist ungueltig.");
+    throw new Error("Alias-ID ist ungültig.");
   }
 
   return aliasId;
@@ -44,7 +44,7 @@ function parseImportRuleId(formData: FormData): number {
   const ruleId = Number.parseInt(String(formData.get("ruleId") ?? ""), 10);
 
   if (!Number.isInteger(ruleId) || ruleId <= 0) {
-    throw new Error("Regel-ID ist ungueltig.");
+    throw new Error("Regel-ID ist ungültig.");
   }
 
   return ruleId;
@@ -68,7 +68,7 @@ function parseProjectId(formData: FormData): number {
   const projectId = Number.parseInt(String(formData.get("projectId") ?? ""), 10);
 
   if (!Number.isInteger(projectId) || projectId <= 0) {
-    throw new Error("Sonderkategorie ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungültig.");
   }
 
   return projectId;
@@ -78,7 +78,7 @@ function parseCategoryId(formData: FormData): number {
   const categoryId = Number.parseInt(String(formData.get("categoryId") ?? ""), 10);
 
   if (!Number.isInteger(categoryId) || categoryId <= 0) {
-    throw new Error("Kategorie-ID ist ungueltig.");
+    throw new Error("Kategorie-ID ist ungültig.");
   }
 
   return categoryId;
@@ -88,7 +88,7 @@ function parseFixedCostId(formData: FormData): number {
   const fixedCostId = Number.parseInt(String(formData.get("fixedCostId") ?? ""), 10);
 
   if (!Number.isInteger(fixedCostId) || fixedCostId <= 0) {
-    throw new Error("Fixkosten-ID ist ungueltig.");
+    throw new Error("Fixkosten-ID ist ungültig.");
   }
 
   return fixedCostId;
@@ -160,7 +160,7 @@ export async function deleteImportDisplayAliasAction(
     redirect("/einstellungen/import-aliase?error=" + encodeMessage(errorMessage));
   }
 
-  redirect("/einstellungen/import-aliase?notice=" + encodeMessage("Import-Alias geloescht."));
+  redirect("/einstellungen/import-aliase?notice=" + encodeMessage("Import-Alias gelöscht."));
 }
 
 export async function createImportRuleSettingsAction(

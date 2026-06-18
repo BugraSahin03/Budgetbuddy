@@ -8,7 +8,7 @@ export function parsePlannedAmountCents(rawInput: string): number {
   }
 
   if (!STRICT_EURO_AMOUNT_PATTERN.test(normalizedInput)) {
-    throw new Error("Geplanter Betrag ist ungueltig formatiert.");
+    throw new Error("Geplanter Betrag ist ungültig formatiert.");
   }
 
   const canonical = normalizedInput.replace(",", ".");
@@ -21,7 +21,7 @@ export function parsePlannedAmountCents(rawInput: string): number {
   const cents = Math.round(parsed * 100);
 
   if (cents > 99_999_999) {
-    throw new Error("Geplanter Betrag ist zu gross.");
+    throw new Error("Geplanter Betrag ist zu groß.");
   }
 
   return cents;

@@ -34,7 +34,7 @@ function parseTransactionId(rawValue: FormDataEntryValue | null): number {
   const value = toOptionalPositiveInt(rawValue);
 
   if (!value) {
-    throw new Error("Transaktions-ID ist ungueltig.");
+    throw new Error("Transaktions-ID ist ungültig.");
   }
 
   return value;
@@ -47,7 +47,7 @@ function parseTransactionType(rawValue: FormDataEntryValue | null): TransactionT
     return value;
   }
 
-  throw new Error("Transaktionstyp ist ungueltig.");
+  throw new Error("Transaktionstyp ist ungültig.");
 }
 
 function toErrorMessage(error: unknown): string {
@@ -95,7 +95,7 @@ export async function updateManualTransactionAction(formData: FormData): Promise
     if (intent === "delete") {
       deleteManualTransaction(transactionId);
       revalidatePath("/transaktionen");
-      redirect("/transaktionen?notice=" + encodeMessage("Transaktion geloescht."));
+      redirect("/transaktionen?notice=" + encodeMessage("Transaktion gelöscht."));
     }
 
     updateManualTransaction(transactionId, parseManualTransactionInput(formData));

@@ -59,8 +59,8 @@ describe("FIN-082 month todos UI", () => {
     expect(repository).toContain("ORDER BY id ASC");
     expect(repository).not.toContain("due");
     expect(repository).not.toContain("priority");
-    expect(dialog).not.toContain("Faellig");
-    expect(dialog).not.toContain("Prioritaet");
+    expect(dialog).not.toContain("Fällig");
+    expect(dialog).not.toContain("Priorität");
     expect(domainModel).toContain("ToDos werden nicht automatisch in Folgemonate uebernommen");
   });
 });

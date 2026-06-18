@@ -38,13 +38,13 @@ export default async function ImportAliasesPage({ searchParams }: ImportAliasPag
         <span className="month-hero-orb month-hero-orb-right" aria-hidden="true" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Link href="/einstellungen" aria-label="Zurueck zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
+            <Link href="/einstellungen" aria-label="Zurück zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
               &larr;
             </Link>
             <p className="month-eyebrow">Import-Aliasse</p>
             <h2 className="month-hero-title mt-2">Import-Aliasse</h2>
             <p className="month-hero-copy mt-4">
-              Aliasse aendern nur den sichtbaren Namen in Listen. Der originale Banktext bleibt unveraendert gespeichert.
+              Aliasse ändern nur den sichtbaren Namen in Listen. Der originale Banktext bleibt unverändert gespeichert.
             </p>
           </div>
           <div className="month-stat-card month-stat-card-calm min-w-64">
@@ -76,7 +76,7 @@ export default async function ImportAliasesPage({ searchParams }: ImportAliasPag
 
         <form action={createImportDisplayAliasAction} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
           <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
-            Muster enthaelt
+            Muster enthält
             <input
               name="pattern"
               required
@@ -113,7 +113,7 @@ export default async function ImportAliasesPage({ searchParams }: ImportAliasPag
             <p className="month-eyebrow">Aliasliste</p>
             <h3 className="month-section-title mt-1">Bestehende Anzeigenamen</h3>
           </div>
-          <span className="month-chip month-chip-neutral w-fit">{importAliases.length} Eintraege</span>
+          <span className="month-chip month-chip-neutral w-fit">{importAliases.length} Einträge</span>
         </header>
 
         {importAliases.length === 0 ? (
@@ -127,7 +127,7 @@ export default async function ImportAliasesPage({ searchParams }: ImportAliasPag
                 <form action={updateImportDisplayAliasAction} className="grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] md:items-end">
                   <input type="hidden" name="aliasId" value={alias.id} />
                   <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
-                    Muster enthaelt
+                    Muster enthält
                     <input
                       name="pattern"
                       defaultValue={alias.pattern}
@@ -153,7 +153,7 @@ export default async function ImportAliasesPage({ searchParams }: ImportAliasPag
                 <form action={deleteImportDisplayAliasAction} className="mt-3 flex justify-end">
                   <input type="hidden" name="aliasId" value={alias.id} />
                   <button type="submit" className="rounded-full border border-red-200 bg-red-50 px-4 py-2 text-xs font-semibold text-red-700 transition hover:bg-red-100">
-                    Alias loeschen
+                    Alias löschen
                   </button>
                 </form>
               </li>

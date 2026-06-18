@@ -44,7 +44,7 @@ export default async function FixedCostsPage({ searchParams }: FixedCostsPagePro
           <p className="month-eyebrow">Fixkosten</p>
           <h1>Fixkostenpflege</h1>
           <p>
-            Pflege wiederkehrende Monatskosten als ruhigen Planungsblock. Importhinweise bleiben im Monatskontext und ueberladen diese Pflegeansicht nicht.
+            Pflege wiederkehrende Monatskosten als ruhigen Planungsblock. Importhinweise bleiben im Monatskontext und überladen diese Pflegeansicht nicht.
           </p>
         </div>
         <div className="fixed-cost-hero-side">

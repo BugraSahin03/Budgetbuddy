@@ -96,7 +96,7 @@ export function getCategoryUsageState({
 
   if (normalizedSpentAmountCents > budgetAmountCents) {
     return {
-      label: "Ueber Budget",
+      label: "Über Budget",
       percent,
       progressPercent,
       tone: "over",

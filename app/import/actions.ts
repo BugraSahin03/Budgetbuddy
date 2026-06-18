@@ -46,7 +46,7 @@ async function resolveImportFile(
 
   if (file instanceof File && file.size > 0) {
     if (file.size > MAX_PREVIEW_FILE_BYTES) {
-      return { error: "Die CSV-Datei ist zu gross fuer die Vorschau." };
+      return { error: "Die CSV-Datei ist zu groß für die Vorschau." };
     }
 
     return {
@@ -71,11 +71,11 @@ async function resolveImportFile(
     }
 
     return {
-      error: "Die geladene Vorschau ist abgelaufen. Bitte die CSV-Datei erneut auswaehlen.",
+      error: "Die geladene Vorschau ist abgelaufen. Bitte die CSV-Datei erneut auswählen.",
     };
   }
 
-  return { error: "Bitte eine CSV-Datei auswaehlen." };
+  return { error: "Bitte eine CSV-Datei auswählen." };
 }
 
 function purgeExpiredPreviewFiles(now: number): void {

@@ -26,7 +26,7 @@ function parseCategoryId(rawValue: FormDataEntryValue | null): number {
   const categoryId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(categoryId) || categoryId <= 0) {
-    throw new Error("Kategorie-ID ist ungueltig.");
+    throw new Error("Kategorie-ID ist ungültig.");
   }
 
   return categoryId;
@@ -37,7 +37,7 @@ function parseSpecialBudgetProjectId(rawValue: FormDataEntryValue | null): numbe
   const specialBudgetProjectId = Number.parseInt(value, 10);
 
   if (!Number.isInteger(specialBudgetProjectId) || specialBudgetProjectId <= 0) {
-    throw new Error("Sonderkategorie ist ungueltig.");
+    throw new Error("Sonderkategorie ist ungültig.");
   }
 
   return specialBudgetProjectId;

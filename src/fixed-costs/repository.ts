@@ -76,7 +76,7 @@ function parseAmountCents(plannedAmountInput: string): number {
   }
 
   if (!AMOUNT_PATTERN.test(normalized)) {
-    throw new Error("Betrag ist ungueltig formatiert.");
+    throw new Error("Betrag ist ungültig formatiert.");
   }
 
   const parsed = Number.parseFloat(normalized.replace(",", "."));
@@ -88,7 +88,7 @@ function parseAmountCents(plannedAmountInput: string): number {
   const cents = Math.round(parsed * 100);
 
   if (cents > 99_999_999) {
-    throw new Error("Betrag ist zu gross.");
+    throw new Error("Betrag ist zu groß.");
   }
 
   return cents;
@@ -215,7 +215,7 @@ export function updateFixedCost(fixedCostId: number, input: FixedCostInput): voi
   const id = Number.parseInt(String(fixedCostId), 10);
 
   if (!Number.isInteger(id) || id <= 0) {
-    throw new Error("Fixkosten-ID ist ungueltig.");
+    throw new Error("Fixkosten-ID ist ungültig.");
   }
 
   const name = normalizeName(input.name);
@@ -251,7 +251,7 @@ export function setFixedCostActive(fixedCostId: number, isActive: boolean): void
   const id = Number.parseInt(String(fixedCostId), 10);
 
   if (!Number.isInteger(id) || id <= 0) {
-    throw new Error("Fixkosten-ID ist ungueltig.");
+    throw new Error("Fixkosten-ID ist ungültig.");
   }
 
   const result = getDb()
@@ -278,7 +278,7 @@ export function updateFixedCostSortOrder(fixedCostIds: number[]): void {
     const id = Number.parseInt(String(fixedCostId), 10);
 
     if (!Number.isInteger(id) || id <= 0) {
-      throw new Error("Fixkosten-ID ist ungueltig.");
+      throw new Error("Fixkosten-ID ist ungültig.");
     }
 
     return id;
@@ -286,7 +286,7 @@ export function updateFixedCostSortOrder(fixedCostIds: number[]): void {
   const uniqueIds = new Set(normalizedIds);
 
   if (uniqueIds.size !== normalizedIds.length) {
-    throw new Error("Fixkosten-Reihenfolge enthaelt doppelte Eintraege.");
+    throw new Error("Fixkosten-Reihenfolge enthält doppelte Einträge.");
   }
 
   const db = getDb();

@@ -22,11 +22,11 @@ describe("FIN-075 month comparison UI", () => {
     expect(page).toContain("Gespart");
     expect(page).not.toContain("savedLabel");
     expect(page).not.toContain("savedTone");
-    expect(page).not.toContain("Ueberschuss");
+    expect(page).not.toContain("Überschuss");
     expect(page).not.toContain("Defizit");
     expect(page).not.toContain("MonthChip");
     expect(page).not.toContain("{month.monthKey}</");
-    expect(page).not.toContain("Monat oeffnen");
+    expect(page).not.toContain("Monat öffnen");
   });
 
   it("groups month rows into collapsible year books", () => {

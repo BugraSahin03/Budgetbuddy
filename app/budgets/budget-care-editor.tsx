@@ -104,7 +104,7 @@ export function BudgetCareEditor({
               <button
                 type="submit"
                 className="budget-icon-action budget-icon-action-save"
-                aria-label="Aenderungen speichern und Editiermodus beenden"
+                aria-label="Änderungen speichern und Editiermodus beenden"
                 title="Speichern"
               >
                 ✓
@@ -153,7 +153,7 @@ export function BudgetCareEditor({
                         ) : null}
                       </div>
                       {category.isSavings ? (
-                        <p>Systemkategorie fuer echte Sparbuchungen ohne Planwert.</p>
+                        <p>Systemkategorie für echte Sparbuchungen ohne Planwert.</p>
                       ) : null}
                     </div>
                   </div>
