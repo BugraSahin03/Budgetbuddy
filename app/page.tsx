@@ -142,7 +142,7 @@ export default async function HomePage() {
             <p className="month-eyebrow">Offene Arbeit</p>
             <h2 className="month-section-title mt-2">{openWorkLabel}</h2>
             <p className="month-section-copy mt-3 max-w-2xl">
-              Gezaehlt werden nur Buchungen, die wirklich eine Kategorie oder Sonderkategorie brauchen. Transfers und Fixkosten-Kontrolltreffer bleiben draussen.
+              Gezählt werden nur Buchungen, die wirklich eine Kategorie oder Sonderkategorie brauchen. Transfers und Fixkosten-Kontrolltreffer bleiben draußen.
             </p>
           </div>
           <a
