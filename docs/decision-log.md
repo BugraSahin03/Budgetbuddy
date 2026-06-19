@@ -1623,3 +1623,20 @@ Auswirkung:
 - Deployment- und Betriebsfolgearbeiten bauen auf dem VPS-Profil auf.
 - Die SQLite-Datei bleibt zentrales Datenobjekt und muss vor echter Produktivnutzung robust gesichert und per Restore getestet werden.
 - Die grundlegende Entscheidung ist in `docs/adr/0009-private-vps-tailscale-hosting.md` festgehalten.
+
+## 2026-06-19 - FIN-089 dokumentiert VPS-Basissetup
+
+Quelle/Ticket: `FIN-089`
+
+Erkenntnis/Entscheidung:
+
+- Das Hetzner-VPS-Basissetup wird als reproduzierbare Doku in `docs/production-vps-basissetup.md` gefuehrt.
+- Standard-Betriebsnutzer ist `budgetbuddy`; App-, DB- und Backup-Verzeichnisse gehoeren `budgetbuddy:budgetbuddy`.
+- Node.js 22 wird fuer Ubuntu 24.04 ueber NodeSource dokumentiert.
+- Tailscale wird installiert, aber Tailscale Serve bleibt explizit Folgearbeit.
+- BudgetBuddy wird in FIN-089 nicht geklont, nicht gebaut, nicht als Dienst gestartet und nicht public exponiert.
+
+Auswirkung:
+
+- FIN-090 kann auf vorbereitetem User, Paketstand und Zielverzeichnissen aufbauen.
+- Die Sicherheitsleitplanke aus ADR 0009 bleibt erhalten: keine Public-App-Ports, kein Funnel, keine Cloudflare-Startkonfiguration.
