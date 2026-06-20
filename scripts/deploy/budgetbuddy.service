@@ -1,0 +1,27 @@
+[Unit]
+Description=BudgetBuddy production service
+Documentation=https://github.com/BugraSahin03/Budgetbuddy
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=budgetbuddy
+Group=budgetbuddy
+WorkingDirectory=/opt/budgetbuddy
+Environment=NODE_ENV=production
+Environment=BUDGETBUDDY_DB_PATH=/var/lib/budgetbuddy/budgetbuddy.db
+Environment=PORT=3000
+Environment=NPM_CONFIG_CACHE=/tmp/budgetbuddy-npm-cache
+ExecStart=/usr/bin/npm run start -- --hostname 127.0.0.1 --port 3000
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/var/lib/budgetbuddy /var/backups/budgetbuddy /opt/budgetbuddy
+
+[Install]
+WantedBy=multi-user.target

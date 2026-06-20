@@ -218,6 +218,7 @@ Siehe auch:
 - `docs/adr/0001-tech-stack.md`
 - `docs/adr/0009-private-vps-tailscale-hosting.md`
 - `docs/production-vps-basissetup.md`
+- `docs/production-app-service.md`
 - `docs/domain-model.md`
 - `docs/import-and-bank-notes.md`
 
