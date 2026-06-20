@@ -1659,3 +1659,21 @@ Auswirkung:
 - `scripts/deploy/budgetbuddy.service` und `scripts/deploy/install-production-service.sh` stellen nicht-geheime Deploy-Artefakte bereit.
 - Nach Scope-Klarstellung im Issue wurde der Dienst auf `budgetbuddy-prod-01` echt installiert, gestartet, per Reboot-Autostart geprueft und ohne oeffentliche App-Portfreigabe verifiziert.
 - Die erste VPS-Ausfuehrung nutzt eine Release-Kopie nach `/opt/budgetbuddy`, keinen Git-Checkout auf dem Server. Es wurde kein GitHub-Deploy-Key eingerichtet und keine lokale `data/`-Testdatenbank uebertragen.
+
+## 2026-06-20 - FIN-091 aktiviert Tailscale-only Zugriff
+
+Quelle/Ticket: `FIN-091`
+
+Erkenntnis/Entscheidung:
+
+- BudgetBuddy wird nach dem systemd-Produktionsstart per Tailscale Serve nur tailnet-intern erreichbar gemacht.
+- Tailscale Serve proxyt den lokalen Dienst `127.0.0.1:3000` auf die HTTPS-Adresse des Tailscale-Knotens.
+- Tailscale Funnel bleibt deaktiviert und wird nicht verwendet.
+- Cloudflare bleibt ebenfalls ungenutzt.
+- Der App-Dienst bleibt selbst an `127.0.0.1:3000` gebunden; die oeffentliche Server-IP stellt BudgetBuddy nicht bereit.
+
+Auswirkung:
+
+- `docs/tailscale-only-access.md` beschreibt Aktivierung, Healthcheck, ACL-/Grant-Minimum, negative Security Checks und Notfallabschaltung.
+- Der private Zugriff haengt vom Tailscale-Status der eigenen Endgeraete ab. Mac, iPhone und weitere Geraete muessen im Tailnet aktiv sein, um BudgetBuddy zu erreichen.
+- Vor dauerhafter echter Finanznutzung bleibt FIN-092 fuer produktionssichere Backups und Restore-Tests relevant.
