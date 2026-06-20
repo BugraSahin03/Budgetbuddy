@@ -1658,3 +1658,4 @@ Auswirkung:
 - `docs/production-app-service.md` beschreibt Build, systemd-Betrieb, Logs, lokalen Healthcheck, Reboot-Test, Update-Ablauf und negative Security Checks.
 - `scripts/deploy/budgetbuddy.service` und `scripts/deploy/install-production-service.sh` stellen nicht-geheime Deploy-Artefakte bereit.
 - Nach Scope-Klarstellung im Issue wurde der Dienst auf `budgetbuddy-prod-01` echt installiert, gestartet, per Reboot-Autostart geprueft und ohne oeffentliche App-Portfreigabe verifiziert.
+- Die erste VPS-Ausfuehrung nutzt eine Release-Kopie nach `/opt/budgetbuddy`, keinen Git-Checkout auf dem Server. Es wurde kein GitHub-Deploy-Key eingerichtet und keine lokale `data/`-Testdatenbank uebertragen.

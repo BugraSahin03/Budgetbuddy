@@ -78,9 +78,11 @@ Erwartung:
 - Zielverzeichnisse existieren und gehoeren `budgetbuddy:budgetbuddy`.
 - UFW erlaubt keine BudgetBuddy-App-Ports public.
 
-## Repo bereitstellen
+## App bereitstellen
 
-Als `root` oder mit einem passenden Deploy-Weg auf dem VPS:
+Der Zielpfad bleibt immer `/opt/budgetbuddy`. Fuer die Bereitstellung gibt es zwei sichere Varianten.
+
+### Variante A: Git-Checkout mit Deploy-Key
 
 ```bash
 cd /opt/budgetbuddy
@@ -91,6 +93,32 @@ chown -R budgetbuddy:budgetbuddy /opt/budgetbuddy
 ```
 
 Wenn der VPS noch keinen GitHub-Deploy-Key hat, muss dieser ausserhalb des Repos eingerichtet werden. Keine privaten SSH-Keys oder Tokens in Git ablegen.
+
+### Variante B: Release-Kopie vom vertrauenswuerdigen Rechner
+
+Wenn auf dem VPS noch kein GitHub-Deploy-Key eingerichtet ist, kann ein gepruefter Stand vom lokalen Rechner als Release-Kopie uebertragen werden. Dabei duerfen lokale Testdaten nicht mitkopiert werden.
+
+Beispiel vom lokalen Projekt-Worktree:
+
+```bash
+tar \
+  --exclude='.git' \
+  --exclude='node_modules' \
+  --exclude='.next' \
+  --exclude='data' \
+  -czf - . \
+  | ssh root@<server-ip> 'set -euo pipefail
+      rm -rf /opt/budgetbuddy.release
+      install -d -m 0755 -o budgetbuddy -g budgetbuddy /opt/budgetbuddy.release
+      tar -xzf - -C /opt/budgetbuddy.release
+      chown -R budgetbuddy:budgetbuddy /opt/budgetbuddy.release
+      rm -rf /opt/budgetbuddy.previous
+      if [ -d /opt/budgetbuddy ]; then mv /opt/budgetbuddy /opt/budgetbuddy.previous; fi
+      mv /opt/budgetbuddy.release /opt/budgetbuddy
+    '
+```
+
+Hinweis: Diese Variante ist kein Git-Checkout auf dem Server. Fuer spaetere `git pull`-Updates muss entweder ein Deploy-Key eingerichtet oder erneut eine Release-Kopie uebertragen werden.
 
 Wichtig fuer echte Produktivdaten:
 
@@ -227,7 +255,7 @@ Erwartung:
 
 ## Update-Ablauf
 
-Wenn neue Versionen nach `main` gemerged wurden:
+Wenn `/opt/budgetbuddy` ein Git-Checkout ist und der VPS Zugriff auf GitHub hat:
 
 ```bash
 cd /opt/budgetbuddy
@@ -238,6 +266,15 @@ runuser -u budgetbuddy -- npm ci
 runuser -u budgetbuddy -- npm run build
 systemctl restart budgetbuddy.service
 curl -fsS http://127.0.0.1:3000/api/health
+```
+
+Wenn `/opt/budgetbuddy` als Release-Kopie bereitgestellt wurde:
+
+```bash
+# Vom lokalen, geprueften Worktree erneut ohne data/ uebertragen.
+# Danach auf dem VPS:
+cd /opt/budgetbuddy
+./scripts/deploy/install-production-service.sh
 ```
 
 Keine Testdatenbank kopieren. Falls eine bestehende Produktivdatenbank vorhanden ist, bleibt sie unter `/var/lib/budgetbuddy/budgetbuddy.db` erhalten.
