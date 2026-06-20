@@ -84,6 +84,7 @@ Die Basisinitialisierung erfolgt in:
 - [Prompt-Vorlagen fuer Codex-Instanzen](docs/prompts.md)
 - [ADR 0001: Tech Stack](docs/adr/0001-tech-stack.md)
 - [ADR 0002: Kategorien, Sonderbudgets und Bargeld trennen](docs/adr/0002-domain-separation.md)
+- [BudgetBuddy Produktionsdienst](docs/production-app-service.md)
 
 ## Einstieg fuer neue Codex-Instanzen
 

@@ -1640,3 +1640,21 @@ Auswirkung:
 
 - FIN-090 kann auf vorbereitetem User, Paketstand und Zielverzeichnissen aufbauen.
 - Die Sicherheitsleitplanke aus ADR 0009 bleibt erhalten: keine Public-App-Ports, kein Funnel, keine Cloudflare-Startkonfiguration.
+
+## 2026-06-20 - FIN-090 bereitet lokalen systemd-Produktionsdienst vor
+
+Quelle/Ticket: `FIN-090`
+
+Erkenntnis/Entscheidung:
+
+- Der BudgetBuddy-Produktionsdienst wird fuer den VPS als lokaler Next.js-Service unter `systemd` vorbereitet.
+- Die systemd-Unit nutzt `BUDGETBUDDY_DB_PATH=/var/lib/budgetbuddy/budgetbuddy.db`, `NODE_ENV=production` und Port `3000`.
+- Der Dienst bindet bewusst nur an `127.0.0.1:3000`, damit BudgetBuddy auch bei versehentlicher Firewall-Aenderung nicht direkt auf `0.0.0.0` lauscht.
+- FIN-090 kopiert keine lokale Entwicklungsdatenbank `data/budgetbuddy.db` auf den VPS. Die Produktivdatenbank startet unter dem Produktionspfad leer, damit lokale Testdaten nicht mitgenommen werden.
+- Die echte Tailscale-Erreichbarkeit bleibt Folgearbeit in FIN-091; robuste Backups bleiben vor dauerhafter echter Finanznutzung Folgearbeit in FIN-092.
+
+Auswirkung:
+
+- `docs/production-app-service.md` beschreibt Build, systemd-Betrieb, Logs, lokalen Healthcheck, Reboot-Test, Update-Ablauf und negative Security Checks.
+- `scripts/deploy/budgetbuddy.service` und `scripts/deploy/install-production-service.sh` stellen nicht-geheime Deploy-Artefakte bereit.
+- Nach Scope-Klarstellung im Issue wurde der Dienst auf `budgetbuddy-prod-01` echt installiert, gestartet, per Reboot-Autostart geprueft und ohne oeffentliche App-Portfreigabe verifiziert.
