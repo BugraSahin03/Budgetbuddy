@@ -196,3 +196,15 @@ curl -fsS http://127.0.0.1:3000/api/health
 - Der Produktionsdefault fuer Backups ist `/var/backups/budgetbuddy`.
 - Offsite-Backup und Verschluesselung sind nicht Teil dieses Basisskripts und folgen separat.
 - Restore ueberschreibt den aktuellen Stand. Vor einem echten Restore immer zuerst einen Restore-Test in temporaerem Pfad machen.
+
+## 7) Verschluesseltes Offsite-Backup
+
+Die zweite Sicherungsebene ist in `docs/offsite-backup.md` beschrieben.
+
+Kurzfassung:
+
+- FIN-092-Backups unter `/var/backups/budgetbuddy` bleiben die Quelle.
+- Der Mac zieht Backups per Pull ueber SSH/Tailscale.
+- Standardziel auf dem Mac: `~/Backups/BudgetBuddy`.
+- Die finale lokale Ablage ist verschluesselt (`*.db.enc`).
+- Keine Passphrases, Private Keys oder Tailscale-Secrets ins Repo schreiben.
