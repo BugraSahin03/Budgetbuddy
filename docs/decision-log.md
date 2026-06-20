@@ -1677,3 +1677,20 @@ Auswirkung:
 - `docs/tailscale-only-access.md` beschreibt Aktivierung, Healthcheck, ACL-/Grant-Minimum, negative Security Checks und Notfallabschaltung.
 - Der private Zugriff haengt vom Tailscale-Status der eigenen Endgeraete ab. Mac, iPhone und weitere Geraete muessen im Tailnet aktiv sein, um BudgetBuddy zu erreichen.
 - Vor dauerhafter echter Finanznutzung bleibt FIN-092 fuer produktionssichere Backups und Restore-Tests relevant.
+
+## 2026-06-20 - FIN-092 haertet SQLite-Backups
+
+Quelle/Ticket: `FIN-092`
+
+Erkenntnis/Entscheidung:
+
+- Produktive BudgetBuddy-Backups duerfen nicht mehr als rohe Live-Dateikopie der SQLite-Datei verstanden werden.
+- Das Backup-Skript nutzt die SQLite Online Backup API ueber `better-sqlite3`, damit Backups waehrend laufender App erstellt werden koennen.
+- Jedes erstellte Backup wird per `PRAGMA integrity_check` validiert.
+- Lokale Rotation ist als 30-Tage-Default im Skript enthalten; Offsite-Backup bleibt separate Folgearbeit.
+
+Auswirkung:
+
+- Lokale Entwicklung bleibt mit `data/budgetbuddy.db` und `data/backups/` moeglich.
+- Der Produktionspfad nutzt `BUDGETBUDDY_DB_PATH=/var/lib/budgetbuddy/budgetbuddy.db` und `BUDGETBUDDY_BACKUP_DIR=/var/backups/budgetbuddy`.
+- Restore-Tests sollen immer gegen einen temporaeren DB-Pfad laufen, bevor ein echtes Backup nach `/var/lib/budgetbuddy/budgetbuddy.db` zurueckgespielt wird.

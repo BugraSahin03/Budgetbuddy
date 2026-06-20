@@ -1,2 +1,5 @@
-# Beispiel (taeglich 02:30):
+# Beispiel lokale Entwicklung (taeglich 02:30):
 # 30 2 * * * cd /absolute/path/to/Budgetbuddy && node scripts/backup/create-backup.mjs >> data/backups/backup.log 2>&1
+
+# Beispiel Produktion auf dem VPS (taeglich 02:30, 30 Tage lokale Retention):
+# 30 2 * * * cd /opt/budgetbuddy && BUDGETBUDDY_DB_PATH=/var/lib/budgetbuddy/budgetbuddy.db BUDGETBUDDY_BACKUP_DIR=/var/backups/budgetbuddy BUDGETBUDDY_BACKUP_RETENTION_DAYS=30 node scripts/backup/create-backup.mjs >> /var/backups/budgetbuddy/backup.log 2>&1
