@@ -1,0 +1,12 @@
+[Unit]
+Description=Run BudgetBuddy SQLite backup daily
+Documentation=docs/backup-and-restore.md
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+Unit=budgetbuddy-backup.service
+
+[Install]
+WantedBy=timers.target
+

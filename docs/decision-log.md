@@ -1728,3 +1728,21 @@ Auswirkung:
 - Fehlende oder kaputte VPS-Backup-Erzeugung faellt beim Offsite-Lauf sichtbar auf.
 - Andere lokale Nutzer koennen den Offsite-Zielordner nicht listen.
 - Lokale Node-Installationspfade bleiben nutzerspezifisch und werden nicht im Template fest verdrahtet.
+
+## 2026-06-23 - FIN-097 Backup-Kette ist manuell Ende-zu-Ende geprueft
+
+Quelle/Ticket: `FIN-097`
+
+Erkenntnis/Entscheidung:
+
+- Die erste echte Backup-Kette nutzt weiter FIN-092 als lokale VPS-Quelle und FIN-093 als verschluesselten Mac-Pull.
+- Der wiederkehrende VPS-Backup-Lauf wird als systemd Timer umgesetzt, nicht als Cronjob.
+- Der Timer laeuft taeglich um `02:30` Serverzeit und behaelt die 30-Tage-Retention bei.
+- Der macOS LaunchAgent fuer den Offsite-Pull wird noch nicht dauerhaft aktiviert; der erste Betrieb bleibt bis zur separaten Freigabe manuell.
+
+Auswirkung:
+
+- Auf dem VPS existiert mindestens ein gueltiges SQLite-sicheres Backup unter `/var/backups/budgetbuddy`.
+- Auf dem Mac existiert mindestens eine verschluesselte Offsite-Kopie unter `~/Backups/BudgetBuddy`.
+- Ein Restore aus der Offsite-Kopie wurde in einen temporaeren Pfad entschluesselt, per `PRAGMA integrity_check` geprueft und per lokalem Healthcheck validiert.
+- Secrets und Passphrases bleiben ausschliesslich ausserhalb des Repos und werden nicht dokumentiert.
