@@ -96,6 +96,8 @@ Das Skript:
 - verschluesselt neue Backups als `budgetbuddy-....db.enc`
 - ueberspringt bereits vorhandene verschluesselte Backups
 - legt keine Klartext-DB im Zielordner ab
+- bricht ab, wenn die Quelle keine `budgetbuddy-*.db` enthaelt
+- erzwingt `0700` fuer den Zielordner
 
 ## macOS LaunchAgent
 
@@ -109,6 +111,7 @@ Einrichtung:
 
 1. Template nach `~/Library/LaunchAgents/com.budgetbuddy.offsite-backup.plist` kopieren.
 2. Platzhalter ersetzen:
+   - `/absolute/path/to/node` mit dem Ergebnis von `command -v node`
    - `/absolute/path/to/Budgetbuddy`
    - `USERNAME`
    - Quelle, falls anderer Hostname genutzt wird

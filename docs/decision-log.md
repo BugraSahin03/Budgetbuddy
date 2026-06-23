@@ -1712,3 +1712,19 @@ Auswirkung:
 - `docs/offsite-backup.md` beschreibt Setup, LaunchAgent, Nachholverhalten und Restore-Test.
 - `scripts/backup/pull-offsite-backup.mjs` und `scripts/backup/decrypt-offsite-backup.mjs` stellen nicht-geheime Hilfen bereit.
 - Externe Festplatte bleibt optionales zweites Ziel und ist nicht Voraussetzung fuer die erste Automatik.
+
+## 2026-06-23 - FIN-093 Offsite-Backup laeuft fail-closed
+
+Quelle/Ticket: `FIN-093`
+
+Erkenntnis/Entscheidung:
+
+- Ein Offsite-Lauf ohne passende FIN-092-Quelldatei `budgetbuddy-*.db` darf nicht als Erfolg gelten.
+- Der Mac-Zielordner wird vom Skript mit `0700` angelegt beziehungsweise nachgezogen.
+- Das LaunchAgent-Template nutzt keinen festen Node-Pfad mehr, sondern einen zu ersetzenden Platzhalter.
+
+Auswirkung:
+
+- Fehlende oder kaputte VPS-Backup-Erzeugung faellt beim Offsite-Lauf sichtbar auf.
+- Andere lokale Nutzer koennen den Offsite-Zielordner nicht listen.
+- Lokale Node-Installationspfade bleiben nutzerspezifisch und werden nicht im Template fest verdrahtet.

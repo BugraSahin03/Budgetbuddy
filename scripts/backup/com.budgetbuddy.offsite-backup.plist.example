@@ -7,7 +7,7 @@
 
   <key>ProgramArguments</key>
   <array>
-    <string>/usr/local/bin/node</string>
+    <string>/absolute/path/to/node</string>
     <string>/absolute/path/to/Budgetbuddy/scripts/backup/pull-offsite-backup.mjs</string>
     <string>--source</string>
     <string><tailscale-dns-name>:/var/backups/budgetbuddy</string>

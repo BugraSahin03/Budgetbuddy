@@ -13,6 +13,7 @@ export const DEFAULT_OFFSITE_TARGET_DIR = "~/Backups/BudgetBuddy";
 export const ENCRYPTED_BACKUP_EXTENSION = ".enc";
 const FILE_MAGIC = "BBOFFSITE1";
 const SCRYPT_KEY_LENGTH = 32;
+const PRIVATE_DIRECTORY_MODE = 0o700;
 
 export function expandHome(input, homeDir = os.homedir()) {
   if (input === "~") {
@@ -72,6 +73,11 @@ export function listPlainBackupFiles(sourceDir) {
 
 export function encryptedFileNameFor(backupFilePath) {
   return `${path.basename(backupFilePath)}${ENCRYPTED_BACKUP_EXTENSION}`;
+}
+
+export function ensurePrivateDirectory(directoryPath) {
+  fs.mkdirSync(directoryPath, { recursive: true, mode: PRIVATE_DIRECTORY_MODE });
+  fs.chmodSync(directoryPath, PRIVATE_DIRECTORY_MODE);
 }
 
 export function encryptBackupFile({ inputPath, outputPath, passphrase }) {
@@ -173,7 +179,7 @@ export function syncBackupSource({ source, stagingDir, env = process.env }) {
 }
 
 export function encryptStagedBackups({ stagingDir, targetDir, passphrase }) {
-  fs.mkdirSync(targetDir, { recursive: true });
+  ensurePrivateDirectory(targetDir);
   const encrypted = [];
   const skipped = [];
 
@@ -205,6 +211,11 @@ export function pullAndEncryptOffsiteBackups({ source, targetDir, passphraseFile
 
   try {
     syncBackupSource({ source: resolvedSource, stagingDir: resolvedStagingDir, env });
+    const stagedBackups = listPlainBackupFiles(resolvedStagingDir);
+    if (stagedBackups.length === 0) {
+      throw new Error("No FIN-092 backup files found in offsite source. Expected at least one budgetbuddy-*.db file.");
+    }
+
     const result = encryptStagedBackups({
       stagingDir: resolvedStagingDir,
       targetDir: resolvedTargetDir,

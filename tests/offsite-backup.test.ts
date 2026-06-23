@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   decryptBackupFile,
+  ensurePrivateDirectory,
   encryptedFileNameFor,
   pullAndEncryptOffsiteBackups,
   resolveOffsiteSource,
@@ -99,5 +100,29 @@ describe("offsite backup", () => {
     expect(first.encrypted).toHaveLength(1);
     expect(second.encrypted).toEqual([]);
     expect(second.skipped).toEqual(first.encrypted);
+  });
+
+  it("fails when the source does not contain FIN-092 backup files", () => {
+    const root = createTempRoot();
+    const sourceDir = path.join(root, "source");
+    const targetDir = path.join(root, "target");
+    const passphraseFile = path.join(root, "passphrase");
+    fs.mkdirSync(sourceDir, { recursive: true });
+    fs.writeFileSync(path.join(sourceDir, "notes.txt"), "not a backup");
+    fs.writeFileSync(passphraseFile, "test-only-not-a-secret-passphrase-for-offsite-tests");
+
+    expect(() => pullAndEncryptOffsiteBackups({ source: sourceDir, targetDir, passphraseFile })).toThrow(
+      "No FIN-092 backup files found",
+    );
+  });
+
+  it("keeps the offsite target directory private", () => {
+    const root = createTempRoot();
+    const targetDir = path.join(root, "target");
+    fs.mkdirSync(targetDir, { recursive: true, mode: 0o755 });
+
+    ensurePrivateDirectory(targetDir);
+
+    expect(fs.statSync(targetDir).mode & 0o777).toBe(0o700);
   });
 });
