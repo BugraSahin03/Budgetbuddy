@@ -1694,3 +1694,37 @@ Auswirkung:
 - Lokale Entwicklung bleibt mit `data/budgetbuddy.db` und `data/backups/` moeglich.
 - Der Produktionspfad nutzt `BUDGETBUDDY_DB_PATH=/var/lib/budgetbuddy/budgetbuddy.db` und `BUDGETBUDDY_BACKUP_DIR=/var/backups/budgetbuddy`.
 - Restore-Tests sollen immer gegen einen temporaeren DB-Pfad laufen, bevor ein echtes Backup nach `/var/lib/budgetbuddy/budgetbuddy.db` zurueckgespielt wird.
+
+## 2026-06-20 - FIN-093 definiert Mac-Pull fuer verschluesselte Offsite-Backups
+
+Quelle/Ticket: `FIN-093`
+
+Erkenntnis/Entscheidung:
+
+- Offsite-Backups werden als Mac-Pull umgesetzt, nicht als VPS-Push.
+- Quelle sind ausschliesslich fertige FIN-092-Backups aus `/var/backups/budgetbuddy`, nicht die Live-Datenbank.
+- Standardziel auf dem Mac ist `~/Backups/BudgetBuddy`.
+- Die finale Mac-Ablage wird verschluesselt; Secrets und Passphrases bleiben ausserhalb des Repos.
+- Wenn der Mac offline ist, bleiben VPS-Backups erhalten und fehlende Dateien werden beim naechsten Pull nachgeholt.
+
+Auswirkung:
+
+- `docs/offsite-backup.md` beschreibt Setup, LaunchAgent, Nachholverhalten und Restore-Test.
+- `scripts/backup/pull-offsite-backup.mjs` und `scripts/backup/decrypt-offsite-backup.mjs` stellen nicht-geheime Hilfen bereit.
+- Externe Festplatte bleibt optionales zweites Ziel und ist nicht Voraussetzung fuer die erste Automatik.
+
+## 2026-06-23 - FIN-093 Offsite-Backup laeuft fail-closed
+
+Quelle/Ticket: `FIN-093`
+
+Erkenntnis/Entscheidung:
+
+- Ein Offsite-Lauf ohne passende FIN-092-Quelldatei `budgetbuddy-*.db` darf nicht als Erfolg gelten.
+- Der Mac-Zielordner wird vom Skript mit `0700` angelegt beziehungsweise nachgezogen.
+- Das LaunchAgent-Template nutzt keinen festen Node-Pfad mehr, sondern einen zu ersetzenden Platzhalter.
+
+Auswirkung:
+
+- Fehlende oder kaputte VPS-Backup-Erzeugung faellt beim Offsite-Lauf sichtbar auf.
+- Andere lokale Nutzer koennen den Offsite-Zielordner nicht listen.
+- Lokale Node-Installationspfade bleiben nutzerspezifisch und werden nicht im Template fest verdrahtet.

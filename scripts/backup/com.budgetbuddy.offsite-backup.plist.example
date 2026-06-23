@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.budgetbuddy.offsite-backup</string>
+
+  <key>ProgramArguments</key>
+  <array>
+    <string>/absolute/path/to/node</string>
+    <string>/absolute/path/to/Budgetbuddy/scripts/backup/pull-offsite-backup.mjs</string>
+    <string>--source</string>
+    <string><tailscale-dns-name>:/var/backups/budgetbuddy</string>
+    <string>--target-dir</string>
+    <string>/Users/USERNAME/Backups/BudgetBuddy</string>
+    <string>--passphrase-file</string>
+    <string>/Users/USERNAME/.config/budgetbuddy/offsite-backup-passphrase</string>
+  </array>
+
+  <key>EnvironmentVariables</key>
+  <dict>
+    <key>BUDGETBUDDY_OFFSITE_SSH_OPTIONS</key>
+    <string>-o BatchMode=yes -o ConnectTimeout=10</string>
+  </dict>
+
+  <key>RunAtLoad</key>
+  <true/>
+
+  <key>StartInterval</key>
+  <integer>21600</integer>
+
+  <key>StandardOutPath</key>
+  <string>/Users/USERNAME/Library/Logs/budgetbuddy-offsite-backup.log</string>
+
+  <key>StandardErrorPath</key>
+  <string>/Users/USERNAME/Library/Logs/budgetbuddy-offsite-backup.err.log</string>
+</dict>
+</plist>
