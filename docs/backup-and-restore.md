@@ -105,6 +105,42 @@ Vorgehen Produktion:
 
 Damit laeuft taeglich ein SQLite-sicheres Online-Backup mit Integritaetscheck.
 
+### Produktion per systemd timer
+
+Fuer den VPS-Produktivbetrieb ist ein systemd Timer bevorzugt. Die nicht-geheimen Vorlagen liegen unter:
+
+```text
+scripts/deploy/budgetbuddy-backup.service
+scripts/deploy/budgetbuddy-backup.timer
+```
+
+Installation auf dem VPS:
+
+```bash
+cd /opt/budgetbuddy
+install -m 0644 scripts/deploy/budgetbuddy-backup.service /etc/systemd/system/budgetbuddy-backup.service
+install -m 0644 scripts/deploy/budgetbuddy-backup.timer /etc/systemd/system/budgetbuddy-backup.timer
+systemctl daemon-reload
+systemctl enable --now budgetbuddy-backup.timer
+systemctl start budgetbuddy-backup.service
+```
+
+Pruefung:
+
+```bash
+systemctl status budgetbuddy-backup.service --no-pager
+systemctl list-timers budgetbuddy-backup.timer --no-pager
+find /var/backups/budgetbuddy -maxdepth 1 -type f -name 'budgetbuddy-*.db' | sort
+```
+
+Der Timer laeuft taeglich um `02:30` Serverzeit. `Persistent=true` holt einen verpassten Lauf nach, wenn der VPS zu diesem Zeitpunkt nicht aktiv war.
+
+Das Backup-Skript setzt Backup-Dateien auf `0600`. Die Service-Unit setzt zusaetzlich `UMask=0077`, damit neu erzeugte Klartext-Backups auf dem VPS nicht world-readable sind. Bestehende Backup-Dateien sollten einmalig gehaertet werden:
+
+```bash
+chmod 600 /var/backups/budgetbuddy/budgetbuddy-*.db
+```
+
 ## 5) Restore-Test ohne Produktivdaten zu ueberschreiben
 
 Ein Restore-Test darf die Produktivdatenbank nicht direkt ersetzen. Erst in einen temporaeren Pfad wiederherstellen und pruefen.

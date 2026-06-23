@@ -86,6 +86,7 @@ describe("backup lib", () => {
       expect(result.backupPath).toContain("budgetbuddy-2026-05-24T09-00-00-000Z.db");
       expect(result.integrityResult).toBe("ok");
       expect(result.deletedBackups).toEqual([]);
+      expect(fs.statSync(result.backupPath).mode & 0o777).toBe(0o600);
       expect(runIntegrityCheck(result.backupPath)).toBe("ok");
 
       const backupDb = new Database(result.backupPath, { readonly: true, fileMustExist: true });
