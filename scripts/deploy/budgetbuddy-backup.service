@@ -12,5 +12,5 @@ Environment=NODE_ENV=production
 Environment=BUDGETBUDDY_DB_PATH=/var/lib/budgetbuddy/budgetbuddy.db
 Environment=BUDGETBUDDY_BACKUP_DIR=/var/backups/budgetbuddy
 Environment=BUDGETBUDDY_BACKUP_RETENTION_DAYS=30
+UMask=0077
 ExecStart=/usr/bin/node scripts/backup/create-backup.mjs
-

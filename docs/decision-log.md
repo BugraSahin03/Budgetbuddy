@@ -1738,11 +1738,14 @@ Erkenntnis/Entscheidung:
 - Die erste echte Backup-Kette nutzt weiter FIN-092 als lokale VPS-Quelle und FIN-093 als verschluesselten Mac-Pull.
 - Der wiederkehrende VPS-Backup-Lauf wird als systemd Timer umgesetzt, nicht als Cronjob.
 - Der Timer laeuft taeglich um `02:30` Serverzeit und behaelt die 30-Tage-Retention bei.
+- Das Backup-Skript setzt erzeugte Backup-Dateien explizit auf `0600`.
+- Die Backup-Service-Unit nutzt `UMask=0077`, damit neue VPS-Klartext-Backups nur fuer den Betriebsnutzer lesbar sind.
 - Der macOS LaunchAgent fuer den Offsite-Pull wird noch nicht dauerhaft aktiviert; der erste Betrieb bleibt bis zur separaten Freigabe manuell.
 
 Auswirkung:
 
 - Auf dem VPS existiert mindestens ein gueltiges SQLite-sicheres Backup unter `/var/backups/budgetbuddy`.
+- Bestehende VPS-Backups wurden auf `0600` gehaertet.
 - Auf dem Mac existiert mindestens eine verschluesselte Offsite-Kopie unter `~/Backups/BudgetBuddy`.
 - Ein Restore aus der Offsite-Kopie wurde in einen temporaeren Pfad entschluesselt, per `PRAGMA integrity_check` geprueft und per lokalem Healthcheck validiert.
 - Secrets und Passphrases bleiben ausschliesslich ausserhalb des Repos und werden nicht dokumentiert.

@@ -135,6 +135,12 @@ find /var/backups/budgetbuddy -maxdepth 1 -type f -name 'budgetbuddy-*.db' | sor
 
 Der Timer laeuft taeglich um `02:30` Serverzeit. `Persistent=true` holt einen verpassten Lauf nach, wenn der VPS zu diesem Zeitpunkt nicht aktiv war.
 
+Das Backup-Skript setzt Backup-Dateien auf `0600`. Die Service-Unit setzt zusaetzlich `UMask=0077`, damit neu erzeugte Klartext-Backups auf dem VPS nicht world-readable sind. Bestehende Backup-Dateien sollten einmalig gehaertet werden:
+
+```bash
+chmod 600 /var/backups/budgetbuddy/budgetbuddy-*.db
+```
+
 ## 5) Restore-Test ohne Produktivdaten zu ueberschreiben
 
 Ein Restore-Test darf die Produktivdatenbank nicht direkt ersetzen. Erst in einen temporaeren Pfad wiederherstellen und pruefen.

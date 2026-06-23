@@ -6,6 +6,7 @@ export const DB_PATH_ENV = "BUDGETBUDDY_DB_PATH";
 export const BACKUP_DIR_ENV = "BUDGETBUDDY_BACKUP_DIR";
 export const RETENTION_DAYS_ENV = "BUDGETBUDDY_BACKUP_RETENTION_DAYS";
 export const DEFAULT_RETENTION_DAYS = 30;
+export const BACKUP_FILE_MODE = 0o600;
 
 export function resolveDatabasePath(env = process.env, cwd = process.cwd()) {
   const configured = env[DB_PATH_ENV]?.trim();
@@ -126,6 +127,7 @@ export async function createBackup({
   }
 
   const integrityResult = runIntegrityCheck(tempBackupPath);
+  fs.chmodSync(tempBackupPath, BACKUP_FILE_MODE);
   fs.renameSync(tempBackupPath, backupFilePath);
 
   const deletedBackups = rotateBackups({ backupDir, retentionDays, now });
