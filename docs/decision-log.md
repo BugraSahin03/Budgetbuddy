@@ -1768,3 +1768,24 @@ Auswirkung:
 Folgeaktion:
 
 - Bei zukuenftigen Betriebs- oder Deployment-Tickets das Runbook aktuell halten.
+
+## 2026-06-24 - FIN-099 zeigt Zukunftsmonate nur bei vorhandenen Daten
+
+Quelle/Ticket: `FIN-099`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsauswahl bleibt bis zum aktuellen Monat lueckenlos, damit vergangene
+  Monatsarbeit nachvollziehbar bleibt.
+- Zukuenftige Monate werden nur ergaenzt, wenn fuer diesen konkreten Monat Daten
+  vorhanden sind.
+- Als vorhandene Monatsdaten gelten Buchungen, Monatsbudget-Overrides,
+  Sonderkategorien, Monats-ToDos und Monatsstatus.
+
+Auswirkung:
+
+- Ein direkt per URL befuellter Zukunftsmonat wird danach in der Monatsauswahl
+  sichtbar.
+- Eine einzelne Zukunftsbuchung erzeugt keine leeren Monatskarten fuer alle
+  Monate bis zu diesem Zukunftsdatum.
+- Monatsberechnungen und Buchungserstellung bleiben unveraendert.

@@ -460,23 +460,29 @@ function listSpecialBudgetRows(monthKey: string): MonthSpecialBudgetRow[] {
   }));
 }
 
-function getFirstStoredMonthKey(): string | null {
-  const row = getDb()
+function listStoredMonthKeys(): string[] {
+  const rows = getDb()
     .prepare(
       `
-        SELECT MIN(monthKey) AS firstMonthKey
+        SELECT DISTINCT monthKey
         FROM (
           SELECT effective_month_key AS monthKey FROM transactions
           UNION ALL
           SELECT month_key AS monthKey FROM monthly_category_budgets
           UNION ALL
           SELECT month_key AS monthKey FROM special_budgets
+          UNION ALL
+          SELECT month_key AS monthKey FROM monthly_todos
+          UNION ALL
+          SELECT month_key AS monthKey FROM monthly_statuses
         )
+        WHERE monthKey IS NOT NULL
+        ORDER BY monthKey DESC
       `,
     )
-    .get() as { firstMonthKey: string | null };
+    .all() as Array<{ monthKey: string }>;
 
-  return row.firstMonthKey;
+  return rows.map((entry) => entry.monthKey);
 }
 
 function getFirstTransactionMonthKey(): string | null {
@@ -641,29 +647,36 @@ export function listMonthTimeline(
   currentMonthKey = getCurrentMonthKey(),
 ): MonthTimelinePreview[] {
   const normalizedCurrentMonthKey = normalizeMonthKey(currentMonthKey);
+  const currentMonthValue = toComparableMonthValue(normalizedCurrentMonthKey);
+  const storedMonthKeys = listStoredMonthKeys();
   const firstStoredMonthKey =
-    getFirstStoredMonthKey() ?? normalizedCurrentMonthKey;
+    storedMonthKeys.at(-1) ?? normalizedCurrentMonthKey;
   const firstMonthKey =
     toComparableMonthValue(firstStoredMonthKey) <=
-    toComparableMonthValue(normalizedCurrentMonthKey)
+    currentMonthValue
       ? firstStoredMonthKey
       : normalizedCurrentMonthKey;
-
-  return buildMonthRange(firstMonthKey, normalizedCurrentMonthKey).map(
-    (monthKey) => {
-      const snapshot = getMonthSnapshot(monthKey);
-
-      return {
-        monthKey,
-        label: formatMonthLabel(monthKey),
-        detailHref: buildMonthDetailHref(monthKey),
-        incomeCents: snapshot.totals.incomeCents,
-        variableExpenseCents: snapshot.totals.expenseCents,
-        plannedFixedCostsCents: snapshot.totals.plannedFixedCostsCents,
-        availableCents: snapshot.totals.availableCents,
-      };
-    },
+  const futureStoredMonthKeys = storedMonthKeys.filter(
+    (monthKey) => toComparableMonthValue(monthKey) > currentMonthValue,
   );
+  const visibleMonthKeys = [
+    ...futureStoredMonthKeys,
+    ...buildMonthRange(firstMonthKey, normalizedCurrentMonthKey),
+  ];
+
+  return visibleMonthKeys.map((monthKey) => {
+    const snapshot = getMonthSnapshot(monthKey);
+
+    return {
+      monthKey,
+      label: formatMonthLabel(monthKey),
+      detailHref: buildMonthDetailHref(monthKey),
+      incomeCents: snapshot.totals.incomeCents,
+      variableExpenseCents: snapshot.totals.expenseCents,
+      plannedFixedCostsCents: snapshot.totals.plannedFixedCostsCents,
+      availableCents: snapshot.totals.availableCents,
+    };
+  });
 }
 
 export function listMonthComparison(
