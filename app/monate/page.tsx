@@ -122,7 +122,6 @@ export default function MonthsPage() {
             return (
               <details
                 key={group.year}
-                open
                 className="group/year rounded-[2rem] border border-[color:var(--month-line)] bg-white/62 p-4 shadow-[0_16px_34px_rgba(7,27,70,0.04)]"
               >
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] px-2 py-1 marker:hidden">

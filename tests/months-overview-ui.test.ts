@@ -23,5 +23,8 @@ describe("FIN-099 months overview UI", () => {
     expect(page).toContain("getCurrentMonthKey()");
     expect(page).toContain("Aktuelles Jahr");
     expect(page).toContain("isCurrentYear");
+    expect(page).not.toContain(
+      'open\n                className="group/year',
+    );
   });
 });
