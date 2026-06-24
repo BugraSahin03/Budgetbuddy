@@ -163,11 +163,12 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("specialBudget:");
     expect(page).toContain("open");
     expect(filter).toContain("Filter zurücksetzen");
+    expect(filter).toContain("Filtern nach...");
     expect(filter).toContain("availableOptions.map");
     expect(filter).toContain('aria-pressed="true"');
     expect(filter).toContain("selectedTokens.some");
     expect(filter).toContain("row.hidden = !isVisible");
-    expect(filter).toContain("Filter hinzufügen");
+    expect(filter).toContain("Keine Treffer.");
     expect(directSelect).toContain("updateLiveBookingPresentation");
     expect(directSelect).toContain("createVisualMark");
     expect(directSelect).toContain("month-booking-filter-row-updated");
