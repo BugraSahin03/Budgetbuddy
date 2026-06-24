@@ -80,6 +80,86 @@ describe("months repository", () => {
     );
   });
 
+  it("shows future months with transactions without filling empty future gaps", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, currency_code, description, source_type, category_id, special_budget_id
+        ) VALUES
+          (?, NULL, 'income', '2031-01-05', '2031-01', 120000, 'EUR', 'Past Salary', 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2031-07-10', '2031-07', -4200, 'EUR', 'Future Expense', 'manual', ?, NULL)
+      `,
+    ).run(sparkasseId, sparkasseId, einkaufId);
+
+    const months = listMonthTimeline("2031-04");
+
+    expect(months.map((month) => month.monthKey)).toEqual([
+      "2031-07",
+      "2031-04",
+      "2031-03",
+      "2031-02",
+      "2031-01",
+    ]);
+    expect(months.some((month) => month.monthKey === "2031-06")).toBe(false);
+    expect(months.find((month) => month.monthKey === "2031-07")?.variableExpenseCents).toBe(
+      4200,
+    );
+  });
+
+  it("uses budgets, special budgets, todos and month statuses as visible month activity", () => {
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+
+    db.prepare(
+      `
+        INSERT INTO monthly_category_budgets (month_key, category_id, budget_amount_cents)
+        VALUES ('2031-06', ?, 24000)
+      `,
+    ).run(einkaufId);
+
+    db.prepare(
+      `
+        INSERT INTO special_budgets (name, month_key, planned_amount_cents, note, is_active)
+        VALUES ('Future Special', '2031-07', 9000, 'Test', 1)
+      `,
+    ).run();
+
+    db.prepare(
+      `
+        INSERT INTO monthly_todos (month_key, text)
+        VALUES ('2031-08', 'Future todo')
+      `,
+    ).run();
+
+    db.prepare(
+      `
+        INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+        VALUES ('2031-09', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `,
+    ).run();
+
+    const months = listMonthTimeline("2031-04");
+
+    expect(months.map((month) => month.monthKey)).toEqual([
+      "2031-09",
+      "2031-08",
+      "2031-07",
+      "2031-06",
+      "2031-04",
+    ]);
+    expect(months.some((month) => month.monthKey === "2031-05")).toBe(false);
+    expect(months.find((month) => month.monthKey === "2031-06")?.availableCents).toBeLessThanOrEqual(0);
+  });
+
   it("builds simple month comparison values and excludes transfers from expenses", () => {
     const sparkasseId = (
       db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
