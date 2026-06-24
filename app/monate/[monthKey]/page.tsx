@@ -14,6 +14,10 @@ import {
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
 import { DirectAssignmentSelect } from "@/app/monate/[monthKey]/direct-assignment-select";
+import {
+  MonthBookingFilter,
+  type MonthBookingFilterOption,
+} from "@/app/monate/[monthKey]/month-booking-filter";
 import { MonthCategoryOverview } from "@/app/monate/[monthKey]/month-category-overview";
 import { MonthTodoDialog } from "@/app/monate/[monthKey]/month-todo-dialog";
 import { MonthActionOverlay } from "@/app/monate/month-action-overlay";
@@ -251,6 +255,72 @@ function bookingEditHref(monthKey: string, isBookingEditMode: boolean): string {
   return isBookingEditMode
     ? `/monate/${monthKey}#monatsbuchungen`
     : `/monate/${monthKey}?bookingEdit=1#monatsbuchungen`;
+}
+
+function transactionFilterToken(transaction: MonthDetailTransactionRow): string {
+  if (transaction.transactionType !== "expense") {
+    return "";
+  }
+
+  if (transaction.categoryId !== null) {
+    return `category:${transaction.categoryId}`;
+  }
+
+  if (transaction.specialBudgetId !== null) {
+    return `specialBudget:${transaction.specialBudgetId}`;
+  }
+
+  return "open";
+}
+
+function buildBookingFilterOptions(
+  transactions: MonthDetailTransactionRow[],
+): MonthBookingFilterOption[] {
+  const categoryOptions = new Map<number, MonthBookingFilterOption>();
+  const specialBudgetOptions = new Map<number, MonthBookingFilterOption>();
+  let hasOpenExpenses = false;
+
+  for (const transaction of transactions) {
+    if (transaction.transactionType !== "expense") continue;
+
+    if (transaction.categoryId !== null && transaction.categoryName) {
+      categoryOptions.set(transaction.categoryId, {
+        label: transaction.categoryName,
+        token: `category:${transaction.categoryId}`,
+        tone: "category",
+      });
+      continue;
+    }
+
+    if (transaction.specialBudgetId !== null && transaction.specialBudgetName) {
+      specialBudgetOptions.set(transaction.specialBudgetId, {
+        label: `Sonderkategorie · ${transaction.specialBudgetName}`,
+        token: `specialBudget:${transaction.specialBudgetId}`,
+        tone: "specialBudget",
+      });
+      continue;
+    }
+
+    hasOpenExpenses = true;
+  }
+
+  return [
+    ...Array.from(categoryOptions.values()).sort((first, second) =>
+      first.label.localeCompare(second.label, "de"),
+    ),
+    ...Array.from(specialBudgetOptions.values()).sort((first, second) =>
+      first.label.localeCompare(second.label, "de"),
+    ),
+    ...(hasOpenExpenses
+      ? [
+          {
+            label: "Ohne Zuordnung",
+            token: "open",
+            tone: "open" as const,
+          },
+        ]
+      : []),
+  ];
 }
 
 function MonthNavLink({
@@ -502,6 +572,7 @@ export default async function MonthDetailPage({
   const recentExpenses = month.transactions
     .filter((transaction) => transaction.transactionType === "expense")
     .slice(0, 5);
+  const bookingFilterOptions = buildBookingFilterOptions(month.transactions);
   const activeSpecialBudgetRows = month.dashboard.specialBudgetRows.filter(
     (row) => row.isActive,
   );
@@ -1099,7 +1170,12 @@ export default async function MonthDetailPage({
               Keine Buchungen für diesen Monat vorhanden.
             </EmptyReferenceCard>
           ) : (
-            month.transactions.map((transaction) => {
+            <>
+              <MonthBookingFilter
+                options={bookingFilterOptions}
+                totalCount={month.transactions.length}
+              />
+              {month.transactions.map((transaction) => {
               const currentAssignment = transaction.categoryId
                 ? `category:${transaction.categoryId}`
                 : transaction.specialBudgetId
@@ -1115,6 +1191,10 @@ export default async function MonthDetailPage({
               return (
                 <article
                   key={`${transaction.sourceType}-${transaction.id}`}
+                  data-month-booking-row
+                  data-booking-filter-tokens={transactionFilterToken(
+                    transaction,
+                  )}
                   className="min-w-0 overflow-hidden rounded-[1rem] border border-[color:var(--month-line)] bg-white/82 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.025)] sm:px-4"
                 >
                   <div className="month-booking-row-grid">
@@ -1435,7 +1515,8 @@ export default async function MonthDetailPage({
                   ) : null}
                 </article>
               );
-            })
+              })}
+            </>
           )}
         </div>
       </details>

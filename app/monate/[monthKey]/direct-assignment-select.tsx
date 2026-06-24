@@ -49,6 +49,20 @@ function parseAssignment(assignment: string): ParsedAssignment {
   return null;
 }
 
+function updateBookingFilterToken(
+  selectElement: HTMLSelectElement | null,
+  assignment: string,
+): void {
+  const row = selectElement?.closest<HTMLElement>("[data-month-booking-row]");
+
+  if (!row) return;
+
+  row.dataset.bookingFilterTokens = assignment.length > 0 ? assignment : "open";
+  row.dispatchEvent(
+    new CustomEvent("month-booking-filter-row-updated", { bubbles: true }),
+  );
+}
+
 function progressBackground(
   budgetCents: number | null,
   spentCents: number,
@@ -171,6 +185,7 @@ export function DirectAssignmentSelect({
   const [savedAssignment, setSavedAssignment] = useState(currentAssignment);
   const [error, setError] = useState<string | null>(null);
   const [isPending, setIsPending] = useState(false);
+  const selectRef = useRef<HTMLSelectElement | null>(null);
   const latestAssignmentRef = useRef(currentAssignment);
   const pendingAssignmentRef = useRef<string | null>(null);
   const hasSavedAssignment = savedAssignment.length > 0 || hasAssignment;
@@ -215,6 +230,8 @@ export function DirectAssignmentSelect({
           body.error ?? "Zuordnung konnte nicht gespeichert werden.",
         );
       }
+
+      updateBookingFilterToken(selectRef.current, assignment);
     } catch (caughtError) {
       latestAssignmentRef.current = previousAssignment;
       updateLiveAssignmentOverview(assignment, previousAssignment, amountCents);
@@ -235,6 +252,7 @@ export function DirectAssignmentSelect({
     <span className="inline-flex max-w-full flex-col items-start gap-1">
       <span className="relative inline-flex max-w-full">
         <select
+          ref={selectRef}
           name="assignment"
           value={selectedAssignment}
           aria-label="Kategoriezuordnung direkt ändern"
