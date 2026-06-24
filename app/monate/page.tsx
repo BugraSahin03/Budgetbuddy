@@ -59,7 +59,7 @@ export default function MonthsPage() {
               <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-[1.4rem] px-2 py-1 marker:hidden">
                 <span>
                   <span className="month-eyebrow">Jahr</span>
-                  <span className="mt-1 block text-[clamp(2.15rem,7vw,3.7rem)] font-black leading-none tracking-[-0.08em] text-[color:var(--month-ink)]">
+                  <span className="mt-1 block text-[clamp(1.6rem,4vw,2.35rem)] font-extrabold leading-none tracking-[-0.045em] text-[color:var(--month-ink)]">
                     {group.year}
                   </span>
                 </span>
