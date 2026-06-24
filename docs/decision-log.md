@@ -1749,3 +1749,22 @@ Auswirkung:
 - Auf dem Mac existiert mindestens eine verschluesselte Offsite-Kopie unter `~/Backups/BudgetBuddy`.
 - Ein Restore aus der Offsite-Kopie wurde in einen temporaeren Pfad entschluesselt, per `PRAGMA integrity_check` geprueft und per lokalem Healthcheck validiert.
 - Secrets und Passphrases bleiben ausschliesslich ausserhalb des Repos und werden nicht dokumentiert.
+
+## 2026-06-24 - FIN-094 buendelt Produktivbetrieb in zentralem Runbook
+
+Quelle/Ticket: `FIN-094`
+
+Erkenntnis/Entscheidung:
+
+- Der VPS-Produktivbetrieb bleibt auf die Detaildokumente fuer Basissetup, systemd-Service, Tailscale-only Zugriff, lokale Backups und Offsite-Backups verteilt.
+- Zusaetzlich wird ein zentrales `docs/production-runbook.md` als Einstieg fuer Alltag, Stoerung, Restore und Server-Ersatz eingefuehrt.
+- Die Doku ist bewusst sowohl fuer den Nutzer als Betreiber als auch fuer Codex/Entwickler im Notfall gedacht.
+
+Auswirkung:
+
+- Produktiv-Checks, Restore-Schritte und negative Security Checks sind an einer Stelle auffindbar.
+- Es entsteht keine neue Infrastruktur- oder Sicherheitsentscheidung; bestehende FIN-088 bis FIN-093/097 Regeln werden gebuendelt.
+
+Folgeaktion:
+
+- Bei zukuenftigen Betriebs- oder Deployment-Tickets das Runbook aktuell halten.
