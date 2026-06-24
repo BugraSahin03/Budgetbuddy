@@ -151,8 +151,11 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     );
 
     expect(page).toContain("MonthBookingFilter");
-    expect(page).toContain("buildBookingFilterOptions(month.transactions)");
+    expect(page).toContain("buildBookingFilterOptions({");
+    expect(page).toContain("categories: categoryOptions");
+    expect(page).toContain("specialBudgets: specialBudgetOptions");
     expect(page).toContain("transactionFilterToken(");
+    expect(page).toContain("data-month-booking-visual");
     expect(page).toContain("data-month-booking-row");
     expect(page).toContain("data-booking-filter-tokens");
     expect(page).toContain("Ohne Zuordnung");
@@ -160,10 +163,13 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("specialBudget:");
     expect(page).toContain("open");
     expect(filter).toContain("Filter zurücksetzen");
-    expect(filter).toContain("aria-pressed={isSelected}");
+    expect(filter).toContain("availableOptions.map");
+    expect(filter).toContain('aria-pressed="true"');
     expect(filter).toContain("selectedTokens.some");
     expect(filter).toContain("row.hidden = !isVisible");
-    expect(directSelect).toContain("updateBookingFilterToken");
+    expect(filter).toContain("Filter hinzufügen");
+    expect(directSelect).toContain("updateLiveBookingPresentation");
+    expect(directSelect).toContain("createVisualMark");
     expect(directSelect).toContain("month-booking-filter-row-updated");
   });
 });

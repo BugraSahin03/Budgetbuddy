@@ -13,6 +13,7 @@ type DirectAssignmentSelectProps = {
     id: number;
     name: string;
     iconName?: string | null;
+    colorHex?: string | null;
   }>;
   specialBudgetOptions: Array<{
     id: number;
@@ -49,15 +50,76 @@ function parseAssignment(assignment: string): ParsedAssignment {
   return null;
 }
 
-function updateBookingFilterToken(
+function categoryFallbackIcon(name: string): string {
+  const letters = Array.from(name.trim()).filter((char) =>
+    /[\p{L}\p{N}]/u.test(char),
+  );
+
+  return letters.slice(0, 2).join("").toUpperCase() || "#";
+}
+
+function categoryDisplayIcon(name: string, iconName?: string | null): string {
+  const normalizedIcon = iconName?.trim() ?? "";
+
+  if (normalizedIcon.length === 0) {
+    return categoryFallbackIcon(name);
+  }
+
+  return Array.from(normalizedIcon).slice(0, 2).join("");
+}
+
+function createVisualMark(
+  assignment: string,
+  categoryOptions: DirectAssignmentSelectProps["categoryOptions"],
+): HTMLSpanElement {
+  const parsedAssignment = parseAssignment(assignment);
+  const mark = document.createElement("span");
+  mark.className = "category-visual-mark h-10 w-10";
+
+  if (parsedAssignment?.type === "category") {
+    const category = categoryOptions.find(
+      (option) => option.id === parsedAssignment.id,
+    );
+
+    mark.className += " text-xs";
+    mark.style.backgroundColor = "rgba(223, 244, 253, 0.92)";
+    mark.style.borderColor = "rgba(20, 33, 61, 0.24)";
+    mark.style.borderWidth = "2px";
+    mark.style.color = "#14213D";
+    mark.textContent = categoryDisplayIcon(
+      category?.name ?? "Kategorie",
+      category?.iconName,
+    );
+
+    return mark;
+  }
+
+  if (parsedAssignment?.type === "specialBudget") {
+    mark.className += " border-amber-200 bg-amber-100 text-xs text-amber-900";
+    mark.textContent = "SB";
+
+    return mark;
+  }
+
+  mark.className += " border-red-200 bg-red-100 text-base text-red-700";
+  mark.textContent = "?";
+
+  return mark;
+}
+
+function updateLiveBookingPresentation(
   selectElement: HTMLSelectElement | null,
   assignment: string,
+  categoryOptions: DirectAssignmentSelectProps["categoryOptions"],
 ): void {
   const row = selectElement?.closest<HTMLElement>("[data-month-booking-row]");
 
   if (!row) return;
 
   row.dataset.bookingFilterTokens = assignment.length > 0 ? assignment : "open";
+  row
+    .querySelector<HTMLElement>("[data-month-booking-visual]")
+    ?.replaceChildren(createVisualMark(assignment, categoryOptions));
   row.dispatchEvent(
     new CustomEvent("month-booking-filter-row-updated", { bubbles: true }),
   );
@@ -216,6 +278,7 @@ export function DirectAssignmentSelect({
     setError(null);
     setIsPending(true);
     updateLiveAssignmentOverview(previousAssignment, assignment, amountCents);
+    updateLiveBookingPresentation(selectRef.current, assignment, categoryOptions);
 
     try {
       const response = await fetch(`/monate/${monthKey}/assignments`, {
@@ -231,10 +294,14 @@ export function DirectAssignmentSelect({
         );
       }
 
-      updateBookingFilterToken(selectRef.current, assignment);
     } catch (caughtError) {
       latestAssignmentRef.current = previousAssignment;
       updateLiveAssignmentOverview(assignment, previousAssignment, amountCents);
+      updateLiveBookingPresentation(
+        selectRef.current,
+        previousAssignment,
+        categoryOptions,
+      );
       setSelectedAssignment(previousAssignment);
       setSavedAssignment(previousAssignment);
       setError(

@@ -273,44 +273,36 @@ function transactionFilterToken(transaction: MonthDetailTransactionRow): string 
   return "open";
 }
 
-function buildBookingFilterOptions(
-  transactions: MonthDetailTransactionRow[],
-): MonthBookingFilterOption[] {
-  const categoryOptions = new Map<number, MonthBookingFilterOption>();
-  const specialBudgetOptions = new Map<number, MonthBookingFilterOption>();
+function buildBookingFilterOptions({
+  categories,
+  specialBudgets,
+  transactions,
+}: {
+  categories: { id: number; name: string }[];
+  specialBudgets: { id: number; name: string }[];
+  transactions: MonthDetailTransactionRow[];
+}): MonthBookingFilterOption[] {
   let hasOpenExpenses = false;
 
   for (const transaction of transactions) {
     if (transaction.transactionType !== "expense") continue;
 
-    if (transaction.categoryId !== null && transaction.categoryName) {
-      categoryOptions.set(transaction.categoryId, {
-        label: transaction.categoryName,
-        token: `category:${transaction.categoryId}`,
-        tone: "category",
-      });
-      continue;
+    if (transaction.categoryId === null && transaction.specialBudgetId === null) {
+      hasOpenExpenses = true;
     }
-
-    if (transaction.specialBudgetId !== null && transaction.specialBudgetName) {
-      specialBudgetOptions.set(transaction.specialBudgetId, {
-        label: `Sonderkategorie · ${transaction.specialBudgetName}`,
-        token: `specialBudget:${transaction.specialBudgetId}`,
-        tone: "specialBudget",
-      });
-      continue;
-    }
-
-    hasOpenExpenses = true;
   }
 
   return [
-    ...Array.from(categoryOptions.values()).sort((first, second) =>
-      first.label.localeCompare(second.label, "de"),
-    ),
-    ...Array.from(specialBudgetOptions.values()).sort((first, second) =>
-      first.label.localeCompare(second.label, "de"),
-    ),
+    ...categories.map((category) => ({
+      label: category.name,
+      token: `category:${category.id}`,
+      tone: "category" as const,
+    })),
+    ...specialBudgets.map((budget) => ({
+      label: `Sonderkategorie · ${budget.name}`,
+      token: `specialBudget:${budget.id}`,
+      tone: "specialBudget" as const,
+    })),
     ...(hasOpenExpenses
       ? [
           {
@@ -572,7 +564,11 @@ export default async function MonthDetailPage({
   const recentExpenses = month.transactions
     .filter((transaction) => transaction.transactionType === "expense")
     .slice(0, 5);
-  const bookingFilterOptions = buildBookingFilterOptions(month.transactions);
+  const bookingFilterOptions = buildBookingFilterOptions({
+    categories: categoryOptions,
+    specialBudgets: specialBudgetOptions,
+    transactions: month.transactions,
+  });
   const activeSpecialBudgetRows = month.dashboard.specialBudgetRows.filter(
     (row) => row.isActive,
   );
@@ -1198,7 +1194,10 @@ export default async function MonthDetailPage({
                   className="min-w-0 overflow-hidden rounded-[1rem] border border-[color:var(--month-line)] bg-white/82 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.025)] sm:px-4"
                 >
                   <div className="month-booking-row-grid">
-                    <div className="flex min-w-0 items-center">
+                    <div
+                      className="flex min-w-0 items-center"
+                      data-month-booking-visual
+                    >
                       <TransactionVisualMark
                         transaction={transaction}
                         categoryVisuals={categoryVisuals}
@@ -1227,12 +1226,13 @@ export default async function MonthDetailPage({
                         hasAssignment={hasAssignment}
                         monthKey={month.monthKey}
                         transactionId={transaction.id}
-                        categoryOptions={categoryOptions}
+                        categoryOptions={visualCategoryOptions}
                         specialBudgetOptions={specialBudgetOptions}
                       />
                     ) : (
                       <span
                         className={`inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-black ${assignmentTone(transaction)}`}
+                        data-month-booking-assignment-label
                       >
                         <span className="truncate">
                           {assignmentChipLabel(transaction)}

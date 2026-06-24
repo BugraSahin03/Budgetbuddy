@@ -60,6 +60,14 @@ export function MonthBookingFilter({
   const [selectedTokens, setSelectedTokens] = useState<string[]>([]);
   const [visibleCount, setVisibleCount] = useState(totalCount);
   const selectedSet = useMemo(() => new Set(selectedTokens), [selectedTokens]);
+  const optionByToken = useMemo(
+    () => new Map(options.map((option) => [option.token, option])),
+    [options],
+  );
+  const selectedOptions = selectedTokens
+    .map((token) => optionByToken.get(token))
+    .filter((option): option is MonthBookingFilterOption => option !== undefined);
+  const availableOptions = options.filter((option) => !selectedSet.has(option.token));
   const hasActiveFilter = selectedTokens.length > 0;
 
   useEffect(() => {
@@ -88,6 +96,11 @@ export function MonthBookingFilter({
         ? currentTokens.filter((currentToken) => currentToken !== token)
         : [...currentTokens, token],
     );
+  }
+
+  function addToken(token: string): void {
+    if (token.length === 0) return;
+    toggleToken(token);
   }
 
   function resetFilter(): void {
@@ -123,28 +136,38 @@ export function MonthBookingFilter({
         ) : null}
       </div>
 
-      <div className="mt-4 flex flex-wrap gap-2">
-        {options.map((option) => {
-          const isSelected = selectedSet.has(option.token);
+      <label className="mt-4 grid max-w-sm gap-1 text-[0.68rem] font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
+        Filter hinzufügen
+        <select
+          value=""
+          className="rounded-2xl border border-[color:var(--month-line)] bg-white px-3 py-2 text-sm font-black normal-case tracking-normal text-[color:var(--month-ink)] shadow-[0_8px_18px_rgba(7,27,70,0.025)] focus:outline-none"
+          onChange={(event) => addToken(event.currentTarget.value)}
+        >
+          <option value="">Kategorie oder Sonderkategorie wählen</option>
+          {availableOptions.map((option) => (
+            <option key={option.token} value={option.token}>
+              {option.label}
+            </option>
+          ))}
+        </select>
+      </label>
 
-          return (
+      {selectedOptions.length > 0 ? (
+        <div className="mt-4 flex flex-wrap gap-2">
+          {selectedOptions.map((option) => (
             <button
               key={option.token}
               type="button"
-              aria-pressed={isSelected}
-              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black shadow-[0_8px_18px_rgba(7,27,70,0.025)] transition hover:-translate-y-0.5 ${
-                isSelected
-                  ? optionToneClassName(option.tone)
-                  : "border-[color:var(--month-line)] bg-white/86 text-[color:var(--month-ink-soft)]"
-              }`}
+              aria-pressed="true"
+              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-black shadow-[0_8px_18px_rgba(7,27,70,0.025)] transition hover:-translate-y-0.5 ${optionToneClassName(option.tone)}`}
               onClick={() => toggleToken(option.token)}
             >
-              {isSelected ? <span aria-hidden="true">✓</span> : null}
+              <span aria-hidden="true">✓</span>
               <span>{option.label}</span>
             </button>
-          );
-        })}
-      </div>
+          ))}
+        </div>
+      ) : null}
 
       {hasActiveFilter && visibleCount === 0 ? (
         <p className="mt-4 rounded-2xl border border-dashed border-[color:var(--month-line-strong)] bg-white/76 px-4 py-3 text-sm font-semibold text-[color:var(--month-ink-soft)]">
