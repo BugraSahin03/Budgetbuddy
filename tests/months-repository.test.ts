@@ -523,6 +523,10 @@ describe("months repository", () => {
     );
     expect(markedSnapshot.totals.actualFixedCostsCents).toBe(2890);
     expect(markedSnapshot.totals.expenseCents).toBe(0);
+    expect(
+      markedSnapshot.categoryRows.find((row) => row.categoryId === einkaufId)
+        ?.spentAmountCents,
+    ).toBe(0);
 
     clearFixedCostControlOverrideForMonth(transactionId, "2031-12");
 
@@ -534,6 +538,59 @@ describe("months repository", () => {
     );
     expect(clearedSnapshot.totals.actualFixedCostsCents).toBe(0);
     expect(clearedSnapshot.totals.expenseCents).toBe(2890);
+    expect(
+      clearedSnapshot.categoryRows.find((row) => row.categoryId === einkaufId)
+        ?.spentAmountCents,
+    ).toBe(2890);
+  });
+
+  it("excludes manual fixed-cost control overrides from special budget actuals", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const specialBudgetId = Number(
+      db
+        .prepare(
+          `
+            INSERT INTO special_budgets (name, month_key, planned_amount_cents, note, is_active)
+            VALUES ('TEST-FIN-100 Spezial', '2031-11', 10000, 'Test', 1)
+          `,
+        )
+        .run().lastInsertRowid,
+    );
+
+    const manualExpense = db
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+            amount_cents, currency_code, description, source_type, category_id, special_budget_id
+          )
+          VALUES (?, NULL, 'expense', '2031-11-05', '2031-11', -3490, 'EUR', 'TEST-FIN-100 Spezial Gym', 'manual', NULL, ?)
+        `,
+      )
+      .run(sparkasseId, specialBudgetId);
+    const transactionId = Number(manualExpense.lastInsertRowid);
+
+    expect(
+      getMonthSnapshot("2031-11").specialBudgetRows.find(
+        (row) => row.id === specialBudgetId,
+      )?.actualExpenseCents,
+    ).toBe(3490);
+
+    setFixedCostControlOverrideForMonth(transactionId, "2031-11", "include");
+
+    const markedSnapshot = getMonthSnapshot("2031-11");
+
+    expect(markedSnapshot.totals.expenseCents).toBe(0);
+    expect(
+      markedSnapshot.specialBudgetRows.find((row) => row.id === specialBudgetId)
+        ?.actualExpenseCents,
+    ).toBe(0);
+    expect(
+      markedSnapshot.specialBudgetRows.find((row) => row.id === specialBudgetId)
+        ?.remainingAmountCents,
+    ).toBe(10000);
   });
 
   it("can exclude automatically recognized fixed-cost control matches", () => {

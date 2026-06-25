@@ -596,7 +596,15 @@ function getPlannedFixedCostsCents(monthKey: string): number {
   return getLivePlannedFixedCostsCents();
 }
 
-function listSpecialBudgetRows(monthKey: string): MonthSpecialBudgetRow[] {
+function listSpecialBudgetRows(
+  monthKey: string,
+  excludedTransactionIds: readonly number[] = [],
+): MonthSpecialBudgetRow[] {
+  const excludedTransactionFilter =
+    excludedTransactionIds.length > 0
+      ? `AND t.id NOT IN (${excludedTransactionIds.map(() => "?").join(", ")})`
+      : "";
+
   const rows = getDb()
     .prepare(
       `
@@ -615,6 +623,7 @@ function listSpecialBudgetRows(monthKey: string): MonthSpecialBudgetRow[] {
               FROM transactions t
               WHERE t.transaction_type = 'expense'
                 AND t.special_budget_id = sb.id
+                ${excludedTransactionFilter}
             ),
             0
           ) AS actualExpenseCents
@@ -624,7 +633,7 @@ function listSpecialBudgetRows(monthKey: string): MonthSpecialBudgetRow[] {
         ORDER BY isActive DESC, sb.name COLLATE NOCASE ASC
       `,
     )
-    .all(monthKey) as Array<{
+    .all(...excludedTransactionIds, monthKey) as Array<{
     id: number;
     name: string;
     monthKey: string;
@@ -774,8 +783,17 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   const savingsCents = getSavingsActualCents(normalizedMonthKey);
   const plannedFixedCostsCents = getPlannedFixedCostsCents(normalizedMonthKey);
   const cashBalanceCents = getCashAccountSnapshot().currentBalanceCents;
-  const categoryRows = listMonthlyBudgetCategories(normalizedMonthKey);
-  const specialBudgetRows = listSpecialBudgetRows(normalizedMonthKey);
+  const fixedCostControlTransactionIds = fixedCostControlMatches.map(
+    (match) => match.transactionId,
+  );
+  const categoryRows = listMonthlyBudgetCategories(
+    normalizedMonthKey,
+    fixedCostControlTransactionIds,
+  );
+  const specialBudgetRows = listSpecialBudgetRows(
+    normalizedMonthKey,
+    fixedCostControlTransactionIds,
+  );
   const planSummary = buildMonthPlanSummary({
     incomeCents,
     categoryRows,
