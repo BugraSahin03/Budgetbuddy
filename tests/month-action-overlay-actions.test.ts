@@ -80,6 +80,8 @@ function buildMonthlyFormData(params: { useCashAccount?: boolean }): FormData {
 
 describe("FIN-057 monthly action cash toggle", () => {
   it("uses the cash account when Bargeld is active", async () => {
+    mocks.redirect.mockClear();
+
     await expect(
       createMonthlyManualTransactionAction(
         buildMonthlyFormData({ useCashAccount: true }),
@@ -92,11 +94,18 @@ describe("FIN-057 monthly action cash toggle", () => {
         accountId: 22,
       }),
     );
+    expect(mocks.redirect).toHaveBeenCalledTimes(1);
+    expect(mocks.redirect).toHaveBeenLastCalledWith(
+      "/monate/2026-06?notice=Monatsbuchung%20erstellt.",
+    );
+    expect(mocks.redirect.mock.calls.join("\n")).not.toContain("NEXT_REDIRECT");
+    expect(mocks.redirect.mock.calls.join("\n")).not.toContain("?error=");
   });
 
   it("keeps the selected account when Bargeld is inactive", async () => {
     mocks.createManualTransaction.mockClear();
     mocks.getActiveCashAccountId.mockClear();
+    mocks.redirect.mockClear();
 
     await expect(
       createMonthlyManualTransactionAction(buildMonthlyFormData({})),
@@ -108,6 +117,11 @@ describe("FIN-057 monthly action cash toggle", () => {
         accountId: 11,
       }),
     );
+    expect(mocks.redirect).toHaveBeenCalledTimes(1);
+    expect(mocks.redirect).toHaveBeenLastCalledWith(
+      "/monate/2026-06?notice=Monatsbuchung%20erstellt.",
+    );
+    expect(mocks.redirect.mock.calls.join("\n")).not.toContain("?error=");
   });
 });
 
