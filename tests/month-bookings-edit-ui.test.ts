@@ -140,4 +140,37 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("border-amber-200 bg-amber-100");
     expect(page).toContain("border-red-200 bg-red-100");
   });
+
+  it("adds a quiet multi-filter for month bookings without changing booking data", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const filter = readProjectFile(
+      "app/monate/[monthKey]/month-booking-filter.tsx",
+    );
+    const directSelect = readProjectFile(
+      "app/monate/[monthKey]/direct-assignment-select.tsx",
+    );
+
+    expect(page).toContain("MonthBookingFilter");
+    expect(page).toContain("buildBookingFilterOptions({");
+    expect(page).toContain("categories: categoryOptions");
+    expect(page).toContain("specialBudgets: specialBudgetOptions");
+    expect(page).toContain("transactionFilterToken(");
+    expect(page).toContain("data-month-booking-visual");
+    expect(page).toContain("data-month-booking-row");
+    expect(page).toContain("data-booking-filter-tokens");
+    expect(page).toContain("Ohne Zuordnung");
+    expect(page).toContain("category:");
+    expect(page).toContain("specialBudget:");
+    expect(page).toContain("open");
+    expect(filter).toContain("Filter zurücksetzen");
+    expect(filter).toContain("Kategorie wählen");
+    expect(filter).toContain("availableOptions.map");
+    expect(filter).toContain('aria-pressed="true"');
+    expect(filter).toContain("selectedTokens.some");
+    expect(filter).toContain("row.hidden = !isVisible");
+    expect(filter).toContain("Keine Treffer.");
+    expect(directSelect).toContain("updateLiveBookingPresentation");
+    expect(directSelect).toContain("createVisualMark");
+    expect(directSelect).toContain("month-booking-filter-row-updated");
+  });
 });

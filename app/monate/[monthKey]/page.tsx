@@ -14,6 +14,10 @@ import {
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
 import { DirectAssignmentSelect } from "@/app/monate/[monthKey]/direct-assignment-select";
+import {
+  MonthBookingFilter,
+  type MonthBookingFilterOption,
+} from "@/app/monate/[monthKey]/month-booking-filter";
 import { MonthCategoryOverview } from "@/app/monate/[monthKey]/month-category-overview";
 import { MonthTodoDialog } from "@/app/monate/[monthKey]/month-todo-dialog";
 import { MonthActionOverlay } from "@/app/monate/month-action-overlay";
@@ -251,6 +255,64 @@ function bookingEditHref(monthKey: string, isBookingEditMode: boolean): string {
   return isBookingEditMode
     ? `/monate/${monthKey}#monatsbuchungen`
     : `/monate/${monthKey}?bookingEdit=1#monatsbuchungen`;
+}
+
+function transactionFilterToken(transaction: MonthDetailTransactionRow): string {
+  if (transaction.transactionType !== "expense") {
+    return "";
+  }
+
+  if (transaction.categoryId !== null) {
+    return `category:${transaction.categoryId}`;
+  }
+
+  if (transaction.specialBudgetId !== null) {
+    return `specialBudget:${transaction.specialBudgetId}`;
+  }
+
+  return "open";
+}
+
+function buildBookingFilterOptions({
+  categories,
+  specialBudgets,
+  transactions,
+}: {
+  categories: { id: number; name: string }[];
+  specialBudgets: { id: number; name: string }[];
+  transactions: MonthDetailTransactionRow[];
+}): MonthBookingFilterOption[] {
+  let hasOpenExpenses = false;
+
+  for (const transaction of transactions) {
+    if (transaction.transactionType !== "expense") continue;
+
+    if (transaction.categoryId === null && transaction.specialBudgetId === null) {
+      hasOpenExpenses = true;
+    }
+  }
+
+  return [
+    ...categories.map((category) => ({
+      label: category.name,
+      token: `category:${category.id}`,
+      tone: "category" as const,
+    })),
+    ...specialBudgets.map((budget) => ({
+      label: `Sonderkategorie · ${budget.name}`,
+      token: `specialBudget:${budget.id}`,
+      tone: "specialBudget" as const,
+    })),
+    ...(hasOpenExpenses
+      ? [
+          {
+            label: "Ohne Zuordnung",
+            token: "open",
+            tone: "open" as const,
+          },
+        ]
+      : []),
+  ];
 }
 
 function MonthNavLink({
@@ -502,6 +564,11 @@ export default async function MonthDetailPage({
   const recentExpenses = month.transactions
     .filter((transaction) => transaction.transactionType === "expense")
     .slice(0, 5);
+  const bookingFilterOptions = buildBookingFilterOptions({
+    categories: categoryOptions,
+    specialBudgets: specialBudgetOptions,
+    transactions: month.transactions,
+  });
   const activeSpecialBudgetRows = month.dashboard.specialBudgetRows.filter(
     (row) => row.isActive,
   );
@@ -1099,7 +1166,12 @@ export default async function MonthDetailPage({
               Keine Buchungen für diesen Monat vorhanden.
             </EmptyReferenceCard>
           ) : (
-            month.transactions.map((transaction) => {
+            <>
+              <MonthBookingFilter
+                options={bookingFilterOptions}
+                totalCount={month.transactions.length}
+              />
+              {month.transactions.map((transaction) => {
               const currentAssignment = transaction.categoryId
                 ? `category:${transaction.categoryId}`
                 : transaction.specialBudgetId
@@ -1115,10 +1187,17 @@ export default async function MonthDetailPage({
               return (
                 <article
                   key={`${transaction.sourceType}-${transaction.id}`}
+                  data-month-booking-row
+                  data-booking-filter-tokens={transactionFilterToken(
+                    transaction,
+                  )}
                   className="min-w-0 overflow-hidden rounded-[1rem] border border-[color:var(--month-line)] bg-white/82 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.025)] sm:px-4"
                 >
                   <div className="month-booking-row-grid">
-                    <div className="flex min-w-0 items-center">
+                    <div
+                      className="flex min-w-0 items-center"
+                      data-month-booking-visual
+                    >
                       <TransactionVisualMark
                         transaction={transaction}
                         categoryVisuals={categoryVisuals}
@@ -1147,12 +1226,13 @@ export default async function MonthDetailPage({
                         hasAssignment={hasAssignment}
                         monthKey={month.monthKey}
                         transactionId={transaction.id}
-                        categoryOptions={categoryOptions}
+                        categoryOptions={visualCategoryOptions}
                         specialBudgetOptions={specialBudgetOptions}
                       />
                     ) : (
                       <span
                         className={`inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-black ${assignmentTone(transaction)}`}
+                        data-month-booking-assignment-label
                       >
                         <span className="truncate">
                           {assignmentChipLabel(transaction)}
@@ -1435,7 +1515,8 @@ export default async function MonthDetailPage({
                   ) : null}
                 </article>
               );
-            })
+              })}
+            </>
           )}
         </div>
       </details>
