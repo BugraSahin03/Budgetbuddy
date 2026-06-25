@@ -259,6 +259,7 @@ export async function setMonthlyBudgetOverrideAction(
   formData: FormData,
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
 
   try {
     const categoryId = parseCategoryId(formData.get("categoryId"));
@@ -270,20 +271,19 @@ export async function setMonthlyBudgetOverrideAction(
     revalidatePath(`/monate/${monthKey}`);
     revalidatePath("/auswertungen");
 
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monatsbudget gespeichert.")}`,
-    );
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monatsbudget gespeichert.")}`;
   } catch (error) {
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
-    );
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`;
   }
+
+  redirect(redirectTarget);
 }
 
 export async function updateMonthlySpecialBudgetAction(
   formData: FormData,
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
 
   try {
     const specialBudgetId = parseSpecialBudgetId(
@@ -303,20 +303,19 @@ export async function updateMonthlySpecialBudgetAction(
     revalidatePath("/sonderbudgets");
     revalidatePath("/auswertungen");
 
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderkategorie gespeichert.")}`,
-    );
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderkategorie gespeichert.")}`;
   } catch (error) {
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
-    );
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`;
   }
+
+  redirect(redirectTarget);
 }
 
 export async function updateMonthlySpecialBudgetStateAction(
   formData: FormData,
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
 
   try {
     const specialBudgetId = parseSpecialBudgetId(
@@ -330,28 +329,22 @@ export async function updateMonthlySpecialBudgetStateAction(
       revalidatePath("/monate");
       revalidatePath(`/monate/${monthKey}`);
       revalidatePath("/sonderbudgets");
-      redirect(
-        `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderkategorie deaktiviert.")}`,
-      );
-    }
-
-    if (intent === "reactivate") {
+      redirectTarget = `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderkategorie deaktiviert.")}`;
+    } else if (intent === "reactivate") {
       setSpecialBudgetActiveForMonth(specialBudgetId, monthKey, true);
       revalidatePath("/");
       revalidatePath("/monate");
       revalidatePath(`/monate/${monthKey}`);
       revalidatePath("/sonderbudgets");
-      redirect(
-        `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderkategorie reaktiviert.")}`,
-      );
+      redirectTarget = `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Sonderkategorie reaktiviert.")}`;
+    } else {
+      throw new Error("Unbekannte Aktion.");
     }
-
-    throw new Error("Unbekannte Aktion.");
   } catch (error) {
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
-    );
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`;
   }
+
+  redirect(redirectTarget);
 }
 
 export async function updateMonthlyTransactionAssignmentAction(
@@ -447,6 +440,7 @@ export async function updateMonthlyManualTransactionAction(
   formData: FormData,
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
 
   try {
     const transactionId = parseTransactionId(formData.get("transactionId"));
@@ -463,26 +457,25 @@ export async function updateMonthlyManualTransactionAction(
     revalidatePath("/sonderbudgets");
     revalidatePath("/auswertungen");
 
-    redirect(
-      monthBookingHref(monthKey, {
-        bookingEdit: "1",
-        notice: "Buchung gespeichert.",
-      }),
-    );
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      notice: "Buchung gespeichert.",
+    });
   } catch (error) {
-    redirect(
-      monthBookingHref(monthKey, {
-        bookingEdit: "1",
-        error: toErrorMessage(error),
-      }),
-    );
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      error: toErrorMessage(error),
+    });
   }
+
+  redirect(redirectTarget);
 }
 
 export async function deleteMonthlyManualTransactionAction(
   formData: FormData,
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
 
   try {
     const transactionId = parseTransactionId(formData.get("transactionId"));
@@ -500,26 +493,25 @@ export async function deleteMonthlyManualTransactionAction(
     revalidatePath("/transaktionen");
     revalidatePath("/auswertungen");
 
-    redirect(
-      monthBookingHref(monthKey, {
-        bookingEdit: "1",
-        notice: "Buchung gelöscht.",
-      }),
-    );
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      notice: "Buchung gelöscht.",
+    });
   } catch (error) {
-    redirect(
-      monthBookingHref(monthKey, {
-        bookingEdit: "1",
-        error: toErrorMessage(error),
-      }),
-    );
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      error: toErrorMessage(error),
+    });
   }
+
+  redirect(redirectTarget);
 }
 
 export async function deleteMonthlyImportedTransactionAction(
   formData: FormData,
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
 
   try {
     const transactionId = parseTransactionId(formData.get("transactionId"));
@@ -537,26 +529,25 @@ export async function deleteMonthlyImportedTransactionAction(
     revalidatePath("/transaktionen");
     revalidatePath("/auswertungen");
 
-    redirect(
-      monthBookingHref(monthKey, {
-        bookingEdit: "1",
-        notice: "Import-Buchung gelöscht.",
-      }),
-    );
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      notice: "Import-Buchung gelöscht.",
+    });
   } catch (error) {
-    redirect(
-      monthBookingHref(monthKey, {
-        bookingEdit: "1",
-        error: toErrorMessage(error),
-      }),
-    );
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      error: toErrorMessage(error),
+    });
   }
+
+  redirect(redirectTarget);
 }
 
 export async function createMonthlyManualTransactionAction(
   formData: FormData,
 ): Promise<never> {
   const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
 
   try {
     createManualTransaction(parseMonthlyManualTransactionInput(formData));
@@ -567,12 +558,10 @@ export async function createMonthlyManualTransactionAction(
     revalidatePath("/transaktionen");
     revalidatePath("/auswertungen");
 
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monatsbuchung erstellt.")}`,
-    );
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?notice=${encodeMessage("Monatsbuchung erstellt.")}`;
   } catch (error) {
-    redirect(
-      `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`,
-    );
+    redirectTarget = `/monate/${encodeMessage(monthKey)}?error=${encodeMessage(toErrorMessage(error))}`;
   }
+
+  redirect(redirectTarget);
 }
