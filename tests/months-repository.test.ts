@@ -20,6 +20,8 @@ const {
   listMonthComparison,
   listMonthTimeline,
   reopenMonth,
+  clearFixedCostControlOverrideForMonth,
+  setFixedCostControlOverrideForMonth,
 } = await import("@/src/months/repository");
 
 describe("months repository", () => {
@@ -482,6 +484,152 @@ describe("months repository", () => {
     expect(snapshot.totals.availableCents).toBe(
       200000 - 11700 - plannedFixedCostsCents,
     );
+  });
+
+  it("allows manual fixed-cost control overrides for month expenses", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+
+    const manualExpense = db
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+            amount_cents, currency_code, description, source_type, category_id, special_budget_id
+          )
+          VALUES (?, NULL, 'expense', '2031-12-05', '2031-12', -2890, 'EUR', 'TEST-FIN-100 Manual Gym', 'manual', ?, NULL)
+        `,
+      )
+      .run(sparkasseId, einkaufId);
+    const transactionId = Number(manualExpense.lastInsertRowid);
+
+    setFixedCostControlOverrideForMonth(transactionId, "2031-12", "include");
+
+    const markedSnapshot = getMonthSnapshot("2031-12");
+
+    expect(markedSnapshot.fixedCostControlMatches).toHaveLength(1);
+    expect(markedSnapshot.fixedCostControlMatches[0]).toMatchObject({
+      transactionId,
+      controlAmountCents: 2890,
+      controlLabel: "Fixkosten-Kontrolle: Manuell markiert",
+      controlSource: "manual",
+    });
+    expect(markedSnapshot.transactions.map((transaction) => transaction.id)).not.toContain(
+      transactionId,
+    );
+    expect(markedSnapshot.totals.actualFixedCostsCents).toBe(2890);
+    expect(markedSnapshot.totals.expenseCents).toBe(0);
+    expect(
+      markedSnapshot.categoryRows.find((row) => row.categoryId === einkaufId)
+        ?.spentAmountCents,
+    ).toBe(0);
+
+    clearFixedCostControlOverrideForMonth(transactionId, "2031-12");
+
+    const clearedSnapshot = getMonthSnapshot("2031-12");
+
+    expect(clearedSnapshot.fixedCostControlMatches).toHaveLength(0);
+    expect(clearedSnapshot.transactions.map((transaction) => transaction.id)).toContain(
+      transactionId,
+    );
+    expect(clearedSnapshot.totals.actualFixedCostsCents).toBe(0);
+    expect(clearedSnapshot.totals.expenseCents).toBe(2890);
+    expect(
+      clearedSnapshot.categoryRows.find((row) => row.categoryId === einkaufId)
+        ?.spentAmountCents,
+    ).toBe(2890);
+  });
+
+  it("excludes manual fixed-cost control overrides from special budget actuals", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const specialBudgetId = Number(
+      db
+        .prepare(
+          `
+            INSERT INTO special_budgets (name, month_key, planned_amount_cents, note, is_active)
+            VALUES ('TEST-FIN-100 Spezial', '2031-11', 10000, 'Test', 1)
+          `,
+        )
+        .run().lastInsertRowid,
+    );
+
+    const manualExpense = db
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+            amount_cents, currency_code, description, source_type, category_id, special_budget_id
+          )
+          VALUES (?, NULL, 'expense', '2031-11-05', '2031-11', -3490, 'EUR', 'TEST-FIN-100 Spezial Gym', 'manual', NULL, ?)
+        `,
+      )
+      .run(sparkasseId, specialBudgetId);
+    const transactionId = Number(manualExpense.lastInsertRowid);
+
+    expect(
+      getMonthSnapshot("2031-11").specialBudgetRows.find(
+        (row) => row.id === specialBudgetId,
+      )?.actualExpenseCents,
+    ).toBe(3490);
+
+    setFixedCostControlOverrideForMonth(transactionId, "2031-11", "include");
+
+    const markedSnapshot = getMonthSnapshot("2031-11");
+
+    expect(markedSnapshot.totals.expenseCents).toBe(0);
+    expect(
+      markedSnapshot.specialBudgetRows.find((row) => row.id === specialBudgetId)
+        ?.actualExpenseCents,
+    ).toBe(0);
+    expect(
+      markedSnapshot.specialBudgetRows.find((row) => row.id === specialBudgetId)
+        ?.remainingAmountCents,
+    ).toBe(10000);
+  });
+
+  it("can exclude automatically recognized fixed-cost control matches", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+
+    db.prepare(
+      `
+        INSERT INTO fixed_costs (name, planned_amount_cents, booking_day_of_month, payment_note, note, is_active)
+        VALUES ('TEST-FIN-100 Streaming', 1299, 1, 'STREAMING SERVICE', 'Test', 1)
+      `,
+    ).run();
+
+    const recognizedExpense = db
+      .prepare(
+        `
+          INSERT INTO transactions (
+            account_id, destination_account_id, transaction_type, booking_date, effective_month_key,
+            amount_cents, currency_code, description, counterparty_name, source_type, category_id, special_budget_id
+          )
+          VALUES (?, NULL, 'expense', '2032-01-03', '2032-01', -1299, 'EUR', 'TEST-FIN-100 Streaming Lastschrift', 'STREAMING SERVICE', 'import', NULL, NULL)
+        `,
+      )
+      .run(sparkasseId);
+    const transactionId = Number(recognizedExpense.lastInsertRowid);
+
+    expect(getMonthSnapshot("2032-01").fixedCostControlMatches).toHaveLength(1);
+
+    setFixedCostControlOverrideForMonth(transactionId, "2032-01", "exclude");
+
+    const snapshot = getMonthSnapshot("2032-01");
+
+    expect(snapshot.fixedCostControlMatches).toHaveLength(0);
+    expect(snapshot.transactions.map((transaction) => transaction.id)).toContain(
+      transactionId,
+    );
+    expect(snapshot.totals.actualFixedCostsCents).toBe(0);
+    expect(snapshot.totals.expenseCents).toBe(1299);
   });
 
   it("keeps the month budget stand negative when expenses and fixed costs exceed income", () => {

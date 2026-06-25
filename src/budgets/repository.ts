@@ -126,8 +126,15 @@ export function listCategoryBudgetDefaults(): CategoryBudgetDefaultRow[] {
   }));
 }
 
-export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCategoryRow[] {
+export function listMonthlyBudgetCategories(
+  monthKey: string,
+  excludedTransactionIds: readonly number[] = [],
+): MonthlyBudgetCategoryRow[] {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
+  const excludedTransactionFilter =
+    excludedTransactionIds.length > 0
+      ? `AND t.id NOT IN (${excludedTransactionIds.map(() => "?").join(", ")})`
+      : "";
 
   const rows = getDb()
     .prepare(
@@ -145,6 +152,7 @@ export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCate
             WHERE t.transaction_type = 'expense'
               AND t.category_id = c.id
               AND t.effective_month_key = ?
+              ${excludedTransactionFilter}
           ), 0) AS spentAmountCents
         FROM categories c
         LEFT JOIN monthly_category_budgets mb
@@ -156,7 +164,11 @@ export function listMonthlyBudgetCategories(monthKey: string): MonthlyBudgetCate
         ORDER BY c.is_active DESC, c.name COLLATE NOCASE ASC
       `,
     )
-    .all(normalizedMonthKey, normalizedMonthKey) as Array<{
+    .all(
+      normalizedMonthKey,
+      ...excludedTransactionIds,
+      normalizedMonthKey,
+    ) as Array<{
     categoryId: number;
     categoryName: string;
     isCategoryActive: number;

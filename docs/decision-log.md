@@ -1789,3 +1789,26 @@ Auswirkung:
 - Eine einzelne Zukunftsbuchung erzeugt keine leeren Monatskarten fuer alle
   Monate bis zu diesem Zukunftsdatum.
 - Monatsberechnungen und Buchungserstellung bleiben unveraendert.
+
+## 2026-06-25 - FIN-100 fuehrt manuelle Fixkosten-Kontroll-Overrides ein
+
+Quelle/Ticket: `FIN-100`
+
+Erkenntnis/Entscheidung:
+
+- Die FIN-024-Regel, dass Einzeltransaktionen nicht mehr manuell als Fixkosten
+  markiert werden, wird fuer die Kontrollsicht gezielt erweitert.
+- Manuelle Korrekturen werden als separate Overrides gespeichert, nicht direkt
+  auf der Transaktion und nicht ueber die stillgelegte
+  `fixed_cost_transaction_links`-Logik.
+- `include` markiert eine Ausgabe manuell als Fixkosten-Kontrolltreffer.
+- `exclude` unterdrueckt einen automatisch erkannten Kontrolltreffer.
+
+Auswirkung:
+
+- Die automatische Import-/Fixkostenerkennung bleibt bestehen.
+- Nutzerkorrekturen bleiben stabil und gehen bei Neuberechnung der Monatsansicht
+  nicht verloren.
+- Manuell markierte Treffer werden in der Fixkostenkontrolle sichtbar als
+  `manuell` gekennzeichnet.
+- Details stehen in `docs/adr/0010-manual-fixed-cost-control-overrides.md`.

@@ -168,7 +168,19 @@ describe("schema migrations", () => {
     expect(sql).toContain("idx_monthly_todos_month_key");
   });
 
+  it("contains migration for manual fixed-cost control overrides", () => {
+    const sql = migrations.find((migration) => migration.id === "0015_fin_100")
+      ?.sql ?? "";
+
+    expect(sql).toContain(
+      "CREATE TABLE IF NOT EXISTS transaction_fixed_cost_control_overrides",
+    );
+    expect(sql).toContain("mode TEXT NOT NULL CHECK (mode IN ('include', 'exclude'))");
+    expect(sql).toContain("REFERENCES transactions(id) ON DELETE CASCADE");
+    expect(sql).toContain("idx_transaction_fixed_cost_control_overrides_mode");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0014_fin_082");
+    expect(getLatestSchemaVersion()).toBe("0015_fin_100");
   });
 });

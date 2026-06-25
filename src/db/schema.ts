@@ -800,6 +800,18 @@ CREATE INDEX IF NOT EXISTS idx_monthly_todos_month_key
 ON monthly_todos(month_key, id);
 `;
 
+const fin100MigrationSql = `
+CREATE TABLE IF NOT EXISTS transaction_fixed_cost_control_overrides (
+  transaction_id INTEGER PRIMARY KEY REFERENCES transactions(id) ON DELETE CASCADE,
+  mode TEXT NOT NULL CHECK (mode IN ('include', 'exclude')),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_transaction_fixed_cost_control_overrides_mode
+ON transaction_fixed_cost_control_overrides(mode);
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -870,6 +882,11 @@ export const migrations: readonly Migration[] = [
     id: "0014_fin_082",
     name: "FIN-082 add month-scoped todos",
     sql: fin082MigrationSql,
+  },
+  {
+    id: "0015_fin_100",
+    name: "FIN-100 add manual fixed-cost control overrides",
+    sql: fin100MigrationSql,
   },
 ];
 

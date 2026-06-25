@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 const mocks = vi.hoisted(() => ({
   closeMonth: vi.fn(),
+  clearFixedCostControlOverrideForMonth: vi.fn(),
   createManualTransaction: vi.fn(),
   deleteImportedTransactionForMonth: vi.fn(),
   deleteManualTransaction: vi.fn(),
@@ -11,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   }),
   revalidatePath: vi.fn(),
   reopenMonth: vi.fn(),
+  setFixedCostControlOverrideForMonth: vi.fn(),
   updateExpenseAssignmentForMonth: vi.fn(),
   updateManualTransaction: vi.fn(),
 }));
@@ -26,8 +28,12 @@ vi.mock("@/src/budgets/repository", () => ({
   setMonthlyCategoryBudget: vi.fn(),
 }));
 vi.mock("@/src/months/repository", () => ({
+  clearFixedCostControlOverrideForMonth:
+    mocks.clearFixedCostControlOverrideForMonth,
   closeMonth: mocks.closeMonth,
   reopenMonth: mocks.reopenMonth,
+  setFixedCostControlOverrideForMonth:
+    mocks.setFixedCostControlOverrideForMonth,
 }));
 vi.mock("@/src/special-budgets/amounts", () => ({
   parsePlannedAmountCents: vi.fn(),
@@ -51,6 +57,7 @@ const {
   deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
   reopenMonthAction,
+  updateMonthlyFixedCostControlOverrideAction,
   updateMonthlyTransactionAssignmentAction,
 } = await import("@/app/monate/actions");
 
@@ -190,6 +197,48 @@ describe("FIN-060 monthly booking edit actions", () => {
     );
     expect(mocks.redirect).toHaveBeenCalledWith(
       "/monate/2026-06?bookingEdit=1&notice=Import-Buchung+gel%C3%B6scht.#monatsbuchungen",
+    );
+  });
+});
+
+describe("FIN-100 monthly fixed-cost control override actions", () => {
+  it("returns to the reopened fixed-cost control dialog after marking an expense", async () => {
+    const formData = new FormData();
+    formData.set("monthKey", "2026-06");
+    formData.set("transactionId", "77");
+    formData.set("intent", "include");
+
+    await expect(
+      updateMonthlyFixedCostControlOverrideAction(formData),
+    ).rejects.toThrow("redirect:");
+
+    expect(mocks.setFixedCostControlOverrideForMonth).toHaveBeenCalledWith(
+      77,
+      "2026-06",
+      "include",
+    );
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      "/monate/2026-06?bookingEdit=1&fixedCostControl=1&notice=Buchung+als+Fixkosten-Kontrolle+markiert.",
+    );
+  });
+
+  it("returns to the reopened fixed-cost control dialog after removing a manual mark", async () => {
+    mocks.redirect.mockClear();
+    const formData = new FormData();
+    formData.set("monthKey", "2026-06");
+    formData.set("transactionId", "78");
+    formData.set("intent", "clear");
+
+    await expect(
+      updateMonthlyFixedCostControlOverrideAction(formData),
+    ).rejects.toThrow("redirect:");
+
+    expect(mocks.clearFixedCostControlOverrideForMonth).toHaveBeenCalledWith(
+      78,
+      "2026-06",
+    );
+    expect(mocks.redirect).toHaveBeenCalledWith(
+      "/monate/2026-06?bookingEdit=1&fixedCostControl=1&notice=Fixkosten-Markierung+entfernt.",
     );
   });
 });

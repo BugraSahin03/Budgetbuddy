@@ -9,8 +9,8 @@ function readProjectFile(path: string): string {
   return readFileSync(join(ROOT, path), "utf8");
 }
 
-describe("FIN-074 month fixed-cost control list UI", () => {
-  it("shows fixed-cost control matches in the month dialog as read-only transparency", () => {
+describe("month fixed-cost control list UI", () => {
+  it("shows fixed-cost control matches and manual override actions in the month dialog", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
 
     expect(page).toContain("month.dashboard.fixedCostControlMatches");
@@ -22,6 +22,13 @@ describe("FIN-074 month fixed-cost control list UI", () => {
     expect(page).toContain("match.displayName");
     expect(page).toContain("match.description");
     expect(page).toContain("formatEuro(match.controlAmountCents)");
+    expect(page).toContain("match.controlSource");
+    expect(page).toContain("manuell");
+    expect(page).toContain("updateMonthlyFixedCostControlOverrideAction");
+    expect(page).toContain("isFixedCostControlDialogOpen");
+    expect(page).toContain("initialOpen={isFixedCostControlDialogOpen}");
+    expect(page).toContain("Markierung entfernen");
+    expect(page).toContain("Als Fixkosten markieren");
     expect(page).toContain("month.transactions.map((transaction)");
     expect(page).not.toContain("fixed_cost_transaction_links");
   });

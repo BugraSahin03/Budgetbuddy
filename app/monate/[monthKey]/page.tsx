@@ -11,6 +11,7 @@ import {
   updateMonthlyManualTransactionAction,
   updateMonthlySpecialBudgetAction,
   updateMonthlySpecialBudgetStateAction,
+  updateMonthlyFixedCostControlOverrideAction,
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
 import { DirectAssignmentSelect } from "@/app/monate/[monthKey]/direct-assignment-select";
@@ -540,6 +541,8 @@ export default async function MonthDetailPage({
   const error = toSingleParam(resolvedSearchParams.error);
   const isBookingEditMode =
     toSingleParam(resolvedSearchParams.bookingEdit) === "1";
+  const isFixedCostControlDialogOpen =
+    toSingleParam(resolvedSearchParams.fixedCostControl) === "1";
   const month = getMonthDetail(monthKey);
   const allCategories = listCategories();
   const categoryVisuals = categoryVisualById(allCategories);
@@ -720,6 +723,7 @@ export default async function MonthDetailPage({
               description="Die Kontrolle bleibt im Monatskontext erreichbar, nimmt aber keinen dauerhaften Platz in der Übersicht ein."
               triggerLabel="Fixkostenkontrolle"
               triggerClassName="month-dialog-trigger month-dialog-trigger-rose"
+              initialOpen={isFixedCostControlDialogOpen}
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
@@ -777,6 +781,11 @@ export default async function MonthDetailPage({
                               <span className="rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-bold text-[color:var(--month-ink-soft)]">
                                 {fixedCostControlReasonLabel(match)}
                               </span>
+                              {match.controlSource === "manual" ? (
+                                <span className="rounded-full border border-sky-200 bg-sky-50 px-2.5 py-1 text-xs font-black uppercase tracking-[0.12em] text-sky-800">
+                                  manuell
+                                </span>
+                              ) : null}
                             </div>
                             <p className="mt-2 truncate text-sm font-black text-[color:var(--month-ink)]">
                               {match.displayName}
@@ -790,9 +799,42 @@ export default async function MonthDetailPage({
                               </p>
                             ) : null}
                           </div>
-                          <p className="text-right text-lg font-black tracking-[-0.045em] text-[color:var(--month-ink)]">
-                            {formatEuro(match.controlAmountCents)}
-                          </p>
+                          <div className="grid justify-items-start gap-2 lg:justify-items-end">
+                            <p className="text-right text-lg font-black tracking-[-0.045em] text-[color:var(--month-ink)]">
+                              {formatEuro(match.controlAmountCents)}
+                            </p>
+                            {canEditBookings ? (
+                              <form
+                                action={updateMonthlyFixedCostControlOverrideAction}
+                              >
+                                <input
+                                  type="hidden"
+                                  name="monthKey"
+                                  value={month.monthKey}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="transactionId"
+                                  value={match.transactionId}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="intent"
+                                  value={
+                                    match.controlSource === "manual"
+                                      ? "clear"
+                                      : "exclude"
+                                  }
+                                />
+                                <button
+                                  type="submit"
+                                  className="rounded-full border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.12em] text-rose-800 shadow-[0_8px_18px_rgba(190,18,60,0.08)] transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-100"
+                                >
+                                  Markierung entfernen
+                                </button>
+                              </form>
+                            ) : null}
+                          </div>
                         </div>
                       </article>
                     ))
@@ -1257,6 +1299,29 @@ export default async function MonthDetailPage({
                             ? `${transaction.accountName} -> ${transaction.destinationAccountName}`
                             : transaction.accountName}
                         </span>
+                        {transaction.isFixedCostControlCandidate ? (
+                          <form
+                            action={updateMonthlyFixedCostControlOverrideAction}
+                          >
+                            <input
+                              type="hidden"
+                              name="monthKey"
+                              value={month.monthKey}
+                            />
+                            <input
+                              type="hidden"
+                              name="transactionId"
+                              value={transaction.id}
+                            />
+                            <input type="hidden" name="intent" value="include" />
+                            <button
+                              type="submit"
+                              className="rounded-full border border-rose-100 bg-rose-50 px-2.5 py-1 text-xs font-black text-rose-800 transition hover:-translate-y-0.5 hover:border-rose-200"
+                            >
+                              Als Fixkosten markieren
+                            </button>
+                          </form>
+                        ) : null}
                       </div>
 
                       {transaction.sourceType === "import" ? (
