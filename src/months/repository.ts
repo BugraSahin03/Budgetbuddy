@@ -20,6 +20,7 @@ import {
   type MonthPlanSummary,
 } from "@/src/months/plan-summary";
 import {
+  assertMonthIsOpen,
   closeMonth as closeMonthStatus,
   getMonthStatus,
   normalizeMonthKey,
@@ -80,6 +81,7 @@ export type MonthDetailTransactionRow = {
   specialBudgetId: number | null;
   specialBudgetName: string | null;
   importRunId: number | null;
+  isFixedCostControlCandidate: boolean;
 };
 
 export type MonthFixedCostControlMatchRow = {
@@ -93,6 +95,7 @@ export type MonthFixedCostControlMatchRow = {
   importRunId: number | null;
   controlLabel: string;
   ruleName: string;
+  controlSource: "automatic" | "manual";
 };
 
 export type MonthTotals = {
@@ -330,10 +333,191 @@ function buildImportedFixedCostControlMatches(
       importRunId: row.importRunId,
       controlLabel: control.label,
       ruleName: control.ruleName,
+      controlSource: "automatic",
     });
   }
 
   return result;
+}
+
+function listFixedCostControlOverrideRowsForMonth(monthKey: string): Array<{
+  transactionId: number;
+  mode: "include" | "exclude";
+}> {
+  return getDb()
+    .prepare(
+      `
+        SELECT
+          t.id AS transactionId,
+          override.mode
+        FROM transaction_fixed_cost_control_overrides override
+        INNER JOIN transactions t ON t.id = override.transaction_id
+        WHERE t.effective_month_key = ?
+      `,
+    )
+    .all(monthKey) as Array<{
+    transactionId: number;
+    mode: "include" | "exclude";
+  }>;
+}
+
+function listManualFixedCostControlRowsForMonth(monthKey: string): Array<{
+  id: number;
+  sourceType: "manual" | "import";
+  bookingDate: string;
+  amountCents: number;
+  description: string;
+  counterpartyName: string | null;
+  importRunId: number | null;
+}> {
+  return getDb()
+    .prepare(
+      `
+        SELECT
+          t.id,
+          t.source_type AS sourceType,
+          t.booking_date AS bookingDate,
+          t.amount_cents AS amountCents,
+          t.description,
+          t.counterparty_name AS counterpartyName,
+          t.import_run_id AS importRunId
+        FROM transaction_fixed_cost_control_overrides override
+        INNER JOIN transactions t ON t.id = override.transaction_id
+        WHERE override.mode = 'include'
+          AND t.transaction_type = 'expense'
+          AND t.effective_month_key = ?
+        ORDER BY t.booking_date ASC, t.id ASC
+      `,
+    )
+    .all(monthKey) as Array<{
+    id: number;
+    sourceType: "manual" | "import";
+    bookingDate: string;
+    amountCents: number;
+    description: string;
+    counterpartyName: string | null;
+    importRunId: number | null;
+  }>;
+}
+
+function buildManualFixedCostControlMatches(
+  monthKey: string,
+): MonthFixedCostControlMatchRow[] {
+  const rows = listManualFixedCostControlRowsForMonth(monthKey);
+  const aliases = listImportDisplayAliases();
+
+  return rows.map((row) => ({
+    transactionId: row.id,
+    bookingDate: row.bookingDate,
+    description: row.description,
+    displayName: resolveImportDisplayName({
+      sourceType: row.sourceType,
+      description: row.description,
+      counterpartyName: row.counterpartyName,
+      aliases,
+    }),
+    counterpartyName: row.counterpartyName,
+    amountCents: row.amountCents,
+    controlAmountCents: Math.max(0, -row.amountCents),
+    importRunId: row.importRunId,
+    controlLabel: "Fixkosten-Kontrolle: Manuell markiert",
+    ruleName: "Manuelle Fixkosten-Markierung",
+    controlSource: "manual",
+  }));
+}
+
+function buildFixedCostControlMatches(
+  monthKey: string,
+): MonthFixedCostControlMatchRow[] {
+  const overrides = listFixedCostControlOverrideRowsForMonth(monthKey);
+  const excludedTransactionIds = new Set(
+    overrides
+      .filter((override) => override.mode === "exclude")
+      .map((override) => override.transactionId),
+  );
+  const matchesByTransactionId = new Map<number, MonthFixedCostControlMatchRow>();
+
+  for (const match of buildImportedFixedCostControlMatches(monthKey)) {
+    if (!excludedTransactionIds.has(match.transactionId)) {
+      matchesByTransactionId.set(match.transactionId, match);
+    }
+  }
+
+  for (const match of buildManualFixedCostControlMatches(monthKey)) {
+    matchesByTransactionId.set(match.transactionId, match);
+  }
+
+  return Array.from(matchesByTransactionId.values()).sort((first, second) =>
+    first.bookingDate.localeCompare(second.bookingDate) ||
+    first.transactionId - second.transactionId,
+  );
+}
+
+function assertExpenseTransactionInMonth(
+  transactionId: number,
+  monthKey: string,
+): void {
+  const row = getDb()
+    .prepare(
+      `
+        SELECT transaction_type AS transactionType
+        FROM transactions
+        WHERE id = ?
+          AND effective_month_key = ?
+      `,
+    )
+    .get(transactionId, monthKey) as
+    | { transactionType: TransactionType }
+    | undefined;
+
+  if (!row) {
+    throw new Error("Buchung wurde in diesem Monat nicht gefunden.");
+  }
+
+  if (row.transactionType !== "expense") {
+    throw new Error("Nur Ausgaben können als Fixkosten-Kontrolle markiert werden.");
+  }
+}
+
+export function setFixedCostControlOverrideForMonth(
+  transactionId: number,
+  monthKey: string,
+  mode: "include" | "exclude",
+): void {
+  const normalizedMonthKey = normalizeMonthKey(monthKey);
+  assertMonthIsOpen(normalizedMonthKey);
+  assertExpenseTransactionInMonth(transactionId, normalizedMonthKey);
+
+  getDb()
+    .prepare(
+      `
+        INSERT INTO transaction_fixed_cost_control_overrides (
+          transaction_id,
+          mode,
+          updated_at
+        )
+        VALUES (?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(transaction_id) DO UPDATE SET
+          mode = excluded.mode,
+          updated_at = CURRENT_TIMESTAMP
+      `,
+    )
+    .run(transactionId, mode);
+}
+
+export function clearFixedCostControlOverrideForMonth(
+  transactionId: number,
+  monthKey: string,
+): void {
+  const normalizedMonthKey = normalizeMonthKey(monthKey);
+  assertMonthIsOpen(normalizedMonthKey);
+  assertExpenseTransactionInMonth(transactionId, normalizedMonthKey);
+
+  getDb()
+    .prepare(
+      "DELETE FROM transaction_fixed_cost_control_overrides WHERE transaction_id = ?",
+    )
+    .run(transactionId);
 }
 
 function sumFixedCostControlMatches(
@@ -549,6 +733,7 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
 
   return rows.map((row) => ({
     ...row,
+    isFixedCostControlCandidate: row.transactionType === "expense",
     displayName: resolveImportDisplayName({
       sourceType: row.sourceType,
       description: row.description,
@@ -578,7 +763,7 @@ function excludeFixedCostControlTransactions(
 export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
   const fixedCostControlMatches =
-    buildImportedFixedCostControlMatches(normalizedMonthKey);
+    buildFixedCostControlMatches(normalizedMonthKey);
   const actualFixedCostsCents =
     sumFixedCostControlMatches(fixedCostControlMatches);
   const incomeCents = getIncomeCents(normalizedMonthKey);

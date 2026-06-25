@@ -168,9 +168,22 @@ Fixkosten werden fuer den Start nicht ueber ein eigenes N26-Fachmodell importier
 MVP-Regel (FIN-024):
 
 - Die aktive Fixkostensumme reduziert den verfuegbaren Monatsbetrag direkt.
-- Einzeltransaktionen werden nicht mehr manuell als Fixkosten markiert.
+- Einzeltransaktionen werden nicht mehr als geplante Fixkosten-Zuordnung
+  gepflegt.
 - `wirkt_fuer_monat` ist nicht Teil des Zielmodells.
 - N26-Sammeltransfer und direkte Sparkassen-Fixkostenmatches sind Kontrollinformationen, keine normalen variablen Monatsausgaben.
+
+Ergaenzung fuer die Kontrollsicht (FIN-100):
+
+- Einzelne Ausgaben koennen manuell als Fixkosten-Kontrolltreffer markiert
+  oder aus der Fixkostenkontrolle entfernt werden.
+- Diese Entscheidung betrifft nur die Monats-Fixkostenkontrolle, nicht den
+  geplanten Fixkostenblock und nicht die Fixkosten-Stammdatenpflege.
+- Manuelle Entscheidungen werden als separate Overrides gespeichert:
+  `include` fuer manuell hinzufuegen, `exclude` fuer automatisch erkannten
+  Treffer ausblenden.
+- Manuell markierte Kontrolltreffer werden als `manuell` kenntlich gemacht.
+- Die alte `fixed_cost_transaction_links`-Logik bleibt stillgelegt.
 
 Technischer Migrationshinweis (FIN-025):
 

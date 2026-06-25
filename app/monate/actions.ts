@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { setMonthlyCategoryBudget } from "@/src/budgets/repository";
-import { closeMonth, reopenMonth } from "@/src/months/repository";
+import {
+  clearFixedCostControlOverrideForMonth,
+  closeMonth,
+  reopenMonth,
+  setFixedCostControlOverrideForMonth,
+} from "@/src/months/repository";
 import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
   setSpecialBudgetActiveForMonth,
@@ -373,6 +378,50 @@ export async function updateMonthlyTransactionAssignmentAction(
   } catch (error) {
     redirectTarget = monthBookingHref(monthKey, {
       ...(keepBookingEdit ? { bookingEdit: "1" } : {}),
+      error: toErrorMessage(error),
+    });
+  }
+
+  redirect(redirectTarget);
+}
+
+export async function updateMonthlyFixedCostControlOverrideAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    const transactionId = parseTransactionId(formData.get("transactionId"));
+    const intent = toSingleString(formData.get("intent")).trim();
+
+    if (intent === "include") {
+      setFixedCostControlOverrideForMonth(transactionId, monthKey, "include");
+      revalidateMonthContext(monthKey);
+      redirectTarget = monthBookingHref(monthKey, {
+        bookingEdit: "1",
+        notice: "Buchung als Fixkosten-Kontrolle markiert.",
+      });
+    } else if (intent === "exclude") {
+      setFixedCostControlOverrideForMonth(transactionId, monthKey, "exclude");
+      revalidateMonthContext(monthKey);
+      redirectTarget = monthBookingHref(monthKey, {
+        bookingEdit: "1",
+        notice: "Fixkosten-Markierung entfernt.",
+      });
+    } else if (intent === "clear") {
+      clearFixedCostControlOverrideForMonth(transactionId, monthKey);
+      revalidateMonthContext(monthKey);
+      redirectTarget = monthBookingHref(monthKey, {
+        bookingEdit: "1",
+        notice: "Fixkosten-Markierung entfernt.",
+      });
+    } else {
+      throw new Error("Unbekannte Fixkosten-Aktion.");
+    }
+  } catch (error) {
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
       error: toErrorMessage(error),
     });
   }
