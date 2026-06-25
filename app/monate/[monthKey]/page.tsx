@@ -541,6 +541,8 @@ export default async function MonthDetailPage({
   const error = toSingleParam(resolvedSearchParams.error);
   const isBookingEditMode =
     toSingleParam(resolvedSearchParams.bookingEdit) === "1";
+  const isFixedCostControlDialogOpen =
+    toSingleParam(resolvedSearchParams.fixedCostControl) === "1";
   const month = getMonthDetail(monthKey);
   const allCategories = listCategories();
   const categoryVisuals = categoryVisualById(allCategories);
@@ -721,6 +723,7 @@ export default async function MonthDetailPage({
               description="Die Kontrolle bleibt im Monatskontext erreichbar, nimmt aber keinen dauerhaften Platz in der Übersicht ein."
               triggerLabel="Fixkostenkontrolle"
               triggerClassName="month-dialog-trigger month-dialog-trigger-rose"
+              initialOpen={isFixedCostControlDialogOpen}
             >
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
@@ -825,7 +828,7 @@ export default async function MonthDetailPage({
                                 />
                                 <button
                                   type="submit"
-                                  className="rounded-full border border-[color:var(--month-line)] bg-white px-3 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.12em] text-[color:var(--month-ink-soft)] transition hover:-translate-y-0.5 hover:text-[color:var(--month-ink)]"
+                                  className="rounded-full border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-[0.68rem] font-black uppercase tracking-[0.12em] text-rose-800 shadow-[0_8px_18px_rgba(190,18,60,0.08)] transition hover:-translate-y-0.5 hover:border-rose-300 hover:bg-rose-100"
                                 >
                                   Markierung entfernen
                                 </button>

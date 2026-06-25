@@ -25,6 +25,8 @@ describe("month fixed-cost control list UI", () => {
     expect(page).toContain("match.controlSource");
     expect(page).toContain("manuell");
     expect(page).toContain("updateMonthlyFixedCostControlOverrideAction");
+    expect(page).toContain("isFixedCostControlDialogOpen");
+    expect(page).toContain("initialOpen={isFixedCostControlDialogOpen}");
     expect(page).toContain("Markierung entfernen");
     expect(page).toContain("Als Fixkosten markieren");
     expect(page).toContain("month.transactions.map((transaction)");

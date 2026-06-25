@@ -190,6 +190,16 @@ function monthBookingHref(
   return `/monate/${encodeMessage(monthKey)}${query.length > 0 ? `?${query}` : ""}#monatsbuchungen`;
 }
 
+function monthFixedCostControlHref(
+  monthKey: string,
+  params: Record<string, string>,
+): string {
+  const searchParams = new URLSearchParams(params);
+  const query = searchParams.toString();
+
+  return `/monate/${encodeMessage(monthKey)}${query.length > 0 ? `?${query}` : ""}`;
+}
+
 function revalidateMonthContext(monthKey: string): void {
   revalidatePath("/");
   revalidatePath("/monate");
@@ -398,30 +408,34 @@ export async function updateMonthlyFixedCostControlOverrideAction(
     if (intent === "include") {
       setFixedCostControlOverrideForMonth(transactionId, monthKey, "include");
       revalidateMonthContext(monthKey);
-      redirectTarget = monthBookingHref(monthKey, {
+      redirectTarget = monthFixedCostControlHref(monthKey, {
         bookingEdit: "1",
+        fixedCostControl: "1",
         notice: "Buchung als Fixkosten-Kontrolle markiert.",
       });
     } else if (intent === "exclude") {
       setFixedCostControlOverrideForMonth(transactionId, monthKey, "exclude");
       revalidateMonthContext(monthKey);
-      redirectTarget = monthBookingHref(monthKey, {
+      redirectTarget = monthFixedCostControlHref(monthKey, {
         bookingEdit: "1",
+        fixedCostControl: "1",
         notice: "Fixkosten-Markierung entfernt.",
       });
     } else if (intent === "clear") {
       clearFixedCostControlOverrideForMonth(transactionId, monthKey);
       revalidateMonthContext(monthKey);
-      redirectTarget = monthBookingHref(monthKey, {
+      redirectTarget = monthFixedCostControlHref(monthKey, {
         bookingEdit: "1",
+        fixedCostControl: "1",
         notice: "Fixkosten-Markierung entfernt.",
       });
     } else {
       throw new Error("Unbekannte Fixkosten-Aktion.");
     }
   } catch (error) {
-    redirectTarget = monthBookingHref(monthKey, {
+    redirectTarget = monthFixedCostControlHref(monthKey, {
       bookingEdit: "1",
+      fixedCostControl: "1",
       error: toErrorMessage(error),
     });
   }
