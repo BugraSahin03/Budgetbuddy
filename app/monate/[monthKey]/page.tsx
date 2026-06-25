@@ -231,9 +231,12 @@ function TransactionVisualMark({
 
   if (transaction.specialBudgetId) {
     return (
-      <span className="category-visual-mark h-10 w-10 border-amber-200 bg-amber-100 text-xs text-amber-900">
-        SB
-      </span>
+      <CategoryVisualMark
+        name={transaction.specialBudgetName ?? "Sonderkategorie"}
+        iconName={transaction.specialBudgetIconName}
+        className="h-10 w-10 text-xs"
+        variant="neutral"
+      />
     );
   }
 
@@ -1432,6 +1435,9 @@ export default async function MonthDetailPage({
                                         key={budget.id}
                                         value={`specialBudget:${budget.id}`}
                                       >
+                                        {budget.iconName
+                                          ? `${budget.iconName} `
+                                          : ""}
                                         Sonderkategorie · {budget.name}
                                       </option>
                                     ))}
@@ -1494,6 +1500,9 @@ export default async function MonthDetailPage({
                                       key={budget.id}
                                       value={`specialBudget:${budget.id}`}
                                     >
+                                      {budget.iconName
+                                        ? `${budget.iconName} `
+                                        : ""}
                                       Sonderkategorie · {budget.name}
                                     </option>
                                   ))}
