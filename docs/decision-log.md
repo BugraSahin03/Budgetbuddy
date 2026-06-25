@@ -1812,3 +1812,45 @@ Auswirkung:
 - Manuell markierte Treffer werden in der Fixkostenkontrolle sichtbar als
   `manuell` gekennzeichnet.
 - Details stehen in `docs/adr/0010-manual-fixed-cost-control-overrides.md`.
+
+## 2026-06-25 - FIN-101 grenzt Tailscale-Haenger auf Tailnet-Pfad ein
+
+Quelle/Ticket: `FIN-101`
+
+Erkenntnis/Entscheidung:
+
+- Phase 1 hat nur lesende Diagnose ausgefuehrt; es wurden keine Dienste neu gestartet und keine Konfigurationen geaendert.
+- Zum Messzeitpunkt war BudgetBuddy ueber Tailscale schnell erreichbar, waehrend der lokale VPS-Healthcheck ebenfalls sehr schnell war.
+- Public-Ports fuer BudgetBuddy blieben nicht erreichbar; Tailscale Serve blieb `tailnet only`.
+- Wiederholte `magicsock`/`derp`/`disco` Signale in `tailscaled` deuten weiter auf Tailscale-Client-/Peer-/Route-/DERP-State statt auf Next.js oder SQLite.
+
+Auswirkung:
+
+- Das Produktiv-Runbook enthaelt jetzt eine Diagnose- und Recovery-Prozedur fuer Tailscale-Haenger.
+- Phase-2-Fixes wie Client-Reconnect, stale Device Cleanup, VPS-`tailscaled` Neustart, Serve-Neusetzen oder Updates muessen separat freigegeben werden.
+
+Folgeaktion:
+
+- Bei erneutem Haenger erst die Runbook-Messkette ausfuehren und Messwerte dokumentieren.
+- Konkrete Fixes erst nach separater Freigabe umsetzen.
+
+## 2026-06-25 - FIN-101 Phase 2 bestaetigt Client-Reconnect als risikoarmen Fix
+
+Quelle/Ticket: `FIN-101`
+
+Erkenntnis/Entscheidung:
+
+- Phase 2 wurde nach Freigabe mit aktivierter Tailscale-Verbindung des betroffenen Macs ausgefuehrt.
+- Vor dem Reconnect war Tailscale lokal auf dem Mac gestoppt; danach war der Tailscale-HTTPS-Pfad stabil.
+- 20 aufeinanderfolgende Healthchecks ueber Tailscale waren erfolgreich, waehrend der lokale VPS-Healthcheck sehr schnell blieb.
+- Public-Ports und Public-Healthcheck blieben nicht erreichbar.
+- Es wurde kein VPS-seitiger `tailscaled` Neustart, kein Tailscale-Serve-Neusetzen und kein Paketupdate ausgefuehrt, weil der Client-Reconnect ausgereicht hat.
+
+Auswirkung:
+
+- Der bevorzugte erste Recovery-Schritt bleibt der Reconnect des betroffenen Clients.
+- VPS-seitige Eingriffe werden auf Faelle begrenzt, in denen mehrere aktive Tailnet-Geraete betroffen sind oder der Tailscale-HTTPS-Pfad nach Client-Reconnect weiter haengt.
+
+Folgeaktion:
+
+- Offline/stale Tailnet-Geraete koennen separat im Tailscale Admin geprueft werden, falls die Peer-State-/DERP-/Disco-Meldungen weiterhin irritieren.
