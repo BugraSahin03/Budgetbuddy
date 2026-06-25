@@ -1812,3 +1812,24 @@ Auswirkung:
 - Manuell markierte Treffer werden in der Fixkostenkontrolle sichtbar als
   `manuell` gekennzeichnet.
 - Details stehen in `docs/adr/0010-manual-fixed-cost-control-overrides.md`.
+
+## 2026-06-25 - FIN-101 grenzt Tailscale-Haenger auf Tailnet-Pfad ein
+
+Quelle/Ticket: `FIN-101`
+
+Erkenntnis/Entscheidung:
+
+- Phase 1 hat nur lesende Diagnose ausgefuehrt; es wurden keine Dienste neu gestartet und keine Konfigurationen geaendert.
+- Zum Messzeitpunkt war BudgetBuddy ueber Tailscale schnell erreichbar, waehrend der lokale VPS-Healthcheck ebenfalls sehr schnell war.
+- Public-Ports fuer BudgetBuddy blieben nicht erreichbar; Tailscale Serve blieb `tailnet only`.
+- Wiederholte `magicsock`/`derp`/`disco` Signale in `tailscaled` deuten weiter auf Tailscale-Client-/Peer-/Route-/DERP-State statt auf Next.js oder SQLite.
+
+Auswirkung:
+
+- Das Produktiv-Runbook enthaelt jetzt eine Diagnose- und Recovery-Prozedur fuer Tailscale-Haenger.
+- Phase-2-Fixes wie Client-Reconnect, stale Device Cleanup, VPS-`tailscaled` Neustart, Serve-Neusetzen oder Updates muessen separat freigegeben werden.
+
+Folgeaktion:
+
+- Bei erneutem Haenger erst die Runbook-Messkette ausfuehren und Messwerte dokumentieren.
+- Konkrete Fixes erst nach separater Freigabe umsetzen.
