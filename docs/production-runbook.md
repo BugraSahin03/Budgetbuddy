@@ -529,6 +529,26 @@ Einordnung:
 - Die App selbst und SQLite sind nach den Messwerten nicht die Ursache der Haenger.
 - Die beobachteten Haenger bleiben am wahrscheinlichsten ein Tailscale-Client-/Peer-/Route-/DERP-Thema.
 
+Phase-2-Reconnect-Test am 2026-06-25:
+
+- Vor dem Reconnect war Tailscale auf dem betroffenen Mac gestoppt; Tailscale-DNS und HTTPS-Healthcheck konnten dadurch nicht funktionieren.
+- Nach erneutem Verbinden des Mac-Clients war `tailscale ping budgetbuddy-prod-01` erfolgreich und schnell, ca. `22ms`, direkte Verbindung.
+- Mac `tailscale netcheck`: UDP aktiv, naechster DERP Frankfurt.
+- Tailscale-HTTPS `/api/health`: 20 erfolgreiche Laeufe, grob `0.09s` bis `0.21s`, kein Timeout.
+- TCP `443` auf Tailscale-DNS: wiederholt erfolgreich.
+- VPS lokaler Healthcheck `127.0.0.1:3000/api/health`: 3 erfolgreiche Laeufe, ca. `0.004s` bis `0.006s`.
+- `budgetbuddy.service`, `tailscaled` und `budgetbuddy-backup.timer`: aktiv.
+- Tailscale Serve: `tailnet only`, Proxy auf `http://127.0.0.1:3000`.
+- Public `80`, `443`, `3000` und Public-Healthcheck: nicht erreichbar.
+- VPS `tailscaled` Logs zeigten weiterhin wiederholte Peer-State-/DERP-/Disco-Meldungen fuer ein offline/stale Peer; der aktuelle Mac-Zugriff blieb trotzdem stabil.
+
+Phase-2-Entscheidung:
+
+- Es wurde kein VPS-seitiger `tailscaled` Neustart ausgefuehrt, weil der Client-Reconnect den betroffenen Zugriff stabil wiederhergestellt hat.
+- Tailscale Serve wurde nicht neu gesetzt und keine Pakete wurden aktualisiert.
+- Bei erneutem Haenger zuerst denselben Client-Reconnect und die Messkette aus diesem Runbook ausfuehren.
+- Einen VPS-seitigen `tailscaled` Neustart erst dann freigeben, wenn mehrere aktive Tailnet-Geraete gleichzeitig betroffen sind oder der Tailscale-HTTPS-Pfad trotz gesundem Client-Reconnect weiter haengt.
+
 ## Notfallabschaltung
 
 Wenn BudgetBuddy sofort nicht mehr erreichbar sein soll:

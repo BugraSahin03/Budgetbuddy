@@ -1833,3 +1833,24 @@ Folgeaktion:
 
 - Bei erneutem Haenger erst die Runbook-Messkette ausfuehren und Messwerte dokumentieren.
 - Konkrete Fixes erst nach separater Freigabe umsetzen.
+
+## 2026-06-25 - FIN-101 Phase 2 bestaetigt Client-Reconnect als risikoarmen Fix
+
+Quelle/Ticket: `FIN-101`
+
+Erkenntnis/Entscheidung:
+
+- Phase 2 wurde nach Freigabe mit aktivierter Tailscale-Verbindung des betroffenen Macs ausgefuehrt.
+- Vor dem Reconnect war Tailscale lokal auf dem Mac gestoppt; danach war der Tailscale-HTTPS-Pfad stabil.
+- 20 aufeinanderfolgende Healthchecks ueber Tailscale waren erfolgreich, waehrend der lokale VPS-Healthcheck sehr schnell blieb.
+- Public-Ports und Public-Healthcheck blieben nicht erreichbar.
+- Es wurde kein VPS-seitiger `tailscaled` Neustart, kein Tailscale-Serve-Neusetzen und kein Paketupdate ausgefuehrt, weil der Client-Reconnect ausgereicht hat.
+
+Auswirkung:
+
+- Der bevorzugte erste Recovery-Schritt bleibt der Reconnect des betroffenen Clients.
+- VPS-seitige Eingriffe werden auf Faelle begrenzt, in denen mehrere aktive Tailnet-Geraete betroffen sind oder der Tailscale-HTTPS-Pfad nach Client-Reconnect weiter haengt.
+
+Folgeaktion:
+
+- Offline/stale Tailnet-Geraete koennen separat im Tailscale Admin geprueft werden, falls die Peer-State-/DERP-/Disco-Meldungen weiterhin irritieren.
