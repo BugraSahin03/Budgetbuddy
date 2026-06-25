@@ -36,6 +36,7 @@ export type SpecialBudgetOption = {
   id: number;
   name: string;
   monthKey: string;
+  iconName: string | null;
 };
 
 export type CashAccountSnapshot = {
@@ -449,7 +450,8 @@ export function listActiveSpecialBudgetOptionsForMonth(
         SELECT
           special_budgets.id,
           special_budgets.name,
-          special_budgets.month_key AS monthKey
+          special_budgets.month_key AS monthKey,
+          sbp.icon_name AS iconName
         FROM special_budgets
         LEFT JOIN special_budget_projects sbp ON sbp.id = special_budgets.project_id
         WHERE special_budgets.is_active = 1

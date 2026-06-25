@@ -142,9 +142,12 @@ function AssignmentTiles({
             {specialBudgetOptions.map((budget) => (
               <label key={budget.id} className="month-action-choice month-action-choice-warn">
                 <input type="radio" name="assignment" value={`specialBudget:${budget.id}`} />
-                <span aria-hidden="true" className="month-action-choice-icon">
-                  {budget.name.trim().slice(0, 1).toUpperCase() || "#"}
-                </span>
+                <CategoryVisualMark
+                  name={budget.name}
+                  iconName={budget.iconName}
+                  className="month-action-choice-icon"
+                  variant="neutral"
+                />
                 <span>{budget.name}</span>
               </label>
             ))}

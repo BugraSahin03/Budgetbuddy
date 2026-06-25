@@ -249,15 +249,26 @@ describe("months repository", () => {
       db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
     ).id;
 
+    const specialBudgetProjectId = Number(
+      db
+        .prepare(
+          `
+            INSERT INTO special_budget_projects (name, status, icon_name)
+            VALUES ('Test Special', 'active', 'UR')
+          `,
+        )
+        .run().lastInsertRowid,
+    );
+
     const specialBudgetId = Number(
       db
         .prepare(
           `
-            INSERT INTO special_budgets (name, month_key, planned_amount_cents, note, is_active)
-            VALUES ('Test Special', '2031-03', 5000, 'Test', 1)
+            INSERT INTO special_budgets (project_id, name, month_key, planned_amount_cents, note, is_active)
+            VALUES (?, 'Test Special', '2031-03', 5000, 'Test', 1)
           `,
         )
-        .run().lastInsertRowid,
+        .run(specialBudgetProjectId).lastInsertRowid,
     );
 
     db.prepare(
@@ -312,6 +323,13 @@ describe("months repository", () => {
     expect(
       detail.transactions.find((row) => row.description === "Manual Special")?.specialBudgetId,
     ).toBe(specialBudgetId);
+    expect(
+      detail.transactions.find((row) => row.description === "Manual Special")
+        ?.specialBudgetIconName,
+    ).toBe("UR");
+    expect(
+      detail.dashboard.specialBudgetRows.find((row) => row.name === "Test Special")?.iconName,
+    ).toBe("UR");
   });
 
   it("builds one shared month snapshot for totals, budgets and transactions", () => {

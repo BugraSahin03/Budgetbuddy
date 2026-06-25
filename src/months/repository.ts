@@ -80,6 +80,7 @@ export type MonthDetailTransactionRow = {
   categoryIconName: string | null;
   specialBudgetId: number | null;
   specialBudgetName: string | null;
+  specialBudgetIconName: string | null;
   importRunId: number | null;
   isFixedCostControlCandidate: boolean;
 };
@@ -112,6 +113,7 @@ export type MonthTotals = {
 export type MonthSpecialBudgetRow = {
   id: number;
   name: string;
+  iconName: string | null;
   monthKey: string;
   plannedAmountCents: number;
   actualExpenseCents: number;
@@ -611,6 +613,7 @@ function listSpecialBudgetRows(
         SELECT
           sb.id,
           sb.name,
+          sbp.icon_name AS iconName,
           sb.month_key AS monthKey,
           sb.planned_amount_cents AS plannedAmountCents,
           CASE
@@ -636,6 +639,7 @@ function listSpecialBudgetRows(
     .all(...excludedTransactionIds, monthKey) as Array<{
     id: number;
     name: string;
+    iconName: string | null;
     monthKey: string;
     plannedAmountCents: number;
     isActive: number;
@@ -645,6 +649,7 @@ function listSpecialBudgetRows(
   return rows.map((row) => ({
     id: row.id,
     name: row.name,
+    iconName: row.iconName,
     monthKey: row.monthKey,
     plannedAmountCents: row.plannedAmountCents,
     actualExpenseCents: row.actualExpenseCents,
@@ -728,12 +733,14 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
           c.icon_name AS categoryIconName,
           t.special_budget_id AS specialBudgetId,
           sb.name AS specialBudgetName,
+          sbp.icon_name AS specialBudgetIconName,
           t.import_run_id AS importRunId
         FROM transactions t
         INNER JOIN accounts source ON source.id = t.account_id
         LEFT JOIN accounts destination ON destination.id = t.destination_account_id
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN special_budgets sb ON sb.id = t.special_budget_id
+        LEFT JOIN special_budget_projects sbp ON sbp.id = sb.project_id
         WHERE t.effective_month_key = ?
         ORDER BY t.booking_date DESC, t.id DESC
       `,

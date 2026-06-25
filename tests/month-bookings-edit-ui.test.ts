@@ -52,6 +52,7 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain('name="assignment"');
     expect(page).toContain('optgroup label="Kategorien"');
     expect(page).toContain('optgroup label="Sonderkategorien"');
+    expect(page).toContain("budget.iconName");
     expect(page).toContain("Sonderkategorie · {budget.name}");
     expect(page).toContain("deleteMonthlyManualTransactionAction");
     expect(page).toContain("deleteMonthlyImportedTransactionAction");
@@ -73,6 +74,7 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).not.toContain('action={updateMonthlyTransactionAssignmentAction}\n                        className="inline-flex max-w-full"\n                      >\n                        <DirectAssignmentSelect');
     expect(directSelect).toContain('<optgroup label="Kategorien">');
     expect(directSelect).toContain('<optgroup label="Sonderkategorien">');
+    expect(directSelect).toContain("budget.iconName");
     expect(directSelect).toContain("Sonderkategorie · {budget.name}");
     expect(directSelect).toContain("<option value=\"\" disabled>");
     expect(directSelect).toContain("hasCurrentAssignmentOption");
@@ -137,8 +139,33 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("month-booking-row-grid");
     expect(page).toContain("truncate text-base font-black");
     expect(page).toContain("text-lg font-black tracking-[-0.045em]");
-    expect(page).toContain("border-amber-200 bg-amber-100");
+    expect(page).toContain("specialBudgetIconName");
+    expect(page).toContain("iconName={transaction.specialBudgetIconName}");
     expect(page).toContain("border-red-200 bg-red-100");
+  });
+
+  it("uses Sonderkategorie icons across month overview, lists and quick assignment", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const overview = readProjectFile(
+      "app/monate/[monthKey]/month-category-overview.tsx",
+    );
+    const directSelect = readProjectFile(
+      "app/monate/[monthKey]/direct-assignment-select.tsx",
+    );
+    const overlay = readProjectFile("app/monate/month-action-overlay.tsx");
+
+    expect(page).toContain("specialBudgetIconName");
+    expect(page).toContain("iconName={transaction.specialBudgetIconName}");
+    expect(overview).toContain("iconName={row.iconName}");
+    expect(directSelect).toContain("specialBudget?.iconName");
+    expect(directSelect).toContain(
+      "createVisualMark(assignment, categoryOptions, specialBudgetOptions)",
+    );
+    expect(overlay).toContain("iconName={budget.iconName}");
+    expect(page).not.toContain(">SB<");
+    expect(overview).not.toContain(">SB<");
+    expect(directSelect).not.toContain(">SB<");
+    expect(overlay).not.toContain(">SB<");
   });
 
   it("adds a quiet multi-filter for month bookings without changing booking data", () => {

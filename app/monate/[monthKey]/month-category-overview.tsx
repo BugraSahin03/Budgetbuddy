@@ -22,6 +22,7 @@ type CategoryOverviewRow = {
 type SpecialBudgetOverviewRow = {
   id: number;
   name: string;
+  iconName: string | null;
   plannedAmountCents: number;
   actualExpenseCents: number;
 };
@@ -152,9 +153,12 @@ export function MonthCategoryOverview({
                   data-live-spent-cents={row.actualExpenseCents}
                 >
                   <div className="flex items-center gap-4">
-                    <span className="category-visual-mark h-12 w-12 text-xs">
-                      SB
-                    </span>
+                    <CategoryVisualMark
+                      name={row.name}
+                      iconName={row.iconName}
+                      className="h-12 w-12 text-sm"
+                      variant="neutral"
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-3">
                         <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
