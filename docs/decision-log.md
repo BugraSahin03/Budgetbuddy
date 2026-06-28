@@ -1854,3 +1854,23 @@ Auswirkung:
 Folgeaktion:
 
 - Offline/stale Tailnet-Geraete koennen separat im Tailscale Admin geprueft werden, falls die Peer-State-/DERP-/Disco-Meldungen weiterhin irritieren.
+
+## 2026-06-28 - FIN-105 identifiziert fehlende Mobile-Viewport-Basis
+
+Quelle/Ticket: `FIN-105`
+
+Erkenntnis/Entscheidung:
+
+- Der Mobile-Audit hat gezeigt, dass BudgetBuddy aktuell keinen expliziten mobilen Viewport-Meta-Eintrag im Root-Layout setzt.
+- Mobile Browser rendern dadurch mit einer Desktop-Layoutbreite von ca. `980px`, statt echte Smartphone-Breiten wie `375px`, `390px` oder `430px` zu verwenden.
+- Viele sichtbare Mobile-Probleme werden dadurch ueberlagert: Navigation wirkt abgeschnitten, Karten laufen nach rechts heraus und vorhandene Media Queries greifen nicht als echtes Smartphone-Zielbild.
+- Ein simulierter Gegencheck mit `width=device-width, initial-scale=1` zeigte fuer die geprueften Hauptseiten keinen messbaren horizontalen Dokument-Overflow bei `375px`, `390px` und `430px`.
+
+Auswirkung:
+
+- Das erste Mobile-Umsetzungsticket sollte die Viewport-Basis und Smartphone-Shell/Navigation herstellen, bevor Detailseiten poliert werden.
+- Danach sollten Monatsansicht, Hinzufuegen-Dialog und Budgetpflege gezielt auf iPhone/Safari geprueft werden.
+
+Folgeaktion:
+
+- Die priorisierte Mobile-Roadmap ist in `docs/mobile-responsive-audit-fin-105.md` dokumentiert.
