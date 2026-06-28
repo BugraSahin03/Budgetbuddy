@@ -18,18 +18,41 @@ Der Reviewer ist die letzte Qualitaetsinstanz. Er prueft, ob eine Implementer-In
 - prueft Akzeptanzkriterien
 - dokumentiert Erkenntnisse und Entscheidungen
 - stellt bei UI-/UX-nahen Tickets vor dem Review eine laufende Preview fuer den Nutzer bereit und setzt das Issue auf `status:visual-check`
-- uebergibt die Aenderungen per PR an den Reviewer
+- uebergibt die Aenderungen per PR direkt an den Reviewer
+- fragt nach abgeschlossenem Ticket die Dispatcher-/Queue-Instanz nach dem naechsten sinnvollen Ticket
 
 ### Reviewer
 
 - liest Projektkontext und Ticket
 - prueft die Aenderungen kritisch
-- gibt klares Feedback
+- gibt klares Feedback direkt an den Implementer
 - entscheidet, ob die Aenderungen freigegeben werden
-- bildet jede Entscheidung sichtbar im GitHub-PR ab:
+- bildet jede Entscheidung sichtbar im GitHub-PR ab und informiert den Implementer direkt:
   - `APPROVED` mit formaler GitHub-Review `Approve` und strukturiertem Review-Kommentar, danach Statuswechsel auf `status:ready-to-merge`
   - `CHANGES_REQUESTED` mit formaler GitHub-Review `Request changes` und strukturiertem PR-Kommentar mit konkreten Findings
   - `BLOCKED` durch dokumentierten Blocker im PR und Issue ohne Freigabe
+
+
+## Dev-Reviewer-Direktkommunikation
+
+Reviewer-Feedback geht im neuen Workflow direkt an den Implementer, nicht mehr standardmaessig ueber den Nutzer.
+
+
+Standardmaessig gelten feste Review-Paare:
+
+- `Dev 1` uebergibt an `Reviewer 1`.
+- `Dev 2` uebergibt an `Reviewer 2`.
+
+Wenn davon abgewichen wird, muss der Grund im PR- oder Ticket-Handoff stehen.
+
+Der Nutzer wird nur eingebunden bei:
+
+- Visual Check, sofern noch nicht erfolgt,
+- fachlichen oder produktseitigen Unsicherheiten,
+- Blockern, die der Reviewer nicht selbst klaeren kann,
+- unklaren Repo-/GitHub-Zustaenden, z. B. falsche PR-Issue-Zuordnung, unklare Branches, Scope-Verletzungen oder unerwartete lokale Aenderungen.
+
+Der Reviewer ersetzt nicht den Nutzer als Produktowner. Technisches Review-Pingpong darf direkt mit dem Implementer laufen; Entscheidungen ueber Produkt, Prioritaet oder Repo-Hygiene mit Interpretationsspielraum bleiben beim Nutzer.
 
 ## Reviewer-Entscheidungen
 
