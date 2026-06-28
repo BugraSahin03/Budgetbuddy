@@ -108,7 +108,8 @@ Regeln:
 7. Tests/Build/Linting ausfuehren, soweit sinnvoll.
 8. PR gegen `main` mit `Closes #<issue>` erstellen.
 9. Bei UI-/UX-nahen Tickets oder wenn das Issue es verlangt: Preview aus dem Ticket-Worktree auf separatem Port starten, Handoff fuer den Nutzer schreiben und Issue auf `status:visual-check` setzen.
-10. Nach `Visual Check OK` oder wenn kein Visual Check noetig ist: Handoff fuer Reviewer schreiben und Issue auf `status:review` setzen.
+10. Nach `Visual Check OK` oder wenn kein Visual Check noetig ist: Handoff direkt an den Reviewer schreiben und Issue auf `status:review` setzen.
+11. Nach Reviewer-Approval, Merge und Cleanup die Dispatcher-/Queue-Instanz nach dem naechsten Ticket fragen.
 
 ## Visual Check vor Review
 
@@ -183,9 +184,25 @@ Wenn Aenderungen ausserhalb des Write-Scopes ohne Begruendung auftauchen, ist di
 Entscheidung: CHANGES_REQUESTED
 ```
 
+## Dispatcher-/Queue-Instanz
+
+Der Dispatcher ist die Koordinationsinstanz fuer freie Entwickler. Details stehen in `docs/dispatcher-workflow.md`.
+
+Entwickler fragen den Dispatcher nach dem naechsten Ticket, statt den Nutzer fuer jeden Folgeschritt einzubinden. Der Dispatcher beachtet Prioritaeten, Abhaengigkeiten, Write-Scope-Konflikte, Visual-Check-Pflichten und offene Repo-/GitHub-Zustaende.
+
+
+Standard-Pairing:
+
+- `Dev 1` arbeitet mit `Reviewer 1`.
+- `Dev 2` arbeitet mit `Reviewer 2`.
+
+Dieses Pairing trennt parallele Arbeitsstraenge. Abweichungen muessen dokumentiert werden.
+
+Unklare lokale Aenderungen, Scope-Verletzungen, falsche Branch-/PR-/Issue-Zuordnungen und Merge-/Rebase-Entscheidungen werden weiterhin an den Nutzer eskaliert.
+
 ## Handoff an Reviewer
 
-Implementer liefern am Ende:
+Implementer liefern am Ende direkt an den Reviewer:
 
 ```md
 Issue: #57 ([FIN-011])
@@ -208,7 +225,7 @@ Bekannte Restpunkte:
 
 Der Write-Scope wird im Issue gepflegt und im Handoff nur bei Abweichungen erneut erwaehnt.
 
-Bei Tickets mit Visual Check muss im Reviewer-Handoff zusaetzlich stehen, ob der Nutzer den Visual Check freigegeben hat.
+Bei Tickets mit Visual Check muss im Reviewer-Handoff zusaetzlich stehen, ob der Nutzer den Visual Check freigegeben hat. Ausserdem muss der Handoff den Repo-/GitHub-Zustand nennen: Branch eindeutig, Aenderungen im Write-Scope, keine unzugeordneten lokalen Aenderungen, Issue/PR-Zuordnung eindeutig.
 
 ## Integration und Cleanup nach Freigabe
 

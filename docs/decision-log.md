@@ -1874,3 +1874,62 @@ Auswirkung:
 Folgeaktion:
 
 - Die priorisierte Mobile-Roadmap ist in `docs/mobile-responsive-audit-fin-105.md` dokumentiert.
+
+
+## 2026-06-28 - FIN-113 fuehrt Dispatcher-Workflow fuer Codex-Instanzen ein
+
+Quelle/Ticket: `FIN-113`
+
+Erkenntnis/Entscheidung:
+
+- BudgetBuddy nutzt kuenftig eine Dispatcher-/Queue-Instanz, die freien Entwickler-Instanzen das naechste sinnvolle Ticket empfiehlt.
+- Entwickler und Reviewer duerfen technisches Review-Pingpong direkt miteinander fuehren.
+- Der Nutzer bleibt Produktowner und wird weiterhin bei Visual Check, fachlichen Entscheidungen, Blockern und Repo-/GitHub-Unklarheiten eingebunden.
+- Unzugeordnete lokale Aenderungen, Scope-Verletzungen, falsche Branch-/PR-/Issue-Zuordnungen und Merge-/Rebase-Entscheidungen werden nicht autonom entschieden.
+
+Auswirkung:
+
+- `docs/dispatcher-workflow.md` beschreibt die neue Rolle.
+- `docs/codex-workflow.md`, `docs/review-workflow.md` und `docs/parallel-development.md` verweisen auf direkte Dev-Reviewer-Handoffs und den Dispatcher.
+- Der Pilot soll mit der Mobile-Ticketrunde starten.
+- FIN-113 gilt bis zur dokumentierten Pilot-Auswertung als eingefuehrter Testprozess, nicht als unumkehrbare Prozessfreigabe.
+
+
+## 2026-06-28 - FIN-113 nutzt feste Dev-Reviewer-Paare
+
+Quelle/Ticket: `FIN-113`
+
+Erkenntnis/Entscheidung:
+
+- Fuer den neuen Dispatcher-Workflow werden feste Review-Paare dokumentiert.
+- `Dev 1` uebergibt standardmaessig an `Reviewer 1`.
+- `Dev 2` uebergibt standardmaessig an `Reviewer 2`.
+- Das Pairing soll parallele Arbeitsstraenge nachvollziehbar trennen.
+- Abweichungen sind moeglich, muessen aber im Ticket-/PR-Handoff begruendet werden.
+
+Auswirkung:
+
+- Entwickler muessen ihren festen Reviewer direkt kontaktieren, statt Review-Anfragen ueber den Nutzer weiterzugeben.
+- Der Dispatcher muss bei Ticketzuweisungen das feste Pairing beruecksichtigen.
+- Der Nutzer kann parallele Arbeitsstraenge leichter auseinanderhalten.
+
+Folgeaktion:
+
+- Das Pairing wird im Pilot mit der Mobile-Ticketrunde geprueft.
+- Abweichungen vom Pairing werden im Ticket-/PR-Handoff dokumentiert und nach dem Pilot ausgewertet.
+
+
+## 2026-06-28 - FIN-113 sichtbarer Dispatcher-Thread angelegt
+
+Quelle/Ticket: `FIN-113`
+
+Erkenntnis/Entscheidung:
+
+- Der sichtbare Dispatcher-Chat wurde manuell angelegt.
+- Dispatcher-ID: `019f0e6f-4173-7352-980e-24510daba47e`.
+- Bestehende Paare bleiben: `Dev 1` -> `Reviewer 1`, `Dev 2` -> `Reviewer 2`.
+
+Auswirkung:
+
+- Entwickler sollen nach Ticketabschluss den sichtbaren Dispatcher-Chat nach dem naechsten Ticket fragen.
+- Direkte Dev-Reviewer-Handoffs bleiben innerhalb der festen Paare.

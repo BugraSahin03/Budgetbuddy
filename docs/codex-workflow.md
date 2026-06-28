@@ -13,7 +13,8 @@ Vor jeder Arbeit lesen:
 5. fuer laufende Erkenntnisse: `docs/decision-log.md`
 6. fuer parallele Entwicklung: `docs/parallel-development.md`
 7. fuer Review-Gates: `docs/review-workflow.md`
-8. fuer Architekturentscheidungen: `docs/adr/`
+8. fuer Dispatcher-/Queue-Regeln: `docs/dispatcher-workflow.md`
+9. fuer Architekturentscheidungen: `docs/adr/`
 
 ## Ticket-Arbeit
 
@@ -33,6 +34,7 @@ Wenn eine Instanz an einem Ticket arbeitet:
 10. Reviewer setzt bei Freigabe das Issue auf `status:ready-to-merge`.
 11. Ticket erst nach Merge als `status:done` markieren und schliessen.
 12. Nach dem Merge raeumt der Implementer Worktree sowie lokalen und Remote-Branch auf.
+13. Danach fragt der Implementer die Dispatcher-/Queue-Instanz nach dem naechsten sinnvollen Ticket.
 
 Auch kleine produktive Aenderungen folgen diesem Ablauf. Wenn zwei Tickets dieselben zentralen Dateien aendern muessen, werden sie standardmaessig nicht parallelisiert.
 
@@ -41,6 +43,29 @@ Auch kleine produktive Aenderungen folgen diesem Ablauf. Wenn zwei Tickets diese
 `main` auf GitHub und im Hauptordner `/Volumes/Intenso/Dev/Budgetbuddy` ist die stabile Integrationsbasis.
 
 Der Hauptordner bleibt dauerhaft auf `main` und dient als Kontrollraum, nicht als Implementierungsarbeitsplatz. Jede produktive Aenderung wird in einem eigenen Ticket-Worktree umgesetzt. Details stehen in `docs/parallel-development.md`.
+
+
+## Dispatcher-/Queue-Workflow
+
+Fuer laufende Ticketarbeit gibt es eine Dispatcher-/Queue-Instanz. Details stehen in `docs/dispatcher-workflow.md`.
+
+Kurzfassung:
+
+- Entwickler fragen den Dispatcher nach dem naechsten Ticket.
+- Der Dispatcher beachtet Prioritaeten, Abhaengigkeiten, Write-Scope-Konflikte und Visual-Check-Pflichten.
+- Nach Umsetzung und ggf. Nutzer-Visual-Check schreibt der Entwickler direkt den Reviewer an.
+- Reviewer-Feedback geht direkt an den Entwickler zurueck.
+- Nach Abschluss fragt der Entwickler wieder den Dispatcher nach dem naechsten Ticket.
+- Der Nutzer bleibt eingebunden bei Visual Check, fachlichen Entscheidungen, Blockern sowie unklaren Repo-/GitHub-Zustaenden.
+
+Standard-Pairing fuer direkte Reviews:
+
+- `Dev 1` -> `Reviewer 1`
+- `Dev 2` -> `Reviewer 2`
+
+Ausnahmen muessen im Ticket/PR-Handoff dokumentiert werden.
+
+Repo-/GitHub-Unklarheiten werden nicht autonom entschieden. Dazu gehoeren unzugeordnete lokale Aenderungen, Dateien ausserhalb des Write-Scopes, falsche Branch-/PR-/Issue-Zuordnung, Merge-/Rebase-Konflikte oder widerspruechliche Labels/Status.
 
 ## Review-Gate
 
@@ -62,9 +87,10 @@ Empfohlener Ablauf:
    - letzte formale PR-Review-Entscheidung pruefen (`Approve` oder `Request changes`)
    - bei letzter Entscheidung `CHANGES_REQUESTED` kein Merge
 9. Nur bei `status:ready-to-merge`, letzter formaler Entscheidung `APPROVED` und gruener CI darf in `main` gemerged werden.
-10. Bei `CHANGES_REQUESTED` geht das konkrete Review-Feedback zurueck an den Implementer.
-11. Bei `BLOCKED` wird der Blocker im PR und Issue dokumentiert.
+10. Bei `CHANGES_REQUESTED` geht das konkrete Review-Feedback direkt vom Reviewer zurueck an den Implementer.
+11. Bei `BLOCKED` wird der Blocker im PR und Issue dokumentiert; fachliche oder Repo-/GitHub-Unklarheiten werden an den Nutzer eskaliert.
 12. Nach erfolgreichem Merge raeumt der Implementer Worktree und Branch auf.
+13. Danach fragt der Implementer die Dispatcher-/Queue-Instanz nach dem naechsten Ticket.
 
 Der Reviewer soll kritisch sein und Findings priorisieren, aber keine neuen Features in den Review hineinziehen.
 
