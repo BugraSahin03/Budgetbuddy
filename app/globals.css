@@ -393,6 +393,8 @@ body.app-mobile-nav-open {
 
   .app-nav-link {
     border-radius: 1rem;
+    justify-content: flex-start;
+    min-height: auto;
   }
 
   .app-nav-label {
