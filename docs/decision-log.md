@@ -1892,6 +1892,7 @@ Auswirkung:
 - `docs/dispatcher-workflow.md` beschreibt die neue Rolle.
 - `docs/codex-workflow.md`, `docs/review-workflow.md` und `docs/parallel-development.md` verweisen auf direkte Dev-Reviewer-Handoffs und den Dispatcher.
 - Der Pilot soll mit der Mobile-Ticketrunde starten.
+- FIN-113 gilt bis zur dokumentierten Pilot-Auswertung als eingefuehrter Testprozess, nicht als unumkehrbare Prozessfreigabe.
 
 
 ## 2026-06-28 - FIN-113 nutzt feste Dev-Reviewer-Paare
@@ -1905,6 +1906,17 @@ Erkenntnis/Entscheidung:
 - `Dev 2` uebergibt standardmaessig an `Reviewer 2`.
 - Das Pairing soll parallele Arbeitsstraenge nachvollziehbar trennen.
 - Abweichungen sind moeglich, muessen aber im Ticket-/PR-Handoff begruendet werden.
+
+Auswirkung:
+
+- Entwickler muessen ihren festen Reviewer direkt kontaktieren, statt Review-Anfragen ueber den Nutzer weiterzugeben.
+- Der Dispatcher muss bei Ticketzuweisungen das feste Pairing beruecksichtigen.
+- Der Nutzer kann parallele Arbeitsstraenge leichter auseinanderhalten.
+
+Folgeaktion:
+
+- Das Pairing wird im Pilot mit der Mobile-Ticketrunde geprueft.
+- Abweichungen vom Pairing werden im Ticket-/PR-Handoff dokumentiert und nach dem Pilot ausgewertet.
 
 
 ## 2026-06-28 - FIN-113 sichtbarer Dispatcher-Thread angelegt

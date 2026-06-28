@@ -203,12 +203,30 @@ Bitte nenne mir das naechste sinnvolle Ticket.
 
 ## Pilot fuer FIN-113
 
-Der neue Prozess wird zuerst an der Mobile-Runde getestet.
+Der neue Prozess ist mit dieser Doku-Aenderung noch nicht dauerhaft final freigegeben, sondern wird bewusst als Pilot eingefuehrt.
 
-Empfohlen:
+Pilotstatus:
 
-1. `FIN-105` als Audit/Startpunkt,
-2. danach `FIN-106` oder `FIN-107`,
-3. Dev fragt Dispatcher nach Abschluss nach dem naechsten Ticket,
-4. Reviewer und Dev kommunizieren direkt,
+- Der sichtbare Dispatcher-Chat wurde angelegt.
+- Die festen Dev-Reviewer-Paare wurden dokumentiert.
+- Die Prozessregeln sind in den Workflow-Dokumenten vorbereitet.
+- Der echte Praxistest wird nachgelagert mit der Mobile-Ticketrunde durchgefuehrt.
+
+Empfohlener Pilotablauf:
+
+1. `FIN-105` als Audit/Startpunkt, falls noch offen bzw. als Rueckblick auf bereits erfolgtes Audit.
+2. Danach `FIN-106` oder `FIN-107` ueber den Dispatcher zuweisen lassen.
+3. Dev fragt nach Abschluss den Dispatcher nach dem naechsten Ticket.
+4. Reviewer und Dev kommunizieren direkt im festen Pairing.
 5. Nutzer wird nur fuer Visual Check, fachliche Entscheidungen oder Repo-Unklarheiten eingebunden.
+
+Entscheidungsstelle nach Pilot:
+
+Nach mindestens einem vollstaendigen Ticketdurchlauf mit Dispatcher, Dev, Reviewer und ggf. Visual Check muss im Issue oder Decision Log festgehalten werden:
+
+- Hat der Dispatcher das richtige naechste Ticket empfohlen?
+- Hat Dev -> Reviewer ohne Nutzer-Pingpong funktioniert?
+- Wurden Repo-/GitHub-Unklarheiten korrekt an den Nutzer eskaliert?
+- Soll der Workflow dauerhaft uebernommen, angepasst oder zurueckgestellt werden?
+
+Bis diese Auswertung dokumentiert ist, gilt FIN-113 als Pilotprozess und nicht als unumkehrbare Prozessfreigabe.
