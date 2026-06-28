@@ -6,9 +6,10 @@ import { isActivePath, NAV_ITEMS } from "@/app/components/navigation-config";
 
 type AppNavigationProps = {
   collapsed?: boolean;
+  onNavigate?: () => void;
 };
 
-export function AppNavigation({ collapsed = false }: AppNavigationProps) {
+export function AppNavigation({ collapsed = false, onNavigate }: AppNavigationProps) {
   const pathname = usePathname();
 
   return (
@@ -24,6 +25,7 @@ export function AppNavigation({ collapsed = false }: AppNavigationProps) {
                 className={`app-nav-link ${active ? "app-nav-link-active" : ""}`}
                 aria-current={active ? "page" : undefined}
                 title={collapsed ? item.label : undefined}
+                onClick={onNavigate}
               >
                 <span className="app-nav-label">{item.label}</span>
                 <span className="app-nav-rail-marker" aria-hidden="true" />
