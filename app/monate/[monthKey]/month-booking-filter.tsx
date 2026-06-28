@@ -118,7 +118,7 @@ export function MonthBookingFilter({
           <label className="sr-only" htmlFor="month-booking-filter-select">
             Buchungen filtern
           </label>
-          <span className="relative inline-flex min-w-0 items-center">
+          <span className="relative inline-flex w-full min-w-0 items-center sm:w-auto">
             <span
               aria-hidden="true"
               className="pointer-events-none absolute left-3.5 text-[0.68rem] font-black uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]"
@@ -128,7 +128,7 @@ export function MonthBookingFilter({
             <select
               id="month-booking-filter-select"
               value=""
-              className="min-w-0 appearance-none rounded-full border border-[color:var(--month-line)] bg-white/88 py-2 pl-[4.6rem] pr-9 text-xs font-black text-[color:var(--month-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_18px_rgba(7,27,70,0.035)] outline-none transition hover:border-[color:var(--month-line-strong)] focus:border-[color:var(--month-line-strong)] sm:min-w-72"
+              className="min-w-0 w-full appearance-none rounded-full border border-[color:var(--month-line)] bg-white/88 py-2 pl-[4.6rem] pr-9 text-xs font-black text-[color:var(--month-ink)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9),0_8px_18px_rgba(7,27,70,0.035)] outline-none transition hover:border-[color:var(--month-line-strong)] focus:border-[color:var(--month-line-strong)] sm:min-w-72"
               onChange={(event) => addToken(event.currentTarget.value)}
             >
               <option value="">Kategorie wählen</option>

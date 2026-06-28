@@ -805,6 +805,138 @@ body.app-mobile-nav-open {
   }
 }
 
+@media (max-width: 639px) {
+  .month-reference-hero {
+    border-radius: 1.65rem;
+    padding: 1rem;
+  }
+
+  .month-reference-actions {
+    width: 100%;
+  }
+
+  .month-reference-panel {
+    border-radius: 1.45rem;
+    padding: 1rem;
+  }
+
+  .month-reference-metric-card {
+    min-height: auto;
+    padding: 1rem;
+  }
+
+  .month-reference-marker {
+    border-radius: 1rem;
+    height: 2.25rem;
+    width: 2.25rem;
+  }
+
+  .month-reference-label {
+    font-size: 0.78rem;
+    margin-top: 0.85rem;
+  }
+
+  .month-reference-value {
+    font-size: 1.65rem;
+    line-height: 1;
+    margin-top: 0.35rem;
+  }
+
+  .month-reference-copy {
+    line-height: 1.45;
+    margin-top: 0.55rem;
+  }
+
+  .month-reference-card-action {
+    margin-top: 0.75rem;
+    position: static;
+  }
+
+  .month-budget-stand-card {
+    border-radius: 1.35rem;
+  }
+
+  .month-cash-inline {
+    width: 100%;
+  }
+
+  .month-expense-row {
+    align-items: start;
+    border-radius: 1.05rem;
+    display: grid;
+    gap: 0.35rem 0.75rem;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+    padding: 0.82rem;
+  }
+
+  .month-expense-row > p:last-child {
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .month-expense-title,
+  .month-expense-subtitle,
+  .month-booking-title,
+  .month-category-title {
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  .month-expense-title,
+  .month-expense-subtitle,
+  .month-booking-title {
+    -webkit-box-orient: vertical;
+    display: -webkit-box;
+    overflow: hidden;
+  }
+
+  .month-expense-title,
+  .month-booking-title {
+    -webkit-line-clamp: 2;
+  }
+
+  .month-expense-subtitle {
+    -webkit-line-clamp: 2;
+  }
+
+  .month-booking-row-grid {
+    align-items: start;
+    gap: 0.45rem 0.75rem;
+    grid-template-columns: 2.5rem minmax(0, 1fr);
+  }
+
+  .month-booking-row-grid > * {
+    min-width: 0;
+  }
+
+  .month-booking-date,
+  .month-booking-assignment,
+  .month-booking-amount {
+    grid-column: 2;
+  }
+
+  .month-booking-assignment {
+    justify-self: start;
+    max-width: 100%;
+  }
+
+  .month-booking-amount {
+    justify-self: end;
+    text-align: right;
+    width: 100%;
+  }
+
+  .month-disclosure-summary {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .month-disclosure-summary > span:first-child {
+    font-size: 1.45rem;
+    line-height: 1.05;
+  }
+}
+
 /* FIN-050: keep the reference screen compact while monthly care remains close by. */
 .month-dialog-trigger {
   display: inline-flex;
