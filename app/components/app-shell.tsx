@@ -18,6 +18,7 @@ type AppShellProps = {
 
 const NAV_COLLAPSED_EVENT = "budgetbuddy:navigation-collapsed-change";
 const MOBILE_NAVIGATION_ID = "budgetbuddy-mobile-navigation";
+const MOBILE_NAVIGATION_QUERY = "(max-width: 767.98px)";
 
 function getCollapsedSnapshot() {
   if (typeof window === "undefined") {
@@ -37,6 +38,23 @@ function subscribeToCollapsedState(callback: () => void) {
   };
 }
 
+function getMobileNavigationSnapshot() {
+  if (typeof window === "undefined") {
+    return false;
+  }
+
+  return window.matchMedia(MOBILE_NAVIGATION_QUERY).matches;
+}
+
+function subscribeToMobileNavigationState(callback: () => void) {
+  const mediaQuery = window.matchMedia(MOBILE_NAVIGATION_QUERY);
+  mediaQuery.addEventListener("change", callback);
+
+  return () => {
+    mediaQuery.removeEventListener("change", callback);
+  };
+}
+
 export function AppShell({ children }: AppShellProps) {
   const pathname = usePathname();
   const [mobileNavigationOpen, setMobileNavigationOpen] = useState(false);
@@ -45,7 +63,13 @@ export function AppShell({ children }: AppShellProps) {
     getCollapsedSnapshot,
     () => false,
   );
+  const isMobileNavigation = useSyncExternalStore(
+    subscribeToMobileNavigationState,
+    getMobileNavigationSnapshot,
+    () => false,
+  );
   const activeNavItem = NAV_ITEMS.find((item) => isActivePath(pathname, item.href));
+  const mobileDrawerHidden = isMobileNavigation && !mobileNavigationOpen;
 
   useEffect(() => {
     document.body.classList.toggle("app-mobile-nav-open", mobileNavigationOpen);
@@ -92,7 +116,13 @@ export function AppShell({ children }: AppShellProps) {
         onClick={() => setMobileNavigationOpen(false)}
       />
 
-      <aside id={MOBILE_NAVIGATION_ID} className="app-sidebar" aria-label="App-Shell">
+      <aside
+        id={MOBILE_NAVIGATION_ID}
+        className="app-sidebar"
+        aria-label="App-Shell"
+        aria-hidden={mobileDrawerHidden}
+        inert={mobileDrawerHidden ? true : undefined}
+      >
         <div className="app-brand-row">
           <span className="app-brand-dot" aria-hidden="true" />
           <div className="app-brand-copy">
