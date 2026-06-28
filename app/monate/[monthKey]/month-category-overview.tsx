@@ -78,7 +78,7 @@ export function MonthCategoryOverview({
               />
               <div className="min-w-0 flex-1">
                 <div className="flex items-center justify-between gap-3">
-                  <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
+                  <p className="month-category-title truncate text-sm font-extrabold text-[color:var(--month-ink)]">
                     {row.categoryName}
                   </p>
                   <p
@@ -161,7 +161,7 @@ export function MonthCategoryOverview({
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
+                        <p className="month-category-title truncate text-sm font-extrabold text-[color:var(--month-ink)]">
                           {row.name}
                         </p>
                         <p

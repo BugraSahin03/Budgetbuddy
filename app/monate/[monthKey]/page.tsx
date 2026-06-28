@@ -390,27 +390,29 @@ function ReferenceMetricCard({
   }[tone];
 
   return (
-    <article className="month-reference-card relative min-h-[10rem] p-6">
+    <article className="month-reference-card month-reference-metric-card relative min-h-[10rem] p-6">
       <div
-        className="flex h-10 w-10 items-center justify-center rounded-2xl"
+        className="month-reference-marker flex h-10 w-10 items-center justify-center rounded-2xl"
         style={toneStyle.marker}
       >
         <span className="text-lg font-bold leading-none">{marker}</span>
       </div>
-      <p className="mt-5 text-sm font-semibold text-[color:var(--month-ink-soft)]">
+      <p className="month-reference-label mt-5 text-sm font-semibold text-[color:var(--month-ink-soft)]">
         {label}
       </p>
       <p
-        className="mt-2 text-[2rem] font-extrabold tracking-[-0.055em]"
+        className="month-reference-value mt-2 text-[2rem] font-extrabold tracking-[-0.055em]"
         style={toneStyle.value}
       >
         {value}
       </p>
-      <p className="mt-2 text-xs font-medium text-[color:var(--month-ink-muted)]">
+      <p className="month-reference-copy mt-2 text-xs font-medium text-[color:var(--month-ink-muted)]">
         {copy}
       </p>
       {action ? (
-        <div className={actionClassName ?? "mt-4"}>{action}</div>
+        <div className={actionClassName ?? "month-reference-card-action mt-4"}>
+          {action}
+        </div>
       ) : null}
     </article>
   );
@@ -592,9 +594,9 @@ export default async function MonthDetailPage({
   return (
     <MonthPageShell>
       <section className="month-reference-hero">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="month-eyebrow">Monatsüberblick</p>
-          <div className="flex flex-wrap items-center justify-end gap-3">
+          <div className="month-reference-actions flex flex-wrap items-center justify-start gap-3 sm:justify-end">
             <MonthTodoDialog
               monthKey={month.monthKey}
               monthLabel={month.label}
@@ -718,7 +720,7 @@ export default async function MonthDetailPage({
           copy="Variable Ausgaben ohne separaten Fixkosten-Kontrollblock."
           tone="expense"
           marker="↗"
-          actionClassName="absolute right-6 top-6"
+          actionClassName="month-reference-card-action absolute right-6 top-6"
           action={
             <MonthDialog
               eyebrow="Fixkostenkontrolle"
@@ -1151,10 +1153,10 @@ export default async function MonthDetailPage({
                     categoryVisuals={categoryVisuals}
                   />
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-extrabold text-[color:var(--month-ink)]">
+                    <p className="month-expense-title truncate text-sm font-extrabold text-[color:var(--month-ink)]">
                       {transaction.displayName}
                     </p>
-                    <p className="mt-1 truncate text-xs font-semibold text-[color:var(--month-ink-soft)]">
+                    <p className="month-expense-subtitle mt-1 truncate text-xs font-semibold text-[color:var(--month-ink-soft)]">
                       {transactionSubtitle(transaction)}
                     </p>
                   </div>
@@ -1249,7 +1251,7 @@ export default async function MonthDetailPage({
                       />
                     </div>
                     <h3
-                      className="min-w-0 truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg"
+                      className="month-booking-title min-w-0 truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg"
                       title={
                         transaction.sourceType === "import"
                           ? transaction.description
@@ -1258,25 +1260,27 @@ export default async function MonthDetailPage({
                     >
                       {transaction.displayName}
                     </h3>
-                    <p className="text-sm font-extrabold tracking-[-0.015em] text-[color:var(--month-ink-soft)] sm:text-left">
+                    <p className="month-booking-date text-sm font-extrabold tracking-[-0.015em] text-[color:var(--month-ink-soft)] sm:text-left">
                       {transaction.bookingDate}
                     </p>
                     {canDirectlyEditAssignment ? (
-                      <DirectAssignmentSelect
-                        amountCents={transaction.amountCents}
-                        currentAssignment={currentAssignment}
-                        currentAssignmentLabel={assignmentChipLabel(
-                          transaction,
-                        )}
-                        hasAssignment={hasAssignment}
-                        monthKey={month.monthKey}
-                        transactionId={transaction.id}
-                        categoryOptions={visualCategoryOptions}
-                        specialBudgetOptions={specialBudgetOptions}
-                      />
+                      <span className="month-booking-assignment min-w-0">
+                        <DirectAssignmentSelect
+                          amountCents={transaction.amountCents}
+                          currentAssignment={currentAssignment}
+                          currentAssignmentLabel={assignmentChipLabel(
+                            transaction,
+                          )}
+                          hasAssignment={hasAssignment}
+                          monthKey={month.monthKey}
+                          transactionId={transaction.id}
+                          categoryOptions={visualCategoryOptions}
+                          specialBudgetOptions={specialBudgetOptions}
+                        />
+                      </span>
                     ) : (
                       <span
-                        className={`inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-black ${assignmentTone(transaction)}`}
+                        className={`month-booking-assignment inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-black ${assignmentTone(transaction)}`}
                         data-month-booking-assignment-label
                       >
                         <span className="truncate">
@@ -1285,7 +1289,7 @@ export default async function MonthDetailPage({
                       </span>
                     )}
                     <p
-                      className={`shrink-0 text-left text-lg font-black tracking-[-0.045em] sm:text-right ${amountTone(transaction.amountCents)}`}
+                      className={`month-booking-amount shrink-0 text-left text-lg font-black tracking-[-0.045em] sm:text-right ${amountTone(transaction.amountCents)}`}
                     >
                       {formatEuro(transaction.amountCents)}
                     </p>
