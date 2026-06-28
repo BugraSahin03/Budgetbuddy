@@ -170,7 +170,7 @@ body.app-mobile-nav-open {
 
 .app-brand-row {
   align-items: center;
-  display: flex;
+  display: none;
   gap: 0.65rem;
   min-width: 0;
   width: 100%;
@@ -368,6 +368,7 @@ body.app-mobile-nav-open {
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 1.45rem;
     box-shadow: 0 18px 38px rgba(2, 8, 23, 0.14);
+    display: flex;
     padding: 0.68rem;
   }
 
@@ -397,6 +398,10 @@ body.app-mobile-nav-open {
   .app-nav-label {
     overflow: hidden;
     transition: max-width 180ms ease, opacity 140ms ease;
+  }
+
+  .app-nav-rail-marker {
+    display: none;
   }
 
   .app-shell-collapsed .app-brand-row {
