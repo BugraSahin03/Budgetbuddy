@@ -1771,6 +1771,7 @@ select.month-action-input {
 @media (max-width: 860px) {
   .month-action-dialog {
     height: calc(100vh - 0.5rem);
+    height: calc(100dvh - 0.5rem);
     max-width: calc(100vw - 0.5rem);
   }
 
@@ -1795,6 +1796,244 @@ select.month-action-input {
 
   .month-action-tile-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .month-action-dialog {
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    max-width: 100vw;
+    width: 100vw;
+  }
+
+  .month-action-surface {
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .month-action-topbar {
+    background: rgba(232, 247, 255, 0.96);
+    gap: 0.65rem;
+    min-height: auto;
+    padding: max(0.8rem, env(safe-area-inset-top)) 1rem 0.85rem;
+    position: sticky;
+    top: 0;
+    z-index: 3;
+  }
+
+  .month-action-back {
+    font-size: 0.72rem;
+  }
+
+  .month-action-topbar h2 {
+    font-size: 1rem;
+  }
+
+  .month-action-page {
+    max-width: none;
+    padding: 1rem 0.85rem calc(5.75rem + env(safe-area-inset-bottom));
+  }
+
+  .month-action-tabs {
+    gap: 0.45rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .month-action-tabs > label {
+    border-radius: 0.78rem;
+    font-size: 0.76rem;
+    min-height: 3rem;
+    padding: 0.68rem 0.35rem;
+    text-align: center;
+  }
+
+  .month-action-tabs > label:nth-of-type(3) {
+    grid-column: auto;
+    justify-self: stretch;
+    min-height: 3rem;
+    min-width: 0;
+    padding: 0.68rem 0.35rem;
+  }
+
+  .month-action-form,
+  .month-action-import-shell {
+    margin-top: 1.15rem;
+  }
+
+  .month-action-amount-stage {
+    gap: 0.78rem;
+    padding: 0.35rem 0 0.85rem;
+  }
+
+  .month-action-amount-field {
+    align-items: center;
+    gap: 0.75rem;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .month-action-amount-field span {
+    font-size: clamp(1.35rem, 7vw, 1.85rem);
+  }
+
+  .month-action-amount-field input {
+    font-size: clamp(3rem, 18vw, 4.3rem);
+    max-width: min(14rem, 68vw);
+  }
+
+  .month-action-budget-pill {
+    font-size: 0.68rem;
+    line-height: 1.25;
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .month-action-field-card,
+  .month-action-category-panel,
+  .month-action-import-intro {
+    border-radius: 0.95rem;
+    padding: 1rem;
+  }
+
+  .month-action-label {
+    font-size: 0.68rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .month-action-input {
+    font-size: 1rem;
+    min-height: 2.35rem;
+  }
+
+  .month-action-cash-toggle {
+    min-height: 2.45rem;
+    padding: 0.54rem 0.82rem;
+  }
+
+  .month-action-panel-title-row {
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .month-action-panel-title-row span {
+    font-size: 0.7rem;
+  }
+
+  .month-action-tile-grid {
+    gap: 0.8rem;
+    margin-top: 0.95rem;
+  }
+
+  .month-action-choice {
+    align-content: start;
+    border-radius: 0.95rem;
+    font-size: 0.72rem;
+    gap: 0.48rem;
+    min-height: 6.7rem;
+    overflow-wrap: anywhere;
+    padding: 0.15rem;
+    text-align: center;
+  }
+
+  .month-action-choice-icon {
+    border-radius: 0.76rem;
+    height: 3.3rem;
+    width: 3.3rem;
+  }
+
+  .month-action-save-dock {
+    background: linear-gradient(180deg, rgba(245, 251, 255, 0), rgba(245, 251, 255, 0.96) 28%);
+    bottom: 0;
+    left: 0;
+    margin-top: 0.2rem;
+    padding: 1rem 0.85rem max(0.85rem, env(safe-area-inset-bottom));
+    position: sticky;
+    z-index: 2;
+  }
+
+  .month-action-submit {
+    border-radius: 0.85rem;
+    font-size: 0.98rem;
+    min-height: 3.65rem;
+  }
+
+  .month-action-import-intro h3 {
+    font-size: 1.2rem;
+  }
+
+  .month-action-import-intro p:last-child {
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+
+  .month-import-upload-box {
+    border-radius: 1rem;
+    padding: 1.15rem 0.9rem;
+  }
+
+  .month-import-upload-box em {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+  }
+
+  .month-import-action-row {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .month-import-action-row button {
+    min-height: 2.85rem;
+    width: 100%;
+  }
+}
+
+.month-import-preview-cards {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .month-import-preview-cards {
+    display: grid;
+    gap: 0.75rem;
+    padding: 0.75rem;
+  }
+
+  .month-import-preview-card {
+    background: #ffffff;
+    border: 1px solid rgba(226, 232, 240, 0.92);
+    border-radius: 0.95rem;
+    display: grid;
+    gap: 0.45rem;
+    padding: 0.85rem;
+  }
+
+  .month-import-preview-card > div {
+    align-items: center;
+    display: flex;
+    gap: 0.75rem;
+    justify-content: space-between;
+  }
+
+  .month-import-preview-card p {
+    color: #475569;
+    font-size: 0.78rem;
+    font-weight: 650;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+  }
+
+  .month-import-preview-card h4 {
+    color: #071b46;
+    font-size: 0.92rem;
+    font-weight: 900;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  .month-import-preview-table {
+    display: none;
   }
 }
 
