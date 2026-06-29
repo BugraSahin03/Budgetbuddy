@@ -3286,7 +3286,33 @@ details[open] > .archive-section-summary::after {
 
   .fixed-cost-card {
     border-radius: 1.15rem;
-    padding: 0.85rem;
+    padding: 0.72rem;
+  }
+
+  .fixed-cost-read-card {
+    gap: 0.65rem;
+  }
+
+  .fixed-cost-read-title h3 {
+    font-size: 1rem;
+  }
+
+  .fixed-cost-read-grid {
+    gap: 0.45rem;
+  }
+
+  .fixed-cost-read-grid span {
+    border-radius: 0.78rem;
+    gap: 0.18rem;
+    padding: 0.48rem 0.6rem;
+  }
+
+  .fixed-cost-read-grid small {
+    font-size: 0.61rem;
+  }
+
+  .fixed-cost-read-grid strong {
+    font-size: 0.84rem;
   }
 
   .fixed-cost-edit-form {
