@@ -3254,15 +3254,20 @@ details[open] > .archive-section-summary::after {
 
   .fixed-cost-care-shell {
     gap: 0.95rem;
+    margin-inline: auto;
+    max-width: 22.5rem;
+    width: calc(100% - 0.75rem);
   }
 
   .fixed-cost-hero-panel,
   .fixed-cost-panel {
     border-radius: 1.25rem;
+    width: 100%;
   }
 
   .fixed-cost-hero-panel h1 {
-    font-size: clamp(2.05rem, 13vw, 3.1rem);
+    font-size: clamp(1.95rem, 12vw, 2.85rem);
+    overflow-wrap: anywhere;
   }
 
   .fixed-cost-hero-side {

@@ -18,6 +18,7 @@ describe("FIN-109 mobile secondary areas", () => {
     expect(css).toContain(".budget-category-edit-panel");
     expect(css).toContain(".budget-special-edit-panel");
     expect(css).toContain(".fixed-cost-hero-side");
+    expect(css).toContain("max-width: 22.5rem;");
     expect(css).toContain(".fixed-cost-read-grid span");
     expect(css).toContain("padding: 0.48rem 0.6rem;");
     expect(css).toContain(".archive-section-summary");
