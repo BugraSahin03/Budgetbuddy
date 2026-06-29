@@ -145,7 +145,7 @@ export function ImportForm({
           )}
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="month-import-action-row flex flex-wrap gap-2">
           <button
             type="submit"
             name="intent"
@@ -198,8 +198,44 @@ export function ImportForm({
       ) : null}
 
       {state.result?.rows.length ? (
-        <section className="overflow-x-auto rounded-xl border border-slate-200 bg-white shadow-sm">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+          {surface === "embedded" ? (
+            <div className="month-import-preview-cards">
+              {state.result.rows.map((row, index) => {
+                const suggestion = state.suggestions.find((item) => item.rowIndex === index);
+
+                return (
+                  <article
+                    key={`${row.bookingDate}-${row.amountCents}-${row.description}-${row.endToEndReference}-card`}
+                    className="month-import-preview-card"
+                  >
+                    <div>
+                      <p>{row.bookingDate}</p>
+                      <strong className={amountTone(row.amountCents)}>
+                        {formatEuroFromCents(row.amountCents)}
+                      </strong>
+                    </div>
+                    <h4>{row.description}</h4>
+                    <p>{row.counterparty || "Keine Gegenpartei"}</p>
+                    {row.info ? <p>{row.info}</p> : null}
+                    {suggestion ? (
+                      <span
+                        className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-medium ${
+                          isFixedCostControlLabel(suggestion.label)
+                            ? "border-violet-200 bg-violet-50 text-violet-700"
+                            : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                        }`}
+                      >
+                        {suggestion.label}
+                      </span>
+                    ) : null}
+                  </article>
+                );
+              })}
+            </div>
+          ) : null}
+          <div className="month-import-preview-table overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
                 <th className="px-3 py-2 font-semibold">Buchungstag</th>
@@ -242,7 +278,8 @@ export function ImportForm({
                 );
               })}
             </tbody>
-          </table>
+            </table>
+          </div>
         </section>
       ) : null}
 
