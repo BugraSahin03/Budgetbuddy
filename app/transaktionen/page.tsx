@@ -138,7 +138,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
     defaultAccountId;
 
   return (
-    <section className="space-y-4">
+    <section className="transaction-fallback-shell space-y-4">
       <header className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
@@ -165,7 +165,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
 
       <form
         action={createManualTransactionAction}
-        className="flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
+        className="transaction-quick-transfer flex flex-wrap items-center gap-2 rounded-xl border border-slate-200 bg-white p-3 shadow-sm"
       >
         <input type="hidden" name="bookingDate" value={todayIsoDate} />
         <input type="hidden" name="effectiveMonthKey" value={defaultMonthKey} />
@@ -208,7 +208,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
 
       <form
         action={createManualTransactionAction}
-        className="grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-12"
+        className="transaction-create-form grid gap-3 rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:grid-cols-2 xl:grid-cols-12"
       >
         <div className="xl:col-span-2">
           <label className="text-xs font-semibold uppercase tracking-[0.12em] text-slate-500" htmlFor="new-date">Datum</label>
@@ -295,8 +295,8 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
         </div>
       </form>
 
-      <div className="overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <table className="min-w-full divide-y divide-slate-200 text-sm">
+      <div className="transaction-fallback-table-card overflow-x-auto rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+        <table className="transaction-fallback-table min-w-full divide-y divide-slate-200 text-sm">
           <thead>
             <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
               <th className="px-3 py-2 font-semibold">Datum</th>
@@ -323,19 +323,19 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
 
                 return (
                   <tr key={row.id}>
-                    <td className="px-3 py-2 align-top">{formatDateIso(row.bookingDate)}</td>
-                    <td className="px-3 py-2 align-top">{toTypeLabel(row.transactionType)}</td>
-                    <td className="px-3 py-2 align-top font-medium text-slate-900">{row.description}</td>
-                    <td className="px-3 py-2 align-top text-slate-600">
+                    <td data-label="Datum" className="px-3 py-2 align-top">{formatDateIso(row.bookingDate)}</td>
+                    <td data-label="Typ" className="px-3 py-2 align-top">{toTypeLabel(row.transactionType)}</td>
+                    <td data-label="Buchung" className="px-3 py-2 align-top font-medium text-slate-900">{row.description}</td>
+                    <td data-label="Konto" className="px-3 py-2 align-top text-slate-600">
                       {row.destinationAccountName ? `${row.accountName} -> ${row.destinationAccountName}` : row.accountName}
                     </td>
-                    <td className="px-3 py-2 align-top text-slate-900">{formatEuro(row.amountCents)}</td>
-                    <td className="px-3 py-2 align-top">
+                    <td data-label="Betrag" className="px-3 py-2 align-top text-slate-900">{formatEuro(row.amountCents)}</td>
+                    <td data-label="Status" className="px-3 py-2 align-top">
                       <span className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${statusBadgeClass(status)}`}>
                         {status}
                       </span>
                     </td>
-                    <td className="px-3 py-2">
+                    <td data-label="Aktion" className="px-3 py-2">
                       <form action={updateManualTransactionAction} className="grid gap-2 rounded-lg border border-slate-200 bg-slate-50 p-2">
                         <input type="hidden" name="transactionId" value={row.id} />
 
@@ -416,8 +416,8 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
           </div>
         </header>
 
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <div className="transaction-fallback-table-card overflow-x-auto rounded-lg border border-slate-200">
+          <table className="transaction-fallback-table min-w-full divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
                 <th className="px-3 py-2 font-semibold">Datum</th>
@@ -444,13 +444,13 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
 
                   return (
                     <tr key={`imported-main-${row.id}`}>
-                      <td className="px-3 py-2">{row.bookingDate}</td>
-                      <td className="px-3 py-2 font-medium text-slate-900" title={row.description}>
+                      <td data-label="Datum" className="px-3 py-2">{row.bookingDate}</td>
+                      <td data-label="Buchung" className="px-3 py-2 font-medium text-slate-900" title={row.description}>
                         {row.displayName}
                       </td>
-                      <td className="px-3 py-2 text-slate-700">{row.counterpartyName ?? "-"}</td>
-                      <td className="px-3 py-2 text-slate-900">{formatEuro(row.amountCents)}</td>
-                      <td className="px-3 py-2">
+                      <td data-label="Gegenpartei" className="px-3 py-2 text-slate-700">{row.counterpartyName ?? "-"}</td>
+                      <td data-label="Betrag" className="px-3 py-2 text-slate-900">{formatEuro(row.amountCents)}</td>
+                      <td data-label="Zuordnung" className="px-3 py-2">
                         {assignment === "Zuordnen" ? (
                           <span className="inline-flex rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-700">
                             Zuordnen
@@ -459,7 +459,7 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
                           <span className="text-slate-700">{assignment}</span>
                         )}
                       </td>
-                      <td className="px-3 py-2 text-slate-600">#{row.importRunId ?? "-"}</td>
+                      <td data-label="Importlauf" className="px-3 py-2 text-slate-600">#{row.importRunId ?? "-"}</td>
                     </tr>
                   );
                 })
@@ -468,8 +468,8 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
           </table>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border border-slate-200">
-          <table className="min-w-full divide-y divide-slate-200 text-sm">
+        <div className="transaction-fallback-table-card overflow-x-auto rounded-lg border border-slate-200">
+          <table className="transaction-fallback-table min-w-full divide-y divide-slate-200 text-sm">
             <thead>
               <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
                 <th className="px-3 py-2 font-semibold">Datum</th>
@@ -489,17 +489,17 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
               ) : (
                 importedTransfers.map((row) => (
                   <tr key={`imported-transfer-${row.id}`}>
-                    <td className="px-3 py-2">{row.bookingDate}</td>
-                    <td className="px-3 py-2 font-medium text-slate-900" title={row.description}>
+                    <td data-label="Datum" className="px-3 py-2">{row.bookingDate}</td>
+                    <td data-label="Transfer" className="px-3 py-2 font-medium text-slate-900" title={row.description}>
                       {row.displayName}
                     </td>
-                    <td className="px-3 py-2 text-slate-700">
+                    <td data-label="Strecke" className="px-3 py-2 text-slate-700">
                       {row.sourceAccountName}
                       {" -> "}
                       {row.destinationAccountName ?? "(ohne Zielkonto)"}
                     </td>
-                    <td className="px-3 py-2 text-slate-900">{formatEuro(row.amountCents)}</td>
-                    <td className="px-3 py-2 text-slate-600">#{row.importRunId ?? "-"}</td>
+                    <td data-label="Betrag" className="px-3 py-2 text-slate-900">{formatEuro(row.amountCents)}</td>
+                    <td data-label="Importlauf" className="px-3 py-2 text-slate-600">#{row.importRunId ?? "-"}</td>
                   </tr>
                 ))
               )}
