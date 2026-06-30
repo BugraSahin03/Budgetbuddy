@@ -61,14 +61,14 @@ export default function SettingsPage() {
             <Link
               key={setting.href}
               href={setting.href}
-              className="group overflow-hidden rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/82 shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--month-line-strong)] hover:bg-white hover:shadow-md"
+              className="settings-area-card group overflow-hidden rounded-[1.35rem] border border-[color:var(--month-line)] bg-white/82 shadow-sm transition hover:-translate-y-0.5 hover:border-[color:var(--month-line-strong)] hover:bg-white hover:shadow-md"
             >
-              <div className="grid min-h-32 grid-cols-[6.5rem_minmax(0,1fr)]">
-                <span className="flex h-full items-center justify-center bg-sky-100/85 text-5xl font-black leading-none text-[#0f4c6d] transition group-hover:bg-sky-100">
+              <div className="settings-area-card-inner grid min-h-32 grid-cols-[6.5rem_minmax(0,1fr)]">
+                <span className="settings-area-icon flex h-full items-center justify-center bg-sky-100/85 text-5xl font-black leading-none text-[#0f4c6d] transition group-hover:bg-sky-100">
                   {setting.icon}
                 </span>
                 <div className="flex items-center justify-between gap-3 p-4">
-                  <div>
+                  <div className="settings-area-copy min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
                       {setting.meta}
                     </p>
