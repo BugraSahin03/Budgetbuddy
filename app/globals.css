@@ -3266,8 +3266,9 @@ details[open] > .archive-section-summary::after {
   }
 
   .fixed-cost-hero-panel h1 {
-    font-size: clamp(1.95rem, 12vw, 2.85rem);
-    overflow-wrap: anywhere;
+    font-size: clamp(1.82rem, 11vw, 2.55rem);
+    overflow-wrap: normal;
+    word-break: normal;
   }
 
   .fixed-cost-hero-side {
