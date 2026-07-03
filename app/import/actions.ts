@@ -5,6 +5,7 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
 import {
+  buildSparkasseImportPreviewPlan,
   detectDefaultImportMonthKey,
   persistSparkasseCsvImport,
 } from "@/src/import/persistence";
@@ -109,6 +110,16 @@ export async function parseSparkasseCsvAction(
 
     if (intent === "confirm") {
       const activeRules = listActiveImportRules();
+      const suggestions = buildImportRuleSuggestions({
+        rows: parsed.rows,
+        rules: activeRules,
+        fixedCosts: activeFixedCosts,
+      });
+      const previewPlan = buildSparkasseImportPreviewPlan({
+        rows: parsed.rows,
+        suggestions,
+      });
+
       if (previousState.previewFileToken) {
         previewFileCache.delete(previousState.previewFileToken);
       }
@@ -129,11 +140,8 @@ export async function parseSparkasseCsvAction(
         result: parsed,
         fatalError: null,
         persisted,
-        suggestions: buildImportRuleSuggestions({
-          rows: parsed.rows,
-          rules: activeRules,
-          fixedCosts: activeFixedCosts,
-        }),
+        suggestions,
+        previewPlan,
         detectedMonthKey,
         previewFileToken: null,
         previewFilename: null,
@@ -145,6 +153,10 @@ export async function parseSparkasseCsvAction(
       rows: parsed.rows,
       rules: activeRules,
       fixedCosts: activeFixedCosts,
+    });
+    const previewPlan = buildSparkasseImportPreviewPlan({
+      rows: parsed.rows,
+      suggestions,
     });
 
     if (previousState.previewFileToken) {
@@ -162,6 +174,7 @@ export async function parseSparkasseCsvAction(
       fatalError: null,
       persisted: null,
       suggestions,
+      previewPlan,
       detectedMonthKey,
       previewFileToken,
       previewFilename: resolvedFile.filename,

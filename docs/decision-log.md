@@ -74,6 +74,25 @@ Folgeaktion:
 
 - Keine ADR erforderlich, solange dies eine reine Anzeigenamen-Ergaenzung bleibt und keine Import- oder Dedupe-Strategie veraendert.
 
+## 2026-07-03 - FIN-116 macht Import-Vorschau zur Entscheidungsansicht
+
+Quelle/Ticket: `FIN-116`
+
+Erkenntnis/Entscheidung:
+
+- Die Import-Vorschau trennt normale neue Importzeilen von herausgefilterten Zeilen.
+- Duplikate werden in der Vorschau mit derselben Fingerprint-Logik erkannt wie beim echten Import.
+- Wenn eine Zeile zugleich Duplikat und Regel-/Kontrolltreffer ist, dominiert der Duplikatstatus in der Anzeige.
+
+Auswirkung:
+
+- Die positive Importliste ist die verlaessliche Vorschau fuer normale Monatsbuchungen.
+- Kontrolltreffer und Sonderfaelle bleiben sichtbar, stehen aber nicht mehr vermischt in der normalen Importliste.
+
+Folgeaktion:
+
+- Keine ADR erforderlich, weil die fachliche Dedupe-Logik unveraendert bleibt und nur die Preview-Entscheidung sichtbar gemacht wird.
+
 ## 2026-06-02 - FIN-044 legt UI-Leitbild fuer ruhige Premium-Finanzoberflaeche fest
 
 Quelle/Ticket: `FIN-044`
