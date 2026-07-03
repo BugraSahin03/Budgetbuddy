@@ -617,4 +617,12 @@ describe("database migrations runtime behavior", () => {
 
     expect(row?.value).toBe("deprecated");
   });
+
+  it("adds nullable source row index metadata for imported transactions", () => {
+    const columns = db
+      .prepare("PRAGMA table_info(imported_transactions)")
+      .all() as Array<{ name: string }>;
+
+    expect(columns.some((column) => column.name === "source_row_index")).toBe(true);
+  });
 });

@@ -737,12 +737,31 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
           t.import_run_id AS importRunId
         FROM transactions t
         INNER JOIN accounts source ON source.id = t.account_id
+        LEFT JOIN imported_transactions it ON it.transaction_id = t.id
         LEFT JOIN accounts destination ON destination.id = t.destination_account_id
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN special_budgets sb ON sb.id = t.special_budget_id
         LEFT JOIN special_budget_projects sbp ON sbp.id = sb.project_id
         WHERE t.effective_month_key = ?
-        ORDER BY t.booking_date DESC, t.id DESC
+        ORDER BY
+          t.booking_date DESC,
+          CASE
+            WHEN it.source_row_index IS NULL THEN t.id
+            ELSE COALESCE(
+              (
+                SELECT MAX(imported_t.id)
+                FROM transactions imported_t
+                WHERE imported_t.import_run_id = t.import_run_id
+                  AND imported_t.booking_date = t.booking_date
+              ),
+              t.id
+            )
+          END DESC,
+          CASE
+            WHEN it.source_row_index IS NULL THEN 0
+            ELSE it.source_row_index
+          END ASC,
+          t.id DESC
       `,
     )
     .all(normalizedMonthKey) as Array<Omit<MonthDetailTransactionRow, "displayName">>;
