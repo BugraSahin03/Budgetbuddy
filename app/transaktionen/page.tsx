@@ -325,7 +325,9 @@ export default async function TransactionsPage({ searchParams }: TransactionsPag
                   <tr key={row.id}>
                     <td data-label="Datum" className="px-3 py-2 align-top">{formatDateIso(row.bookingDate)}</td>
                     <td data-label="Typ" className="px-3 py-2 align-top">{toTypeLabel(row.transactionType)}</td>
-                    <td data-label="Buchung" className="px-3 py-2 align-top font-medium text-slate-900">{row.description}</td>
+                    <td data-label="Buchung" className="px-3 py-2 align-top font-medium text-slate-900" title={row.description}>
+                      {row.displayName}
+                    </td>
                     <td data-label="Konto" className="px-3 py-2 align-top text-slate-600">
                       {row.destinationAccountName ? `${row.accountName} -> ${row.destinationAccountName}` : row.accountName}
                     </td>

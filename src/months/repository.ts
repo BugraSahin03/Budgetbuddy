@@ -67,6 +67,7 @@ export type MonthDetailTransactionRow = {
   bookingDate: string;
   effectiveMonthKey: string;
   description: string;
+  displayNameOverride: string | null;
   displayName: string;
   transactionType: TransactionType;
   amountCents: number;
@@ -89,6 +90,7 @@ export type MonthFixedCostControlMatchRow = {
   transactionId: number;
   bookingDate: string;
   description: string;
+  displayNameOverride: string | null;
   displayName: string;
   counterpartyName: string | null;
   amountCents: number;
@@ -223,6 +225,7 @@ function listImportedExpenseRowsForMonth(monthKey: string): Array<{
   bookingDate: string;
   amountCents: number;
   description: string;
+  displayNameOverride: string | null;
   counterpartyName: string | null;
   importRunId: number | null;
 }> {
@@ -234,6 +237,7 @@ function listImportedExpenseRowsForMonth(monthKey: string): Array<{
           booking_date AS bookingDate,
           amount_cents AS amountCents,
           description,
+          display_name_override AS displayNameOverride,
           counterparty_name AS counterpartyName,
           import_run_id AS importRunId
         FROM transactions
@@ -248,6 +252,7 @@ function listImportedExpenseRowsForMonth(monthKey: string): Array<{
     bookingDate: string;
     amountCents: number;
     description: string;
+    displayNameOverride: string | null;
     counterpartyName: string | null;
     importRunId: number | null;
   }>;
@@ -323,9 +328,11 @@ function buildImportedFixedCostControlMatches(
       transactionId: row.id,
       bookingDate: row.bookingDate,
       description: row.description,
+      displayNameOverride: row.displayNameOverride,
       displayName: resolveImportDisplayName({
         sourceType: "import",
         description: row.description,
+        displayNameOverride: row.displayNameOverride,
         counterpartyName: row.counterpartyName,
         aliases,
       }),
@@ -369,6 +376,7 @@ function listManualFixedCostControlRowsForMonth(monthKey: string): Array<{
   bookingDate: string;
   amountCents: number;
   description: string;
+  displayNameOverride: string | null;
   counterpartyName: string | null;
   importRunId: number | null;
 }> {
@@ -381,6 +389,7 @@ function listManualFixedCostControlRowsForMonth(monthKey: string): Array<{
           t.booking_date AS bookingDate,
           t.amount_cents AS amountCents,
           t.description,
+          t.display_name_override AS displayNameOverride,
           t.counterparty_name AS counterpartyName,
           t.import_run_id AS importRunId
         FROM transaction_fixed_cost_control_overrides override
@@ -397,6 +406,7 @@ function listManualFixedCostControlRowsForMonth(monthKey: string): Array<{
     bookingDate: string;
     amountCents: number;
     description: string;
+    displayNameOverride: string | null;
     counterpartyName: string | null;
     importRunId: number | null;
   }>;
@@ -412,9 +422,11 @@ function buildManualFixedCostControlMatches(
     transactionId: row.id,
     bookingDate: row.bookingDate,
     description: row.description,
+    displayNameOverride: row.displayNameOverride,
     displayName: resolveImportDisplayName({
       sourceType: row.sourceType,
       description: row.description,
+      displayNameOverride: row.displayNameOverride,
       counterpartyName: row.counterpartyName,
       aliases,
     }),
@@ -721,6 +733,7 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
           t.booking_date AS bookingDate,
           t.effective_month_key AS effectiveMonthKey,
           t.description,
+          t.display_name_override AS displayNameOverride,
           t.transaction_type AS transactionType,
           t.amount_cents AS amountCents,
           t.account_id AS accountId,
@@ -772,6 +785,7 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
     displayName: resolveImportDisplayName({
       sourceType: row.sourceType,
       description: row.description,
+      displayNameOverride: row.displayNameOverride,
       counterpartyName: row.counterpartyName,
       aliases,
     }),

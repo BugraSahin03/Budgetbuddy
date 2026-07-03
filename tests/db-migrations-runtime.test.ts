@@ -64,6 +64,54 @@ describe("database migrations runtime behavior", () => {
     ]);
   });
 
+  it("adds optional transaction display-name override without replacing descriptions", () => {
+    const columns = db
+      .prepare("PRAGMA table_info(transactions)")
+      .all() as Array<{ name: string }>;
+
+    expect(columns.map((column) => column.name)).toContain(
+      "display_name_override",
+    );
+
+    const account = db
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as AccountRow;
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id,
+          transaction_type,
+          booking_date,
+          effective_month_key,
+          amount_cents,
+          currency_code,
+          description,
+          display_name_override,
+          source_type
+        )
+        VALUES (?, 'income', '2033-01-02', '2033-01', 120000, 'EUR', 'Originaltext', 'Lesbarer Name', 'manual')
+      `,
+    ).run(account.id);
+
+    const row = db
+      .prepare(
+        `
+          SELECT
+            description,
+            display_name_override AS displayNameOverride
+          FROM transactions
+          WHERE description = 'Originaltext'
+        `,
+      )
+      .get() as { description: string; displayNameOverride: string };
+
+    expect(row).toEqual({
+      description: "Originaltext",
+      displayNameOverride: "Lesbarer Name",
+    });
+  });
+
   it("stores special budget monthly shares under a project", () => {
     const project = db
       .prepare(

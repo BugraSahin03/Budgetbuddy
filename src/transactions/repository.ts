@@ -11,6 +11,8 @@ export type TransactionListItem = {
   bookingDate: string;
   effectiveMonthKey: string;
   description: string;
+  displayNameOverride: string | null;
+  displayName: string;
   accountName: string;
   destinationAccountName: string | null;
   transactionType: TransactionType;
@@ -133,6 +135,24 @@ function normalizeDescription(description: string): string {
 
   if (normalized.length > 140) {
     throw new Error("Beschreibung darf maximal 140 Zeichen enthalten.");
+  }
+
+  return normalized;
+}
+
+function normalizeDisplayNameOverride(displayNameOverride: string): string | null {
+  const normalized = displayNameOverride.trim();
+
+  if (normalized.length === 0) {
+    return null;
+  }
+
+  if (normalized.length < 2) {
+    throw new Error("Anzeigename muss mindestens 2 Zeichen enthalten.");
+  }
+
+  if (normalized.length > 80) {
+    throw new Error("Anzeigename darf maximal 80 Zeichen enthalten.");
   }
 
   return normalized;
@@ -386,6 +406,7 @@ export function listManualTransactions(): TransactionListItem[] {
           t.booking_date AS bookingDate,
           t.effective_month_key AS effectiveMonthKey,
           t.description,
+          t.display_name_override AS displayNameOverride,
           source.name AS accountName,
           destination.name AS destinationAccountName,
           t.transaction_type AS transactionType,
@@ -402,9 +423,41 @@ export function listManualTransactions(): TransactionListItem[] {
         ORDER BY t.booking_date DESC, t.id DESC
       `,
     )
-    .all() as TransactionListItem[];
+    .all() as Array<Omit<TransactionListItem, "displayName">>;
 
-  return rows;
+  return rows.map((row) => ({
+    ...row,
+    displayName: row.displayNameOverride ?? row.description,
+  }));
+}
+
+export function updateTransactionDisplayNameOverrideForMonth(
+  transactionId: number,
+  monthKey: string,
+  displayNameOverride: string,
+): void {
+  const id = ensurePositiveInt(transactionId, "Transaktion");
+  const effectiveMonthKey = normalizeEffectiveMonthKey(monthKey, monthKey);
+  const normalizedOverride = normalizeDisplayNameOverride(displayNameOverride);
+
+  assertMonthIsOpen(effectiveMonthKey);
+
+  const result = getDb()
+    .prepare(
+      `
+        UPDATE transactions
+        SET
+          display_name_override = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+          AND effective_month_key = ?
+      `,
+    )
+    .run(normalizedOverride, id, effectiveMonthKey);
+
+  if (result.changes === 0) {
+    throw new Error("Buchung passt nicht zum ausgewählten Monat.");
+  }
 }
 
 export function listActiveAccountOptions(): AccountOption[] {

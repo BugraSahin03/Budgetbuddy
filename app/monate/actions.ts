@@ -24,6 +24,7 @@ import {
   type TransactionType,
   updateManualTransaction,
   updateExpenseAssignmentForMonth,
+  updateTransactionDisplayNameOverrideForMonth,
 } from "@/src/transactions/repository";
 
 function toSingleString(value: FormDataEntryValue | null): string {
@@ -460,6 +461,42 @@ export async function updateMonthlyManualTransactionAction(
     redirectTarget = monthBookingHref(monthKey, {
       bookingEdit: "1",
       notice: "Buchung gespeichert.",
+    });
+  } catch (error) {
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      error: toErrorMessage(error),
+    });
+  }
+
+  redirect(redirectTarget);
+}
+
+export async function updateMonthlyTransactionDisplayNameAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    const transactionId = parseTransactionId(formData.get("transactionId"));
+
+    updateTransactionDisplayNameOverrideForMonth(
+      transactionId,
+      monthKey,
+      toSingleString(formData.get("displayNameOverride")),
+    );
+
+    revalidatePath("/");
+    revalidatePath("/monate");
+    revalidatePath(`/monate/${monthKey}`);
+    revalidatePath("/transaktionen");
+    revalidatePath("/import");
+    revalidatePath("/auswertungen");
+
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      notice: "Anzeigename gespeichert.",
     });
   } catch (error) {
     redirectTarget = monthBookingHref(monthKey, {

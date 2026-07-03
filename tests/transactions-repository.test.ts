@@ -250,6 +250,60 @@ describe("transactions repository", () => {
     expect(refund?.amountCents).toBe(1234);
   });
 
+  it("stores and clears transaction display-name overrides without changing descriptions", () => {
+    cleanupTestTransactions();
+
+    const accountId = (dbClient
+      .getDb()
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as { id: number }).id;
+
+    transactions.createManualTransaction({
+      bookingDate: "2026-05-22",
+      description: `${PREFIX}ReadableOriginal`,
+      transactionType: "income",
+      amountInput: "100",
+      accountId,
+      destinationAccountId: null,
+      categoryId: null,
+      specialBudgetId: null,
+    });
+
+    const created = transactions
+      .listManualTransactions()
+      .find((row) => row.description === `${PREFIX}ReadableOriginal`);
+
+    expect(created?.displayName).toBe(`${PREFIX}ReadableOriginal`);
+
+    transactions.updateTransactionDisplayNameOverrideForMonth(
+      created!.id,
+      "2026-05",
+      "Gehalt Bonus",
+    );
+
+    const renamed = transactions
+      .listManualTransactions()
+      .find((row) => row.id === created!.id);
+
+    expect(renamed?.description).toBe(`${PREFIX}ReadableOriginal`);
+    expect(renamed?.displayNameOverride).toBe("Gehalt Bonus");
+    expect(renamed?.displayName).toBe("Gehalt Bonus");
+
+    transactions.updateTransactionDisplayNameOverrideForMonth(
+      created!.id,
+      "2026-05",
+      "",
+    );
+
+    const cleared = transactions
+      .listManualTransactions()
+      .find((row) => row.id === created!.id);
+
+    expect(cleared?.description).toBe(`${PREFIX}ReadableOriginal`);
+    expect(cleared?.displayNameOverride).toBeNull();
+    expect(cleared?.displayName).toBe(`${PREFIX}ReadableOriginal`);
+  });
+
   it("updates and deletes manual transaction", () => {
     cleanupTestTransactions();
 

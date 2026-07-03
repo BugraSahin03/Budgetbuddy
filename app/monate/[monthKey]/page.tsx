@@ -15,6 +15,7 @@ import {
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
 import { DirectAssignmentSelect } from "@/app/monate/[monthKey]/direct-assignment-select";
+import { InlineDisplayNameEditor } from "@/app/monate/[monthKey]/display-name-inline-editor";
 import {
   MonthBookingFilter,
   type MonthBookingFilterOption,
@@ -1250,16 +1251,31 @@ export default async function MonthDetailPage({
                         categoryVisuals={categoryVisuals}
                       />
                     </div>
-                    <h3
-                      className="month-booking-title min-w-0 truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg"
-                      title={
-                        transaction.sourceType === "import"
-                          ? transaction.description
-                          : undefined
-                      }
-                    >
-                      {transaction.displayName}
-                    </h3>
+                    {canEditBookings ? (
+                      <InlineDisplayNameEditor
+                        monthKey={month.monthKey}
+                        transactionId={transaction.id}
+                        sourceType={transaction.sourceType}
+                        displayName={transaction.displayName}
+                        displayNameOverride={transaction.displayNameOverride}
+                        originalDescription={
+                          transaction.sourceType === "import"
+                            ? transaction.description
+                            : undefined
+                        }
+                      />
+                    ) : (
+                      <h3
+                        className="month-booking-title min-w-0 truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg"
+                        title={
+                          transaction.sourceType === "import"
+                            ? transaction.description
+                            : undefined
+                        }
+                      >
+                        {transaction.displayName}
+                      </h3>
+                    )}
                     <p className="month-booking-date text-sm font-extrabold tracking-[-0.015em] text-[color:var(--month-ink-soft)] sm:text-left">
                       {transaction.bookingDate}
                     </p>
@@ -1389,7 +1405,7 @@ export default async function MonthDetailPage({
                               />
                             </label>
                             <label className="grid gap-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
-                              Name
+                              Beschreibung
                               <input
                                 name="description"
                                 defaultValue={transaction.description}
@@ -1460,72 +1476,76 @@ export default async function MonthDetailPage({
                             Speichern
                           </button>
                         </form>
-                      ) : canEditAssignment ? (
-                        <form
-                          action={updateMonthlyTransactionAssignmentAction}
-                          className="grid gap-3"
-                        >
-                          <input
-                            type="hidden"
-                            name="monthKey"
-                            value={month.monthKey}
-                          />
-                          <input type="hidden" name="bookingEdit" value="1" />
-                          <input
-                            type="hidden"
-                            name="transactionId"
-                            value={transaction.id}
-                          />
-                          <label className="grid gap-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
-                            Kategoriezuordnung
-                            <select
-                              name="assignment"
-                              defaultValue={currentAssignment}
-                              className="rounded-xl border border-[color:var(--month-line)] bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-[color:var(--month-ink)]"
-                            >
-                              <option value="">Zuordnen</option>
-                              <optgroup label="Kategorien">
-                                {categoryOptions.map((category) => (
-                                  <option
-                                    key={category.id}
-                                    value={`category:${category.id}`}
-                                  >
-                                    {category.iconName
-                                      ? `${category.iconName} `
-                                      : ""}
-                                    {category.name}
-                                  </option>
-                                ))}
-                              </optgroup>
-                              {specialBudgetOptions.length > 0 ? (
-                                <optgroup label="Sonderkategorien">
-                                  {specialBudgetOptions.map((budget) => (
-                                    <option
-                                      key={budget.id}
-                                      value={`specialBudget:${budget.id}`}
-                                    >
-                                      {budget.iconName
-                                        ? `${budget.iconName} `
-                                        : ""}
-                                      Sonderkategorie · {budget.name}
-                                    </option>
-                                  ))}
-                                </optgroup>
-                              ) : null}
-                            </select>
-                          </label>
-                          <button
-                            type="submit"
-                            className="w-fit rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
-                          >
-                            Zuordnung speichern
-                          </button>
-                        </form>
                       ) : (
-                        <p className="text-sm font-semibold text-[color:var(--month-ink-soft)]">
-                          Diese Buchung hat keine Kategoriezuordnung und wird hier
-                          nur lesbar angezeigt.
-                        </p>
+                        <>
+                          {canEditAssignment ? (
+                            <form
+                              action={updateMonthlyTransactionAssignmentAction}
+                              className="grid gap-3"
+                            >
+                              <input
+                                type="hidden"
+                                name="monthKey"
+                                value={month.monthKey}
+                              />
+                              <input type="hidden" name="bookingEdit" value="1" />
+                              <input
+                                type="hidden"
+                                name="transactionId"
+                                value={transaction.id}
+                              />
+                              <label className="grid gap-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
+                                Kategoriezuordnung
+                                <select
+                                  name="assignment"
+                                  defaultValue={currentAssignment}
+                                  className="rounded-xl border border-[color:var(--month-line)] bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-[color:var(--month-ink)]"
+                                >
+                                  <option value="">Zuordnen</option>
+                                  <optgroup label="Kategorien">
+                                    {categoryOptions.map((category) => (
+                                      <option
+                                        key={category.id}
+                                        value={`category:${category.id}`}
+                                      >
+                                        {category.iconName
+                                          ? `${category.iconName} `
+                                          : ""}
+                                        {category.name}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                  {specialBudgetOptions.length > 0 ? (
+                                    <optgroup label="Sonderkategorien">
+                                      {specialBudgetOptions.map((budget) => (
+                                        <option
+                                          key={budget.id}
+                                          value={`specialBudget:${budget.id}`}
+                                        >
+                                          {budget.iconName
+                                            ? `${budget.iconName} `
+                                            : ""}
+                                          Sonderkategorie · {budget.name}
+                                        </option>
+                                      ))}
+                                    </optgroup>
+                                  ) : null}
+                                </select>
+                              </label>
+                              <button
+                                type="submit"
+                                className="w-fit rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                              >
+                                Zuordnung speichern
+                              </button>
+                            </form>
+                          ) : (
+                            <p className="text-sm font-semibold text-[color:var(--month-ink-soft)]">
+                              Diese Buchung hat keine Kategoriezuordnung und wird hier
+                              nur lesbar angezeigt.
+                            </p>
+                          )}
+                        </>
                       )}
 
                       {isManual ? (

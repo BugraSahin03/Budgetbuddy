@@ -189,7 +189,16 @@ describe("schema migrations", () => {
     expect(sql).toContain("idx_imported_transactions_run_source_row");
   });
 
+  it("contains migration for transaction display-name overrides", () => {
+    const sql = migrations.find((migration) => migration.id === "0017_fin_115")
+      ?.sql ?? "";
+
+    expect(sql).toContain("ALTER TABLE transactions");
+    expect(sql).toContain("display_name_override TEXT");
+    expect(sql).toContain("idx_transactions_display_name_override");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0016_fin_114");
+    expect(getLatestSchemaVersion()).toBe("0017_fin_115");
   });
 });

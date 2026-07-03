@@ -8,6 +8,7 @@ export type ImportedTransactionListItem = {
   id: number;
   bookingDate: string;
   description: string;
+  displayNameOverride: string | null;
   displayName: string;
   amountCents: number;
   transactionType: "expense" | "income" | "transfer" | "refund";
@@ -28,6 +29,7 @@ export function listImportedTransactions(): ImportedTransactionListItem[] {
           t.id,
           t.booking_date AS bookingDate,
           t.description,
+          t.display_name_override AS displayNameOverride,
           t.amount_cents AS amountCents,
           t.transaction_type AS transactionType,
           source.name AS sourceAccountName,
@@ -71,6 +73,7 @@ export function listImportedTransactions(): ImportedTransactionListItem[] {
     displayName: resolveImportDisplayName({
       sourceType: "import",
       description: row.description,
+      displayNameOverride: row.displayNameOverride,
       counterpartyName: row.counterpartyName,
       aliases,
     }),

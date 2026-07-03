@@ -89,5 +89,22 @@ describe("FIN-059 display names in import-backed lists", () => {
     const month = monthsRepository.getMonthDetail("2026-06");
     expect(month.transactions[0].description).toBe(originalDescription);
     expect(month.transactions[0].displayName).toBe("Amazon");
+
+    db.prepare(
+      `
+        UPDATE transactions
+        SET display_name_override = 'Kindle Geschenk'
+        WHERE id = ?
+      `,
+    ).run(transactionId);
+
+    const importedWithOverride = importRepository.listImportedTransactions();
+    expect(importedWithOverride[0].description).toBe(originalDescription);
+    expect(importedWithOverride[0].displayName).toBe("Kindle Geschenk");
+
+    const monthWithOverride = monthsRepository.getMonthDetail("2026-06");
+    expect(monthWithOverride.transactions[0].description).toBe(originalDescription);
+    expect(monthWithOverride.transactions[0].displayNameOverride).toBe("Kindle Geschenk");
+    expect(monthWithOverride.transactions[0].displayName).toBe("Kindle Geschenk");
   });
 });
