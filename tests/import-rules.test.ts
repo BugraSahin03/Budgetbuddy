@@ -113,6 +113,7 @@ describe("import rules", () => {
 
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0].label).toBe("Transfer -> Bargeld");
+    expect(suggestions[0].ruleName).toBe("ATM -> Bargeld Transfer");
   });
 
   it("ships editable default N26 control rule", () => {
@@ -150,6 +151,7 @@ describe("import rules", () => {
 
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0].label).toBe("Fixkosten-Kontrolle: N26-Sammeltransfer");
+    expect(suggestions[0].ruleName).toBe("N26 Sammeltransfer Kontrolle");
   });
 
   it("recognizes direct fixed-cost debit as control hit", async () => {

@@ -64,6 +64,20 @@ function parseImportControlPatternInput(formData: FormData) {
   return parseRuleInputFromFormData(normalizedFormData);
 }
 
+function parseCashTransferRuleInput(formData: FormData) {
+  const normalizedFormData = new FormData();
+
+  for (const [key, value] of formData.entries()) {
+    normalizedFormData.set(key, value);
+  }
+
+  normalizedFormData.set("targetType", "transfer_cash");
+  normalizedFormData.delete("categoryId");
+  normalizedFormData.delete("specialBudgetId");
+
+  return parseRuleInputFromFormData(normalizedFormData);
+}
+
 function parseProjectId(formData: FormData): number {
   const projectId = Number.parseInt(String(formData.get("projectId") ?? ""), 10);
 
@@ -182,7 +196,10 @@ export async function createImportRuleSettingsAction(
     redirect("/einstellungen/import-regeln?error=" + encodeMessage(errorMessage));
   }
 
-  redirect("/einstellungen/import-regeln?notice=" + encodeMessage("Import-Regel erstellt."));
+  redirect(
+    "/einstellungen/import-regeln?notice=" +
+      encodeMessage("Fixkosten-Kontrollmuster erstellt."),
+  );
 }
 
 export async function updateImportRuleSettingsAction(
@@ -206,7 +223,57 @@ export async function updateImportRuleSettingsAction(
 
   redirect(
     "/einstellungen/import-regeln?notice=" +
-      encodeMessage("Import-Regel gespeichert."),
+      encodeMessage("Fixkosten-Kontrollmuster gespeichert."),
+  );
+}
+
+export async function createCashTransferRuleSettingsAction(
+  formData: FormData,
+): Promise<never> {
+  let errorMessage: string | null = null;
+
+  try {
+    createImportRule(parseCashTransferRuleInput(formData));
+    revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/bargeld-transferregeln");
+    revalidatePath("/import");
+    revalidatePath("/monate");
+  } catch (error) {
+    errorMessage = toErrorMessage(error);
+  }
+
+  if (errorMessage) {
+    redirect("/einstellungen/bargeld-transferregeln?error=" + encodeMessage(errorMessage));
+  }
+
+  redirect(
+    "/einstellungen/bargeld-transferregeln?notice=" +
+      encodeMessage("Bargeld-/Transferregel erstellt."),
+  );
+}
+
+export async function updateCashTransferRuleSettingsAction(
+  formData: FormData,
+): Promise<never> {
+  let errorMessage: string | null = null;
+
+  try {
+    updateImportRule(parseImportRuleId(formData), parseCashTransferRuleInput(formData));
+    revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/bargeld-transferregeln");
+    revalidatePath("/import");
+    revalidatePath("/monate");
+  } catch (error) {
+    errorMessage = toErrorMessage(error);
+  }
+
+  if (errorMessage) {
+    redirect("/einstellungen/bargeld-transferregeln?error=" + encodeMessage(errorMessage));
+  }
+
+  redirect(
+    "/einstellungen/bargeld-transferregeln?notice=" +
+      encodeMessage("Bargeld-/Transferregel gespeichert."),
   );
 }
 

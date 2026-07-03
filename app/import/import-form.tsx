@@ -22,6 +22,10 @@ function isFixedCostControlLabel(label: string): boolean {
   return label.startsWith("Fixkosten-Kontrolle:");
 }
 
+function renderSuggestionText(params: { label: string; ruleName: string }): string {
+  return `${params.label} · Regel: ${params.ruleName}`;
+}
+
 export function resolveEffectiveMonthDefault(params: {
   detectedMonthKey: string | null;
   defaultEffectiveMonthKey?: string;
@@ -226,7 +230,7 @@ export function ImportForm({
                             : "border-emerald-200 bg-emerald-50 text-emerald-700"
                         }`}
                       >
-                        {suggestion.label}
+                        {renderSuggestionText(suggestion)}
                       </span>
                     ) : null}
                   </article>
@@ -268,7 +272,7 @@ export function ImportForm({
                             : "border-emerald-200 bg-emerald-50 text-emerald-700"
                         }`}
                       >
-                        {suggestion.label}
+                        {renderSuggestionText(suggestion)}
                       </span>
                     ) : (
                       <span className="text-xs text-slate-500">-</span>
