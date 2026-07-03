@@ -812,6 +812,14 @@ CREATE INDEX IF NOT EXISTS idx_transaction_fixed_cost_control_overrides_mode
 ON transaction_fixed_cost_control_overrides(mode);
 `;
 
+const fin114MigrationSql = `
+ALTER TABLE imported_transactions
+ADD COLUMN source_row_index INTEGER CHECK (source_row_index IS NULL OR source_row_index >= 0);
+
+CREATE INDEX IF NOT EXISTS idx_imported_transactions_run_source_row
+ON imported_transactions(import_run_id, source_row_index);
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -887,6 +895,11 @@ export const migrations: readonly Migration[] = [
     id: "0015_fin_100",
     name: "FIN-100 add manual fixed-cost control overrides",
     sql: fin100MigrationSql,
+  },
+  {
+    id: "0016_fin_114",
+    name: "FIN-114 preserve import source row order",
+    sql: fin114MigrationSql,
   },
 ];
 
