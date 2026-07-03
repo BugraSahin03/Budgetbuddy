@@ -820,6 +820,21 @@ CREATE INDEX IF NOT EXISTS idx_imported_transactions_run_source_row
 ON imported_transactions(import_run_id, source_row_index);
 `;
 
+const fin115MigrationSql = `
+ALTER TABLE transactions
+ADD COLUMN display_name_override TEXT CHECK (
+  display_name_override IS NULL
+  OR (
+    length(trim(display_name_override)) BETWEEN 2 AND 80
+    AND display_name_override = trim(display_name_override)
+  )
+);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_display_name_override
+ON transactions(display_name_override)
+WHERE display_name_override IS NOT NULL;
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -901,6 +916,11 @@ export const migrations: readonly Migration[] = [
     name: "FIN-114 preserve import source row order",
     sql: fin114MigrationSql,
   },
+  {
+    id: "0017_fin_115",
+    name: "FIN-115 add transaction display-name override",
+    sql: fin115MigrationSql,
+  },
 ];
 
 type MigrationRow = {
@@ -945,6 +965,15 @@ export function applyMigrations(db: Database.Database): void {
         tableColumnExists(db, "fixed_costs", "sort_order")
       ) {
         db.exec("CREATE INDEX IF NOT EXISTS idx_fixed_costs_sort_order ON fixed_costs(sort_order);");
+      } else if (
+        pendingMigration.id === "0017_fin_115" &&
+        tableColumnExists(db, "transactions", "display_name_override")
+      ) {
+        db.exec(`
+          CREATE INDEX IF NOT EXISTS idx_transactions_display_name_override
+          ON transactions(display_name_override)
+          WHERE display_name_override IS NOT NULL;
+        `);
       } else {
         db.exec(pendingMigration.sql);
       }

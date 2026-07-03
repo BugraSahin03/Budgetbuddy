@@ -63,6 +63,25 @@ describe("FIN-059 import display names", () => {
       }),
     ).toBe("Amazon Marketplace");
   });
+
+  it("uses a transaction-specific override before aliases or heuristics", () => {
+    expect(
+      resolveImportDisplayName({
+        sourceType: "import",
+        description: "FOLGELASTSCHRIFT | AMZN Mktp DE 123456",
+        displayNameOverride: "Kindle Geschenk",
+        aliases: [{ pattern: "AMZN", displayName: "Amazon" }],
+      }),
+    ).toBe("Kindle Geschenk");
+
+    expect(
+      resolveImportDisplayName({
+        sourceType: "manual",
+        description: "Manuelle alte Beschreibung",
+        displayNameOverride: "Lesbarer manueller Name",
+      }),
+    ).toBe("Lesbarer manueller Name");
+  });
 });
 
 describe("FIN-080 Sparkasse display-name heuristics", () => {

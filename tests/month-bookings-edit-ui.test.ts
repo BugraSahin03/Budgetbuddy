@@ -12,6 +12,9 @@ function readProjectFile(path: string): string {
 describe("FIN-060/FIN-084 month bookings edit UI", () => {
   it("keeps full booking edits behind edit mode while allowing direct assignment", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const displayNameEditor = readProjectFile(
+      "app/monate/[monthKey]/display-name-inline-editor.tsx",
+    );
     const directSelect = readProjectFile(
       "app/monate/[monthKey]/direct-assignment-select.tsx",
     );
@@ -25,6 +28,17 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("canEditBookings ? (");
     expect(page).toContain("canDirectlyEditAssignment");
     expect(page).toContain("!canEditBookings");
+    expect(page).toContain("InlineDisplayNameEditor");
+    expect(displayNameEditor).toContain('name="displayNameOverride"');
+    expect(displayNameEditor).toContain(
+      'aria-label="Anzeigename direkt bearbeiten"',
+    );
+    expect(displayNameEditor).toContain("Anzeigename speichern");
+    expect(displayNameEditor).toContain(
+      "fetch(`/monate/${monthKey}/display-names`",
+    );
+    expect(displayNameEditor).not.toContain("requestSubmit");
+    expect(page).not.toContain("placeholder={transaction.displayName}");
     expect(page).toContain("DirectAssignmentSelect");
     expect(page).toContain("currentAssignmentLabel");
     expect(directSelect).toContain("setIsPending(true)");
@@ -95,6 +109,24 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(directSelect).not.toContain("requestSubmit");
   });
 
+  it("saves inline display names through a month API route without page navigation", () => {
+    const route = readProjectFile(
+      "app/monate/[monthKey]/display-names/route.ts",
+    );
+    const displayNameEditor = readProjectFile(
+      "app/monate/[monthKey]/display-name-inline-editor.tsx",
+    );
+
+    expect(route).toContain("export async function PATCH");
+    expect(route).toContain("updateTransactionDisplayNameOverrideForMonth");
+    expect(route).toContain("NextResponse.json");
+    expect(displayNameEditor).toContain("event.preventDefault()");
+    expect(displayNameEditor).toContain(
+      "fetch(`/monate/${monthKey}/display-names`",
+    );
+    expect(displayNameEditor).not.toContain("redirect");
+  });
+
   it("updates the visible category overview after direct assignment changes", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
     const directSelect = readProjectFile(
@@ -126,6 +158,19 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(updateAction).toContain("redirectTarget = monthBookingHref");
     expect(updateAction).toContain("redirect(redirectTarget);");
     expect(updateAction).not.toContain("redirect(\n      monthBookingHref");
+  });
+
+  it("keeps display-name overrides separate from manual booking detail edits", () => {
+    const actions = readProjectFile("app/monate/actions.ts");
+    const updateManualAction = actions.slice(
+      actions.indexOf("export async function updateMonthlyManualTransactionAction"),
+      actions.indexOf("export async function updateMonthlyTransactionDisplayNameAction"),
+    );
+
+    expect(updateManualAction).toContain("updateManualTransaction");
+    expect(updateManualAction).not.toContain(
+      "updateTransactionDisplayNameOverrideForMonth",
+    );
   });
 
   it("renders quiet read-only chips and semantic symbol tiles instead of permanent type/source fields", () => {

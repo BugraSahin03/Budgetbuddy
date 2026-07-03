@@ -7,6 +7,7 @@ type DisplayNameInput = {
   sourceType?: "manual" | "import";
   description: string;
   counterpartyName?: string | null;
+  displayNameOverride?: string | null;
   aliases?: ImportDisplayAliasMatcher[];
 };
 
@@ -231,6 +232,11 @@ export function buildHeuristicImportDisplayName(
 }
 
 export function resolveImportDisplayName(input: DisplayNameInput): string {
+  const override = normalizeWhitespace(input.displayNameOverride ?? "");
+  if (override.length > 0) {
+    return override;
+  }
+
   const original = normalizeWhitespace(input.description);
 
   if (input.sourceType && input.sourceType !== "import") {

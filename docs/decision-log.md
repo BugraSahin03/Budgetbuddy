@@ -55,6 +55,25 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-07-03 - FIN-115 trennt Buchungs-Anzeigename vom Originaltext
+
+Quelle/Ticket: `FIN-115`
+
+Erkenntnis/Entscheidung:
+
+- Buchungen bekommen einen optionalen `display_name_override` direkt an der Transaktion.
+- Der Override ist buchungsspezifisch und hat Vorrang vor Import-Alias und Anzeigenamen-Heuristik.
+- Eine leere Eingabe entfernt den Override wieder; der originale `description`-Text bleibt erhalten.
+
+Auswirkung:
+
+- Importtexte, Dedupe-Fingerprints, Import-Regeln und Debugging behalten den unveraenderten Originaltext.
+- Nutzer koennen einzelne importierte und manuelle Buchungen fuer Rueckblick und Monatsarbeit lesbarer benennen.
+
+Folgeaktion:
+
+- Keine ADR erforderlich, solange dies eine reine Anzeigenamen-Ergaenzung bleibt und keine Import- oder Dedupe-Strategie veraendert.
+
 ## 2026-06-02 - FIN-044 legt UI-Leitbild fuer ruhige Premium-Finanzoberflaeche fest
 
 Quelle/Ticket: `FIN-044`
