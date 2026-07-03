@@ -1,6 +1,7 @@
 import "server-only";
 
 import type { SparkasseCsvRow } from "@/src/import/sparkasse-csv";
+import { isN26FixedCostControlRule } from "@/src/import-rules/classification";
 import type { ImportRule } from "@/src/import-rules/repository";
 
 type FixedCostForImportMatching = {
@@ -9,12 +10,6 @@ type FixedCostForImportMatching = {
   paymentNote: string | null;
   isActive: boolean;
 };
-
-const N26_CONTROL_RULE_NAMES = new Set([
-  "N26 Sammeltransfer Kontrolle",
-  "N26 Transfer-Kandidat",
-]);
-const N26_CONTROL_PATTERN = "N26-FIX.";
 
 export type ImportRuleSuggestion = {
   rowIndex: number;
@@ -38,21 +33,10 @@ function getMatchText(row: SparkasseCsvRow, matchField: ImportRule["matchField"]
   return normalize(`${row.description} ${row.counterparty}`);
 }
 
-function isN26ControlRule(rule: ImportRule): boolean {
-  if (rule.targetType !== "transfer_cash") {
-    return false;
-  }
-
-  return (
-    N26_CONTROL_RULE_NAMES.has(rule.name) ||
-    normalize(rule.pattern).includes(N26_CONTROL_PATTERN)
-  );
-}
-
 function suggestionLabel(rule: ImportRule): string {
   if (rule.targetType === "transfer_cash") {
-    if (isN26ControlRule(rule)) {
-      return "Fixkosten-Kontrolle: N26-Sammeltransfer";
+    if (isN26FixedCostControlRule(rule)) {
+      return "Fixkosten-Kontrolle: Kontrollmuster";
     }
 
     return "Transfer -> Bargeld";

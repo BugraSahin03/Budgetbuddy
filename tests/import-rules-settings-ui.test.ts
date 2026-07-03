@@ -13,18 +13,24 @@ describe("FIN-079 import rule settings UI", () => {
   it("exposes control pattern recognition as a dedicated settings area next to aliases", () => {
     const settingsPage = readProjectFile("app/einstellungen/page.tsx");
     const importRulesPage = readProjectFile("app/einstellungen/import-regeln/page.tsx");
+    const cashTransferRulesPage = readProjectFile(
+      "app/einstellungen/bargeld-transferregeln/page.tsx",
+    );
     const settingsActions = readProjectFile("app/einstellungen/actions.ts");
 
-    expect(settingsPage).toContain("Import-Erkennung");
+    expect(settingsPage).toContain("Kontrollmuster Fixkostenerkennung");
     expect(settingsPage).toContain('href: "/einstellungen/import-regeln"');
+    expect(settingsPage).toContain("Bargeld- und Transferregeln");
+    expect(settingsPage).toContain('href: "/einstellungen/bargeld-transferregeln"');
     expect(settingsPage).toContain("Import-Aliasse");
     expect(importRulesPage).toContain("Import-Erkennung");
-    expect(importRulesPage).toContain("Kontrollmuster");
-    expect(importRulesPage).toContain("Import-Aliasse bleiben separat");
+    expect(importRulesPage).toContain("Kontrollmuster Fixkostenerkennung");
+    expect(importRulesPage).toContain("Fixkosten-Kontrolltreffer");
     expect(importRulesPage).toContain("N26-Fix.");
     expect(importRulesPage).toContain("N26-Sammeltransfer als Fixkosten-Kontrolle");
     expect(importRulesPage).toContain("createImportRuleSettingsAction");
     expect(importRulesPage).toContain("updateImportRuleSettingsAction");
+    expect(importRulesPage).toContain("isN26FixedCostControlRule");
     expect(importRulesPage).toContain('name="pattern"');
     expect(importRulesPage).toContain('name="matchField"');
     expect(importRulesPage).toContain('name="isActive"');
@@ -34,9 +40,20 @@ describe("FIN-079 import rule settings UI", () => {
     expect(importRulesPage).not.toContain("Sonderkategorie</option>");
     expect(importRulesPage).not.toContain("Kategorie</option>");
     expect(importRulesPage).not.toContain("Bargeld-Transfer / Fixkosten-Kontrolle");
+    expect(cashTransferRulesPage).toContain("Bargeld- und Transferregeln");
+    expect(cashTransferRulesPage).toContain("Transfer -&gt; Bargeld");
+    expect(cashTransferRulesPage).toContain("isCashTransferRule");
+    expect(cashTransferRulesPage).toContain("createCashTransferRuleSettingsAction");
+    expect(cashTransferRulesPage).toContain("updateCashTransferRuleSettingsAction");
+    expect(cashTransferRulesPage).toContain("Bargeld-Transfer ·");
+    expect(cashTransferRulesPage).not.toContain("N26-Sammeltransfer als Fixkosten-Kontrolle");
     expect(settingsActions).toContain("createImportRuleSettingsAction");
     expect(settingsActions).toContain("updateImportRuleSettingsAction");
+    expect(settingsActions).toContain("createCashTransferRuleSettingsAction");
+    expect(settingsActions).toContain("updateCashTransferRuleSettingsAction");
     expect(settingsActions).toContain('normalizedFormData.set("targetType", "transfer_cash")');
+    expect(settingsActions).toContain('normalizedFormData.set("rulePurpose", "fixed_cost_control")');
+    expect(settingsActions).toContain('normalizedFormData.set("rulePurpose", "cash_transfer")');
     expect(settingsActions).toContain('normalizedFormData.delete("categoryId")');
     expect(settingsActions).toContain('normalizedFormData.delete("specialBudgetId")');
     expect(settingsActions).toContain("/einstellungen/import-regeln");

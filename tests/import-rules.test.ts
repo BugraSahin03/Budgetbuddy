@@ -83,6 +83,7 @@ describe("import rules", () => {
       pattern: "BARGELDAUSZAHLUNG",
       matchField: "description",
       targetType: "transfer_cash",
+      rulePurpose: "cash_transfer",
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
@@ -113,6 +114,7 @@ describe("import rules", () => {
 
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0].label).toBe("Transfer -> Bargeld");
+    expect(suggestions[0].ruleName).toBe("ATM -> Bargeld Transfer");
   });
 
   it("ships editable default N26 control rule", () => {
@@ -124,6 +126,7 @@ describe("import rules", () => {
     expect(n26Rule?.pattern).toBe("N26-Fix.");
     expect(n26Rule?.matchField).toBe("description");
     expect(n26Rule?.targetType).toBe("transfer_cash");
+    expect(n26Rule?.rulePurpose).toBe("fixed_cost_control");
     expect(n26Rule?.isActive).toBe(true);
 
     const suggestions = matcher.buildImportRuleSuggestions({
@@ -149,7 +152,49 @@ describe("import rules", () => {
     });
 
     expect(suggestions).toHaveLength(1);
-    expect(suggestions[0].label).toBe("Fixkosten-Kontrolle: N26-Sammeltransfer");
+    expect(suggestions[0].label).toBe("Fixkosten-Kontrolle: Kontrollmuster");
+    expect(suggestions[0].ruleName).toBe("N26 Sammeltransfer Kontrolle");
+  });
+
+  it("keeps edited fixed-cost control rules separate from cash transfer rules", () => {
+    const initial = repo
+      .listImportRules()
+      .find((rule) => rule.name === "N26 Sammeltransfer Kontrolle");
+    expect(initial).toBeDefined();
+
+    repo.updateImportRule(initial!.id, {
+      ...initial!,
+      name: "Garage Kontrolle",
+      pattern: "GARAGE-FAMILIE",
+      rulePurpose: "fixed_cost_control",
+      isActive: true,
+    });
+
+    const suggestions = matcher.buildImportRuleSuggestions({
+      rules: repo.listActiveImportRules(),
+      rows: [
+        {
+          accountIban: "DE001",
+          bookingDate: "2026-05-23",
+          valueDate: "2026-05-23",
+          bookingText: "UEBERWEISUNG",
+          purpose: "GARAGE-FAMILIE SAHIN",
+          counterparty: "Familie Sahin",
+          counterpartyIban: "",
+          counterpartyBic: "",
+          amountCents: -4000,
+          currencyCode: "EUR",
+          info: "Umsatz gebucht",
+          endToEndReference: "",
+          mandateReference: "",
+          description: "UEBERWEISUNG | GARAGE-FAMILIE SAHIN",
+        },
+      ],
+    });
+
+    expect(suggestions).toHaveLength(1);
+    expect(suggestions[0].label).toBe("Fixkosten-Kontrolle: Kontrollmuster");
+    expect(suggestions[0].ruleName).toBe("Garage Kontrolle");
   });
 
   it("recognizes direct fixed-cost debit as control hit", async () => {

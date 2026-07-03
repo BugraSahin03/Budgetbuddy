@@ -1,15 +1,15 @@
 import Link from "next/link";
 
 import {
-  createImportRuleSettingsAction,
-  updateImportRuleSettingsAction,
+  createCashTransferRuleSettingsAction,
+  updateCashTransferRuleSettingsAction,
 } from "@/app/einstellungen/actions";
-import { isN26FixedCostControlRule } from "@/src/import-rules/classification";
+import { isCashTransferRule } from "@/src/import-rules/classification";
 import { listImportRules } from "@/src/import-rules/repository";
 
 export const dynamic = "force-dynamic";
 
-type ImportRulesPageProps = {
+type CashTransferRulesPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
@@ -37,11 +37,13 @@ function matchFieldLabel(value: string): string {
   return "Beschreibung + Gegenpartei";
 }
 
-export default async function ImportRulesPage({ searchParams }: ImportRulesPageProps) {
+export default async function CashTransferRulesPage({
+  searchParams,
+}: CashTransferRulesPageProps) {
   const params = (await searchParams) ?? {};
   const notice = toSingleParam(params.notice);
   const error = toSingleParam(params.error);
-  const rules = listImportRules().filter(isN26FixedCostControlRule);
+  const rules = listImportRules().filter(isCashTransferRule);
   const activeRuleCount = rules.filter((rule) => rule.isActive).length;
 
   return (
@@ -51,19 +53,23 @@ export default async function ImportRulesPage({ searchParams }: ImportRulesPageP
         <span className="month-hero-orb month-hero-orb-right" aria-hidden="true" />
         <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <Link href="/einstellungen" aria-label="Zurück zu Einstellungen" className="month-chip month-chip-neutral mb-4 w-fit text-lg">
+            <Link
+              href="/einstellungen"
+              aria-label="Zurück zu Einstellungen"
+              className="month-chip month-chip-neutral mb-4 w-fit text-lg"
+            >
               &larr;
             </Link>
             <p className="month-eyebrow">Import-Erkennung</p>
-            <h2 className="month-hero-title mt-2">Kontrollmuster Fixkostenerkennung</h2>
+            <h2 className="month-hero-title mt-2">Bargeld- und Transferregeln</h2>
             <p className="month-hero-copy mt-4">
-              Suchmuster, mit denen importierte Buchungen als Fixkosten-Kontrolltreffer
-              erkannt werden. Diese Regeln verändern keine Kategorien, sondern helfen bei der
-              Fixkostenkontrolle im Monat.
+              Regeln, mit denen importierte Buchungen als Bargeldabhebung oder Transfer erkannt
+              werden. Hier steuerst du, welche Muster den Vorschlag „Transfer -&gt; Bargeld“
+              auslösen.
             </p>
           </div>
           <div className="month-stat-card month-stat-card-calm min-w-64">
-            <p className="month-stat-label">Aktive Muster</p>
+            <p className="month-stat-label">Aktive Regeln</p>
             <p className="month-stat-value mt-2">{activeRuleCount}</p>
           </div>
         </div>
@@ -83,18 +89,21 @@ export default async function ImportRulesPage({ searchParams }: ImportRulesPageP
 
       <section className="month-section-panel space-y-4">
         <header>
-          <p className="month-eyebrow">Neues Fixkosten-Kontrollmuster</p>
-          <h3 className="month-section-title mt-1">Muster anlegen</h3>
+          <p className="month-eyebrow">Neue Bargeld-/Transferregel</p>
+          <h3 className="month-section-title mt-1">Regel anlegen</h3>
         </header>
 
-        <form action={createImportRuleSettingsAction} className="grid gap-3 lg:grid-cols-2 xl:grid-cols-10">
+        <form
+          action={createCashTransferRuleSettingsAction}
+          className="grid gap-3 lg:grid-cols-2 xl:grid-cols-10"
+        >
           <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-3">
             Name
             <input
               name="name"
               required
               maxLength={80}
-              placeholder="z. B. N26 Sammeltransfer Kontrolle"
+              placeholder="z. B. Geldautomat Sparkasse"
               className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
             />
           </label>
@@ -105,14 +114,18 @@ export default async function ImportRulesPage({ searchParams }: ImportRulesPageP
               name="pattern"
               required
               maxLength={120}
-              placeholder="z. B. N26-Fix."
+              placeholder="z. B. BARGELDAUSZAHLUNG"
               className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
             />
           </label>
 
           <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-2">
             Suchfeld
-            <select name="matchField" defaultValue="combined" className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]">
+            <select
+              name="matchField"
+              defaultValue="combined"
+              className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
+            >
               <option value="combined">Beschreibung + Gegenpartei</option>
               <option value="description">Beschreibung</option>
               <option value="counterparty">Gegenpartei</option>
@@ -136,46 +149,57 @@ export default async function ImportRulesPage({ searchParams }: ImportRulesPageP
             Aktiv
           </label>
 
-          <button type="submit" className="rounded-[1rem] bg-[#061b46] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f4c6d] xl:col-span-2 xl:self-end">
-            Muster anlegen
+          <button
+            type="submit"
+            className="rounded-[1rem] bg-[#061b46] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f4c6d] xl:col-span-2 xl:self-end"
+          >
+            Regel anlegen
           </button>
         </form>
 
         <div className="month-chip month-chip-accent w-fit">
-          Beispiel: N26-Fix. {"->"} N26-Sammeltransfer als Fixkosten-Kontrolle
+          Zieltyp: Bargeld-Transfer. Keine Fixkosten-Kontrollregel.
         </div>
       </section>
 
       <section className="month-section-panel space-y-4">
         <header className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
           <div>
-            <p className="month-eyebrow">Musterliste</p>
-            <h3 className="month-section-title mt-1">Bestehende Fixkosten-Kontrollmuster</h3>
+            <p className="month-eyebrow">Regelliste</p>
+            <h3 className="month-section-title mt-1">Bestehende Bargeld- und Transferregeln</h3>
           </div>
           <span className="month-chip month-chip-neutral w-fit">{rules.length} Einträge</span>
         </header>
 
         {rules.length === 0 ? (
           <p className="rounded-[1.2rem] border border-[color:var(--month-line)] bg-white/75 px-4 py-6 text-sm text-[color:var(--month-ink-soft)]">
-            Noch keine Fixkosten-Kontrollmuster vorhanden.
+            Noch keine Bargeld- oder Transferregeln vorhanden.
           </p>
         ) : (
           <ul className="space-y-3">
             {rules.map((rule) => (
-              <li key={rule.id} className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-4 shadow-sm">
+              <li
+                key={rule.id}
+                className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/82 p-4 shadow-sm"
+              >
                 <div className="mb-3 flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)]">
-                      Fixkosten-Kontrollmuster · {matchFieldLabel(rule.matchField)}
+                      Bargeld-Transfer · {matchFieldLabel(rule.matchField)}
                     </p>
-                    <h4 className="mt-1 text-base font-semibold text-[color:var(--month-ink)]">{rule.name}</h4>
+                    <h4 className="mt-1 text-base font-semibold text-[color:var(--month-ink)]">
+                      {rule.name}
+                    </h4>
                   </div>
                   <span className={`month-chip w-fit ${rule.isActive ? "month-chip-accent" : "month-chip-neutral"}`}>
                     {rule.isActive ? "Aktiv" : "Inaktiv"}
                   </span>
                 </div>
 
-                <form action={updateImportRuleSettingsAction} className="grid gap-3 lg:grid-cols-2 xl:grid-cols-10">
+                <form
+                  action={updateCashTransferRuleSettingsAction}
+                  className="grid gap-3 lg:grid-cols-2 xl:grid-cols-10"
+                >
                   <input type="hidden" name="ruleId" value={rule.id} />
 
                   <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-3">
@@ -207,8 +231,11 @@ export default async function ImportRulesPage({ searchParams }: ImportRulesPageP
                     Aktiv
                   </label>
 
-                  <button type="submit" className="rounded-[1rem] border border-sky-200 bg-sky-50 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 xl:col-span-2 xl:self-end">
-                    Muster speichern
+                  <button
+                    type="submit"
+                    className="rounded-[1rem] border border-sky-200 bg-sky-50 px-5 py-3 text-sm font-semibold text-sky-800 transition hover:bg-sky-100 xl:col-span-2 xl:self-end"
+                  >
+                    Regel speichern
                   </button>
                 </form>
               </li>

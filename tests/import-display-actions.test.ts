@@ -44,12 +44,14 @@ vi.mock("@/src/categories/repository", () => categoryRepositoryMocks);
 vi.mock("@/src/fixed-costs/repository", () => fixedCostRepositoryMocks);
 
 import {
+  createCashTransferRuleSettingsAction,
   createImportDisplayAliasAction,
   createImportRuleSettingsAction,
   deleteImportDisplayAliasAction,
   reactivateCategoryAction,
   reactivateFixedCostAction,
   reactivateSpecialBudgetProjectAction,
+  updateCashTransferRuleSettingsAction,
   updateImportDisplayAliasAction,
   updateImportRuleSettingsAction,
 } from "@/app/einstellungen/actions";
@@ -72,16 +74,17 @@ describe("FIN-059 import display alias actions", () => {
       displayName: "Amazon",
       pattern: "AMZN",
     });
-    importRuleRepositoryMocks.parseRuleInputFromFormData.mockReturnValue({
+    importRuleRepositoryMocks.parseRuleInputFromFormData.mockImplementation((formData: FormData) => ({
       name: "N26 Sammeltransfer Kontrolle",
       pattern: "N26-Fix.",
       matchField: "description",
       targetType: "transfer_cash",
+      rulePurpose: String(formData.get("rulePurpose") ?? "assignment"),
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
       priority: 60,
-    });
+    }));
   });
 
   it("redirects successful alias writes to notice URLs outside error handling", async () => {
@@ -133,10 +136,10 @@ describe("FIN-059 import display alias actions", () => {
     updateData.set("specialBudgetId", "3");
 
     await expect(createImportRuleSettingsAction(createData)).rejects.toThrow(
-      "NEXT_REDIRECT:/einstellungen/import-regeln?notice=Import-Regel%20erstellt.",
+      "NEXT_REDIRECT:/einstellungen/import-regeln?notice=Fixkosten-Kontrollmuster%20erstellt.",
     );
     await expect(updateImportRuleSettingsAction(updateData)).rejects.toThrow(
-      "NEXT_REDIRECT:/einstellungen/import-regeln?notice=Import-Regel%20gespeichert.",
+      "NEXT_REDIRECT:/einstellungen/import-regeln?notice=Fixkosten-Kontrollmuster%20gespeichert.",
     );
 
     expect(importRuleRepositoryMocks.createImportRule).toHaveBeenCalledWith({
@@ -144,6 +147,7 @@ describe("FIN-059 import display alias actions", () => {
       pattern: "N26-Fix.",
       matchField: "description",
       targetType: "transfer_cash",
+      rulePurpose: "fixed_cost_control",
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
@@ -154,6 +158,7 @@ describe("FIN-059 import display alias actions", () => {
       pattern: "N26-Fix.",
       matchField: "description",
       targetType: "transfer_cash",
+      rulePurpose: "fixed_cost_control",
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
@@ -165,6 +170,55 @@ describe("FIN-059 import display alias actions", () => {
     const parsedUpdateFormData =
       importRuleRepositoryMocks.parseRuleInputFromFormData.mock.calls[1][0] as FormData;
     expect(parsedUpdateFormData.get("targetType")).toBe("transfer_cash");
+    expect(parsedUpdateFormData.get("rulePurpose")).toBe("fixed_cost_control");
+    expect(parsedUpdateFormData.get("categoryId")).toBeNull();
+    expect(parsedUpdateFormData.get("specialBudgetId")).toBeNull();
+  });
+
+  it("redirects successful cash transfer rule writes to the dedicated settings page", async () => {
+    const createData = new FormData();
+    const updateData = new FormData();
+    updateData.set("ruleId", "8");
+    updateData.set("targetType", "category");
+    updateData.set("categoryId", "2");
+    updateData.set("specialBudgetId", "3");
+
+    await expect(createCashTransferRuleSettingsAction(createData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/bargeld-transferregeln?notice=Bargeld-%2FTransferregel%20erstellt.",
+    );
+    await expect(updateCashTransferRuleSettingsAction(updateData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/bargeld-transferregeln?notice=Bargeld-%2FTransferregel%20gespeichert.",
+    );
+
+    expect(importRuleRepositoryMocks.createImportRule).toHaveBeenCalledWith({
+      name: "N26 Sammeltransfer Kontrolle",
+      pattern: "N26-Fix.",
+      matchField: "description",
+      targetType: "transfer_cash",
+      rulePurpose: "cash_transfer",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 60,
+    });
+    expect(importRuleRepositoryMocks.updateImportRule).toHaveBeenCalledWith(8, {
+      name: "N26 Sammeltransfer Kontrolle",
+      pattern: "N26-Fix.",
+      matchField: "description",
+      targetType: "transfer_cash",
+      rulePurpose: "cash_transfer",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 60,
+    });
+    expect(revalidatePathMock).toHaveBeenCalledWith(
+      "/einstellungen/bargeld-transferregeln",
+    );
+    const parsedUpdateFormData =
+      importRuleRepositoryMocks.parseRuleInputFromFormData.mock.calls[1][0] as FormData;
+    expect(parsedUpdateFormData.get("targetType")).toBe("transfer_cash");
+    expect(parsedUpdateFormData.get("rulePurpose")).toBe("cash_transfer");
     expect(parsedUpdateFormData.get("categoryId")).toBeNull();
     expect(parsedUpdateFormData.get("specialBudgetId")).toBeNull();
   });

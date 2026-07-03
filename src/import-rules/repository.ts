@@ -4,6 +4,7 @@ import { getDb } from "@/src/db/client";
 
 export type ImportRuleMatchField = "description" | "counterparty" | "combined";
 export type ImportRuleTargetType = "category" | "special_budget" | "transfer_cash";
+export type ImportRulePurpose = "assignment" | "fixed_cost_control" | "cash_transfer";
 
 export type ImportRule = {
   id: number;
@@ -11,6 +12,7 @@ export type ImportRule = {
   pattern: string;
   matchField: ImportRuleMatchField;
   targetType: ImportRuleTargetType;
+  rulePurpose: ImportRulePurpose;
   categoryId: number | null;
   specialBudgetId: number | null;
   isActive: boolean;
@@ -22,6 +24,7 @@ export type ImportRuleInput = {
   pattern: string;
   matchField: ImportRuleMatchField;
   targetType: ImportRuleTargetType;
+  rulePurpose?: ImportRulePurpose;
   categoryId: number | null;
   specialBudgetId: number | null;
   isActive: boolean;
@@ -41,6 +44,7 @@ function ensureImportRulesTable(): void {
       pattern TEXT NOT NULL,
       match_field TEXT NOT NULL CHECK (match_field IN ('description', 'counterparty', 'combined')),
       target_type TEXT NOT NULL CHECK (target_type IN ('category', 'special_budget', 'transfer_cash')),
+      rule_purpose TEXT NOT NULL DEFAULT 'cash_transfer' CHECK (rule_purpose IN ('assignment', 'fixed_cost_control', 'cash_transfer')),
       category_id INTEGER REFERENCES categories(id) ON DELETE RESTRICT,
       special_budget_id INTEGER REFERENCES special_budgets(id) ON DELETE RESTRICT,
       is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
@@ -52,6 +56,41 @@ function ensureImportRulesTable(): void {
     CREATE INDEX IF NOT EXISTS idx_import_rules_active_priority
       ON import_rules(is_active, priority, id);
   `);
+
+  const columns = getDb().prepare("PRAGMA table_info(import_rules)").all() as Array<{ name: string }>;
+  if (!columns.some((column) => column.name === "rule_purpose")) {
+    getDb().exec(`
+      ALTER TABLE import_rules
+      ADD COLUMN rule_purpose TEXT NOT NULL DEFAULT 'cash_transfer'
+        CHECK (rule_purpose IN ('assignment', 'fixed_cost_control', 'cash_transfer'));
+    `);
+  }
+
+  getDb()
+    .prepare(
+      `
+        UPDATE import_rules
+        SET rule_purpose = 'assignment'
+        WHERE target_type IN ('category', 'special_budget')
+      `,
+    )
+    .run();
+
+  getDb()
+    .prepare(
+      `
+        UPDATE import_rules
+        SET rule_purpose = 'fixed_cost_control'
+        WHERE target_type = 'transfer_cash'
+          AND (
+            name IN (?, ?)
+            OR UPPER(name) LIKE '%N26%KONTROLLE%'
+            OR UPPER(name) LIKE '%N26%TRANSFER%'
+            OR UPPER(pattern) LIKE '%N26-FIX.%'
+          )
+      `,
+    )
+    .run(N26_CONTROL_RULE_NAME, LEGACY_N26_CONTROL_RULE_NAME);
 
   // FIN-029 default: editable N26 control rule for transfer hints.
   // Seed must run at most once and must respect user edits/deactivation.
@@ -100,13 +139,14 @@ function ensureImportRulesTable(): void {
             pattern,
             match_field,
             target_type,
+            rule_purpose,
             category_id,
             special_budget_id,
             is_active,
             priority,
             updated_at
           )
-          VALUES (?, ?, 'description', 'transfer_cash', NULL, NULL, 1, 60, CURRENT_TIMESTAMP)
+          VALUES (?, ?, 'description', 'transfer_cash', 'fixed_cost_control', NULL, NULL, 1, 60, CURRENT_TIMESTAMP)
         `,
       )
       .run(N26_CONTROL_RULE_NAME, N26_CONTROL_PATTERN);
@@ -117,6 +157,7 @@ function ensureImportRulesTable(): void {
           UPDATE import_rules
           SET
             name = ?,
+            rule_purpose = 'fixed_cost_control',
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
         `,
@@ -152,6 +193,7 @@ function toNullablePositiveInt(raw: string): number | null {
 function normalizeInput(input: ImportRuleInput): ImportRuleInput {
   const name = input.name.trim();
   const pattern = input.pattern.trim();
+  const rulePurpose = input.rulePurpose ?? "assignment";
 
   if (name.length < 2 || name.length > 80) {
     throw new Error("Regelname muss 2 bis 80 Zeichen lang sein.");
@@ -170,6 +212,7 @@ function normalizeInput(input: ImportRuleInput): ImportRuleInput {
       ...input,
       name,
       pattern,
+      rulePurpose: "assignment",
       specialBudgetId: null,
     };
   }
@@ -183,14 +226,20 @@ function normalizeInput(input: ImportRuleInput): ImportRuleInput {
       ...input,
       name,
       pattern,
+      rulePurpose: "assignment",
       categoryId: null,
     };
+  }
+
+  if (rulePurpose !== "fixed_cost_control" && rulePurpose !== "cash_transfer") {
+    throw new Error("Transfer-Regel braucht einen eindeutigen Regelzweck.");
   }
 
   return {
     ...input,
     name,
     pattern,
+    rulePurpose,
     categoryId: null,
     specialBudgetId: null,
   };
@@ -208,6 +257,7 @@ export function listImportRules(): ImportRule[] {
           pattern,
           match_field AS matchField,
           target_type AS targetType,
+          rule_purpose AS rulePurpose,
           category_id AS categoryId,
           special_budget_id AS specialBudgetId,
           is_active AS isActive,
@@ -222,6 +272,7 @@ export function listImportRules(): ImportRule[] {
     pattern: string;
     matchField: ImportRuleMatchField;
     targetType: ImportRuleTargetType;
+    rulePurpose: ImportRulePurpose;
     categoryId: number | null;
     specialBudgetId: number | null;
     isActive: number;
@@ -250,13 +301,14 @@ export function createImportRule(input: ImportRuleInput): void {
           pattern,
           match_field,
           target_type,
+          rule_purpose,
           category_id,
           special_budget_id,
           is_active,
           priority,
           updated_at
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
       `,
     )
     .run(
@@ -264,6 +316,7 @@ export function createImportRule(input: ImportRuleInput): void {
       normalized.pattern,
       normalized.matchField,
       normalized.targetType,
+      normalized.rulePurpose,
       normalized.categoryId,
       normalized.specialBudgetId,
       normalized.isActive ? 1 : 0,
@@ -284,6 +337,7 @@ export function updateImportRule(ruleId: number, input: ImportRuleInput): void {
           pattern = ?,
           match_field = ?,
           target_type = ?,
+          rule_purpose = ?,
           category_id = ?,
           special_budget_id = ?,
           is_active = ?,
@@ -297,6 +351,7 @@ export function updateImportRule(ruleId: number, input: ImportRuleInput): void {
       normalized.pattern,
       normalized.matchField,
       normalized.targetType,
+      normalized.rulePurpose,
       normalized.categoryId,
       normalized.specialBudgetId,
       normalized.isActive ? 1 : 0,
@@ -312,12 +367,14 @@ export function updateImportRule(ruleId: number, input: ImportRuleInput): void {
 export function parseRuleInputFromFormData(formData: FormData): ImportRuleInput {
   const matchField = String(formData.get("matchField") ?? "combined") as ImportRuleMatchField;
   const targetType = String(formData.get("targetType") ?? "category") as ImportRuleTargetType;
+  const rulePurpose = String(formData.get("rulePurpose") ?? "assignment") as ImportRulePurpose;
 
   return {
     name: String(formData.get("name") ?? ""),
     pattern: String(formData.get("pattern") ?? ""),
     matchField,
     targetType,
+    rulePurpose,
     categoryId: toNullablePositiveInt(String(formData.get("categoryId") ?? "")),
     specialBudgetId: toNullablePositiveInt(String(formData.get("specialBudgetId") ?? "")),
     isActive: String(formData.get("isActive") ?? "off") === "on",

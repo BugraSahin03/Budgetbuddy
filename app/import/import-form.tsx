@@ -47,6 +47,10 @@ function filteredReasonTone(reason: string): string {
   return "border-violet-200 bg-violet-50 text-violet-700";
 }
 
+function renderSuggestionText(params: { label: string; ruleName: string }): string {
+  return `${params.label} · Regel: ${params.ruleName}`;
+}
+
 export function resolveEffectiveMonthDefault(params: {
   detectedMonthKey: string | null;
   defaultEffectiveMonthKey?: string;
@@ -218,19 +222,31 @@ export function ImportForm({
 
       {state.persisted ? (
         <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Import abgeschlossen</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+            Import abgeschlossen
+          </p>
           <div className="mt-2 grid gap-2 text-sm text-emerald-900 md:grid-cols-4">
-            <p>Importlauf-ID: <span className="font-semibold">{state.persisted.importRunId}</span></p>
-            <p>Gefunden: <span className="font-semibold">{state.persisted.detectedRows}</span></p>
-            <p>Importiert: <span className="font-semibold">{state.persisted.importedRows}</span></p>
-            <p>Duplikate: <span className="font-semibold">{state.persisted.duplicateRows}</span></p>
+            <p>
+              Importlauf-ID: <span className="font-semibold">{state.persisted.importRunId}</span>
+            </p>
+            <p>
+              Gefunden: <span className="font-semibold">{state.persisted.detectedRows}</span>
+            </p>
+            <p>
+              Importiert: <span className="font-semibold">{state.persisted.importedRows}</span>
+            </p>
+            <p>
+              Duplikate: <span className="font-semibold">{state.persisted.duplicateRows}</span>
+            </p>
           </div>
         </section>
       ) : null}
 
       {state.result?.errors.length ? (
         <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">Parsing-Hinweise</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+            Parsing-Hinweise
+          </p>
           <ul className="mt-2 space-y-1 text-sm text-amber-800">
             {state.result.errors.map((error) => (
               <li key={error}>{error}</li>
@@ -348,7 +364,7 @@ export function ImportForm({
                             : "border-emerald-200 bg-emerald-50 text-emerald-700"
                         }`}
                       >
-                        {suggestion.label}
+                        {renderSuggestionText(suggestion)}
                       </span>
                     ) : null}
                   </article>
@@ -393,7 +409,7 @@ export function ImportForm({
                                   : "border-emerald-200 bg-emerald-50 text-emerald-700"
                               }`}
                             >
-                              {suggestion.label}
+                              {renderSuggestionText(suggestion)}
                             </span>
                           ) : (
                             <span className="text-xs text-slate-500">-</span>
@@ -412,7 +428,6 @@ export function ImportForm({
           )}
         </section>
       ) : null}
-
     </div>
   );
 }
