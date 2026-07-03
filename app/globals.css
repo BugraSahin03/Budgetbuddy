@@ -2873,6 +2873,124 @@ details[open] > .archive-section-summary::after {
   margin: 0;
 }
 
+.fixed-cost-filter-panel {
+  background: linear-gradient(135deg, rgba(238, 248, 255, 0.78), rgba(255, 255, 255, 0.74));
+  border: 1px solid rgba(186, 230, 253, 0.42);
+  border-radius: 999px;
+  align-items: end;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+  padding: 0.44rem;
+}
+
+.fixed-cost-search-field {
+  display: grid;
+  min-width: min(100%, 18rem);
+  flex: 1 1 18rem;
+}
+
+.fixed-cost-search-field span {
+  display: none;
+}
+
+.fixed-cost-search-control {
+  align-items: center;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(7, 27, 70, 0.1);
+  border-radius: 999px;
+  display: grid;
+  gap: 0.45rem;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 2.7rem;
+  padding: 0.25rem 0.38rem 0.25rem 0.85rem;
+}
+
+.fixed-cost-search-control > span {
+  color: var(--month-ink-muted);
+  display: inline-flex;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+.fixed-cost-search-field input {
+  background: transparent;
+  border: 0;
+  color: var(--month-ink);
+  font-size: 0.9rem;
+  font-weight: 700;
+  min-width: 0;
+  padding: 0.48rem 0;
+}
+
+.fixed-cost-search-field input::placeholder {
+  color: rgba(100, 116, 139, 0.72);
+}
+
+.fixed-cost-search-control strong {
+  background: rgba(219, 242, 252, 0.9);
+  border: 1px solid rgba(125, 211, 252, 0.34);
+  border-radius: 999px;
+  color: var(--month-ink-soft);
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  min-width: 3.3rem;
+  padding: 0.48rem 0.62rem;
+  text-align: center;
+}
+
+.fixed-cost-search-control:focus-within {
+  border-color: rgba(125, 211, 252, 0.72);
+  box-shadow: 0 0 0 0.22rem rgba(125, 211, 252, 0.16);
+}
+
+.fixed-cost-search-field input:focus {
+  outline: none;
+}
+
+.fixed-cost-filter-reset {
+  align-items: center;
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: 0.68rem;
+  font-weight: 850;
+  justify-content: center;
+  letter-spacing: 0.08em;
+  min-height: 2rem;
+  padding: 0.45rem 0.72rem;
+  text-transform: uppercase;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+
+.fixed-cost-filter-summary {
+  align-items: center;
+  color: var(--month-ink-muted);
+  display: flex;
+  flex-wrap: wrap;
+  font-size: 0.72rem;
+  font-weight: 850;
+  gap: 0.55rem;
+  justify-content: space-between;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+}
+
+.fixed-cost-filter-reset {
+  background: rgba(255, 255, 255, 0.82);
+  border: 1px solid rgba(7, 27, 70, 0.1);
+  color: var(--month-ink-soft);
+}
+
+.fixed-cost-filter-reset:hover,
+.fixed-cost-filter-reset:focus-visible {
+  background: rgba(219, 234, 254, 0.95);
+  color: var(--month-ink);
+  outline: none;
+}
+
 .fixed-cost-create-form,
 .fixed-cost-edit-form {
   display: grid;
@@ -2959,14 +3077,14 @@ details[open] > .archive-section-summary::after {
 
 .fixed-cost-list {
   display: grid;
-  gap: 0.8rem;
+  gap: 0.55rem;
 }
 
 .fixed-cost-card {
   background: rgba(255, 255, 255, 0.84);
   border: 1px solid rgba(226, 232, 240, 0.82);
-  border-radius: 1.4rem;
-  padding: 1rem;
+  border-radius: 1.15rem;
+  padding: 0.78rem 0.85rem;
   transition: border-color 160ms ease, box-shadow 160ms ease, opacity 160ms ease, transform 160ms ease;
 }
 
@@ -3052,7 +3170,7 @@ details[open] > .archive-section-summary::after {
 
 .fixed-cost-read-title h3 {
   color: var(--month-ink);
-  font-size: 1.12rem;
+  font-size: 1rem;
   font-weight: 820;
   letter-spacing: -0.04em;
   min-width: 0;
@@ -3131,6 +3249,10 @@ details[open] > .archive-section-summary::after {
 .fixed-cost-empty-state {
   background: rgba(255, 255, 255, 0.66);
   color: var(--month-ink-soft);
+}
+
+.fixed-cost-filter-empty {
+  margin-top: 0.75rem;
 }
 
 .fixed-cost-notice-success {
@@ -3293,6 +3415,15 @@ details[open] > .archive-section-summary::after {
   .fixed-cost-card {
     border-radius: 1.15rem;
     padding: 0.72rem;
+  }
+
+  .fixed-cost-filter-panel {
+    border-radius: 1.15rem;
+    padding: 0.5rem;
+  }
+
+  .fixed-cost-filter-reset {
+    width: 100%;
   }
 
   .fixed-cost-read-card {

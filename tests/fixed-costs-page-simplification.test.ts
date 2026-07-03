@@ -62,6 +62,22 @@ describe("fixed costs page simplification", () => {
     expect(actionsSource).not.toContain('redirect("/fixkosten?notice="');
   });
 
+  it("adds compact read-only search without changing edit-mode sorting", () => {
+    expect(editorSource).toContain("fixed-cost-filter-panel");
+    expect(editorSource).toContain('aria-label="Fixkosten filtern"');
+    expect(editorSource).toContain('type="search"');
+    expect(editorSource).toContain("Name, Info oder Notiz");
+    expect(editorSource).toContain("fixed-cost-search-control");
+    expect(editorSource).toContain("matchesSearch(row, searchTerm)");
+    expect(editorSource).toContain("visibleFixedCosts");
+    expect(editorSource).toContain("isEditing ? orderedFixedCosts : filteredFixedCosts");
+    expect(editorSource).toContain("Keine Fixkosten passen zu Suche oder Filter.");
+    expect(cssSource).toContain(".fixed-cost-filter-panel");
+    expect(cssSource).toContain(".fixed-cost-search-control");
+    expect(cssSource).toContain(".fixed-cost-filter-summary");
+    expect(cssSource).toContain(".fixed-cost-filter-empty");
+  });
+
   it("keeps archived fixed costs out of care and reactivates them from settings", () => {
     expect(pageSource).toContain("listFixedCosts().filter((fixedCost) => fixedCost.isActive)");
     expect(editorSource).toContain("Deaktivieren");
