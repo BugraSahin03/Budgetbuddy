@@ -128,6 +128,7 @@ export async function parseSparkasseCsvAction(
         sourceFilename: resolvedFile.filename,
         fileContent: resolvedFile.fileContent,
         effectiveMonthKey,
+        previewPlan,
       });
 
       revalidatePath("/transaktionen");

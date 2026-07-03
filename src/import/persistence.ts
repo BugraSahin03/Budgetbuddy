@@ -287,6 +287,7 @@ export function persistSparkasseCsvImport(params: {
   sourceFilename: string;
   fileContent: string;
   effectiveMonthKey?: string | null;
+  previewPlan?: ImportPreviewPlan | null;
 }): ImportPersistenceResult {
   const parseResult = parseSparkasseCsvToPreview(params.fileContent);
   const importEffectiveMonthKey = resolveImportEffectiveMonthKey(
@@ -316,10 +317,22 @@ export function persistSparkasseCsvImport(params: {
   let importedRows = 0;
   let duplicateRows = 0;
   const sparkasseAccountId = resolveSparkasseAccountId();
+  const previewFilteredRowByIndex = new Map(
+    (params.previewPlan?.filteredRows ?? []).map((row) => [row.rowIndex, row]),
+  );
 
   const persistTransaction = db.transaction(() => {
     for (const [sourceRowIndex, row] of parseResult.rows.entries()) {
       const dedupeFingerprint = buildDedupeFingerprint(row);
+      const previewFilteredRow = previewFilteredRowByIndex.get(sourceRowIndex);
+
+      if (previewFilteredRow) {
+        if (previewFilteredRow.reason === "duplicate") {
+          duplicateRows += 1;
+        }
+
+        continue;
+      }
 
       if (findExistingDuplicateByFingerprint(dedupeFingerprint)) {
         duplicateRows += 1;

@@ -180,6 +180,53 @@ describe("import persistence and dedupe", () => {
     ]);
   });
 
+  it("persists only preview-importable rows and keeps cash transfers importable", () => {
+    const parsed = parseSparkasseCsvToPreview(SAMPLE_CSV);
+    const preview = buildSparkasseImportPreviewPlan({
+      rows: parsed.rows,
+      suggestions: [
+        {
+          rowIndex: 0,
+          label: "Fixkosten-Kontrolle: N26-Sammeltransfer",
+          ruleName: "N26 Sammeltransfer Kontrolle",
+        },
+        {
+          rowIndex: 1,
+          label: "Transfer -> Bargeld",
+          ruleName: "Bargeldabhebung",
+        },
+      ],
+    });
+
+    const result = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse.csv",
+      fileContent: SAMPLE_CSV,
+      previewPlan: preview,
+    });
+
+    expect(result.detectedRows).toBe(3);
+    expect(result.importedRows).toBe(2);
+    expect(result.duplicateRows).toBe(0);
+
+    const rows = db
+      .prepare(
+        `
+          SELECT description, transaction_type AS transactionType
+          FROM transactions
+          WHERE source_type = 'import'
+          ORDER BY id ASC
+        `,
+      )
+      .all() as Array<{ description: string; transactionType: string }>;
+
+    expect(rows.map((row) => row.description)).toEqual([
+      "BARGELDAUSZAHLUNG | GA NR 12345678 AUTOMAT STADT",
+      "EINGANG | Lohn April",
+    ]);
+    expect(rows.some((row) => row.transactionType === "transfer")).toBe(true);
+    expect(rows.some((row) => row.description.includes("SUPERMARKT A"))).toBe(false);
+  });
+
   it("treats existing transaction fingerprints as duplicates even without metadata row", () => {
     persistSparkasseCsvImport({
       sourceFilename: "sparkasse.csv",
