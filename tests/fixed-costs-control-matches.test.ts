@@ -80,7 +80,7 @@ describe("fixed-cost control matches", () => {
 
     expect(
       controls.some(
-        (row) => row.controlLabel === "Fixkosten-Kontrolle: N26-Sammeltransfer",
+        (row) => row.controlLabel === "Fixkosten-Kontrolle: Kontrollmuster",
       ),
     ).toBe(true);
     expect(

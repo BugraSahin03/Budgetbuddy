@@ -58,6 +58,7 @@ function parseImportControlPatternInput(formData: FormData) {
   }
 
   normalizedFormData.set("targetType", "transfer_cash");
+  normalizedFormData.set("rulePurpose", "fixed_cost_control");
   normalizedFormData.delete("categoryId");
   normalizedFormData.delete("specialBudgetId");
 
@@ -72,6 +73,7 @@ function parseCashTransferRuleInput(formData: FormData) {
   }
 
   normalizedFormData.set("targetType", "transfer_cash");
+  normalizedFormData.set("rulePurpose", "cash_transfer");
   normalizedFormData.delete("categoryId");
   normalizedFormData.delete("specialBudgetId");
 

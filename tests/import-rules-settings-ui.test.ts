@@ -52,6 +52,8 @@ describe("FIN-079 import rule settings UI", () => {
     expect(settingsActions).toContain("createCashTransferRuleSettingsAction");
     expect(settingsActions).toContain("updateCashTransferRuleSettingsAction");
     expect(settingsActions).toContain('normalizedFormData.set("targetType", "transfer_cash")');
+    expect(settingsActions).toContain('normalizedFormData.set("rulePurpose", "fixed_cost_control")');
+    expect(settingsActions).toContain('normalizedFormData.set("rulePurpose", "cash_transfer")');
     expect(settingsActions).toContain('normalizedFormData.delete("categoryId")');
     expect(settingsActions).toContain('normalizedFormData.delete("specialBudgetId")');
     expect(settingsActions).toContain("/einstellungen/import-regeln");

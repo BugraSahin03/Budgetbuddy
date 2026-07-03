@@ -74,16 +74,17 @@ describe("FIN-059 import display alias actions", () => {
       displayName: "Amazon",
       pattern: "AMZN",
     });
-    importRuleRepositoryMocks.parseRuleInputFromFormData.mockReturnValue({
+    importRuleRepositoryMocks.parseRuleInputFromFormData.mockImplementation((formData: FormData) => ({
       name: "N26 Sammeltransfer Kontrolle",
       pattern: "N26-Fix.",
       matchField: "description",
       targetType: "transfer_cash",
+      rulePurpose: String(formData.get("rulePurpose") ?? "assignment"),
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
       priority: 60,
-    });
+    }));
   });
 
   it("redirects successful alias writes to notice URLs outside error handling", async () => {
@@ -146,6 +147,7 @@ describe("FIN-059 import display alias actions", () => {
       pattern: "N26-Fix.",
       matchField: "description",
       targetType: "transfer_cash",
+      rulePurpose: "fixed_cost_control",
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
@@ -156,6 +158,7 @@ describe("FIN-059 import display alias actions", () => {
       pattern: "N26-Fix.",
       matchField: "description",
       targetType: "transfer_cash",
+      rulePurpose: "fixed_cost_control",
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
@@ -167,6 +170,7 @@ describe("FIN-059 import display alias actions", () => {
     const parsedUpdateFormData =
       importRuleRepositoryMocks.parseRuleInputFromFormData.mock.calls[1][0] as FormData;
     expect(parsedUpdateFormData.get("targetType")).toBe("transfer_cash");
+    expect(parsedUpdateFormData.get("rulePurpose")).toBe("fixed_cost_control");
     expect(parsedUpdateFormData.get("categoryId")).toBeNull();
     expect(parsedUpdateFormData.get("specialBudgetId")).toBeNull();
   });
@@ -191,6 +195,7 @@ describe("FIN-059 import display alias actions", () => {
       pattern: "N26-Fix.",
       matchField: "description",
       targetType: "transfer_cash",
+      rulePurpose: "cash_transfer",
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
@@ -201,6 +206,7 @@ describe("FIN-059 import display alias actions", () => {
       pattern: "N26-Fix.",
       matchField: "description",
       targetType: "transfer_cash",
+      rulePurpose: "cash_transfer",
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
@@ -212,6 +218,7 @@ describe("FIN-059 import display alias actions", () => {
     const parsedUpdateFormData =
       importRuleRepositoryMocks.parseRuleInputFromFormData.mock.calls[1][0] as FormData;
     expect(parsedUpdateFormData.get("targetType")).toBe("transfer_cash");
+    expect(parsedUpdateFormData.get("rulePurpose")).toBe("cash_transfer");
     expect(parsedUpdateFormData.get("categoryId")).toBeNull();
     expect(parsedUpdateFormData.get("specialBudgetId")).toBeNull();
   });

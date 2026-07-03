@@ -92,6 +92,7 @@ describe("import persistence and dedupe", () => {
       pattern: "BANKTERMINAL",
       matchField: "combined",
       targetType: "transfer_cash",
+      rulePurpose: "cash_transfer",
       categoryId: null,
       specialBudgetId: null,
       isActive: true,
@@ -142,6 +143,44 @@ describe("import persistence and dedupe", () => {
       .get(cashAccount.id) as { total: number };
 
     expect(cashIncoming.total).toBe(4000);
+  });
+
+  it("does not persist fixed-cost control rule matches as cash transfers after user edits", () => {
+    createImportRule({
+      name: "Garage Kontrolle",
+      pattern: "GARAGE-FAMILIE",
+      matchField: "combined",
+      targetType: "transfer_cash",
+      rulePurpose: "fixed_cost_control",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 90,
+    });
+
+    const result = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse-fixed-control.csv",
+      fileContent: `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"
+"DE00111111110000000001";"25.04.26";"25.04.26";"UEBERWEISUNG";"GARAGE-FAMILIE SAHIN";"";"";"CONTROL-RULE-202604251030";"";"";"";"Familie Sahin";"";"";"-40,00";"EUR";"Umsatz gebucht"`,
+    });
+
+    expect(result.importedRows).toBe(1);
+
+    const stored = db
+      .prepare(
+        `
+          SELECT transaction_type AS transactionType, destination_account_id AS destinationAccountId
+          FROM transactions
+          WHERE import_run_id = ?
+        `,
+      )
+      .get(result.importRunId) as {
+      transactionType: string;
+      destinationAccountId: number | null;
+    };
+
+    expect(stored.transactionType).toBe("expense");
+    expect(stored.destinationAccountId).toBeNull();
   });
 
   it("marks second identical import as duplicates", () => {

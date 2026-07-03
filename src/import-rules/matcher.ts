@@ -36,7 +36,7 @@ function getMatchText(row: SparkasseCsvRow, matchField: ImportRule["matchField"]
 function suggestionLabel(rule: ImportRule): string {
   if (rule.targetType === "transfer_cash") {
     if (isN26FixedCostControlRule(rule)) {
-      return "Fixkosten-Kontrolle: N26-Sammeltransfer";
+      return "Fixkosten-Kontrolle: Kontrollmuster";
     }
 
     return "Transfer -> Bargeld";
