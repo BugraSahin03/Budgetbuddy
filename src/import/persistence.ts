@@ -4,6 +4,8 @@ import { createHash } from "node:crypto";
 
 import { getDb } from "@/src/db/client";
 import { parseSparkasseCsvToPreview, type SparkasseCsvRow } from "@/src/import/sparkasse-csv";
+import { isCashTransferRule } from "@/src/import-rules/classification";
+import { listActiveImportRules, type ImportRule } from "@/src/import-rules/repository";
 import { assertMonthIsOpen } from "@/src/months/status";
 
 export type ImportPersistenceResult = {
@@ -88,6 +90,37 @@ function isCashWithdrawalTransfer(row: SparkasseCsvRow): boolean {
   );
 }
 
+function normalizeRuleText(value: string): string {
+  return value.trim().toUpperCase();
+}
+
+function getRuleMatchText(row: SparkasseCsvRow, matchField: ImportRule["matchField"]): string {
+  if (matchField === "description") {
+    return normalizeRuleText(row.description);
+  }
+
+  if (matchField === "counterparty") {
+    return normalizeRuleText(row.counterparty);
+  }
+
+  return normalizeRuleText(`${row.description} ${row.counterparty}`);
+}
+
+function matchesCashTransferRule(row: SparkasseCsvRow, activeRules: ImportRule[]): boolean {
+  if (row.amountCents >= 0) {
+    return false;
+  }
+
+  return activeRules.filter(isCashTransferRule).some((rule) => {
+    const needle = normalizeRuleText(rule.pattern);
+    if (needle.length === 0) {
+      return false;
+    }
+
+    return getRuleMatchText(row, rule.matchField).includes(needle);
+  });
+}
+
 function toMonthKey(bookingDate: string): string {
   return bookingDate.slice(0, 7);
 }
@@ -153,11 +186,14 @@ function resolveImportEffectiveMonthKey(
   return detected;
 }
 
-function determineTransactionShape(row: SparkasseCsvRow): {
+function determineTransactionShape(row: SparkasseCsvRow, activeRules: ImportRule[]): {
   transactionType: "expense" | "income" | "transfer";
   destinationAccountId: number | null;
 } {
-  if (row.amountCents < 0 && isCashWithdrawalTransfer(row)) {
+  if (
+    row.amountCents < 0 &&
+    (isCashWithdrawalTransfer(row) || matchesCashTransferRule(row, activeRules))
+  ) {
     return {
       transactionType: "transfer",
       destinationAccountId: resolveCashAccountId(),
@@ -210,6 +246,7 @@ export function persistSparkasseCsvImport(params: {
   let importedRows = 0;
   let duplicateRows = 0;
   const sparkasseAccountId = resolveSparkasseAccountId();
+  const activeImportRules = listActiveImportRules();
 
   const persistTransaction = db.transaction(() => {
     for (const [sourceRowIndex, row] of parseResult.rows.entries()) {
@@ -242,7 +279,7 @@ export function persistSparkasseCsvImport(params: {
         continue;
       }
 
-      const shape = determineTransactionShape(row);
+      const shape = determineTransactionShape(row, activeImportRules);
 
       const transactionInsert = db
         .prepare(

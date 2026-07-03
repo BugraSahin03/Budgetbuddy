@@ -223,12 +223,16 @@ Aktueller Stand:
   - Pattern: `N26-Fix.`
   - Match-Feld: `Beschreibung`
   - Zieltyp: `transfer_cash` (technischer Transferhinweis)
+  - Regelzweck: `fixed_cost_control` (keine Bargeldwirkung)
 - Das Pattern ist in der Import-Regelverwaltung pflegbar und kann ohne Codeaenderung angepasst oder deaktiviert werden.
+- Der Regelzweck bleibt auch nach Name-/Pattern-Aenderungen erhalten; nur Regeln
+  mit Zweck `cash_transfer` duerfen beim Import-Confirm als Transfer `Sparkasse -> Bargeld`
+  persistiert werden.
 - Seit FIN-079 liegt diese Pflege als schlanker Einstellungsbereich fuer
   Import-Erkennung/Kontrollmuster unter `/einstellungen/import-regeln`; sie ist
   bewusst getrennt von `/einstellungen/import-aliase`, weil Aliasse nur
   Anzeigenamen aendern.
-- Treffer werden in der Vorschau als `Fixkosten-Kontrolle: N26-Sammeltransfer` markiert.
+- Treffer werden in der Vorschau als `Fixkosten-Kontrolle: Kontrollmuster` markiert.
 - Diese Treffer sind Kontrollhinweise und sollen nicht als normale variable Monatsausgaben behandelt werden.
 - Die technische Umstellung auf das Monatsblock-Modell ist durch die FIN-Reihe `#56` bis `#60` umgesetzt.
 

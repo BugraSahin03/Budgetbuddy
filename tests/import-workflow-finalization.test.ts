@@ -48,7 +48,7 @@ describe("import workflow finalization", () => {
     expect(state.detectedMonthKey).toBe("2026-04");
     expect(
       state.suggestions.some(
-        (suggestion) => suggestion.label === "Fixkosten-Kontrolle: N26-Sammeltransfer",
+        (suggestion) => suggestion.label === "Fixkosten-Kontrolle: Kontrollmuster",
       ),
     ).toBe(true);
 

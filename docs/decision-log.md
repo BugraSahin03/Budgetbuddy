@@ -1952,3 +1952,27 @@ Auswirkung:
 
 - Entwickler sollen nach Ticketabschluss den sichtbaren Dispatcher-Chat nach dem naechsten Ticket fragen.
 - Direkte Dev-Reviewer-Handoffs bleiben innerhalb der festen Paare.
+
+
+## 2026-07-03 - FIN-117 trennt Import-Regelbereiche in den Einstellungen
+
+Quelle/Ticket: `FIN-117`
+
+Erkenntnis/Entscheidung:
+
+- Import-Regeln bekommen zusaetzlich zum technischen Zieltyp einen dauerhaften
+  `rule_purpose`.
+- `transfer_cash` wird dadurch fachlich in `fixed_cost_control` und
+  `cash_transfer` getrennt.
+- `Kontrollmuster Fixkostenerkennung` zeigt N26-/Fixkosten-Kontrollmuster und beschreibt sie als reine Kontrollsicht.
+- `Bargeld- und Transferregeln` zeigt echte Bargeld-/Transfermuster, die den Vorschlag `Transfer -> Bargeld` ausloesen.
+- Die Import-Vorschau zeigt bei Regelvorschlaegen zusaetzlich den konkreten Regelnamen.
+
+Auswirkung:
+
+- N26-/Fixkosten-Kontrollmuster werden nicht mehr als normale Bargeldtransfer-Regeln dargestellt.
+- Die Trennung bleibt auch nach Nutzer-Edits von Name oder Pattern stabil, weil sie nicht mehr
+  aus dem Textinhalt abgeleitet wird.
+- Echte Bargeld-/Transferregeln werden beim Import-Confirm als Transfer `Sparkasse -> Bargeld`
+  persistiert und erhoehen dadurch den Bargeldbestand; Fixkosten-Kontrollmuster bleiben reine
+  Kontrolltreffer ohne Bargeldwirkung.

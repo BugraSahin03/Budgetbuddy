@@ -15,9 +15,15 @@ const GLOBAL_SETTINGS = [
   },
   {
     href: "/einstellungen/import-regeln",
-    title: "Import-Erkennung",
-    meta: "Kontrollmuster",
+    title: "Kontrollmuster Fixkostenerkennung",
+    meta: "Fixkosten-Import",
     icon: "⌁",
+  },
+  {
+    href: "/einstellungen/bargeld-transferregeln",
+    title: "Bargeld- und Transferregeln",
+    meta: "Transfer-Erkennung",
+    icon: "↔",
   },
   {
     href: "/einstellungen/kategorie-archiv",

@@ -484,7 +484,7 @@ describe("months repository", () => {
       "2031-08-06",
     ]);
     expect(snapshot.fixedCostControlMatches.map((match) => match.controlLabel)).toEqual([
-      "Fixkosten-Kontrolle: N26-Sammeltransfer",
+      "Fixkosten-Kontrolle: Kontrollmuster",
       "Fixkosten-Kontrolle: Direktabbuchung (TEST-FIN-063 Fitness Studio)",
     ]);
     expect(snapshot.fixedCostControlMatches.map((match) => match.displayName)).toEqual([
