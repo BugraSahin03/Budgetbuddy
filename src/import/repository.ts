@@ -37,12 +37,23 @@ export function listImportedTransactions(): ImportedTransactionListItem[] {
           sb.name AS specialBudgetName,
           t.import_run_id AS importRunId
         FROM transactions t
+        LEFT JOIN imported_transactions it ON it.transaction_id = t.id
         INNER JOIN accounts source ON source.id = t.account_id
         LEFT JOIN accounts destination ON destination.id = t.destination_account_id
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN special_budgets sb ON sb.id = t.special_budget_id
         WHERE t.source_type = 'import'
-        ORDER BY t.booking_date DESC, t.id DESC
+        ORDER BY
+          t.booking_date DESC,
+          CASE
+            WHEN it.source_row_index IS NULL THEN t.id
+            ELSE COALESCE(t.import_run_id, t.id)
+          END DESC,
+          CASE
+            WHEN it.source_row_index IS NULL THEN 0
+            ELSE it.source_row_index
+          END ASC,
+          t.id DESC
       `,
     )
     .all() as Array<Omit<ImportedTransactionListItem, "displayName">>;

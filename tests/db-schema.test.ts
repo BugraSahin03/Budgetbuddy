@@ -180,7 +180,16 @@ describe("schema migrations", () => {
     expect(sql).toContain("idx_transaction_fixed_cost_control_overrides_mode");
   });
 
+  it("contains migration for stable import source row ordering", () => {
+    const sql = migrations.find((migration) => migration.id === "0016_fin_114")
+      ?.sql ?? "";
+
+    expect(sql).toContain("ALTER TABLE imported_transactions");
+    expect(sql).toContain("source_row_index INTEGER");
+    expect(sql).toContain("idx_imported_transactions_run_source_row");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0015_fin_100");
+    expect(getLatestSchemaVersion()).toBe("0016_fin_114");
   });
 });

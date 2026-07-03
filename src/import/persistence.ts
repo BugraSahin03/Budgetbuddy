@@ -212,7 +212,7 @@ export function persistSparkasseCsvImport(params: {
   const sparkasseAccountId = resolveSparkasseAccountId();
 
   const persistTransaction = db.transaction(() => {
-    for (const row of parseResult.rows) {
+    for (const [sourceRowIndex, row] of parseResult.rows.entries()) {
       const dedupeFingerprint = buildDedupeFingerprint(row);
 
       const alreadyImported = db
@@ -292,6 +292,7 @@ export function persistSparkasseCsvImport(params: {
           INSERT INTO imported_transactions (
             transaction_id,
             import_run_id,
+            source_row_index,
             account_iban,
             booking_date,
             value_date,
@@ -302,11 +303,12 @@ export function persistSparkasseCsvImport(params: {
             mandate_reference,
             dedupe_fingerprint
           )
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `,
       ).run(
         transactionId,
         importRunId,
+        sourceRowIndex,
         row.accountIban,
         row.bookingDate,
         row.valueDate,
