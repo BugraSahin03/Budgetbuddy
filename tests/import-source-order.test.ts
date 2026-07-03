@@ -31,6 +31,50 @@ describe("FIN-114 import source ordering", () => {
   });
 
   it("stores source row indexes and lists same-day imports in CSV order", () => {
+    const accountId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as {
+        id: number;
+      }
+    ).id;
+    const categoryId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as {
+        id: number;
+      }
+    ).id;
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id,
+          transaction_type,
+          booking_date,
+          effective_month_key,
+          amount_cents,
+          currency_code,
+          description,
+          source_type,
+          category_id
+        )
+        VALUES (?, 'expense', '2026-06-03', '2026-06', -4000, 'EUR', 'MANUELL AELTERE BUCHUNG', 'manual', ?)
+      `,
+    ).run(accountId, categoryId);
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id,
+          transaction_type,
+          booking_date,
+          effective_month_key,
+          amount_cents,
+          currency_code,
+          description,
+          source_type,
+          category_id
+        )
+        VALUES (?, 'expense', '2026-06-03', '2026-06', -5000, 'EUR', 'MANUELL NEUERE BUCHUNG', 'manual', ?)
+      `,
+    ).run(accountId, categoryId);
+
     const result = persistSparkasseCsvImport({
       sourceFilename: "fin-114.csv",
       fileContent: SAME_DAY_CSV,
@@ -63,6 +107,8 @@ describe("FIN-114 import source ordering", () => {
       "KARTENZAHLUNG | CSV ERSTE BUCHUNG",
       "KARTENZAHLUNG | CSV ZWEITE BUCHUNG",
       "KARTENZAHLUNG | CSV DRITTE BUCHUNG",
+      "MANUELL NEUERE BUCHUNG",
+      "MANUELL AELTERE BUCHUNG",
     ]);
   });
 });

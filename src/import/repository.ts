@@ -47,7 +47,15 @@ export function listImportedTransactions(): ImportedTransactionListItem[] {
           t.booking_date DESC,
           CASE
             WHEN it.source_row_index IS NULL THEN t.id
-            ELSE COALESCE(t.import_run_id, t.id)
+            ELSE COALESCE(
+              (
+                SELECT MAX(imported_t.id)
+                FROM transactions imported_t
+                WHERE imported_t.import_run_id = t.import_run_id
+                  AND imported_t.booking_date = t.booking_date
+              ),
+              t.id
+            )
           END DESC,
           CASE
             WHEN it.source_row_index IS NULL THEN 0
