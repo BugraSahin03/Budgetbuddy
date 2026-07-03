@@ -11,9 +11,11 @@ vi.mock("@/src/db/client", () => ({
 }));
 
 const {
+  buildSparkasseImportPreviewPlan,
   detectDefaultImportMonthKey,
   persistSparkasseCsvImport,
 } = await import("@/src/import/persistence");
+const { parseSparkasseCsvToPreview } = await import("@/src/import/sparkasse-csv");
 const { createImportRule } = await import("@/src/import-rules/repository");
 
 const SAMPLE_CSV = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"
@@ -202,6 +204,128 @@ describe("import persistence and dedupe", () => {
       .prepare("SELECT COUNT(*) AS count FROM imported_transactions")
       .get() as { count: number };
     expect(importCount.count).toBe(3);
+  });
+
+  it("builds a preview plan that separates new rows from duplicates", () => {
+    const parsed = parseSparkasseCsvToPreview(SAMPLE_CSV);
+    const firstPreview = buildSparkasseImportPreviewPlan({ rows: parsed.rows });
+
+    expect(firstPreview.importableRowIndexes).toEqual([0, 1, 2]);
+    expect(firstPreview.filteredRows).toEqual([]);
+    expect(firstPreview.duplicateRows).toBe(0);
+
+    persistSparkasseCsvImport({
+      sourceFilename: "sparkasse.csv",
+      fileContent: SAMPLE_CSV,
+    });
+
+    const secondPreview = buildSparkasseImportPreviewPlan({ rows: parsed.rows });
+
+    expect(secondPreview.importableRowIndexes).toEqual([]);
+    expect(secondPreview.duplicateRows).toBe(3);
+    expect(secondPreview.filteredRows.map((row) => row.reasonLabel)).toEqual([
+      "Duplikat",
+      "Duplikat",
+      "Duplikat",
+    ]);
+  });
+
+  it("lets duplicate status dominate rule suggestions in the preview plan", () => {
+    const parsed = parseSparkasseCsvToPreview(SAMPLE_CSV);
+
+    persistSparkasseCsvImport({
+      sourceFilename: "sparkasse.csv",
+      fileContent: SAMPLE_CSV,
+    });
+
+    const preview = buildSparkasseImportPreviewPlan({
+      rows: parsed.rows,
+      suggestions: [
+        {
+          rowIndex: 0,
+          label: "Fixkosten-Kontrolle: Direktabbuchung (Fitness)",
+          ruleName: "Fixkosten-Matching (Direktabbuchung)",
+        },
+      ],
+    });
+
+    expect(preview.filteredRows[0]).toMatchObject({
+      rowIndex: 0,
+      reason: "duplicate",
+      reasonLabel: "Duplikat",
+      suggestionLabel: "Fixkosten-Kontrolle: Direktabbuchung (Fitness)",
+    });
+  });
+
+  it("separates fixed-cost control suggestions but keeps transfer hints importable", () => {
+    const parsed = parseSparkasseCsvToPreview(SAMPLE_CSV);
+    const preview = buildSparkasseImportPreviewPlan({
+      rows: parsed.rows,
+      suggestions: [
+        {
+          rowIndex: 0,
+          label: "Fixkosten-Kontrolle: N26-Sammeltransfer",
+          ruleName: "N26 Sammeltransfer Kontrolle",
+        },
+        {
+          rowIndex: 1,
+          label: "Transfer -> Bargeld",
+          ruleName: "Bargeldabhebung",
+        },
+      ],
+    });
+
+    expect(preview.importableRowIndexes).toEqual([1, 2]);
+    expect(preview.filteredRows.map((row) => row.reasonLabel)).toEqual([
+      "Fixkosten-Kontrolle",
+    ]);
+  });
+
+  it("persists only preview-importable rows and keeps cash transfers importable", () => {
+    const parsed = parseSparkasseCsvToPreview(SAMPLE_CSV);
+    const preview = buildSparkasseImportPreviewPlan({
+      rows: parsed.rows,
+      suggestions: [
+        {
+          rowIndex: 0,
+          label: "Fixkosten-Kontrolle: N26-Sammeltransfer",
+          ruleName: "N26 Sammeltransfer Kontrolle",
+        },
+        {
+          rowIndex: 1,
+          label: "Transfer -> Bargeld",
+          ruleName: "Bargeldabhebung",
+        },
+      ],
+    });
+
+    const result = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse.csv",
+      fileContent: SAMPLE_CSV,
+      previewPlan: preview,
+    });
+
+    expect(result.detectedRows).toBe(3);
+    expect(result.importedRows).toBe(2);
+    expect(result.duplicateRows).toBe(0);
+
+    const rows = db
+      .prepare(
+        `
+          SELECT description, transaction_type AS transactionType
+          FROM transactions
+          WHERE source_type = 'import'
+          ORDER BY id ASC
+        `,
+      )
+      .all() as Array<{ description: string; transactionType: string }>;
+
+    expect(rows.map((row) => row.description)).toEqual([
+      "BARGELDAUSZAHLUNG | GA NR 12345678 AUTOMAT STADT",
+      "EINGANG | Lohn April",
+    ]);
+    expect(rows.some((row) => row.transactionType === "transfer")).toBe(true);
+    expect(rows.some((row) => row.description.includes("SUPERMARKT A"))).toBe(false);
   });
 
   it("treats existing transaction fingerprints as duplicates even without metadata row", () => {

@@ -44,26 +44,34 @@ describe("import workflow finalization", () => {
 
     expect(state.fatalError).toBeNull();
     expect(state.persisted).not.toBeNull();
-    expect(state.persisted?.importedRows).toBe(3);
+    expect(state.persisted?.detectedRows).toBe(3);
+    expect(state.persisted?.importedRows).toBe(2);
+    expect(state.persisted?.duplicateRows).toBe(0);
     expect(state.detectedMonthKey).toBe("2026-04");
     expect(
       state.suggestions.some(
         (suggestion) => suggestion.label === "Fixkosten-Kontrolle: Kontrollmuster",
       ),
     ).toBe(true);
+    expect(state.previewPlan?.importableRowIndexes).toEqual([0, 1]);
+    expect(state.previewPlan?.filteredRows).toEqual([
+      expect.objectContaining({
+        rowIndex: 2,
+        reason: "fixed_cost_control",
+        reasonLabel: "Fixkosten-Kontrolle",
+        suggestionLabel: "Fixkosten-Kontrolle: Kontrollmuster",
+      }),
+    ]);
 
     const imported = listImportedTransactions();
-    expect(imported).toHaveLength(3);
+    expect(imported).toHaveLength(2);
     expect(imported.some((row) => row.transactionType === "transfer")).toBe(true);
     expect(imported.some((row) => row.transactionType === "expense")).toBe(true);
     expect(
       imported.some(
-        (row) =>
-          row.description.includes("N26-Fix.") &&
-          row.transactionType === "expense" &&
-          row.destinationAccountName === null,
+        (row) => row.description.includes("N26-Fix."),
       ),
-    ).toBe(true);
+    ).toBe(false);
 
     const importedMonths = db
       .prepare(
@@ -89,6 +97,13 @@ describe("import workflow finalization", () => {
 
     expect(previewState.fatalError).toBeNull();
     expect(previewState.result?.rows).toHaveLength(3);
+    expect(previewState.previewPlan?.importableRowIndexes).toEqual([0, 1]);
+    expect(previewState.previewPlan?.filteredRows).toEqual([
+      expect.objectContaining({
+        rowIndex: 2,
+        reason: "fixed_cost_control",
+      }),
+    ]);
     expect(previewState.previewFileToken).toEqual(expect.any(String));
     expect(previewState.previewFilename).toBe("sparkasse.csv");
 
@@ -99,7 +114,7 @@ describe("import workflow finalization", () => {
     const confirmedState = await parseSparkasseCsvAction(previewState, confirmFormData);
 
     expect(confirmedState.fatalError).toBeNull();
-    expect(confirmedState.persisted?.importedRows).toBe(3);
+    expect(confirmedState.persisted?.importedRows).toBe(2);
     expect(confirmedState.persisted?.duplicateRows).toBe(0);
     expect(confirmedState.previewFileToken).toBeNull();
   });
@@ -135,7 +150,12 @@ describe("import workflow finalization", () => {
 
     expect(confirmedState.fatalError).toBeNull();
     expect(confirmedState.persisted?.importedRows).toBe(0);
-    expect(confirmedState.persisted?.duplicateRows).toBe(3);
+    expect(confirmedState.persisted?.duplicateRows).toBe(2);
+    expect(confirmedState.previewPlan?.filteredRows).toEqual([
+      expect.objectContaining({ rowIndex: 0, reason: "duplicate" }),
+      expect.objectContaining({ rowIndex: 1, reason: "duplicate" }),
+      expect.objectContaining({ rowIndex: 2, reason: "fixed_cost_control" }),
+    ]);
   });
 
   it("expires cached preview files and asks for a fresh CSV without raw errors", async () => {

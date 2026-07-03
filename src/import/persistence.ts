@@ -5,6 +5,7 @@ import { createHash } from "node:crypto";
 import { getDb } from "@/src/db/client";
 import { parseSparkasseCsvToPreview, type SparkasseCsvRow } from "@/src/import/sparkasse-csv";
 import { isCashTransferRule } from "@/src/import-rules/classification";
+import type { ImportRuleSuggestion } from "@/src/import-rules/matcher";
 import { listActiveImportRules, type ImportRule } from "@/src/import-rules/repository";
 import { assertMonthIsOpen } from "@/src/months/status";
 
@@ -14,6 +15,24 @@ export type ImportPersistenceResult = {
   importedRows: number;
   duplicateRows: number;
   parseErrors: string[];
+};
+
+export type ImportPreviewFilteredReason =
+  | "duplicate"
+  | "fixed_cost_control";
+
+export type ImportPreviewFilteredRow = {
+  rowIndex: number;
+  reason: ImportPreviewFilteredReason;
+  reasonLabel: string;
+  ruleName: string | null;
+  suggestionLabel: string | null;
+};
+
+export type ImportPreviewPlan = {
+  importableRowIndexes: number[];
+  filteredRows: ImportPreviewFilteredRow[];
+  duplicateRows: number;
 };
 
 const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -37,6 +56,93 @@ function buildDedupeFingerprint(row: SparkasseCsvRow): string {
     .join("|");
 
   return createHash("sha256").update(raw).digest("hex");
+}
+
+function findExistingDuplicateByFingerprint(dedupeFingerprint: string): boolean {
+  const db = getDb();
+  const alreadyImported = db
+    .prepare(
+      `
+        SELECT id
+        FROM imported_transactions
+        WHERE dedupe_fingerprint = ?
+        LIMIT 1
+      `,
+    )
+    .get(dedupeFingerprint) as { id: number } | undefined;
+
+  if (alreadyImported) {
+    return true;
+  }
+
+  const alreadyPersistedTransaction = db
+    .prepare(
+      `
+        SELECT id
+        FROM transactions
+        WHERE import_fingerprint = ?
+        LIMIT 1
+      `,
+    )
+    .get(dedupeFingerprint) as { id: number } | undefined;
+
+  return Boolean(alreadyPersistedTransaction);
+}
+
+function isFixedCostControlSuggestion(suggestion: ImportRuleSuggestion | undefined): boolean {
+  return suggestion?.label.startsWith("Fixkosten-Kontrolle:") ?? false;
+}
+
+export function buildSparkasseImportPreviewPlan(params: {
+  rows: SparkasseCsvRow[];
+  suggestions?: ImportRuleSuggestion[];
+}): ImportPreviewPlan {
+  const suggestionByRowIndex = new Map(
+    (params.suggestions ?? []).map((suggestion) => [suggestion.rowIndex, suggestion]),
+  );
+  const seenFingerprints = new Set<string>();
+  const importableRowIndexes: number[] = [];
+  const filteredRows: ImportPreviewFilteredRow[] = [];
+
+  params.rows.forEach((row, rowIndex) => {
+    const dedupeFingerprint = buildDedupeFingerprint(row);
+    const isDuplicate =
+      seenFingerprints.has(dedupeFingerprint) ||
+      findExistingDuplicateByFingerprint(dedupeFingerprint);
+    const suggestion = suggestionByRowIndex.get(rowIndex);
+
+    if (isDuplicate) {
+      filteredRows.push({
+        rowIndex,
+        reason: "duplicate",
+        reasonLabel: "Duplikat",
+        ruleName: suggestion?.ruleName ?? null,
+        suggestionLabel: suggestion?.label ?? null,
+      });
+      return;
+    }
+
+    seenFingerprints.add(dedupeFingerprint);
+
+    if (suggestion && isFixedCostControlSuggestion(suggestion)) {
+      filteredRows.push({
+        rowIndex,
+        reason: "fixed_cost_control",
+        reasonLabel: "Fixkosten-Kontrolle",
+        ruleName: suggestion.ruleName,
+        suggestionLabel: suggestion.label,
+      });
+      return;
+    }
+
+    importableRowIndexes.push(rowIndex);
+  });
+
+  return {
+    importableRowIndexes,
+    filteredRows,
+    duplicateRows: filteredRows.filter((row) => row.reason === "duplicate").length,
+  };
 }
 
 function resolveSparkasseAccountId(): number {
@@ -217,6 +323,7 @@ export function persistSparkasseCsvImport(params: {
   sourceFilename: string;
   fileContent: string;
   effectiveMonthKey?: string | null;
+  previewPlan?: ImportPreviewPlan | null;
 }): ImportPersistenceResult {
   const parseResult = parseSparkasseCsvToPreview(params.fileContent);
   const importEffectiveMonthKey = resolveImportEffectiveMonthKey(
@@ -246,35 +353,25 @@ export function persistSparkasseCsvImport(params: {
   let importedRows = 0;
   let duplicateRows = 0;
   const sparkasseAccountId = resolveSparkasseAccountId();
+  const previewFilteredRowByIndex = new Map(
+    (params.previewPlan?.filteredRows ?? []).map((row) => [row.rowIndex, row]),
+  );
   const activeImportRules = listActiveImportRules();
 
   const persistTransaction = db.transaction(() => {
     for (const [sourceRowIndex, row] of parseResult.rows.entries()) {
       const dedupeFingerprint = buildDedupeFingerprint(row);
+      const previewFilteredRow = previewFilteredRowByIndex.get(sourceRowIndex);
 
-      const alreadyImported = db
-        .prepare(
-          `
-            SELECT id
-            FROM imported_transactions
-            WHERE dedupe_fingerprint = ?
-            LIMIT 1
-          `,
-        )
-        .get(dedupeFingerprint) as { id: number } | undefined;
+      if (previewFilteredRow) {
+        if (previewFilteredRow.reason === "duplicate") {
+          duplicateRows += 1;
+        }
 
-      const alreadyPersistedTransaction = db
-        .prepare(
-          `
-            SELECT id
-            FROM transactions
-            WHERE import_fingerprint = ?
-            LIMIT 1
-          `,
-        )
-        .get(dedupeFingerprint) as { id: number } | undefined;
+        continue;
+      }
 
-      if (alreadyImported || alreadyPersistedTransaction) {
+      if (findExistingDuplicateByFingerprint(dedupeFingerprint)) {
         duplicateRows += 1;
         continue;
       }

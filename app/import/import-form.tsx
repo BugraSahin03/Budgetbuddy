@@ -4,6 +4,19 @@ import { useActionState, useState } from "react";
 
 import { parseSparkasseCsvAction } from "@/app/import/actions";
 import { importPreviewInitialState } from "@/app/import/state";
+import type { SparkasseCsvRow } from "@/src/import/sparkasse-csv";
+
+type PreviewRowView = {
+  row: SparkasseCsvRow;
+  rowIndex: number;
+};
+
+type FilteredPreviewRowView = {
+  decision: NonNullable<
+    typeof importPreviewInitialState.previewPlan
+  >["filteredRows"][number];
+  row: SparkasseCsvRow;
+};
 
 function formatEuroFromCents(amountCents: number): string {
   return new Intl.NumberFormat("de-DE", {
@@ -20,6 +33,18 @@ function amountTone(amountCents: number): string {
 
 function isFixedCostControlLabel(label: string): boolean {
   return label.startsWith("Fixkosten-Kontrolle:");
+}
+
+function filteredReasonTone(reason: string): string {
+  if (reason === "duplicate") {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+
+  if (reason === "fixed_cost_control") {
+    return "border-violet-200 bg-violet-50 text-violet-700";
+  }
+
+  return "border-violet-200 bg-violet-50 text-violet-700";
 }
 
 function renderSuggestionText(params: { label: string; ruleName: string }): string {
@@ -60,9 +85,26 @@ export function ImportForm({
     fallbackMonthKey,
     surface,
   });
-  const fixedCostControls = state.suggestions.filter((item) =>
-    isFixedCostControlLabel(item.label),
+  const suggestionByRowIndex = new Map(
+    state.suggestions.map((suggestion) => [suggestion.rowIndex, suggestion]),
   );
+  const resultRows = state.result?.rows ?? [];
+  const importableRows: PreviewRowView[] = state.previewPlan
+    ? state.previewPlan.importableRowIndexes
+        .map((rowIndex) => ({
+          row: resultRows[rowIndex],
+          rowIndex,
+        }))
+        .filter((item): item is PreviewRowView => Boolean(item.row))
+    : resultRows.map((row, rowIndex) => ({ row, rowIndex }));
+  const filteredRows: FilteredPreviewRowView[] = state.previewPlan
+    ? state.previewPlan.filteredRows
+        .map((decision) => ({
+          decision,
+          row: resultRows[decision.rowIndex],
+        }))
+        .filter((item): item is FilteredPreviewRowView => Boolean(item.row))
+    : [];
   const hasPreviewFile = state.previewFileToken !== null;
   const formSurfaceClass =
     surface === "embedded"
@@ -180,19 +222,31 @@ export function ImportForm({
 
       {state.persisted ? (
         <section className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">Import abgeschlossen</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+            Import abgeschlossen
+          </p>
           <div className="mt-2 grid gap-2 text-sm text-emerald-900 md:grid-cols-4">
-            <p>Importlauf-ID: <span className="font-semibold">{state.persisted.importRunId}</span></p>
-            <p>Gefunden: <span className="font-semibold">{state.persisted.detectedRows}</span></p>
-            <p>Importiert: <span className="font-semibold">{state.persisted.importedRows}</span></p>
-            <p>Duplikate: <span className="font-semibold">{state.persisted.duplicateRows}</span></p>
+            <p>
+              Importlauf-ID: <span className="font-semibold">{state.persisted.importRunId}</span>
+            </p>
+            <p>
+              Gefunden: <span className="font-semibold">{state.persisted.detectedRows}</span>
+            </p>
+            <p>
+              Importiert: <span className="font-semibold">{state.persisted.importedRows}</span>
+            </p>
+            <p>
+              Duplikate: <span className="font-semibold">{state.persisted.duplicateRows}</span>
+            </p>
           </div>
         </section>
       ) : null}
 
       {state.result?.errors.length ? (
         <section className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">Parsing-Hinweise</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-amber-700">
+            Parsing-Hinweise
+          </p>
           <ul className="mt-2 space-y-1 text-sm text-amber-800">
             {state.result.errors.map((error) => (
               <li key={error}>{error}</li>
@@ -202,11 +256,91 @@ export function ImportForm({
       ) : null}
 
       {state.result?.rows.length ? (
-        <section className="rounded-xl border border-slate-200 bg-white shadow-sm">
+        <section className="rounded-xl border border-violet-200 bg-violet-50 p-4 shadow-sm">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-violet-700">
+                Herausgefiltert / Kontrolltreffer
+              </p>
+              <h3 className="mt-1 text-lg font-black tracking-[-0.03em] text-violet-950">
+                Nicht in der normalen Importliste
+              </h3>
+            </div>
+            <span className="rounded-full border border-violet-200 bg-white px-3 py-1 text-xs font-black text-violet-800">
+              {filteredRows.length} Zeilen
+            </span>
+          </div>
+          <p className="mt-2 text-sm font-semibold leading-6 text-violet-900">
+            Diese Zeilen werden nicht als normale Monatsbuchungen importiert. Der Grund steht
+            direkt an der Zeile.
+          </p>
+          {filteredRows.length > 0 ? (
+            <ul className="mt-4 space-y-2 text-sm text-violet-950">
+              {filteredRows.map(({ decision, row }) => (
+                <li
+                  key={`${decision.rowIndex}-${decision.reason}-${row.bookingDate}-${row.amountCents}`}
+                  className="rounded-xl border border-violet-200 bg-white px-3 py-3"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <span
+                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-black ${filteredReasonTone(decision.reason)}`}
+                      >
+                        {decision.reasonLabel}
+                      </span>
+                      {decision.suggestionLabel ? (
+                        <span className="ml-2 inline-flex rounded-full border border-violet-100 bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-700">
+                          {decision.suggestionLabel}
+                        </span>
+                      ) : null}
+                    </div>
+                    <strong className={amountTone(row.amountCents)}>
+                      {formatEuroFromCents(row.amountCents)}
+                    </strong>
+                  </div>
+                  <div className="mt-2 grid gap-1 text-sm text-slate-700 md:grid-cols-[0.8fr_1.4fr_1fr]">
+                    <span>{row.bookingDate}</span>
+                    <span className="font-semibold text-slate-950">{row.description}</span>
+                    <span>{row.counterparty || "Keine Gegenpartei"}</span>
+                  </div>
+                  {decision.ruleName ? (
+                    <p className="mt-2 text-xs font-semibold text-violet-700">
+                      Regel: {decision.ruleName}
+                    </p>
+                  ) : null}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm font-semibold text-violet-900">
+              Keine Duplikate oder Kontrolltreffer in dieser Vorschau.
+            </p>
+          )}
+        </section>
+      ) : null}
+
+      {state.result?.rows.length ? (
+        <section className="rounded-xl border border-emerald-200 bg-emerald-50/80 p-4 shadow-sm">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
+                Wird importiert
+              </p>
+              <h3 className="mt-1 text-lg font-black tracking-[-0.03em] text-emerald-950">
+                Finale Importliste
+              </h3>
+            </div>
+            <span className="rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-black text-emerald-800">
+              {importableRows.length} Buchungen
+            </span>
+          </div>
+          <p className="mt-2 text-sm font-semibold leading-6 text-emerald-900">
+            Diese Zeilen werden beim Bestätigen als normale Monatsbuchungen übernommen.
+          </p>
           {surface === "embedded" ? (
             <div className="month-import-preview-cards">
-              {state.result.rows.map((row, index) => {
-                const suggestion = state.suggestions.find((item) => item.rowIndex === index);
+              {importableRows.map(({ row, rowIndex }) => {
+                const suggestion = suggestionByRowIndex.get(rowIndex);
 
                 return (
                   <article
@@ -238,84 +372,60 @@ export function ImportForm({
               })}
             </div>
           ) : null}
-          <div className="month-import-preview-table overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200 text-sm">
-            <thead>
-              <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
-                <th className="px-3 py-2 font-semibold">Buchungstag</th>
-                <th className="px-3 py-2 font-semibold">Betrag</th>
-                <th className="px-3 py-2 font-semibold">Beschreibung</th>
-                <th className="px-3 py-2 font-semibold">Gegenpartei</th>
-                <th className="px-3 py-2 font-semibold">Info</th>
-                <th className="px-3 py-2 font-semibold">Regelvorschlag</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {state.result.rows.map((row, index) => {
-                const suggestion = state.suggestions.find((item) => item.rowIndex === index);
+          {importableRows.length > 0 ? (
+            <div className="month-import-preview-table mt-4 overflow-x-auto rounded-xl border border-emerald-100 bg-white">
+              <table className="min-w-full divide-y divide-slate-200 text-sm">
+                <thead>
+                  <tr className="text-left text-xs uppercase tracking-[0.12em] text-slate-500">
+                    <th className="px-3 py-2 font-semibold">Buchungstag</th>
+                    <th className="px-3 py-2 font-semibold">Betrag</th>
+                    <th className="px-3 py-2 font-semibold">Beschreibung</th>
+                    <th className="px-3 py-2 font-semibold">Gegenpartei</th>
+                    <th className="px-3 py-2 font-semibold">Info</th>
+                    <th className="px-3 py-2 font-semibold">Regelvorschlag</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {importableRows.map(({ row, rowIndex }) => {
+                    const suggestion = suggestionByRowIndex.get(rowIndex);
 
-                return (
-                <tr key={`${row.bookingDate}-${row.amountCents}-${row.description}-${row.endToEndReference}`}>
-                  <td className="px-3 py-2 text-slate-700">{row.bookingDate}</td>
-                  <td className={`px-3 py-2 font-semibold ${amountTone(row.amountCents)}`}>
-                    {formatEuroFromCents(row.amountCents)}
-                  </td>
-                  <td className="px-3 py-2 text-slate-900">{row.description}</td>
-                  <td className="px-3 py-2 text-slate-700">{row.counterparty}</td>
-                  <td className="px-3 py-2 text-slate-600">{row.info || "-"}</td>
-                  <td className="px-3 py-2 text-slate-700">
-                    {suggestion ? (
-                      <span
-                        className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
-                          isFixedCostControlLabel(suggestion.label)
-                            ? "border-violet-200 bg-violet-50 text-violet-700"
-                            : "border-emerald-200 bg-emerald-50 text-emerald-700"
-                        }`}
+                    return (
+                      <tr
+                        key={`${row.bookingDate}-${row.amountCents}-${row.description}-${row.endToEndReference}`}
                       >
-                        {renderSuggestionText(suggestion)}
-                      </span>
-                    ) : (
-                      <span className="text-xs text-slate-500">-</span>
-                    )}
-                  </td>
-                </tr>
-                );
-              })}
-            </tbody>
-            </table>
-          </div>
-        </section>
-      ) : null}
-
-      {state.result?.rows.length && fixedCostControls.length ? (
-        <section className="rounded-xl border border-violet-200 bg-violet-50 p-4 shadow-sm">
-          <p className="text-xs font-semibold uppercase tracking-[0.12em] text-violet-700">
-            Fixkosten-Kontrollsicht
-          </p>
-          <p className="mt-1 text-sm text-violet-900">
-            Diese Treffer werden als Fixkostenbezogene Kontrolle markiert und nicht als normale
-            variable Regelzuordnung behandelt.
-          </p>
-          <ul className="mt-3 space-y-2 text-sm text-violet-900">
-            {fixedCostControls.map((item) => {
-              const row = state.result?.rows[item.rowIndex];
-              if (!row) {
-                return null;
-              }
-
-              return (
-                <li key={`${item.rowIndex}-${item.ruleName}`} className="rounded-lg border border-violet-200 bg-white px-3 py-2">
-                  <span className="font-semibold">{item.label}</span>
-                  <span className="text-violet-700"> | </span>
-                  <span>{row.bookingDate}</span>
-                  <span className="text-violet-700"> | </span>
-                  <span>{row.description}</span>
-                  <span className="text-violet-700"> | </span>
-                  <span>{formatEuroFromCents(row.amountCents)}</span>
-                </li>
-              );
-            })}
-          </ul>
+                        <td className="px-3 py-2 text-slate-700">{row.bookingDate}</td>
+                        <td className={`px-3 py-2 font-semibold ${amountTone(row.amountCents)}`}>
+                          {formatEuroFromCents(row.amountCents)}
+                        </td>
+                        <td className="px-3 py-2 text-slate-900">{row.description}</td>
+                        <td className="px-3 py-2 text-slate-700">{row.counterparty}</td>
+                        <td className="px-3 py-2 text-slate-600">{row.info || "-"}</td>
+                        <td className="px-3 py-2 text-slate-700">
+                          {suggestion ? (
+                            <span
+                              className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
+                                isFixedCostControlLabel(suggestion.label)
+                                  ? "border-violet-200 bg-violet-50 text-violet-700"
+                                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                              }`}
+                            >
+                              {renderSuggestionText(suggestion)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-slate-500">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <p className="mt-4 rounded-xl border border-emerald-100 bg-white px-4 py-3 text-sm font-semibold text-emerald-900">
+              Keine normalen neuen Monatsbuchungen in dieser Vorschau.
+            </p>
+          )}
         </section>
       ) : null}
     </div>
