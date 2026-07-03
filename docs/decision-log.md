@@ -1949,4 +1949,6 @@ Erkenntnis/Entscheidung:
 Auswirkung:
 
 - N26-/Fixkosten-Kontrollmuster werden nicht mehr als normale Bargeldtransfer-Regeln dargestellt.
-- Die technische Import-Regellogik bleibt bewusst unveraendert; die Trennung ist eine transparente Produkt- und UI-Klassifizierung.
+- Echte Bargeld-/Transferregeln werden beim Import-Confirm als Transfer `Sparkasse -> Bargeld`
+  persistiert und erhoehen dadurch den Bargeldbestand; Fixkosten-Kontrollmuster bleiben reine
+  Kontrolltreffer ohne Bargeldwirkung.

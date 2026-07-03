@@ -14,11 +14,15 @@ const {
   detectDefaultImportMonthKey,
   persistSparkasseCsvImport,
 } = await import("@/src/import/persistence");
+const { createImportRule } = await import("@/src/import-rules/repository");
 
 const SAMPLE_CSV = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"
 "DE00111111110000000001";"24.04.26";"24.04.26";"DIG. KARTE (APPLE PAY)";"2026-04-23T20:21 Debitk.10 2029-12 ";"";"";"65134322015674230426202105";"";"";"";"SUPERMARKT A/STRASSE 1/STADT/DE";"DE00222222220000000002";"BANKDEFFXXX";"-3,58";"EUR";"Umsatz gebucht"
 "DE00111111110000000001";"25.04.26";"25.04.26";"BARGELDAUSZAHLUNG";"GA NR 12345678 AUTOMAT STADT";"";"";"ATM-202604251030";"";"";"";"SPARKASSE GELDAUTOMAT";"";"";"-50,00";"EUR";"Umsatz gebucht"
 "DE00111111110000000001";"24.04.26";"24.04.26";"EINGANG";"Lohn April";"";"";"SALARY-202604";"";"";"";"Arbeitgeber GmbH";"DE00999999990000000009";"BANKDEFFXXX";"2500,00";"EUR";"Umsatz gebucht"`;
+
+const CONFIGURED_CASH_TRANSFER_CSV = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"
+"DE00111111110000000001";"25.04.26";"25.04.26";"KARTENAUSZAHLUNG";"BANKTERMINAL INNENSTADT";"";"";"CASH-RULE-202604251030";"";"";"";"SPARKASSE FILIALE";"";"";"-40,00";"EUR";"Umsatz gebucht"`;
 
 describe("import persistence and dedupe", () => {
   beforeEach(() => {
@@ -80,6 +84,64 @@ describe("import persistence and dedupe", () => {
     ).toBe(true);
     expect(txTypes.some((tx) => tx.transactionType === "income")).toBe(true);
     expect(txTypes.every((tx) => tx.effectiveMonthKey === "2026-04")).toBe(true);
+  });
+
+  it("persists configured cash transfer rule matches as transfers into cash balance", () => {
+    createImportRule({
+      name: "Filialauszahlung -> Bargeld",
+      pattern: "BANKTERMINAL",
+      matchField: "combined",
+      targetType: "transfer_cash",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 90,
+    });
+
+    const result = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse-cash-rule.csv",
+      fileContent: CONFIGURED_CASH_TRANSFER_CSV,
+    });
+
+    expect(result.importedRows).toBe(1);
+
+    const cashAccount = db
+      .prepare("SELECT id FROM accounts WHERE account_type = 'cash' AND name = 'Bargeld'")
+      .get() as { id: number };
+
+    const stored = db
+      .prepare(
+        `
+          SELECT
+            transaction_type AS transactionType,
+            destination_account_id AS destinationAccountId,
+            amount_cents AS amountCents
+          FROM transactions
+          WHERE import_run_id = ?
+        `,
+      )
+      .get(result.importRunId) as {
+      transactionType: string;
+      destinationAccountId: number | null;
+      amountCents: number;
+    };
+
+    expect(stored.transactionType).toBe("transfer");
+    expect(stored.destinationAccountId).toBe(cashAccount.id);
+    expect(stored.amountCents).toBe(-4000);
+
+    const cashIncoming = db
+      .prepare(
+        `
+          SELECT COALESCE(SUM(-amount_cents), 0) AS total
+          FROM transactions
+          WHERE destination_account_id = ?
+            AND transaction_type = 'transfer'
+        `,
+      )
+      .get(cashAccount.id) as { total: number };
+
+    expect(cashIncoming.total).toBe(4000);
   });
 
   it("marks second identical import as duplicates", () => {
