@@ -89,82 +89,80 @@ export default async function CashTransferRulesPage({
         </p>
       ) : null}
 
-      {isEditing ? (
-        <section className="month-section-panel space-y-4">
-          <header>
-            <p className="month-eyebrow">Neue Bargeld-/Transferregel</p>
-            <h3 className="month-section-title mt-1">Regel anlegen</h3>
-          </header>
+      <section className="month-section-panel space-y-4">
+        <header>
+          <p className="month-eyebrow">Neue Bargeld-/Transferregel</p>
+          <h3 className="month-section-title mt-1">Regel anlegen</h3>
+        </header>
 
-          <form
-            action={createCashTransferRuleSettingsAction}
-            className="grid gap-3 lg:grid-cols-2 xl:grid-cols-10"
-          >
-            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-3">
-              Name
-              <input
-                name="name"
-                required
-                maxLength={80}
-                placeholder="z. B. Geldautomat Sparkasse"
-                className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
-              />
-            </label>
+        <form
+          action={createCashTransferRuleSettingsAction}
+          className="grid gap-3 lg:grid-cols-2 xl:grid-cols-10"
+        >
+          <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-3">
+            Name
+            <input
+              name="name"
+              required
+              maxLength={80}
+              placeholder="z. B. Geldautomat Sparkasse"
+              className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
+            />
+          </label>
 
-            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-3">
-              Suchmuster
-              <input
-                name="pattern"
-                required
-                maxLength={120}
-                placeholder="z. B. BARGELDAUSZAHLUNG"
-                className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
-              />
-            </label>
+          <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-3">
+            Suchmuster
+            <input
+              name="pattern"
+              required
+              maxLength={120}
+              placeholder="z. B. BARGELDAUSZAHLUNG"
+              className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
+            />
+          </label>
 
-            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-2">
-              Suchfeld
-              <select
-                name="matchField"
-                defaultValue="combined"
-                className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
-              >
-                <option value="combined">Beschreibung + Gegenpartei</option>
-                <option value="description">Beschreibung</option>
-                <option value="counterparty">Gegenpartei</option>
-              </select>
-            </label>
-
-            <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-2">
-              Priorität
-              <input
-                name="priority"
-                type="number"
-                min={1}
-                max={999}
-                defaultValue={100}
-                className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
-              />
-            </label>
-
-            <label className="flex items-center gap-2 rounded-[1rem] border border-[color:var(--month-line)] bg-white/70 px-4 py-3 text-sm font-semibold text-[color:var(--month-ink)] xl:col-span-2 xl:self-end">
-              <input type="checkbox" name="isActive" defaultChecked className="h-4 w-4" />
-              Aktiv
-            </label>
-
-            <button
-              type="submit"
-              className="rounded-[1rem] bg-[#061b46] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f4c6d] xl:col-span-2 xl:self-end"
+          <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-2">
+            Suchfeld
+            <select
+              name="matchField"
+              defaultValue="combined"
+              className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
             >
-              Regel anlegen
-            </button>
-          </form>
+              <option value="combined">Beschreibung + Gegenpartei</option>
+              <option value="description">Beschreibung</option>
+              <option value="counterparty">Gegenpartei</option>
+            </select>
+          </label>
 
-          <div className="month-chip month-chip-accent w-fit">
-            Zieltyp: Bargeld-Transfer. Keine Fixkosten-Kontrollregel.
-          </div>
-        </section>
-      ) : null}
+          <label className="grid gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[color:var(--month-ink-muted)] xl:col-span-2">
+            Priorität
+            <input
+              name="priority"
+              type="number"
+              min={1}
+              max={999}
+              defaultValue={100}
+              className="rounded-[1rem] border border-[color:var(--month-line)] bg-white/90 px-4 py-3 text-sm normal-case tracking-normal text-[color:var(--month-ink)] outline-none transition focus:border-[color:var(--month-line-strong)]"
+            />
+          </label>
+
+          <label className="flex items-center gap-2 rounded-[1rem] border border-[color:var(--month-line)] bg-white/70 px-4 py-3 text-sm font-semibold text-[color:var(--month-ink)] xl:col-span-2 xl:self-end">
+            <input type="checkbox" name="isActive" defaultChecked className="h-4 w-4" />
+            Aktiv
+          </label>
+
+          <button
+            type="submit"
+            className="rounded-[1rem] bg-[#061b46] px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-[#0f4c6d] xl:col-span-2 xl:self-end"
+          >
+            Regel anlegen
+          </button>
+        </form>
+
+        <div className="month-chip month-chip-accent w-fit">
+          Zieltyp: Bargeld-Transfer. Keine Fixkosten-Kontrollregel.
+        </div>
+      </section>
 
       <section className="month-section-panel space-y-4">
         <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
