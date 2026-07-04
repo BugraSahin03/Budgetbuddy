@@ -14,6 +14,7 @@ const repositoryMocks = vi.hoisted(() => ({
 }));
 const importRuleRepositoryMocks = vi.hoisted(() => ({
   createImportRule: vi.fn(),
+  deleteCashTransferImportRule: vi.fn(),
   parseRuleInputFromFormData: vi.fn(),
   updateImportRule: vi.fn(),
 }));
@@ -47,6 +48,7 @@ import {
   createCashTransferRuleSettingsAction,
   createImportDisplayAliasAction,
   createImportRuleSettingsAction,
+  deleteCashTransferRuleSettingsAction,
   deleteImportDisplayAliasAction,
   reactivateCategoryAction,
   reactivateFixedCostAction,
@@ -65,6 +67,7 @@ describe("FIN-059 import display alias actions", () => {
     repositoryMocks.parseImportDisplayAliasInputFromFormData.mockReset();
     repositoryMocks.updateImportDisplayAlias.mockReset();
     importRuleRepositoryMocks.createImportRule.mockReset();
+    importRuleRepositoryMocks.deleteCashTransferImportRule.mockReset();
     importRuleRepositoryMocks.parseRuleInputFromFormData.mockReset();
     importRuleRepositoryMocks.updateImportRule.mockReset();
     specialBudgetRepositoryMocks.reactivateSpecialBudgetProject.mockReset();
@@ -251,6 +254,30 @@ describe("FIN-059 import display alias actions", () => {
     expect(parsedUpdateFormData.get("rulePurpose")).toBe("cash_transfer");
     expect(parsedUpdateFormData.get("categoryId")).toBeNull();
     expect(parsedUpdateFormData.get("specialBudgetId")).toBeNull();
+  });
+
+  it("deletes cash transfer rules only after explicit confirmation", async () => {
+    const missingConfirmationData = new FormData();
+    missingConfirmationData.set("ruleId", "8");
+
+    await expect(deleteCashTransferRuleSettingsAction(missingConfirmationData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/bargeld-transferregeln?error=L%C3%B6schen%20muss%20best%C3%A4tigt%20werden.",
+    );
+    expect(importRuleRepositoryMocks.deleteCashTransferImportRule).not.toHaveBeenCalled();
+
+    const deleteData = new FormData();
+    deleteData.set("ruleId", "8");
+    deleteData.set("confirmDelete", "on");
+
+    await expect(deleteCashTransferRuleSettingsAction(deleteData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/bargeld-transferregeln?notice=Bargeld-%2FTransferregel%20gel%C3%B6scht.",
+    );
+
+    expect(importRuleRepositoryMocks.deleteCashTransferImportRule).toHaveBeenCalledWith(8);
+    expect(revalidatePathMock).toHaveBeenCalledWith(
+      "/einstellungen/bargeld-transferregeln",
+    );
+    expect(revalidatePathMock).toHaveBeenCalledWith("/import");
   });
 
   it("reactivates archived special budget projects from settings", async () => {

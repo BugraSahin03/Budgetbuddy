@@ -117,6 +117,70 @@ describe("import rules", () => {
     expect(suggestions[0].ruleName).toBe("ATM -> Bargeld Transfer");
   });
 
+  it("deletes cash transfer rules and excludes them from future matching", () => {
+    repo.createImportRule({
+      name: "Garage -> Bargeld Transfer",
+      pattern: "GARAGE",
+      matchField: "combined",
+      targetType: "transfer_cash",
+      rulePurpose: "cash_transfer",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 5,
+    });
+
+    const created = repo
+      .listImportRules()
+      .find((rule) => rule.name === "Garage -> Bargeld Transfer");
+    expect(created).toBeDefined();
+
+    repo.deleteCashTransferImportRule(created!.id);
+
+    const afterDelete = repo
+      .listImportRules()
+      .find((rule) => rule.name === "Garage -> Bargeld Transfer");
+    expect(afterDelete).toBeUndefined();
+
+    const suggestions = matcher.buildImportRuleSuggestions({
+      rules: repo.listActiveImportRules(),
+      rows: [
+        {
+          accountIban: "DE001",
+          bookingDate: "2026-05-23",
+          valueDate: "2026-05-23",
+          bookingText: "UEBERWEISUNG",
+          purpose: "GARAGE",
+          counterparty: "Familie Sahin",
+          counterpartyIban: "",
+          counterpartyBic: "",
+          amountCents: -5000,
+          currencyCode: "EUR",
+          info: "Umsatz gebucht",
+          endToEndReference: "",
+          mandateReference: "",
+          description: "UEBERWEISUNG | GARAGE",
+        },
+      ],
+    });
+
+    expect(suggestions).toHaveLength(0);
+  });
+
+  it("does not delete fixed-cost control rules through the cash transfer delete path", () => {
+    const n26Rule = repo
+      .listImportRules()
+      .find((rule) => rule.name === "N26 Sammeltransfer Kontrolle");
+    expect(n26Rule).toBeDefined();
+
+    expect(() => repo.deleteCashTransferImportRule(n26Rule!.id)).toThrow(
+      "Bargeld-/Transferregel wurde nicht gefunden.",
+    );
+
+    const stillExisting = repo.listImportRules().find((rule) => rule.id === n26Rule!.id);
+    expect(stillExisting?.rulePurpose).toBe("fixed_cost_control");
+  });
+
   it("ships editable default N26 control rule", () => {
     const rules = repo.listImportRules();
     const n26Rule = rules.find((rule) => rule.name === "N26 Sammeltransfer Kontrolle");

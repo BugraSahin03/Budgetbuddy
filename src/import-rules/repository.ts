@@ -364,6 +364,25 @@ export function updateImportRule(ruleId: number, input: ImportRuleInput): void {
   }
 }
 
+export function deleteCashTransferImportRule(ruleId: number): void {
+  ensureImportRulesTable();
+
+  const result = getDb()
+    .prepare(
+      `
+        DELETE FROM import_rules
+        WHERE id = ?
+          AND target_type = 'transfer_cash'
+          AND rule_purpose = 'cash_transfer'
+      `,
+    )
+    .run(ruleId);
+
+  if (result.changes === 0) {
+    throw new Error("Bargeld-/Transferregel wurde nicht gefunden.");
+  }
+}
+
 export function parseRuleInputFromFormData(formData: FormData): ImportRuleInput {
   const matchField = String(formData.get("matchField") ?? "combined") as ImportRuleMatchField;
   const targetType = String(formData.get("targetType") ?? "category") as ImportRuleTargetType;
