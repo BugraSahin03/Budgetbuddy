@@ -173,7 +173,6 @@ export default async function CashTransferRulesPage({
             <h3 className="month-section-title mt-1">Bestehende Bargeld- und Transferregeln</h3>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="month-chip month-chip-neutral w-fit">{rules.length} Einträge</span>
             <Link
               href={
                 isEditing
@@ -181,7 +180,8 @@ export default async function CashTransferRulesPage({
                   : "/einstellungen/bargeld-transferregeln?edit=1"
               }
               aria-label={isEditing ? "Bearbeitungsmodus beenden" : "Bearbeitungsmodus starten"}
-              className="month-chip month-chip-accent w-fit text-base"
+              title={isEditing ? "Fertig" : "Editieren"}
+              className="budget-icon-action"
             >
               {isEditing ? "✓" : "✎"}
             </Link>
