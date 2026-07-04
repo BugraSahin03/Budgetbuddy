@@ -45,12 +45,17 @@ describe("FIN-079 import rule settings UI", () => {
     expect(cashTransferRulesPage).toContain("isCashTransferRule");
     expect(cashTransferRulesPage).toContain("createCashTransferRuleSettingsAction");
     expect(cashTransferRulesPage).toContain("updateCashTransferRuleSettingsAction");
+    expect(cashTransferRulesPage).toContain("deleteCashTransferRuleSettingsAction");
     expect(cashTransferRulesPage).toContain("Bargeld-Transfer ·");
+    expect(cashTransferRulesPage).toContain("Gefahr-Aktion");
+    expect(cashTransferRulesPage).toContain('name="confirmDelete"');
+    expect(cashTransferRulesPage).toContain("Regel löschen");
     expect(cashTransferRulesPage).not.toContain("N26-Sammeltransfer als Fixkosten-Kontrolle");
     expect(settingsActions).toContain("createImportRuleSettingsAction");
     expect(settingsActions).toContain("updateImportRuleSettingsAction");
     expect(settingsActions).toContain("createCashTransferRuleSettingsAction");
     expect(settingsActions).toContain("updateCashTransferRuleSettingsAction");
+    expect(settingsActions).toContain("deleteCashTransferRuleSettingsAction");
     expect(settingsActions).toContain('normalizedFormData.set("targetType", "transfer_cash")');
     expect(settingsActions).toContain('normalizedFormData.set("rulePurpose", "fixed_cost_control")');
     expect(settingsActions).toContain('normalizedFormData.set("rulePurpose", "cash_transfer")');

@@ -1995,3 +1995,20 @@ Auswirkung:
 - Echte Bargeld-/Transferregeln werden beim Import-Confirm als Transfer `Sparkasse -> Bargeld`
   persistiert und erhoehen dadurch den Bargeldbestand; Fixkosten-Kontrollmuster bleiben reine
   Kontrolltreffer ohne Bargeldwirkung.
+
+
+## 2026-07-04 - FIN-119 loescht Bargeld-/Transferregeln gezielt
+
+Quelle/Ticket: `FIN-119`
+
+Erkenntnis/Entscheidung:
+
+- Bargeld-/Transferregeln koennen geloescht werden, wenn sie fachlich nicht mehr existieren sollen.
+- Die Loeschung ist ein Hard-Delete fuer Regeln mit `rule_purpose = cash_transfer`.
+- Fixkosten-Kontrollmuster sind serverseitig vom Loeschpfad ausgeschlossen.
+- Die UI verlangt vor dem Loeschen eine explizite Bestaetigung.
+
+Auswirkung:
+
+- Geloeschte Bargeld-/Transferregeln erscheinen nicht mehr in der Regelliste und matchen zukuenftig nicht mehr.
+- Bereits importierte Transaktionen bleiben unveraendert.

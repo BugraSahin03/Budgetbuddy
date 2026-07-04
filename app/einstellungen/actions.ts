@@ -13,6 +13,7 @@ import { setCategoryActive } from "@/src/categories/repository";
 import { setFixedCostActive } from "@/src/fixed-costs/repository";
 import {
   createImportRule,
+  deleteCashTransferImportRule,
   parseRuleInputFromFormData,
   updateImportRule,
 } from "@/src/import-rules/repository";
@@ -48,6 +49,12 @@ function parseImportRuleId(formData: FormData): number {
   }
 
   return ruleId;
+}
+
+function assertDeleteConfirmation(formData: FormData): void {
+  if (String(formData.get("confirmDelete") ?? "off") !== "on") {
+    throw new Error("Löschen muss bestätigt werden.");
+  }
 }
 
 function parseImportControlPatternInput(formData: FormData) {
@@ -276,6 +283,32 @@ export async function updateCashTransferRuleSettingsAction(
   redirect(
     "/einstellungen/bargeld-transferregeln?notice=" +
       encodeMessage("Bargeld-/Transferregel gespeichert."),
+  );
+}
+
+export async function deleteCashTransferRuleSettingsAction(
+  formData: FormData,
+): Promise<never> {
+  let errorMessage: string | null = null;
+
+  try {
+    assertDeleteConfirmation(formData);
+    deleteCashTransferImportRule(parseImportRuleId(formData));
+    revalidatePath("/einstellungen");
+    revalidatePath("/einstellungen/bargeld-transferregeln");
+    revalidatePath("/import");
+    revalidatePath("/monate");
+  } catch (error) {
+    errorMessage = toErrorMessage(error);
+  }
+
+  if (errorMessage) {
+    redirect("/einstellungen/bargeld-transferregeln?error=" + encodeMessage(errorMessage));
+  }
+
+  redirect(
+    "/einstellungen/bargeld-transferregeln?notice=" +
+      encodeMessage("Bargeld-/Transferregel gelöscht."),
   );
 }
 

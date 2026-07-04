@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import {
   createCashTransferRuleSettingsAction,
+  deleteCashTransferRuleSettingsAction,
   updateCashTransferRuleSettingsAction,
 } from "@/app/einstellungen/actions";
 import { isCashTransferRule } from "@/src/import-rules/classification";
@@ -238,6 +239,45 @@ export default async function CashTransferRulesPage({
                     Regel speichern
                   </button>
                 </form>
+
+                <div className="mt-4 rounded-[1.2rem] border border-red-100 bg-red-50/70 p-3">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-[0.16em] text-red-500">
+                        Gefahr-Aktion
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-red-900">
+                        Regel dauerhaft löschen
+                      </p>
+                      <p className="mt-1 text-xs text-red-700">
+                        Bereits importierte Buchungen bleiben unverändert. Die Regel löst künftig
+                        keine Importvorschläge mehr aus.
+                      </p>
+                    </div>
+
+                    <form
+                      action={deleteCashTransferRuleSettingsAction}
+                      className="flex flex-col gap-2 md:min-w-72"
+                    >
+                      <input type="hidden" name="ruleId" value={rule.id} />
+                      <label className="flex items-center gap-2 rounded-[0.95rem] border border-red-200 bg-white/80 px-3 py-2 text-xs font-semibold text-red-800">
+                        <input
+                          type="checkbox"
+                          name="confirmDelete"
+                          required
+                          className="h-4 w-4"
+                        />
+                        Löschen bestätigen
+                      </label>
+                      <button
+                        type="submit"
+                        className="rounded-[0.95rem] border border-red-200 bg-white px-4 py-2 text-sm font-semibold text-red-700 transition hover:border-red-300 hover:bg-red-100"
+                      >
+                        Regel löschen
+                      </button>
+                    </form>
+                  </div>
+                </div>
               </li>
             ))}
           </ul>
