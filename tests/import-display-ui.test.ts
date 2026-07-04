@@ -47,3 +47,25 @@ describe("FIN-059 import display alias UI", () => {
     expect(transactionsPage).toContain("title={row.description}");
   });
 });
+
+describe("FIN-118 import display alias edit mode", () => {
+  it("keeps existing aliases read-only by default and gates editing behind edit mode", () => {
+    const importAliasesPage = readProjectFile("app/einstellungen/import-aliase/page.tsx");
+    const settingsActions = readProjectFile("app/einstellungen/actions.ts");
+
+    expect(importAliasesPage).toContain("const isEditing = toSingleParam(params.edit) === \"1\"");
+    expect(importAliasesPage).toContain('href="/einstellungen/import-aliase?edit=1"');
+    expect(importAliasesPage).toContain("aria-label=\"Import-Aliasse bearbeiten\"");
+    expect(importAliasesPage).toContain("aria-label=\"Editiermodus für Import-Aliasse beenden\"");
+    expect(importAliasesPage).toContain('aria-label="Import-Aliasse"');
+    expect(importAliasesPage).toContain('aria-label="Import-Aliasse bearbeiten"');
+    expect(importAliasesPage).toContain("Muster enthält");
+    expect(importAliasesPage).toContain("Anzeigename");
+    expect(importAliasesPage).toContain("returnToEdit");
+    expect(importAliasesPage).toContain("Löschen bestätigen");
+    expect(importAliasesPage).toContain('name="confirmDelete"');
+    expect(importAliasesPage).toContain("isEditing ? (");
+    expect(settingsActions).toContain("assertAliasDeleteConfirmed");
+    expect(settingsActions).toContain("Alias-Löschung muss bestätigt werden.");
+  });
+});
