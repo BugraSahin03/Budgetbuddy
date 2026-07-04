@@ -52,6 +52,7 @@ describe("FIN-079 import rule settings UI", () => {
     expect(cashTransferRulesPage).toContain("Bearbeitungsmodus beenden");
     expect(cashTransferRulesPage).toContain("budget-icon-action");
     expect(cashTransferRulesPage).toContain("Gefahr-Aktion");
+    expect(cashTransferRulesPage).toContain('type="hidden" name="isActive" value="on"');
     expect(cashTransferRulesPage).toContain('name="confirmDelete"');
     expect(cashTransferRulesPage).toContain("Regel löschen");
     expect(cashTransferRulesPage).not.toContain("N26-Sammeltransfer als Fixkosten-Kontrolle");

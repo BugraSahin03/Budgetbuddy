@@ -146,10 +146,7 @@ export default async function CashTransferRulesPage({
             />
           </label>
 
-          <label className="flex items-center gap-2 rounded-[1rem] border border-[color:var(--month-line)] bg-white/70 px-4 py-3 text-sm font-semibold text-[color:var(--month-ink)] xl:col-span-2 xl:self-end">
-            <input type="checkbox" name="isActive" defaultChecked className="h-4 w-4" />
-            Aktiv
-          </label>
+          <input type="hidden" name="isActive" value="on" />
 
           <button
             type="submit"
@@ -158,10 +155,6 @@ export default async function CashTransferRulesPage({
             Regel anlegen
           </button>
         </form>
-
-        <div className="month-chip month-chip-accent w-fit">
-          Zieltyp: Bargeld-Transfer. Keine Fixkosten-Kontrollregel.
-        </div>
       </section>
 
       <section className="month-section-panel space-y-4">
