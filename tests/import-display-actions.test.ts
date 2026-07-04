@@ -93,6 +93,7 @@ describe("FIN-059 import display alias actions", () => {
     const deleteData = new FormData();
     updateData.set("aliasId", "7");
     deleteData.set("aliasId", "7");
+    deleteData.set("confirmDelete", "on");
 
     await expect(createImportDisplayAliasAction(createData)).rejects.toThrow(
       "NEXT_REDIRECT:/einstellungen/import-aliase?notice=Import-Alias%20erstellt.",
@@ -111,6 +112,35 @@ describe("FIN-059 import display alias actions", () => {
     });
     expect(repositoryMocks.deleteImportDisplayAlias).toHaveBeenCalledWith(7);
     expect(redirectMock).not.toHaveBeenCalledWith(expect.stringContaining("?error="));
+  });
+
+  it("requires explicit confirmation before deleting import display aliases", async () => {
+    const deleteData = new FormData();
+    deleteData.set("aliasId", "7");
+    deleteData.set("returnToEdit", "1");
+
+    await expect(deleteImportDisplayAliasAction(deleteData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/import-aliase?edit=1&error=Alias-L%C3%B6schung%20muss%20best%C3%A4tigt%20werden.",
+    );
+
+    expect(repositoryMocks.deleteImportDisplayAlias).not.toHaveBeenCalled();
+  });
+
+  it("keeps alias update and delete redirects in edit mode when requested", async () => {
+    const updateData = new FormData();
+    const deleteData = new FormData();
+    updateData.set("aliasId", "7");
+    updateData.set("returnToEdit", "1");
+    deleteData.set("aliasId", "7");
+    deleteData.set("returnToEdit", "1");
+    deleteData.set("confirmDelete", "on");
+
+    await expect(updateImportDisplayAliasAction(updateData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/import-aliase?edit=1&notice=Import-Alias%20gespeichert.",
+    );
+    await expect(deleteImportDisplayAliasAction(deleteData)).rejects.toThrow(
+      "NEXT_REDIRECT:/einstellungen/import-aliase?edit=1&notice=Import-Alias%20gel%C3%B6scht.",
+    );
   });
 
   it("redirects validation or persistence errors to error URLs", async () => {

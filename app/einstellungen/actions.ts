@@ -40,6 +40,22 @@ function parseAliasId(formData: FormData): number {
   return aliasId;
 }
 
+function shouldReturnToAliasEditMode(formData: FormData): boolean {
+  return String(formData.get("returnToEdit") ?? "") === "1";
+}
+
+function importAliasRedirectPath(params: { message: string; type: "error" | "notice"; edit?: boolean }): string {
+  const editPrefix = params.edit ? "edit=1&" : "";
+
+  return `/einstellungen/import-aliase?${editPrefix}${params.type}=${encodeMessage(params.message)}`;
+}
+
+function assertAliasDeleteConfirmed(formData: FormData): void {
+  if (String(formData.get("confirmDelete") ?? "") !== "on") {
+    throw new Error("Alias-Löschung muss bestätigt werden.");
+  }
+}
+
 function parseImportRuleId(formData: FormData): number {
   const ruleId = Number.parseInt(String(formData.get("ruleId") ?? ""), 10);
 
@@ -114,6 +130,7 @@ export async function createImportDisplayAliasAction(
   formData: FormData,
 ): Promise<never> {
   let errorMessage: string | null = null;
+  const returnToEdit = shouldReturnToAliasEditMode(formData);
 
   try {
     createImportDisplayAlias(parseImportDisplayAliasInputFromFormData(formData));
@@ -126,16 +143,29 @@ export async function createImportDisplayAliasAction(
   }
 
   if (errorMessage) {
-    redirect("/einstellungen/import-aliase?error=" + encodeMessage(errorMessage));
+    redirect(
+      importAliasRedirectPath({
+        edit: returnToEdit,
+        message: errorMessage,
+        type: "error",
+      }),
+    );
   }
 
-  redirect("/einstellungen/import-aliase?notice=" + encodeMessage("Import-Alias erstellt."));
+  redirect(
+    importAliasRedirectPath({
+      edit: returnToEdit,
+      message: "Import-Alias erstellt.",
+      type: "notice",
+    }),
+  );
 }
 
 export async function updateImportDisplayAliasAction(
   formData: FormData,
 ): Promise<never> {
   let errorMessage: string | null = null;
+  const returnToEdit = shouldReturnToAliasEditMode(formData);
 
   try {
     updateImportDisplayAlias(
@@ -151,18 +181,32 @@ export async function updateImportDisplayAliasAction(
   }
 
   if (errorMessage) {
-    redirect("/einstellungen/import-aliase?error=" + encodeMessage(errorMessage));
+    redirect(
+      importAliasRedirectPath({
+        edit: returnToEdit,
+        message: errorMessage,
+        type: "error",
+      }),
+    );
   }
 
-  redirect("/einstellungen/import-aliase?notice=" + encodeMessage("Import-Alias gespeichert."));
+  redirect(
+    importAliasRedirectPath({
+      edit: returnToEdit,
+      message: "Import-Alias gespeichert.",
+      type: "notice",
+    }),
+  );
 }
 
 export async function deleteImportDisplayAliasAction(
   formData: FormData,
 ): Promise<never> {
   let errorMessage: string | null = null;
+  const returnToEdit = shouldReturnToAliasEditMode(formData);
 
   try {
+    assertAliasDeleteConfirmed(formData);
     deleteImportDisplayAlias(parseAliasId(formData));
     revalidatePath("/einstellungen");
     revalidatePath("/einstellungen/import-aliase");
@@ -173,10 +217,22 @@ export async function deleteImportDisplayAliasAction(
   }
 
   if (errorMessage) {
-    redirect("/einstellungen/import-aliase?error=" + encodeMessage(errorMessage));
+    redirect(
+      importAliasRedirectPath({
+        edit: returnToEdit,
+        message: errorMessage,
+        type: "error",
+      }),
+    );
   }
 
-  redirect("/einstellungen/import-aliase?notice=" + encodeMessage("Import-Alias gelöscht."));
+  redirect(
+    importAliasRedirectPath({
+      edit: returnToEdit,
+      message: "Import-Alias gelöscht.",
+      type: "notice",
+    }),
+  );
 }
 
 export async function createImportRuleSettingsAction(
