@@ -47,6 +47,9 @@ describe("FIN-079 import rule settings UI", () => {
     expect(cashTransferRulesPage).toContain("updateCashTransferRuleSettingsAction");
     expect(cashTransferRulesPage).toContain("deleteCashTransferRuleSettingsAction");
     expect(cashTransferRulesPage).toContain("Bargeld-Transfer ·");
+    expect(cashTransferRulesPage).toContain("/einstellungen/bargeld-transferregeln?edit=1");
+    expect(cashTransferRulesPage).toContain("Bearbeitungsmodus starten");
+    expect(cashTransferRulesPage).toContain("Bearbeitungsmodus beenden");
     expect(cashTransferRulesPage).toContain("Gefahr-Aktion");
     expect(cashTransferRulesPage).toContain('name="confirmDelete"');
     expect(cashTransferRulesPage).toContain("Regel löschen");
