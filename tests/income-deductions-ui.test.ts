@@ -9,7 +9,6 @@ describe("FIN-120 income deductions UI", () => {
     const settings = read("app/einstellungen/page.tsx");
     const rulesPage = read("app/einstellungen/einkommensabzuege/page.tsx");
     const importForm = read("app/import/import-form.tsx");
-    const importPersistence = read("src/import/persistence.ts");
     const monthPage = read("app/monate/[monthKey]/page.tsx");
 
     expect(settings).toContain('href: "/einstellungen/einkommensabzuege"');
@@ -17,7 +16,8 @@ describe("FIN-120 income deductions UI", () => {
     expect(rulesPage).toContain("createIncomeDeductionRuleAction");
     expect(rulesPage).toContain("updateIncomeDeductionRuleAction");
     expect(rulesPage).toContain("deleteIncomeDeductionRuleAction");
-    expect(importPersistence).toContain("Einkommensabzug bereits vorhanden");
+    expect(importForm).toContain("Weiterer Regeltreffer");
+    expect(importForm).toContain("wird als normale Ausgabe importiert");
     expect(importForm).toContain("werden nicht als normale Ausgabe gezählt");
     expect(monthPage).toContain("incomeDeductionCents");
     expect(monthPage).toContain("Einkommensabzug");

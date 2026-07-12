@@ -87,11 +87,12 @@ describe("FIN-120 income deductions", () => {
     const suggestions = matcher.buildImportRuleSuggestions({ rows: parsed.rows, rules: [], incomeDeductionRules: rules.listActiveIncomeDeductionRules() });
     const plan = persistence.buildSparkasseImportPreviewPlan({ rows: parsed.rows, suggestions, effectiveMonthKey: "2026-07" });
 
-    expect(plan.importableRowIndexes).toEqual([0]);
-    expect(plan.filteredRows[0]).toMatchObject({ rowIndex: 1, reason: "income_deduction_conflict", reasonLabel: "Einkommensabzug bereits vorhanden" });
+    expect(plan.importableRowIndexes).toEqual([0, 1]);
+    expect(plan.incomeDeductionConflictRowIndexes).toEqual([1]);
 
     persistence.persistSparkasseCsvImport({ sourceFilename: "pkv.csv", fileContent: TWO_DEDUCTIONS_CSV, effectiveMonthKey: "2026-07", previewPlan: plan, suggestions });
     expect((db.prepare("SELECT COUNT(*) AS count FROM transactions WHERE transaction_type = 'income_deduction'").get() as { count: number }).count).toBe(1);
+    expect((db.prepare("SELECT COUNT(*) AS count FROM transactions WHERE transaction_type = 'expense'").get() as { count: number }).count).toBe(1);
   });
 
   it("blocks a matching row in a later import for the same month", async () => {
@@ -130,10 +131,16 @@ describe("FIN-120 income deductions", () => {
       effectiveMonthKey: "2026-07",
     });
 
-    expect(secondPlan.importableRowIndexes).toEqual([]);
-    expect(secondPlan.filteredRows[0]).toMatchObject({
-      reason: "income_deduction_conflict",
-      reasonLabel: "Einkommensabzug bereits vorhanden",
+    expect(secondPlan.importableRowIndexes).toEqual([0]);
+    expect(secondPlan.incomeDeductionConflictRowIndexes).toEqual([0]);
+
+    persistence.persistSparkasseCsvImport({
+      sourceFilename: "pkv-2.csv",
+      fileContent: secondCsv,
+      effectiveMonthKey: "2026-07",
+      previewPlan: secondPlan,
+      suggestions: secondSuggestions,
     });
+    expect((db.prepare("SELECT transaction_type AS type FROM transactions WHERE description LIKE '%Zusatzbeitrag%'").get() as { type: string }).type).toBe("expense");
   });
 });

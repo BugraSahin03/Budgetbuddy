@@ -28,7 +28,8 @@ Finanzberechnungen fehleranfällig.
 - Eine partielle Unique-Constraint erlaubt maximal einen
   `income_deduction` je `effective_month_key`.
 - Die Importvorschau reserviert den ersten gültigen Treffer eines Monats. Weitere
-  Treffer werden als Konflikt herausgefiltert und nicht automatisch importiert.
+  Treffer werden als Konflikt markiert und als normale offene Ausgabe importiert,
+  aber nicht als weiterer Einkommensabzug angewendet.
 - Operative Monatseinnahmen sind Bruttoeinnahmen plus Rückerstattungen minus
   Einkommensabzug. Die UI zeigt Brutto und Abzug nachvollziehbar an.
 

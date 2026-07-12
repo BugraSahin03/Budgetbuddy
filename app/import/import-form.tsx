@@ -60,10 +60,6 @@ function filteredReasonTone(reason: string): string {
     return "border-violet-200 bg-violet-50 text-violet-700";
   }
 
-  if (reason === "income_deduction_conflict") {
-    return "border-red-200 bg-red-50 text-red-700";
-  }
-
   return "border-violet-200 bg-violet-50 text-violet-700";
 }
 
@@ -107,6 +103,9 @@ export function ImportForm({
   });
   const suggestionByRowIndex = new Map(
     state.suggestions.map((suggestion) => [suggestion.rowIndex, suggestion]),
+  );
+  const incomeDeductionConflictRowIndexes = new Set(
+    state.previewPlan?.incomeDeductionConflictRowIndexes ?? [],
   );
   const resultRows = state.result?.rows ?? [];
   const importableRows: PreviewRowView[] = state.previewPlan
@@ -362,6 +361,8 @@ export function ImportForm({
             <div className="month-import-preview-cards">
               {importableRows.map(({ row, rowIndex }) => {
                 const suggestion = suggestionByRowIndex.get(rowIndex);
+                const isIncomeDeductionConflict =
+                  incomeDeductionConflictRowIndexes.has(rowIndex);
 
                 return (
                   <article
@@ -377,7 +378,11 @@ export function ImportForm({
                     <h4>{row.description}</h4>
                     <p>{row.counterparty || "Keine Gegenpartei"}</p>
                     {row.info ? <p>{row.info}</p> : null}
-                    {suggestion ? (
+                    {isIncomeDeductionConflict ? (
+                      <span className="inline-flex w-fit rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                        Weiterer Regeltreffer · wird als normale Ausgabe importiert
+                      </span>
+                    ) : suggestion ? (
                       <span
                         className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-medium ${
                           suggestionTone(suggestion.label)
@@ -407,6 +412,8 @@ export function ImportForm({
                 <tbody className="divide-y divide-slate-100">
                   {importableRows.map(({ row, rowIndex }) => {
                     const suggestion = suggestionByRowIndex.get(rowIndex);
+                    const isIncomeDeductionConflict =
+                      incomeDeductionConflictRowIndexes.has(rowIndex);
 
                     return (
                       <tr
@@ -420,7 +427,11 @@ export function ImportForm({
                         <td className="px-3 py-2 text-slate-700">{row.counterparty}</td>
                         <td className="px-3 py-2 text-slate-600">{row.info || "-"}</td>
                         <td className="px-3 py-2 text-slate-700">
-                          {suggestion ? (
+                          {isIncomeDeductionConflict ? (
+                            <span className="inline-flex rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                              Weiterer Regeltreffer · normale Ausgabe
+                            </span>
+                          ) : suggestion ? (
                             <span
                               className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
                                 suggestionTone(suggestion.label)

@@ -124,7 +124,8 @@ Ein Import soll:
 - Treffer werden bereits in der Vorschau als `Einkommensabzug` markiert.
 - Der erste Treffer eines Zielmonats wird als `income_deduction` importiert.
 - Existiert fuer den Zielmonat bereits ein Einkommensabzug oder trifft im selben
-  Import eine zweite Zeile, wird diese als Konflikt herausgefiltert.
+  Import eine zweite Zeile, wird diese als Konflikt markiert und als normale
+  offene Ausgabe importiert. Sie wird nicht nochmals vom Einkommen abgezogen.
 - Die normale Duplikatpruefung laeuft zuerst und bleibt unveraendert.
 - Einkommensabzuege werden nicht von der direkten Fixkosten-Heuristik oder von
   Kategorie-/Sonderkategorie-Regeln uebernommen.

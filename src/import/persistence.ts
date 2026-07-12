@@ -24,8 +24,7 @@ export type ImportPersistenceResult = {
 
 export type ImportPreviewFilteredReason =
   | "duplicate"
-  | "fixed_cost_control"
-  | "income_deduction_conflict";
+  | "fixed_cost_control";
 
 export type ImportPreviewFilteredRow = {
   rowIndex: number;
@@ -37,6 +36,7 @@ export type ImportPreviewFilteredRow = {
 
 export type ImportPreviewPlan = {
   importableRowIndexes: number[];
+  incomeDeductionConflictRowIndexes: number[];
   filteredRows: ImportPreviewFilteredRow[];
   duplicateRows: number;
 };
@@ -109,6 +109,7 @@ export function buildSparkasseImportPreviewPlan(params: {
   );
   const seenFingerprints = new Set<string>();
   const importableRowIndexes: number[] = [];
+  const incomeDeductionConflictRowIndexes: number[] = [];
   const filteredRows: ImportPreviewFilteredRow[] = [];
   const hasIncomeDeductionSuggestions = (params.suggestions ?? []).some(
     (suggestion) => suggestion.kind === "income_deduction",
@@ -153,13 +154,8 @@ export function buildSparkasseImportPreviewPlan(params: {
 
     if (suggestion?.kind === "income_deduction") {
       if (incomeDeductionReserved) {
-        filteredRows.push({
-          rowIndex,
-          reason: "income_deduction_conflict",
-          reasonLabel: "Einkommensabzug bereits vorhanden",
-          ruleName: suggestion.ruleName,
-          suggestionLabel: suggestion.label,
-        });
+        incomeDeductionConflictRowIndexes.push(rowIndex);
+        importableRowIndexes.push(rowIndex);
         return;
       }
 
@@ -171,6 +167,7 @@ export function buildSparkasseImportPreviewPlan(params: {
 
   return {
     importableRowIndexes,
+    incomeDeductionConflictRowIndexes,
     filteredRows,
     duplicateRows: filteredRows.filter((row) => row.reason === "duplicate").length,
   };
@@ -401,6 +398,9 @@ export function persistSparkasseCsvImport(params: {
   const previewFilteredRowByIndex = new Map(
     (params.previewPlan?.filteredRows ?? []).map((row) => [row.rowIndex, row]),
   );
+  const incomeDeductionConflictRowIndexes = new Set(
+    params.previewPlan?.incomeDeductionConflictRowIndexes ?? [],
+  );
   const activeImportRules = listActiveImportRules();
   const activeIncomeDeductionRules = listActiveIncomeDeductionRules();
   const suggestionByRowIndex = new Map(
@@ -430,15 +430,14 @@ export function persistSparkasseCsvImport(params: {
       const matchesIncomeDeduction =
         suggestion?.kind === "income_deduction" ||
         Boolean(matchIncomeDeductionRule(row, activeIncomeDeductionRules));
-
-      if (matchesIncomeDeduction && incomeDeductionReserved) {
-        continue;
-      }
+      const isIncomeDeductionConflict =
+        incomeDeductionConflictRowIndexes.has(sourceRowIndex) ||
+        (matchesIncomeDeduction && incomeDeductionReserved);
 
       const shape = determineTransactionShape({
         row,
         activeRules: activeImportRules,
-        isIncomeDeduction: matchesIncomeDeduction,
+        isIncomeDeduction: matchesIncomeDeduction && !isIncomeDeductionConflict,
       });
 
       if (shape.transactionType === "income_deduction") {

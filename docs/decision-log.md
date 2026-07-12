@@ -2023,7 +2023,8 @@ Erkenntnis/Entscheidung:
   `income_deduction` gespeichert und nicht als normale Ausgabe markiert.
 - Die zugehoerigen Regeln liegen in einem getrennten Einstellungsbereich.
 - Pro Zielmonat wird defensiv maximal ein Einkommensabzug automatisch
-  angewendet; weitere Treffer erscheinen als Konflikt.
+  angewendet; weitere Treffer erscheinen als Konflikt und werden als normale
+  offene Ausgabe importiert.
 - Die operative Monatseinnahme ist Bruttoeinnahme minus Einkommensabzug.
 
 Auswirkung:

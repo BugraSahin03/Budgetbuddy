@@ -71,8 +71,8 @@ Seit FIN-120 koennen aktive Importregeln eine negative Bankbuchung als
 - Er zaehlt nicht als normale Ausgabe, Fixkosten-Ist, Kategorie- oder
   Sonderkategorieverbrauch und erzeugt keine offene Zuordnung.
 - Pro `effective_month_key` darf maximal ein Einkommensabzug gespeichert werden.
-- Ein zweiter Regeltreffer wird in der Vorschau als Konflikt angezeigt und nicht
-  automatisch angewendet.
+- Ein zweiter Regeltreffer wird in der Vorschau als Konflikt angezeigt, nicht als
+  Einkommensabzug angewendet und stattdessen als normale offene Ausgabe importiert.
 - Bestehende Buchungen werden nicht rueckwirkend automatisch umklassifiziert.
 
 Details: `docs/adr/0011-income-deduction-transaction-type.md`.
