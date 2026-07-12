@@ -77,6 +77,7 @@ Die Basisinitialisierung erfolgt in:
 - [Fachliches Datenmodell](docs/domain-model.md)
 - [Import- und Banknotizen](docs/import-and-bank-notes.md)
 - [Decision Log und Erkenntnisse](docs/decision-log.md)
+- [Alfred – eigenständiger Finanzcoach und ehrlicher Sparringspartner](docs/alfred-finanzcoach-konzept.md)
 - [Backlog-Archiv (historisch, read-only)](docs/backlog.md)
 - [Arbeitsweise fuer parallele Codex-Instanzen](docs/codex-workflow.md)
 - [Parallel Development Workflow](docs/parallel-development.md)

@@ -55,6 +55,30 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-07-12 - Alfred wird zum übergreifenden Private-Finance-Office
+
+Quelle/Ticket: `Alfred-Produktkonzept`
+
+Erkenntnis/Entscheidung:
+
+- Alfred bleibt nicht auf Budget- und Transaktionsanalyse begrenzt.
+- Alfred ist ein eigenständiges Produkt und kein Bestandteil von Budget Buddy.
+- Budget Buddy ist lediglich eine mögliche, vorzugsweise lesende Datenquelle für Haushalt und Cashflow. Alfred verbindet diese Daten langfristig mit Depots, Aktien/ETFs, Edelmetallen, weiteren Vermögenswerten, Verbindlichkeiten, Haushaltskontext und Finanzzielen.
+- Die strukturierte Finanzdatenbank ist Alfreds fachliches Gedächtnis. Das Sprachmodell erklärt geprüfte Fakten, verwaltet aber nicht selbst Bestände oder Berechnungen.
+- Investmententscheidungen werden als belegte Entscheidungsvorlagen vorbereitet. Alfred führt keine Käufe, Verkäufe, Überweisungen oder Vertragsänderungen autonom aus.
+
+Auswirkung:
+
+- Es entsteht eine eigene Vermögens- und Investmentdomäne mit Beständen, Transaktionen, datierten Bewertungen, Wechselkursen und Verbindlichkeiten.
+- Die spätere Umsetzung soll in einem eigenen Repository beziehungsweise Dienst erfolgen; es entsteht keine direkte Laufzeit- oder Datenbankkopplung an Budget Buddy.
+- Künftige Analysen können Cashflow, Liquidität, Nettovermögen, Portfolio, Schulden und Ziele gemeinsam bewerten.
+- Markt- und Produktaussagen benötigen aktuelle, sichtbare Quellen und dürfen nicht aus dem Modellgedächtnis stammen.
+
+Folgeaktion:
+
+- Das stufenweise Zielmodell und die offenen Produktentscheidungen stehen in `docs/alfred-finanzcoach-konzept.md`.
+- Vor der eigenständigen Implementierung sind wegen Datenmodell-, Datenschutz-, Personenbezug- und Sicherheitsauswirkungen eigene Architekturentscheidungen im Alfred-Projekt erforderlich.
+
 ## 2026-07-03 - FIN-115 trennt Buchungs-Anzeigename vom Originaltext
 
 Quelle/Ticket: `FIN-115`
