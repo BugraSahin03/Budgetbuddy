@@ -104,6 +104,8 @@ export type MonthFixedCostControlMatchRow = {
 export type MonthTotals = {
   monthKey: string;
   incomeCents: number;
+  grossIncomeCents: number;
+  incomeDeductionCents: number;
   expenseCents: number;
   savingsCents: number;
   plannedFixedCostsCents: number;
@@ -205,7 +207,7 @@ export function reopenMonth(monthKey: string): MonthStatus {
   return reopenMonthStatus(monthKey);
 }
 
-function getIncomeCents(monthKey: string): number {
+function getGrossIncomeCents(monthKey: string): number {
   const row = getDb()
     .prepare(
       `
@@ -218,6 +220,25 @@ function getIncomeCents(monthKey: string): number {
     .get(monthKey) as { total: number };
 
   return row.total;
+}
+
+function getIncomeDeductionCents(monthKey: string): number {
+  const row = getDb()
+    .prepare(
+      `
+        SELECT COALESCE(SUM(-amount_cents), 0) AS total
+        FROM transactions
+        WHERE transaction_type = 'income_deduction'
+          AND effective_month_key = ?
+      `,
+    )
+    .get(monthKey) as { total: number };
+
+  return row.total;
+}
+
+function getIncomeCents(monthKey: string): number {
+  return getGrossIncomeCents(monthKey) - getIncomeDeductionCents(monthKey);
 }
 
 function listImportedExpenseRowsForMonth(monthKey: string): Array<{
@@ -815,7 +836,9 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
     buildFixedCostControlMatches(normalizedMonthKey);
   const actualFixedCostsCents =
     sumFixedCostControlMatches(fixedCostControlMatches);
-  const incomeCents = getIncomeCents(normalizedMonthKey);
+  const grossIncomeCents = getGrossIncomeCents(normalizedMonthKey);
+  const incomeDeductionCents = getIncomeDeductionCents(normalizedMonthKey);
+  const incomeCents = grossIncomeCents - incomeDeductionCents;
   const expenseCents = getExpenseCents(
     normalizedMonthKey,
     actualFixedCostsCents,
@@ -844,6 +867,8 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
     totals: {
       monthKey: normalizedMonthKey,
       incomeCents,
+      grossIncomeCents,
+      incomeDeductionCents,
       expenseCents,
       savingsCents,
       plannedFixedCostsCents,

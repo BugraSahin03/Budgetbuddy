@@ -11,7 +11,7 @@ export type ImportedTransactionListItem = {
   displayNameOverride: string | null;
   displayName: string;
   amountCents: number;
-  transactionType: "expense" | "income" | "transfer" | "refund";
+  transactionType: "expense" | "income" | "transfer" | "refund" | "income_deduction";
   sourceAccountName: string;
   destinationAccountName: string | null;
   counterpartyName: string | null;

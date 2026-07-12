@@ -2012,3 +2012,25 @@ Auswirkung:
 
 - Geloeschte Bargeld-/Transferregeln erscheinen nicht mehr in der Regelliste und matchen zukuenftig nicht mehr.
 - Bereits importierte Transaktionen bleiben unveraendert.
+
+## 2026-07-12 - FIN-120 modelliert Einkommensabzuege separat
+
+Quelle/Ticket: `FIN-120`
+
+Erkenntnis/Entscheidung:
+
+- Einkommensnahe Pflichtabzuege werden als eigener Transaktionstyp
+  `income_deduction` gespeichert und nicht als normale Ausgabe markiert.
+- Die zugehoerigen Regeln liegen in einem getrennten Einstellungsbereich.
+- Pro Zielmonat wird defensiv maximal ein Einkommensabzug automatisch
+  angewendet; weitere Treffer erscheinen als Konflikt.
+- Die operative Monatseinnahme ist Bruttoeinnahme minus Einkommensabzug.
+
+Auswirkung:
+
+- Kategorieverbrauch, Sonderkategorien, Fixkosten-Ist, offene Zuordnungen und
+  Ausgaben-KPI bleiben frei von Einkommensabzuegen.
+- Originale Bankdaten und Duplikat-Fingerprint bleiben auditierbar.
+- Es gibt keine rueckwirkende automatische Umklassifizierung.
+- Grundsatzentscheidung siehe
+  `docs/adr/0011-income-deduction-transaction-type.md`.

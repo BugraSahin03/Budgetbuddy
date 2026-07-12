@@ -48,13 +48,17 @@ function toAmountInput(cents: number): string {
 
 function statusFromRow(
   row: TransactionListItem,
-): "Zugeordnet" | "Transfer" | "Einnahme" | "Zuordnen" {
+): "Zugeordnet" | "Transfer" | "Einnahme" | "Einkommensabzug" | "Zuordnen" {
   if (row.transactionType === "transfer") {
     return "Transfer";
   }
 
   if (row.transactionType === "income" || row.transactionType === "refund") {
     return "Einnahme";
+  }
+
+  if (row.transactionType === "income_deduction") {
+    return "Einkommensabzug";
   }
 
   if (row.categoryName || row.specialBudgetName) {
@@ -77,6 +81,10 @@ function statusBadgeClass(status: string): string {
     return "border-emerald-200 bg-emerald-50 text-emerald-700";
   }
 
+  if (status === "Einkommensabzug") {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+
   return "border-slate-200 bg-slate-100 text-slate-700";
 }
 
@@ -84,6 +92,7 @@ function toTypeLabel(transactionType: TransactionType): string {
   if (transactionType === "expense") return "Ausgabe";
   if (transactionType === "income") return "Einkommen";
   if (transactionType === "refund") return "Rückerstattung";
+  if (transactionType === "income_deduction") return "Einkommensabzug";
   return "Transfer";
 }
 

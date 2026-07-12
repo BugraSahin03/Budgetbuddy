@@ -48,15 +48,34 @@ Moegliche Typen:
 - `income`: Einnahme
 - `transfer`: Umbuchung, z. B. Sparkasse zu Bargeld
 - `refund`: Rueckerstattung
+- `income_deduction`: importierter einkommensnaher Pflichtabzug
 
 Regel:
 
 - `expense` muss genau eine feste Kategorie oder genau eine Sonderkategorie haben.
 - `transfer` darf keine Ausgabe-Kategorie haben und muss ein Zielkonto haben.
 - `income` und `refund` haben keine Ausgabenkategorie.
+- `income_deduction` ist negativ, darf nur aus einem Import entstehen und hat
+  weder Kategorie, Sonderkategorie noch Zielkonto.
 - Importierte `expense`-Buchungen duerfen temporaer noch offen sein, bis sie fachlich zugeordnet wurden.
 - Sobald eine importierte Ausgabe zugeordnet wird, gelten dieselben Fachregeln wie bei manuellen Ausgaben:
   genau eine Kategorie oder genau eine Sonderkategorie des `effective_month_key`.
+
+### Einkommensabzug
+
+Seit FIN-120 koennen aktive Importregeln eine negative Bankbuchung als
+`income_deduction` erkennen.
+
+- Der Abzug bleibt als originale Bankbuchung mit Importreferenz auditierbar.
+- Er reduziert die fuer Budgetstand und Planung verwendeten Monatseinnahmen.
+- Er zaehlt nicht als normale Ausgabe, Fixkosten-Ist, Kategorie- oder
+  Sonderkategorieverbrauch und erzeugt keine offene Zuordnung.
+- Pro `effective_month_key` darf maximal ein Einkommensabzug gespeichert werden.
+- Ein zweiter Regeltreffer wird in der Vorschau als Konflikt angezeigt und nicht
+  automatisch angewendet.
+- Bestehende Buchungen werden nicht rueckwirkend automatisch umklassifiziert.
+
+Details: `docs/adr/0011-income-deduction-transaction-type.md`.
 
 ### Feste Kategorie
 

@@ -136,6 +136,10 @@ function transactionTypeLabel(type: string): string {
     return "Rückerstattung";
   }
 
+  if (type === "income_deduction") {
+    return "Einkommensabzug";
+  }
+
   return "Ausgabe";
 }
 
@@ -156,6 +160,10 @@ function assignmentLabel(row: {
 
   if (row.transactionType === "transfer") {
     return "Transfer";
+  }
+
+  if (row.transactionType === "income_deduction") {
+    return "Einkommensabzug";
   }
 
   return "Keine Zuordnung nötig";
@@ -245,6 +253,14 @@ function TransactionVisualMark({
     return (
       <span className="category-visual-mark h-10 w-10 border-red-200 bg-red-100 text-base text-red-700">
         ?
+      </span>
+    );
+  }
+
+  if (transaction.transactionType === "income_deduction") {
+    return (
+      <span className="category-visual-mark h-10 w-10 border-amber-200 bg-amber-50 text-sm text-amber-800">
+        −
       </span>
     );
   }
@@ -711,7 +727,11 @@ export default async function MonthDetailPage({
         <ReferenceMetricCard
           label="Einnahmen"
           value={formatEuro(month.dashboard.totals.incomeCents)}
-          copy="Alle Einkommen und Rückerstattungen dieses Monats."
+          copy={
+            month.dashboard.totals.incomeDeductionCents > 0
+              ? `Importiert ${formatEuro(month.dashboard.totals.grossIncomeCents)} · Einkommensabzug -${formatEuro(month.dashboard.totals.incomeDeductionCents)}`
+              : "Alle Einkommen und Rückerstattungen dieses Monats."
+          }
           tone="income"
           marker="↙"
         />

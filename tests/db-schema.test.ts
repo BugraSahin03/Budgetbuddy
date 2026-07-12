@@ -198,7 +198,15 @@ describe("schema migrations", () => {
     expect(sql).toContain("idx_transactions_display_name_override");
   });
 
+  it("contains migration for income deductions", () => {
+    const sql = migrations.find((migration) => migration.id === "0018_fin_120")?.sql ?? "";
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS income_deduction_rules");
+    expect(sql).toContain("'income_deduction'");
+    expect(sql).toContain("idx_transactions_one_income_deduction_per_month");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0017_fin_115");
+    expect(getLatestSchemaVersion()).toBe("0018_fin_120");
   });
 });

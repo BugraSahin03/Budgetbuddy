@@ -17,6 +17,12 @@ import {
   parseRuleInputFromFormData,
   updateImportRule,
 } from "@/src/import-rules/repository";
+import {
+  createIncomeDeductionRule,
+  deleteIncomeDeductionRule,
+  parseIncomeDeductionRuleInput,
+  updateIncomeDeductionRule,
+} from "@/src/import-rules/income-deductions";
 import { reactivateSpecialBudgetProject } from "@/src/special-budgets/repository";
 
 function encodeMessage(message: string): string {
@@ -366,6 +372,53 @@ export async function deleteCashTransferRuleSettingsAction(
     "/einstellungen/bargeld-transferregeln?notice=" +
       encodeMessage("Bargeld-/Transferregel gelöscht."),
   );
+}
+
+function incomeDeductionRedirect(message: string, type: "error" | "notice", edit = false): string {
+  return `/einstellungen/einkommensabzuege?${edit ? "edit=1&" : ""}${type}=${encodeMessage(message)}`;
+}
+
+export async function createIncomeDeductionRuleAction(formData: FormData): Promise<never> {
+  try {
+    createIncomeDeductionRule(parseIncomeDeductionRuleInput(formData));
+    revalidatePath("/einstellungen/einkommensabzuege");
+    revalidatePath("/import");
+    revalidatePath("/monate");
+  } catch (error) {
+    redirect(incomeDeductionRedirect(toErrorMessage(error), "error"));
+  }
+
+  redirect(incomeDeductionRedirect("Einkommensabzugsregel erstellt.", "notice"));
+}
+
+export async function updateIncomeDeductionRuleAction(formData: FormData): Promise<never> {
+  try {
+    updateIncomeDeductionRule(
+      parseImportRuleId(formData),
+      parseIncomeDeductionRuleInput(formData),
+    );
+    revalidatePath("/einstellungen/einkommensabzuege");
+    revalidatePath("/import");
+    revalidatePath("/monate");
+  } catch (error) {
+    redirect(incomeDeductionRedirect(toErrorMessage(error), "error", true));
+  }
+
+  redirect(incomeDeductionRedirect("Einkommensabzugsregel gespeichert.", "notice", true));
+}
+
+export async function deleteIncomeDeductionRuleAction(formData: FormData): Promise<never> {
+  try {
+    assertDeleteConfirmation(formData);
+    deleteIncomeDeductionRule(parseImportRuleId(formData));
+    revalidatePath("/einstellungen/einkommensabzuege");
+    revalidatePath("/import");
+    revalidatePath("/monate");
+  } catch (error) {
+    redirect(incomeDeductionRedirect(toErrorMessage(error), "error", true));
+  }
+
+  redirect(incomeDeductionRedirect("Einkommensabzugsregel gelöscht.", "notice", true));
 }
 
 export async function reactivateSpecialBudgetProjectAction(

@@ -2,6 +2,10 @@ import "server-only";
 
 import type { SparkasseCsvRow } from "@/src/import/sparkasse-csv";
 import { isN26FixedCostControlRule } from "@/src/import-rules/classification";
+import {
+  matchIncomeDeductionRule,
+  type IncomeDeductionRule,
+} from "@/src/import-rules/income-deductions";
 import type { ImportRule } from "@/src/import-rules/repository";
 
 type FixedCostForImportMatching = {
@@ -15,6 +19,7 @@ export type ImportRuleSuggestion = {
   rowIndex: number;
   label: string;
   ruleName: string;
+  kind?: "standard" | "income_deduction";
 };
 
 function normalize(value: string): string {
@@ -101,6 +106,7 @@ function buildDirectFixedCostSuggestion(
 export function buildImportRuleSuggestions(params: {
   rows: SparkasseCsvRow[];
   rules: ImportRule[];
+  incomeDeductionRules?: IncomeDeductionRule[];
   fixedCosts?: FixedCostForImportMatching[];
 }): ImportRuleSuggestion[] {
   const activeRules = params.rules.filter((rule) => rule.isActive);
@@ -109,6 +115,21 @@ export function buildImportRuleSuggestions(params: {
 
   for (let rowIndex = 0; rowIndex < params.rows.length; rowIndex += 1) {
     const row = params.rows[rowIndex];
+    const incomeDeductionRule = matchIncomeDeductionRule(
+      row,
+      params.incomeDeductionRules ?? [],
+    );
+
+    if (incomeDeductionRule) {
+      suggestions.push({
+        rowIndex,
+        label: "Einkommensabzug",
+        ruleName: incomeDeductionRule.name,
+        kind: "income_deduction",
+      });
+      continue;
+    }
+
     let ruleMatched = false;
 
     for (const rule of activeRules) {
@@ -124,6 +145,7 @@ export function buildImportRuleSuggestions(params: {
           rowIndex,
           label: suggestionLabel(rule),
           ruleName: rule.name,
+          kind: "standard",
         });
         ruleMatched = true;
         break;
@@ -138,6 +160,7 @@ export function buildImportRuleSuggestions(params: {
     if (directFixedCostSuggestion) {
       suggestions.push({
         rowIndex,
+        kind: "standard",
         ...directFixedCostSuggestion,
       });
     }

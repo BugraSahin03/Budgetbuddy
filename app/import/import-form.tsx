@@ -35,6 +35,22 @@ function isFixedCostControlLabel(label: string): boolean {
   return label.startsWith("Fixkosten-Kontrolle:");
 }
 
+function isIncomeDeductionLabel(label: string): boolean {
+  return label === "Einkommensabzug";
+}
+
+function suggestionTone(label: string): string {
+  if (isFixedCostControlLabel(label)) {
+    return "border-violet-200 bg-violet-50 text-violet-700";
+  }
+
+  if (isIncomeDeductionLabel(label)) {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+
+  return "border-emerald-200 bg-emerald-50 text-emerald-700";
+}
+
 function filteredReasonTone(reason: string): string {
   if (reason === "duplicate") {
     return "border-amber-200 bg-amber-50 text-amber-800";
@@ -42,6 +58,10 @@ function filteredReasonTone(reason: string): string {
 
   if (reason === "fixed_cost_control") {
     return "border-violet-200 bg-violet-50 text-violet-700";
+  }
+
+  if (reason === "income_deduction_conflict") {
+    return "border-red-200 bg-red-50 text-red-700";
   }
 
   return "border-violet-200 bg-violet-50 text-violet-700";
@@ -335,7 +355,8 @@ export function ImportForm({
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold leading-6 text-emerald-900">
-            Diese Zeilen werden beim Bestätigen als normale Monatsbuchungen übernommen.
+            Diese Zeilen werden beim Bestätigen übernommen. Einkommensabzüge sind markiert und
+            werden nicht als normale Ausgabe gezählt.
           </p>
           {surface === "embedded" ? (
             <div className="month-import-preview-cards">
@@ -359,9 +380,7 @@ export function ImportForm({
                     {suggestion ? (
                       <span
                         className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-medium ${
-                          isFixedCostControlLabel(suggestion.label)
-                            ? "border-violet-200 bg-violet-50 text-violet-700"
-                            : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          suggestionTone(suggestion.label)
                         }`}
                       >
                         {renderSuggestionText(suggestion)}
@@ -404,9 +423,7 @@ export function ImportForm({
                           {suggestion ? (
                             <span
                               className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
-                                isFixedCostControlLabel(suggestion.label)
-                                  ? "border-violet-200 bg-violet-50 text-violet-700"
-                                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                suggestionTone(suggestion.label)
                               }`}
                             >
                               {renderSuggestionText(suggestion)}
