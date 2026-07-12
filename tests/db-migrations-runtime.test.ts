@@ -41,6 +41,7 @@ describe("database migrations runtime behavior", () => {
               'special_budgets',
               'fixed_costs',
               'import_runs',
+              'income_deduction_rules',
               'transactions',
               'imported_transactions'
             )
@@ -55,6 +56,7 @@ describe("database migrations runtime behavior", () => {
       "fixed_costs",
       "import_runs",
       "imported_transactions",
+      "income_deduction_rules",
       "monthly_category_budgets",
       "monthly_fixed_cost_snapshots",
       "monthly_statuses",
@@ -110,6 +112,58 @@ describe("database migrations runtime behavior", () => {
       description: "Originaltext",
       displayNameOverride: "Lesbarer Name",
     });
+  });
+
+  it("preserves current transaction references while adding income deductions", () => {
+    const legacyDb = new Database(":memory:");
+    legacyDb.exec("PRAGMA foreign_keys = ON;");
+    legacyDb.exec(`
+      CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+      CREATE TABLE schema_migrations (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    for (const migration of migrations) {
+      if (migration.id === "0018_fin_120") break;
+      legacyDb.exec(migration.sql);
+      legacyDb.prepare("INSERT INTO schema_migrations (id, name) VALUES (?, ?)").run(
+        migration.id,
+        migration.name,
+      );
+    }
+
+    const account = legacyDb.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as AccountRow;
+    const transaction = legacyDb.prepare(`
+      INSERT INTO transactions (
+        account_id, transaction_type, booking_date, effective_month_key, amount_cents,
+        currency_code, description, source_type, import_fingerprint
+      ) VALUES (?, 'expense', '2026-07-02', '2026-07', -30000, 'EUR', 'PKV', 'import', 'fin120-fingerprint')
+    `).run(account.id);
+    const transactionId = Number(transaction.lastInsertRowid);
+    const importRun = legacyDb.prepare(`
+      INSERT INTO import_runs (source_format, source_filename, status)
+      VALUES ('sparkasse_csv', 'pkv.csv', 'completed')
+    `).run();
+    legacyDb.prepare(`
+      INSERT INTO imported_transactions (
+        transaction_id, import_run_id, source_row_index, account_iban, booking_date,
+        amount_cents, dedupe_fingerprint
+      ) VALUES (?, ?, 0, 'DE001', '2026-07-02', -30000, 'fin120-fingerprint')
+    `).run(transactionId, Number(importRun.lastInsertRowid));
+    legacyDb.prepare(`
+      INSERT INTO transaction_fixed_cost_control_overrides (transaction_id, mode)
+      VALUES (?, 'exclude')
+    `).run(transactionId);
+
+    applyMigrations(legacyDb);
+
+    expect((legacyDb.prepare("SELECT COUNT(*) AS count FROM imported_transactions").get() as { count: number }).count).toBe(1);
+    expect((legacyDb.prepare("SELECT COUNT(*) AS count FROM transaction_fixed_cost_control_overrides").get() as { count: number }).count).toBe(1);
+    expect(legacyDb.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    legacyDb.close();
   });
 
   it("stores special budget monthly shares under a project", () => {
@@ -423,7 +477,11 @@ describe("database migrations runtime behavior", () => {
     );
 
     for (const migration of migrations) {
-      if (migration.id === "0005_fin_030" || migration.id === "0008_fin_040") {
+      if (
+        migration.id === "0005_fin_030" ||
+        migration.id === "0008_fin_040" ||
+        migration.id === "0018_fin_120"
+      ) {
         continue;
       }
 

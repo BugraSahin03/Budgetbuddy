@@ -5,6 +5,11 @@ import { createHash } from "node:crypto";
 import { getDb } from "@/src/db/client";
 import { parseSparkasseCsvToPreview, type SparkasseCsvRow } from "@/src/import/sparkasse-csv";
 import { isCashTransferRule } from "@/src/import-rules/classification";
+import {
+  hasIncomeDeductionForMonth,
+  listActiveIncomeDeductionRules,
+  matchIncomeDeductionRule,
+} from "@/src/import-rules/income-deductions";
 import type { ImportRuleSuggestion } from "@/src/import-rules/matcher";
 import { listActiveImportRules, type ImportRule } from "@/src/import-rules/repository";
 import { assertMonthIsOpen } from "@/src/months/status";
@@ -31,6 +36,7 @@ export type ImportPreviewFilteredRow = {
 
 export type ImportPreviewPlan = {
   importableRowIndexes: number[];
+  incomeDeductionConflictRowIndexes: number[];
   filteredRows: ImportPreviewFilteredRow[];
   duplicateRows: number;
 };
@@ -96,13 +102,24 @@ function isFixedCostControlSuggestion(suggestion: ImportRuleSuggestion | undefin
 export function buildSparkasseImportPreviewPlan(params: {
   rows: SparkasseCsvRow[];
   suggestions?: ImportRuleSuggestion[];
+  effectiveMonthKey?: string | null;
 }): ImportPreviewPlan {
   const suggestionByRowIndex = new Map(
     (params.suggestions ?? []).map((suggestion) => [suggestion.rowIndex, suggestion]),
   );
   const seenFingerprints = new Set<string>();
   const importableRowIndexes: number[] = [];
+  const incomeDeductionConflictRowIndexes: number[] = [];
   const filteredRows: ImportPreviewFilteredRow[] = [];
+  const hasIncomeDeductionSuggestions = (params.suggestions ?? []).some(
+    (suggestion) => suggestion.kind === "income_deduction",
+  );
+  const monthKey = hasIncomeDeductionSuggestions
+    ? resolveImportEffectiveMonthKey(params.effectiveMonthKey, params.rows)
+    : null;
+  let incomeDeductionReserved = monthKey
+    ? hasIncomeDeductionForMonth(monthKey)
+    : false;
 
   params.rows.forEach((row, rowIndex) => {
     const dedupeFingerprint = buildDedupeFingerprint(row);
@@ -135,11 +152,22 @@ export function buildSparkasseImportPreviewPlan(params: {
       return;
     }
 
+    if (suggestion?.kind === "income_deduction") {
+      if (incomeDeductionReserved) {
+        incomeDeductionConflictRowIndexes.push(rowIndex);
+        importableRowIndexes.push(rowIndex);
+        return;
+      }
+
+      incomeDeductionReserved = true;
+    }
+
     importableRowIndexes.push(rowIndex);
   });
 
   return {
     importableRowIndexes,
+    incomeDeductionConflictRowIndexes,
     filteredRows,
     duplicateRows: filteredRows.filter((row) => row.reason === "duplicate").length,
   };
@@ -270,7 +298,7 @@ export function detectDefaultImportMonthKey(
   return selected;
 }
 
-function resolveImportEffectiveMonthKey(
+export function resolveImportEffectiveMonthKey(
   rawMonthKey: string | null | undefined,
   rows: SparkasseCsvRow[],
 ): string {
@@ -292,10 +320,23 @@ function resolveImportEffectiveMonthKey(
   return detected;
 }
 
-function determineTransactionShape(row: SparkasseCsvRow, activeRules: ImportRule[]): {
-  transactionType: "expense" | "income" | "transfer";
+function determineTransactionShape(params: {
+  row: SparkasseCsvRow;
+  activeRules: ImportRule[];
+  isIncomeDeduction: boolean;
+}): {
+  transactionType: "expense" | "income" | "transfer" | "income_deduction";
   destinationAccountId: number | null;
 } {
+  const { row, activeRules } = params;
+
+  if (params.isIncomeDeduction && row.amountCents < 0) {
+    return {
+      transactionType: "income_deduction",
+      destinationAccountId: null,
+    };
+  }
+
   if (
     row.amountCents < 0 &&
     (isCashWithdrawalTransfer(row) || matchesCashTransferRule(row, activeRules))
@@ -324,6 +365,7 @@ export function persistSparkasseCsvImport(params: {
   fileContent: string;
   effectiveMonthKey?: string | null;
   previewPlan?: ImportPreviewPlan | null;
+  suggestions?: ImportRuleSuggestion[];
 }): ImportPersistenceResult {
   const parseResult = parseSparkasseCsvToPreview(params.fileContent);
   const importEffectiveMonthKey = resolveImportEffectiveMonthKey(
@@ -356,7 +398,15 @@ export function persistSparkasseCsvImport(params: {
   const previewFilteredRowByIndex = new Map(
     (params.previewPlan?.filteredRows ?? []).map((row) => [row.rowIndex, row]),
   );
+  const incomeDeductionConflictRowIndexes = new Set(
+    params.previewPlan?.incomeDeductionConflictRowIndexes ?? [],
+  );
   const activeImportRules = listActiveImportRules();
+  const activeIncomeDeductionRules = listActiveIncomeDeductionRules();
+  const suggestionByRowIndex = new Map(
+    (params.suggestions ?? []).map((suggestion) => [suggestion.rowIndex, suggestion]),
+  );
+  let incomeDeductionReserved = hasIncomeDeductionForMonth(importEffectiveMonthKey);
 
   const persistTransaction = db.transaction(() => {
     for (const [sourceRowIndex, row] of parseResult.rows.entries()) {
@@ -376,7 +426,23 @@ export function persistSparkasseCsvImport(params: {
         continue;
       }
 
-      const shape = determineTransactionShape(row, activeImportRules);
+      const suggestion = suggestionByRowIndex.get(sourceRowIndex);
+      const matchesIncomeDeduction =
+        suggestion?.kind === "income_deduction" ||
+        Boolean(matchIncomeDeductionRule(row, activeIncomeDeductionRules));
+      const isIncomeDeductionConflict =
+        incomeDeductionConflictRowIndexes.has(sourceRowIndex) ||
+        (matchesIncomeDeduction && incomeDeductionReserved);
+
+      const shape = determineTransactionShape({
+        row,
+        activeRules: activeImportRules,
+        isIncomeDeduction: matchesIncomeDeduction && !isIncomeDeductionConflict,
+      });
+
+      if (shape.transactionType === "income_deduction") {
+        incomeDeductionReserved = true;
+      }
 
       const transactionInsert = db
         .prepare(

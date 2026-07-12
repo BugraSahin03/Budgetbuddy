@@ -26,6 +26,12 @@ const GLOBAL_SETTINGS = [
     icon: "↔",
   },
   {
+    href: "/einstellungen/einkommensabzuege",
+    title: "Einkommensabzüge",
+    meta: "Bereinigte Einnahmen",
+    icon: "−",
+  },
+  {
     href: "/einstellungen/kategorie-archiv",
     title: "Kategorie-Archiv",
     meta: "Kategorien & Sonderkategorien",

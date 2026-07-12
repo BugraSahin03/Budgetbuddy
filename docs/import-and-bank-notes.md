@@ -114,6 +114,26 @@ Ein Import soll:
 - unzugeordnete Ausgaben sichtbar markieren
 - Importlauf protokollieren
 
+## Einkommensabzuege (FIN-120)
+
+- Einkommensabzugsregeln sind ein eigener globaler Einstellungsbereich und
+  bleiben von Import-Aliassen, Bargeld-/Transferregeln und
+  Fixkosten-Kontrollmustern getrennt.
+- Eine aktive Regel matcht negative Buchungen ueber Beschreibung, Gegenpartei
+  oder beide Felder.
+- Treffer werden bereits in der Vorschau als `Einkommensabzug` markiert.
+- Der erste Treffer eines Zielmonats wird als `income_deduction` importiert.
+- Existiert fuer den Zielmonat bereits ein Einkommensabzug oder trifft im selben
+  Import eine zweite Zeile, wird diese als Konflikt markiert und als normale
+  offene Ausgabe importiert. Sie wird nicht nochmals vom Einkommen abgezogen.
+- Die normale Duplikatpruefung laeuft zuerst und bleibt unveraendert.
+- Ein Duplikat wird immer als Duplikat herausgefiltert, auch wenn gleichzeitig
+  eine Einkommensabzugsregel matcht.
+- Eine falsche Einkommensabzug-Klassifizierung kann im offenen Monat als normale
+  offene Ausgabe zurueckgestuft werden, ohne die Importspur zu loeschen.
+- Einkommensabzuege werden nicht von der direkten Fixkosten-Heuristik oder von
+  Kategorie-/Sonderkategorie-Regeln uebernommen.
+
 ## Zielmonat im Import (FIN-031)
 
 - Beim Bestaetigen eines Imports kann ein expliziter Zielmonat (`YYYY-MM`) fuer den gesamten Importlauf gesetzt werden.

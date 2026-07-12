@@ -35,6 +35,22 @@ function isFixedCostControlLabel(label: string): boolean {
   return label.startsWith("Fixkosten-Kontrolle:");
 }
 
+function isIncomeDeductionLabel(label: string): boolean {
+  return label === "Einkommensabzug";
+}
+
+function suggestionTone(label: string): string {
+  if (isFixedCostControlLabel(label)) {
+    return "border-violet-200 bg-violet-50 text-violet-700";
+  }
+
+  if (isIncomeDeductionLabel(label)) {
+    return "border-amber-200 bg-amber-50 text-amber-800";
+  }
+
+  return "border-emerald-200 bg-emerald-50 text-emerald-700";
+}
+
 function filteredReasonTone(reason: string): string {
   if (reason === "duplicate") {
     return "border-amber-200 bg-amber-50 text-amber-800";
@@ -87,6 +103,9 @@ export function ImportForm({
   });
   const suggestionByRowIndex = new Map(
     state.suggestions.map((suggestion) => [suggestion.rowIndex, suggestion]),
+  );
+  const incomeDeductionConflictRowIndexes = new Set(
+    state.previewPlan?.incomeDeductionConflictRowIndexes ?? [],
   );
   const resultRows = state.result?.rows ?? [];
   const importableRows: PreviewRowView[] = state.previewPlan
@@ -335,12 +354,15 @@ export function ImportForm({
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold leading-6 text-emerald-900">
-            Diese Zeilen werden beim Bestätigen als normale Monatsbuchungen übernommen.
+            Diese Zeilen werden beim Bestätigen übernommen. Einkommensabzüge sind markiert und
+            werden nicht als normale Ausgabe gezählt.
           </p>
           {surface === "embedded" ? (
             <div className="month-import-preview-cards">
               {importableRows.map(({ row, rowIndex }) => {
                 const suggestion = suggestionByRowIndex.get(rowIndex);
+                const isIncomeDeductionConflict =
+                  incomeDeductionConflictRowIndexes.has(rowIndex);
 
                 return (
                   <article
@@ -356,12 +378,14 @@ export function ImportForm({
                     <h4>{row.description}</h4>
                     <p>{row.counterparty || "Keine Gegenpartei"}</p>
                     {row.info ? <p>{row.info}</p> : null}
-                    {suggestion ? (
+                    {isIncomeDeductionConflict ? (
+                      <span className="inline-flex w-fit rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                        Weiterer Regeltreffer · wird als normale Ausgabe importiert
+                      </span>
+                    ) : suggestion ? (
                       <span
                         className={`inline-flex w-fit rounded-full border px-2 py-0.5 text-xs font-medium ${
-                          isFixedCostControlLabel(suggestion.label)
-                            ? "border-violet-200 bg-violet-50 text-violet-700"
-                            : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                          suggestionTone(suggestion.label)
                         }`}
                       >
                         {renderSuggestionText(suggestion)}
@@ -388,6 +412,8 @@ export function ImportForm({
                 <tbody className="divide-y divide-slate-100">
                   {importableRows.map(({ row, rowIndex }) => {
                     const suggestion = suggestionByRowIndex.get(rowIndex);
+                    const isIncomeDeductionConflict =
+                      incomeDeductionConflictRowIndexes.has(rowIndex);
 
                     return (
                       <tr
@@ -401,12 +427,14 @@ export function ImportForm({
                         <td className="px-3 py-2 text-slate-700">{row.counterparty}</td>
                         <td className="px-3 py-2 text-slate-600">{row.info || "-"}</td>
                         <td className="px-3 py-2 text-slate-700">
-                          {suggestion ? (
+                          {isIncomeDeductionConflict ? (
+                            <span className="inline-flex rounded-full border border-red-200 bg-red-50 px-2 py-0.5 text-xs font-medium text-red-700">
+                              Weiterer Regeltreffer · normale Ausgabe
+                            </span>
+                          ) : suggestion ? (
                             <span
                               className={`inline-flex rounded-full border px-2 py-0.5 text-xs font-medium ${
-                                isFixedCostControlLabel(suggestion.label)
-                                  ? "border-violet-200 bg-violet-50 text-violet-700"
-                                  : "border-emerald-200 bg-emerald-50 text-emerald-700"
+                                suggestionTone(suggestion.label)
                               }`}
                             >
                               {renderSuggestionText(suggestion)}

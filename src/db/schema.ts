@@ -835,6 +835,239 @@ ON transactions(display_name_override)
 WHERE display_name_override IS NOT NULL;
 `;
 
+const fin120MigrationSql = `
+PRAGMA foreign_keys = OFF;
+
+CREATE TABLE IF NOT EXISTS income_deduction_rules (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  pattern TEXT NOT NULL,
+  match_field TEXT NOT NULL CHECK (match_field IN ('description', 'counterparty', 'combined')),
+  is_active INTEGER NOT NULL DEFAULT 1 CHECK (is_active IN (0, 1)),
+  priority INTEGER NOT NULL DEFAULT 100 CHECK (priority BETWEEN 1 AND 999),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_income_deduction_rules_active_priority
+ON income_deduction_rules(is_active, priority, id);
+
+CREATE TEMP TABLE fin120_imported_transactions_backup AS
+SELECT * FROM imported_transactions;
+
+CREATE TEMP TABLE fin120_fixed_cost_overrides_backup AS
+SELECT * FROM transaction_fixed_cost_control_overrides;
+
+CREATE TABLE IF NOT EXISTS transactions_new (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  account_id INTEGER NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
+  destination_account_id INTEGER REFERENCES accounts(id) ON DELETE RESTRICT,
+  transaction_type TEXT NOT NULL CHECK (
+    transaction_type IN ('expense', 'income', 'transfer', 'refund', 'income_deduction')
+  ),
+  booking_date TEXT NOT NULL,
+  effective_month_key TEXT NOT NULL CHECK (
+    length(effective_month_key) = 7
+    AND substr(effective_month_key, 5, 1) = '-'
+    AND substr(effective_month_key, 1, 4) GLOB '[0-9][0-9][0-9][0-9]'
+    AND substr(effective_month_key, 6, 2) BETWEEN '01' AND '12'
+  ),
+  value_date TEXT,
+  amount_cents INTEGER NOT NULL CHECK (amount_cents != 0),
+  currency_code TEXT NOT NULL DEFAULT 'EUR',
+  description TEXT NOT NULL,
+  display_name_override TEXT CHECK (
+    display_name_override IS NULL
+    OR (
+      length(trim(display_name_override)) BETWEEN 2 AND 80
+      AND display_name_override = trim(display_name_override)
+    )
+  ),
+  counterparty_name TEXT,
+  counterparty_iban TEXT,
+  source_type TEXT NOT NULL CHECK (source_type IN ('manual', 'import')),
+  import_run_id INTEGER REFERENCES import_runs(id) ON DELETE SET NULL,
+  import_fingerprint TEXT,
+  category_id INTEGER REFERENCES categories(id) ON DELETE RESTRICT,
+  special_budget_id INTEGER REFERENCES special_budgets(id) ON DELETE RESTRICT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (
+    (transaction_type = 'expense' AND amount_cents < 0)
+    OR (transaction_type = 'transfer' AND amount_cents < 0)
+    OR (transaction_type = 'income_deduction' AND amount_cents < 0 AND source_type = 'import')
+    OR (transaction_type = 'income' AND amount_cents > 0)
+    OR (transaction_type = 'refund' AND amount_cents > 0)
+  ),
+  CHECK (destination_account_id IS NULL OR destination_account_id != account_id),
+  CHECK (
+    (
+      transaction_type = 'expense'
+      AND destination_account_id IS NULL
+      AND (
+        (
+          source_type = 'manual'
+          AND (
+            (category_id IS NOT NULL AND special_budget_id IS NULL)
+            OR (category_id IS NULL AND special_budget_id IS NOT NULL)
+          )
+        )
+        OR
+        (
+          source_type = 'import'
+          AND (
+            (category_id IS NULL AND special_budget_id IS NULL)
+            OR (category_id IS NOT NULL AND special_budget_id IS NULL)
+            OR (category_id IS NULL AND special_budget_id IS NOT NULL)
+          )
+        )
+      )
+    )
+    OR (
+      transaction_type = 'transfer'
+      AND destination_account_id IS NOT NULL
+      AND category_id IS NULL
+      AND special_budget_id IS NULL
+    )
+    OR (
+      transaction_type IN ('income', 'refund', 'income_deduction')
+      AND destination_account_id IS NULL
+      AND category_id IS NULL
+      AND special_budget_id IS NULL
+    )
+  )
+);
+
+INSERT INTO transactions_new (
+  id,
+  account_id,
+  destination_account_id,
+  transaction_type,
+  booking_date,
+  effective_month_key,
+  value_date,
+  amount_cents,
+  currency_code,
+  description,
+  display_name_override,
+  counterparty_name,
+  counterparty_iban,
+  source_type,
+  import_run_id,
+  import_fingerprint,
+  category_id,
+  special_budget_id,
+  created_at,
+  updated_at
+)
+SELECT
+  id,
+  account_id,
+  destination_account_id,
+  transaction_type,
+  booking_date,
+  effective_month_key,
+  value_date,
+  amount_cents,
+  currency_code,
+  description,
+  display_name_override,
+  counterparty_name,
+  counterparty_iban,
+  source_type,
+  import_run_id,
+  import_fingerprint,
+  category_id,
+  special_budget_id,
+  created_at,
+  updated_at
+FROM transactions;
+
+DROP TABLE transactions;
+ALTER TABLE transactions_new RENAME TO transactions;
+
+INSERT INTO imported_transactions (
+  id,
+  transaction_id,
+  import_run_id,
+  source_row_index,
+  account_iban,
+  booking_date,
+  value_date,
+  amount_cents,
+  counterparty,
+  purpose,
+  end_to_end_reference,
+  mandate_reference,
+  dedupe_fingerprint,
+  created_at
+)
+SELECT
+  id,
+  transaction_id,
+  import_run_id,
+  source_row_index,
+  account_iban,
+  booking_date,
+  value_date,
+  amount_cents,
+  counterparty,
+  purpose,
+  end_to_end_reference,
+  mandate_reference,
+  dedupe_fingerprint,
+  created_at
+FROM fin120_imported_transactions_backup;
+
+INSERT INTO transaction_fixed_cost_control_overrides (
+  transaction_id,
+  mode,
+  created_at,
+  updated_at
+)
+SELECT
+  transaction_id,
+  mode,
+  created_at,
+  updated_at
+FROM fin120_fixed_cost_overrides_backup;
+
+DROP TABLE fin120_imported_transactions_backup;
+DROP TABLE fin120_fixed_cost_overrides_backup;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_import_fingerprint_unique
+ON transactions(import_fingerprint)
+WHERE import_fingerprint IS NOT NULL;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_transactions_one_income_deduction_per_month
+ON transactions(effective_month_key)
+WHERE transaction_type = 'income_deduction';
+
+CREATE INDEX IF NOT EXISTS idx_transactions_booking_date
+ON transactions(booking_date);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_effective_month_key
+ON transactions(effective_month_key);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_account_id
+ON transactions(account_id);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_transaction_type
+ON transactions(transaction_type);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_category_id
+ON transactions(category_id);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_special_budget_id
+ON transactions(special_budget_id);
+
+CREATE INDEX IF NOT EXISTS idx_transactions_display_name_override
+ON transactions(display_name_override)
+WHERE display_name_override IS NOT NULL;
+
+PRAGMA foreign_keys = ON;
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -921,6 +1154,11 @@ export const migrations: readonly Migration[] = [
     name: "FIN-115 add transaction display-name override",
     sql: fin115MigrationSql,
   },
+  {
+    id: "0018_fin_120",
+    name: "FIN-120 add income deduction rules and transaction type",
+    sql: fin120MigrationSql,
+  },
 ];
 
 type MigrationRow = {
@@ -960,6 +1198,13 @@ export function applyMigrations(db: Database.Database): void {
     }
 
     const transaction = db.transaction((pendingMigration: Migration) => {
+      if (
+        pendingMigration.id === "0018_fin_120" &&
+        !tableColumnExists(db, "transactions", "display_name_override")
+      ) {
+        db.exec("ALTER TABLE transactions ADD COLUMN display_name_override TEXT;");
+      }
+
       if (
         pendingMigration.id === "0013_fin_081" &&
         tableColumnExists(db, "fixed_costs", "sort_order")

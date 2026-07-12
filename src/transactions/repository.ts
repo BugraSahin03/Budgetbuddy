@@ -4,7 +4,12 @@ import { getDb } from "@/src/db/client";
 import { assertMonthIsOpen } from "@/src/months/status";
 import { ensureProjectsForUnlinkedMonthlyShares } from "@/src/special-budgets/repository";
 
-export type TransactionType = "expense" | "income" | "transfer" | "refund";
+export type TransactionType =
+  | "expense"
+  | "income"
+  | "transfer"
+  | "refund"
+  | "income_deduction";
 
 export type TransactionListItem = {
   id: number;
@@ -306,7 +311,11 @@ function resolveSignedAmount(
   transactionType: TransactionType,
   absoluteCents: number,
 ): number {
-  if (transactionType === "expense" || transactionType === "transfer") {
+  if (
+    transactionType === "expense" ||
+    transactionType === "transfer" ||
+    transactionType === "income_deduction"
+  ) {
     return -absoluteCents;
   }
 
@@ -331,6 +340,9 @@ function validateAndShapeInput(input: ManualTransactionInput): {
   );
   const description = normalizeDescription(input.description);
   const transactionType = input.transactionType;
+  if (transactionType === "income_deduction") {
+    throw new Error("Einkommensabzüge können nur über Importregeln entstehen.");
+  }
   const accountId = ensurePositiveInt(input.accountId, "Konto");
   const absoluteCents = parseAmountCents(input.amountInput);
   const amountCents = resolveSignedAmount(transactionType, absoluteCents);
@@ -749,6 +761,36 @@ export function deleteImportedTransactionForMonth(
 
   if (result.changes === 0) {
     throw new Error("Import-Buchung wurde nicht gefunden.");
+  }
+}
+
+export function reclassifyIncomeDeductionAsExpenseForMonth(
+  transactionId: number,
+  monthKey: string,
+): void {
+  const id = ensurePositiveInt(transactionId, "Transaktion");
+  const effectiveMonthKey = normalizeEffectiveMonthKey(monthKey, monthKey);
+  assertMonthIsOpen(effectiveMonthKey);
+
+  const result = getDb()
+    .prepare(
+      `
+        UPDATE transactions
+        SET
+          transaction_type = 'expense',
+          category_id = NULL,
+          special_budget_id = NULL,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+          AND source_type = 'import'
+          AND transaction_type = 'income_deduction'
+          AND effective_month_key = ?
+      `,
+    )
+    .run(id, effectiveMonthKey);
+
+  if (result.changes === 0) {
+    throw new Error("Einkommensabzug wurde nicht gefunden.");
   }
 }
 

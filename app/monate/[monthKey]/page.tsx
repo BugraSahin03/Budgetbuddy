@@ -7,6 +7,7 @@ import {
   deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
   reopenMonthAction,
+  reclassifyMonthlyIncomeDeductionAction,
   setMonthlyBudgetOverrideAction,
   updateMonthlyManualTransactionAction,
   updateMonthlySpecialBudgetAction,
@@ -136,6 +137,10 @@ function transactionTypeLabel(type: string): string {
     return "Rückerstattung";
   }
 
+  if (type === "income_deduction") {
+    return "Einkommensabzug";
+  }
+
   return "Ausgabe";
 }
 
@@ -156,6 +161,10 @@ function assignmentLabel(row: {
 
   if (row.transactionType === "transfer") {
     return "Transfer";
+  }
+
+  if (row.transactionType === "income_deduction") {
+    return "Einkommensabzug";
   }
 
   return "Keine Zuordnung nötig";
@@ -245,6 +254,14 @@ function TransactionVisualMark({
     return (
       <span className="category-visual-mark h-10 w-10 border-red-200 bg-red-100 text-base text-red-700">
         ?
+      </span>
+    );
+  }
+
+  if (transaction.transactionType === "income_deduction") {
+    return (
+      <span className="category-visual-mark h-10 w-10 border-amber-200 bg-amber-50 text-sm text-amber-800">
+        −
       </span>
     );
   }
@@ -711,7 +728,11 @@ export default async function MonthDetailPage({
         <ReferenceMetricCard
           label="Einnahmen"
           value={formatEuro(month.dashboard.totals.incomeCents)}
-          copy="Alle Einkommen und Rückerstattungen dieses Monats."
+          copy={
+            month.dashboard.totals.incomeDeductionCents > 0
+              ? `Bruttoeinnahmen ${formatEuro(month.dashboard.totals.grossIncomeCents)} · Einkommensabzug -${formatEuro(month.dashboard.totals.incomeDeductionCents)}`
+              : "Alle Einkommen und Rückerstattungen dieses Monats."
+          }
           tone="income"
           marker="↙"
         />
@@ -1579,10 +1600,27 @@ export default async function MonthDetailPage({
                           </button>
                         </form>
                       ) : transaction.sourceType === "import" ? (
-                        <form
-                          action={deleteMonthlyImportedTransactionAction}
-                          className="flex flex-wrap items-center gap-3 border-t border-[color:var(--month-line)] pt-3"
-                        >
+                        <div className="space-y-3 border-t border-[color:var(--month-line)] pt-3">
+                          {transaction.transactionType === "income_deduction" ? (
+                            <form
+                              action={reclassifyMonthlyIncomeDeductionAction}
+                              className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3"
+                            >
+                              <input type="hidden" name="monthKey" value={month.monthKey} />
+                              <input type="hidden" name="transactionId" value={transaction.id} />
+                              <label className="flex items-center gap-2 text-xs font-semibold text-amber-900">
+                                <input type="checkbox" name="confirmReclassify" className="h-4 w-4 rounded border-amber-300" />
+                                Rücknahme bestätigen
+                              </label>
+                              <button type="submit" className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-amber-900 transition hover:-translate-y-0.5">
+                                Als normale Ausgabe behandeln
+                              </button>
+                            </form>
+                          ) : null}
+                          <form
+                            action={deleteMonthlyImportedTransactionAction}
+                            className="flex flex-wrap items-center gap-3"
+                          >
                           <input
                             type="hidden"
                             name="monthKey"
@@ -1607,7 +1645,8 @@ export default async function MonthDetailPage({
                           >
                             Import-Buchung löschen
                           </button>
-                        </form>
+                          </form>
+                        </div>
                       ) : null}
                     </div>
                   ) : null}
