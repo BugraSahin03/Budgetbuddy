@@ -127,6 +127,10 @@ Ein Import soll:
   Import eine zweite Zeile, wird diese als Konflikt markiert und als normale
   offene Ausgabe importiert. Sie wird nicht nochmals vom Einkommen abgezogen.
 - Die normale Duplikatpruefung laeuft zuerst und bleibt unveraendert.
+- Ein Duplikat wird immer als Duplikat herausgefiltert, auch wenn gleichzeitig
+  eine Einkommensabzugsregel matcht.
+- Eine falsche Einkommensabzug-Klassifizierung kann im offenen Monat als normale
+  offene Ausgabe zurueckgestuft werden, ohne die Importspur zu loeschen.
 - Einkommensabzuege werden nicht von der direkten Fixkosten-Heuristik oder von
   Kategorie-/Sonderkategorie-Regeln uebernommen.
 

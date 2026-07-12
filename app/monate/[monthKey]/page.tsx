@@ -7,6 +7,7 @@ import {
   deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
   reopenMonthAction,
+  reclassifyMonthlyIncomeDeductionAction,
   setMonthlyBudgetOverrideAction,
   updateMonthlyManualTransactionAction,
   updateMonthlySpecialBudgetAction,
@@ -1599,10 +1600,27 @@ export default async function MonthDetailPage({
                           </button>
                         </form>
                       ) : transaction.sourceType === "import" ? (
-                        <form
-                          action={deleteMonthlyImportedTransactionAction}
-                          className="flex flex-wrap items-center gap-3 border-t border-[color:var(--month-line)] pt-3"
-                        >
+                        <div className="space-y-3 border-t border-[color:var(--month-line)] pt-3">
+                          {transaction.transactionType === "income_deduction" ? (
+                            <form
+                              action={reclassifyMonthlyIncomeDeductionAction}
+                              className="flex flex-wrap items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-3"
+                            >
+                              <input type="hidden" name="monthKey" value={month.monthKey} />
+                              <input type="hidden" name="transactionId" value={transaction.id} />
+                              <label className="flex items-center gap-2 text-xs font-semibold text-amber-900">
+                                <input type="checkbox" name="confirmReclassify" className="h-4 w-4 rounded border-amber-300" />
+                                Rücknahme bestätigen
+                              </label>
+                              <button type="submit" className="rounded-xl border border-amber-300 bg-white px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-amber-900 transition hover:-translate-y-0.5">
+                                Als normale Ausgabe behandeln
+                              </button>
+                            </form>
+                          ) : null}
+                          <form
+                            action={deleteMonthlyImportedTransactionAction}
+                            className="flex flex-wrap items-center gap-3"
+                          >
                           <input
                             type="hidden"
                             name="monthKey"
@@ -1627,7 +1645,8 @@ export default async function MonthDetailPage({
                           >
                             Import-Buchung löschen
                           </button>
-                        </form>
+                          </form>
+                        </div>
                       ) : null}
                     </div>
                   ) : null}

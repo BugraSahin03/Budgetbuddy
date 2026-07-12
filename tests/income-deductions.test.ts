@@ -12,6 +12,7 @@ const rules = await import("@/src/import-rules/income-deductions");
 const matcher = await import("@/src/import-rules/matcher");
 const persistence = await import("@/src/import/persistence");
 const months = await import("@/src/months/repository");
+const transactions = await import("@/src/transactions/repository");
 
 const HEADER = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"`;
 const INCOME_DEDUCTION_CSV = `${HEADER}
@@ -142,5 +143,56 @@ describe("FIN-120 income deductions", () => {
       suggestions: secondSuggestions,
     });
     expect((db.prepare("SELECT transaction_type AS type FROM transactions WHERE description LIKE '%Zusatzbeitrag%'").get() as { type: string }).type).toBe("expense");
+  });
+
+  it("lets the user take back a deduction without deleting the imported bank row", async () => {
+    const parser = await import("@/src/import/sparkasse-csv");
+    const rows = parser.parseSparkasseCsvToPreview(INCOME_DEDUCTION_CSV).rows;
+    const suggestions = matcher.buildImportRuleSuggestions({
+      rows,
+      rules: [],
+      incomeDeductionRules: rules.listActiveIncomeDeductionRules(),
+    });
+    const previewPlan = persistence.buildSparkasseImportPreviewPlan({
+      rows,
+      suggestions,
+      effectiveMonthKey: "2026-07",
+    });
+    persistence.persistSparkasseCsvImport({
+      sourceFilename: "pkv.csv",
+      fileContent: INCOME_DEDUCTION_CSV,
+      effectiveMonthKey: "2026-07",
+      previewPlan,
+      suggestions,
+    });
+    const stored = db.prepare("SELECT id FROM transactions WHERE transaction_type = 'income_deduction'").get() as { id: number };
+
+    transactions.reclassifyIncomeDeductionAsExpenseForMonth(stored.id, "2026-07");
+
+    const row = db.prepare(`
+      SELECT t.transaction_type AS type, t.category_id AS categoryId, it.transaction_id AS importedTransactionId
+      FROM transactions t
+      INNER JOIN imported_transactions it ON it.transaction_id = t.id
+      WHERE t.id = ?
+    `).get(stored.id) as { type: string; categoryId: number | null; importedTransactionId: number };
+    expect(row).toEqual({ type: "expense", categoryId: null, importedTransactionId: stored.id });
+    expect(rules.hasIncomeDeductionForMonth("2026-07")).toBe(false);
+  });
+
+  it("keeps duplicate filtering ahead of the monthly deduction conflict", async () => {
+    const parser = await import("@/src/import/sparkasse-csv");
+    const rows = parser.parseSparkasseCsvToPreview(INCOME_DEDUCTION_CSV).rows;
+    const suggestions = matcher.buildImportRuleSuggestions({
+      rows,
+      rules: [],
+      incomeDeductionRules: rules.listActiveIncomeDeductionRules(),
+    });
+    const firstPlan = persistence.buildSparkasseImportPreviewPlan({ rows, suggestions, effectiveMonthKey: "2026-07" });
+    persistence.persistSparkasseCsvImport({ sourceFilename: "pkv.csv", fileContent: INCOME_DEDUCTION_CSV, effectiveMonthKey: "2026-07", previewPlan: firstPlan, suggestions });
+
+    const duplicatePlan = persistence.buildSparkasseImportPreviewPlan({ rows, suggestions, effectiveMonthKey: "2026-07" });
+    expect(duplicatePlan.importableRowIndexes).toEqual([]);
+    expect(duplicatePlan.incomeDeductionConflictRowIndexes).toEqual([]);
+    expect(duplicatePlan.filteredRows[0]).toMatchObject({ reason: "duplicate", reasonLabel: "Duplikat" });
   });
 });

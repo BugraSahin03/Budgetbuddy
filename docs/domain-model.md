@@ -74,6 +74,9 @@ Seit FIN-120 koennen aktive Importregeln eine negative Bankbuchung als
 - Ein zweiter Regeltreffer wird in der Vorschau als Konflikt angezeigt, nicht als
   Einkommensabzug angewendet und stattdessen als normale offene Ausgabe importiert.
 - Bestehende Buchungen werden nicht rueckwirkend automatisch umklassifiziert.
+- Eine falsch erkannte Buchung kann im offenen Monat bewusst vom
+  Einkommensabzug in eine normale offene Ausgabe zurueckgestuft werden. Der
+  originale Importdatensatz bleibt dabei erhalten und der Monatsplatz wird frei.
 
 Details: `docs/adr/0011-income-deduction-transaction-type.md`.
 

@@ -20,6 +20,7 @@ import {
   deleteImportedTransactionForMonth,
   deleteManualTransaction,
   getActiveCashAccountId,
+  reclassifyIncomeDeductionAsExpenseForMonth,
   type ManualTransactionInput,
   type TransactionType,
   updateManualTransaction,
@@ -569,6 +570,39 @@ export async function deleteMonthlyImportedTransactionAction(
     redirectTarget = monthBookingHref(monthKey, {
       bookingEdit: "1",
       notice: "Import-Buchung gelöscht.",
+    });
+  } catch (error) {
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      error: toErrorMessage(error),
+    });
+  }
+
+  redirect(redirectTarget);
+}
+
+export async function reclassifyMonthlyIncomeDeductionAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    const transactionId = parseTransactionId(formData.get("transactionId"));
+    const confirmReclassify = toSingleString(
+      formData.get("confirmReclassify"),
+    ).trim();
+
+    if (confirmReclassify !== "on") {
+      throw new Error("Rücknahme muss bewusst bestätigt werden.");
+    }
+
+    reclassifyIncomeDeductionAsExpenseForMonth(transactionId, monthKey);
+    revalidateMonthContext(monthKey);
+
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      notice: "Einkommensabzug zurückgenommen. Die Buchung ist jetzt eine offene Ausgabe.",
     });
   } catch (error) {
     redirectTarget = monthBookingHref(monthKey, {

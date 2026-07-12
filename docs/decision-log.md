@@ -2032,6 +2032,8 @@ Auswirkung:
 - Kategorieverbrauch, Sonderkategorien, Fixkosten-Ist, offene Zuordnungen und
   Ausgaben-KPI bleiben frei von Einkommensabzuegen.
 - Originale Bankdaten und Duplikat-Fingerprint bleiben auditierbar.
+- Falsch klassifizierte Einkommensabzuege koennen bewusst in normale offene
+  Ausgaben zurueckgestuft werden; die Importspur bleibt bestehen.
 - Es gibt keine rueckwirkende automatische Umklassifizierung.
 - Grundsatzentscheidung siehe
   `docs/adr/0011-income-deduction-transaction-type.md`.

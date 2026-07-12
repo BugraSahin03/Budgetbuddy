@@ -32,6 +32,10 @@ Finanzberechnungen fehleranfällig.
   aber nicht als weiterer Einkommensabzug angewendet.
 - Operative Monatseinnahmen sind Bruttoeinnahmen plus Rückerstattungen minus
   Einkommensabzug. Die UI zeigt Brutto und Abzug nachvollziehbar an.
+- Die Duplikaterkennung läuft vor der Regel- und Monatskonfliktlogik.
+- Eine falsch erkannte Buchung kann in einem offenen Monat bewusst zu einer
+  normalen offenen Ausgabe zurückgestuft werden. Importmetadaten und Fingerprint
+  bleiben erhalten, während der Einkommensabzug-Platz des Monats wieder frei wird.
 
 ## Folgen
 

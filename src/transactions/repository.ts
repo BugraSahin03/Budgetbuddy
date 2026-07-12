@@ -764,6 +764,36 @@ export function deleteImportedTransactionForMonth(
   }
 }
 
+export function reclassifyIncomeDeductionAsExpenseForMonth(
+  transactionId: number,
+  monthKey: string,
+): void {
+  const id = ensurePositiveInt(transactionId, "Transaktion");
+  const effectiveMonthKey = normalizeEffectiveMonthKey(monthKey, monthKey);
+  assertMonthIsOpen(effectiveMonthKey);
+
+  const result = getDb()
+    .prepare(
+      `
+        UPDATE transactions
+        SET
+          transaction_type = 'expense',
+          category_id = NULL,
+          special_budget_id = NULL,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+          AND source_type = 'import'
+          AND transaction_type = 'income_deduction'
+          AND effective_month_key = ?
+      `,
+    )
+    .run(id, effectiveMonthKey);
+
+  if (result.changes === 0) {
+    throw new Error("Einkommensabzug wurde nicht gefunden.");
+  }
+}
+
 export function updateExpenseAssignmentForMonth(
   transactionId: number,
   monthKey: string,
