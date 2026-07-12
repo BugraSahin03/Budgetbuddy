@@ -2034,6 +2034,8 @@ Auswirkung:
 - Originale Bankdaten und Duplikat-Fingerprint bleiben auditierbar.
 - Falsch klassifizierte Einkommensabzuege koennen bewusst in normale offene
   Ausgaben zurueckgestuft werden; die Importspur bleibt bestehen.
+- Monatsvergleich, Jahreswerte und Gesamtstatistik verwenden dieselben
+  bereinigten Einnahmen wie die Monatsansicht.
 - Es gibt keine rueckwirkende automatische Umklassifizierung.
 - Grundsatzentscheidung siehe
   `docs/adr/0011-income-deduction-transaction-type.md`.

@@ -39,6 +39,7 @@ export function listLifetimeStats(currentMonthKey = getCurrentMonthKey()): Lifet
             SUM(
               CASE
                 WHEN t.transaction_type IN ('income', 'refund') THEN t.amount_cents
+                WHEN t.transaction_type = 'income_deduction' THEN t.amount_cents
                 ELSE 0
               END
             ),
@@ -66,7 +67,7 @@ export function listLifetimeStats(currentMonthKey = getCurrentMonthKey()): Lifet
           ) AS savingsCents
         FROM transactions t
         LEFT JOIN categories c ON c.id = t.category_id
-        WHERE t.transaction_type IN ('income', 'refund', 'expense')
+        WHERE t.transaction_type IN ('income', 'refund', 'expense', 'income_deduction')
           AND t.effective_month_key <= ?
         GROUP BY year
         ORDER BY year DESC

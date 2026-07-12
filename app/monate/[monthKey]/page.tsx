@@ -730,7 +730,7 @@ export default async function MonthDetailPage({
           value={formatEuro(month.dashboard.totals.incomeCents)}
           copy={
             month.dashboard.totals.incomeDeductionCents > 0
-              ? `Importiert ${formatEuro(month.dashboard.totals.grossIncomeCents)} · Einkommensabzug -${formatEuro(month.dashboard.totals.incomeDeductionCents)}`
+              ? `Bruttoeinnahmen ${formatEuro(month.dashboard.totals.grossIncomeCents)} · Einkommensabzug -${formatEuro(month.dashboard.totals.incomeDeductionCents)}`
               : "Alle Einkommen und Rückerstattungen dieses Monats."
           }
           tone="income"

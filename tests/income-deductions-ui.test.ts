@@ -21,6 +21,8 @@ describe("FIN-120 income deductions UI", () => {
     expect(importForm).toContain("werden nicht als normale Ausgabe gezählt");
     expect(monthPage).toContain("incomeDeductionCents");
     expect(monthPage).toContain("Einkommensabzug");
+    expect(monthPage).toContain("Bruttoeinnahmen");
+    expect(monthPage).not.toContain("`Importiert ${formatEuro(month.dashboard.totals.grossIncomeCents)}");
     expect(monthPage).toContain("reclassifyMonthlyIncomeDeductionAction");
     expect(monthPage).toContain("Als normale Ausgabe behandeln");
   });

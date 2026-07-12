@@ -46,6 +46,7 @@ describe("lifetime stats", () => {
         ) VALUES
           (?, NULL, 'income', '2031-01-05', '2031-01', 300000, 'EUR', 'Salary 2031', 'manual', NULL, NULL),
           (?, NULL, 'refund', '2031-01-06', '2031-01', 2500, 'EUR', 'Refund 2031', 'manual', NULL, NULL),
+          (?, NULL, 'income_deduction', '2031-01-07', '2031-01', -30000, 'EUR', 'PKV 2031', 'import', NULL, NULL),
           (?, NULL, 'expense', '2031-01-10', '2031-01', -45000, 'EUR', 'Groceries 2031', 'manual', ?, NULL),
           (?, NULL, 'expense', '2031-01-11', '2031-01', -50000, 'EUR', 'Savings 2031', 'manual', ?, NULL),
           (?, ?, 'transfer', '2031-01-12', '2031-01', -70000, 'EUR', 'Cash transfer', 'manual', NULL, NULL),
@@ -54,6 +55,7 @@ describe("lifetime stats", () => {
           (?, NULL, 'expense', '2032-03-11', '2032-03', -60000, 'EUR', 'Savings 2032', 'manual', ?, NULL)
       `,
     ).run(
+      sparkasseId,
       sparkasseId,
       sparkasseId,
       sparkasseId,
@@ -72,7 +74,7 @@ describe("lifetime stats", () => {
     const stats = listLifetimeStats("2032-12");
 
     expect(stats.totals).toEqual({
-      incomeCents: 702500,
+      incomeCents: 672500,
       expenseCents: 275000,
       savingsCents: 110000,
     });
@@ -85,7 +87,7 @@ describe("lifetime stats", () => {
       },
       {
         year: "2031",
-        incomeCents: 302500,
+        incomeCents: 272500,
         expenseCents: 95000,
         savingsCents: 50000,
       },

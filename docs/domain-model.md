@@ -68,6 +68,8 @@ Seit FIN-120 koennen aktive Importregeln eine negative Bankbuchung als
 
 - Der Abzug bleibt als originale Bankbuchung mit Importreferenz auditierbar.
 - Er reduziert die fuer Budgetstand und Planung verwendeten Monatseinnahmen.
+- Jahres- und Gesamtstatistiken verwenden ebenfalls die bereinigten Einnahmen,
+  damit Monats- und Langzeitsicht rechnerisch konsistent bleiben.
 - Er zaehlt nicht als normale Ausgabe, Fixkosten-Ist, Kategorie- oder
   Sonderkategorieverbrauch und erzeugt keine offene Zuordnung.
 - Pro `effective_month_key` darf maximal ein Einkommensabzug gespeichert werden.
