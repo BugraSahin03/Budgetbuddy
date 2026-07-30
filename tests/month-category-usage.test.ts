@@ -4,7 +4,9 @@ import {
   categoryUsageChipClassName,
   categoryUsageProgressStyle,
   categoryUsageSurfaceStyle,
+  getCategoryPlanScale,
   getCategoryUsageState,
+  getHighestPlannedAmountCents,
 } from "@/src/months/category-usage";
 
 describe("FIN-064 category usage colors", () => {
@@ -50,5 +52,64 @@ describe("FIN-064 category usage colors", () => {
     expect(categoryUsageSurfaceStyle(state)).toMatchObject({
       backgroundColor: expect.stringContaining("255, 247, 237"),
     });
+  });
+
+  it("scales positive category and special-budget plans against one shared maximum", () => {
+    const highestPlannedAmountCents = getHighestPlannedAmountCents([
+      2000,
+      40000,
+      null,
+      0,
+    ]);
+
+    expect(highestPlannedAmountCents).toBe(40000);
+    expect(
+      getCategoryPlanScale({
+        budgetAmountCents: 40000,
+        highestPlannedAmountCents,
+      }),
+    ).toEqual({ hasPlannedBudget: true, scalePercent: 100 });
+    expect(
+      getCategoryPlanScale({
+        budgetAmountCents: 20000,
+        highestPlannedAmountCents,
+      }),
+    ).toEqual({ hasPlannedBudget: true, scalePercent: 50 });
+  });
+
+  it("keeps small plans visible without allowing missing plans to distort the scale", () => {
+    expect(
+      getCategoryPlanScale({
+        budgetAmountCents: 2000,
+        highestPlannedAmountCents: 40000,
+      }),
+    ).toEqual({ hasPlannedBudget: true, scalePercent: 12 });
+    expect(
+      getCategoryPlanScale({
+        budgetAmountCents: 0,
+        highestPlannedAmountCents: 40000,
+      }),
+    ).toEqual({ hasPlannedBudget: false, scalePercent: 0 });
+    expect(
+      getCategoryPlanScale({
+        budgetAmountCents: null,
+        highestPlannedAmountCents: 0,
+      }),
+    ).toEqual({ hasPlannedBudget: false, scalePercent: 0 });
+  });
+
+  it("uses the full scale when only one positive planned amount exists", () => {
+    const highestPlannedAmountCents = getHighestPlannedAmountCents([
+      null,
+      0,
+      12500,
+    ]);
+
+    expect(
+      getCategoryPlanScale({
+        budgetAmountCents: 12500,
+        highestPlannedAmountCents,
+      }),
+    ).toEqual({ hasPlannedBudget: true, scalePercent: 100 });
   });
 });

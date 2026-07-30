@@ -177,7 +177,10 @@ function updateLiveOverviewRow(row: HTMLElement, deltaCents: number): void {
 
   const amount = row.querySelector<HTMLElement>("[data-live-amount]");
   if (amount) {
-    amount.textContent = formatEuro(spentCents);
+    amount.textContent =
+      budgetCents !== null && budgetCents > 0
+        ? `${formatEuro(spentCents)} von ${formatEuro(budgetCents)}`
+        : formatEuro(spentCents);
   }
 
   const progress = row.querySelector<HTMLElement>("[data-live-progress]");

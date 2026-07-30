@@ -14,6 +14,13 @@ export type CategoryUsageState = {
   tone: CategoryUsageTone;
 };
 
+export type CategoryPlanScale = {
+  hasPlannedBudget: boolean;
+  scalePercent: number;
+};
+
+const MINIMUM_PLAN_SCALE_PERCENT = 12;
+
 const TONE_STYLES: Record<
   CategoryUsageTone,
   {
@@ -139,4 +146,47 @@ export function categoryUsageProgressStyle(state: CategoryUsageState): CSSProper
 
 export function categoryUsageSurfaceStyle(state: CategoryUsageState): CSSProperties {
   return TONE_STYLES[state.tone].surfaceStyle;
+}
+
+export function getHighestPlannedAmountCents(
+  plannedAmountsCents: Array<number | null>,
+): number {
+  return plannedAmountsCents.reduce<number>(
+    (highest, amount) =>
+      amount !== null && Number.isFinite(amount) && amount > highest
+        ? amount
+        : highest,
+    0,
+  );
+}
+
+export function getCategoryPlanScale({
+  budgetAmountCents,
+  highestPlannedAmountCents,
+}: {
+  budgetAmountCents: number | null;
+  highestPlannedAmountCents: number;
+}): CategoryPlanScale {
+  if (
+    budgetAmountCents === null ||
+    !Number.isFinite(budgetAmountCents) ||
+    budgetAmountCents <= 0 ||
+    !Number.isFinite(highestPlannedAmountCents) ||
+    highestPlannedAmountCents <= 0
+  ) {
+    return {
+      hasPlannedBudget: false,
+      scalePercent: 0,
+    };
+  }
+
+  const relativePercent = Math.min(
+    100,
+    Math.round((budgetAmountCents / highestPlannedAmountCents) * 100),
+  );
+
+  return {
+    hasPlannedBudget: true,
+    scalePercent: Math.max(MINIMUM_PLAN_SCALE_PERCENT, relativePercent),
+  };
 }

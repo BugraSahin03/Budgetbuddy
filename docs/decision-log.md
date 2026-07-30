@@ -55,6 +55,34 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-07-30 - FIN-121 trennt Planwertgröße und Budgetverbrauch visuell
+
+Quelle/Ticket: `FIN-121`
+
+Erkenntnis/Entscheidung:
+
+- Die Monatsübersicht skaliert die verfügbare Balkenbreite sichtbarer
+  Kategorien und Sonderkategorien gemeinsam gegen den höchsten positiven
+  Planwert des Monats.
+- Die Füllung innerhalb dieser Breite und die bestehenden FIN-064-Farben
+  zeigen weiterhin ausschließlich den relativen Verbrauch des jeweiligen
+  Planwerts.
+- Kleine positive Planwerte erhalten eine ruhige Mindestbreite. Fehlende und
+  0-EUR-Planwerte werden weder als Skalierungsbasis verwendet noch mit einem
+  irreführenden Größenbalken dargestellt.
+
+Auswirkung:
+
+- Größenordnung und Verbrauch sind gleichzeitig erkennbar, ohne Kategorien
+  und Sonderkategorien fachlich zu vermischen.
+- Überschreitungen bleiben auf die verfügbare Größenbreite begrenzt und
+  verändern die gemeinsame Monatsskala nicht.
+
+Folgeaktion:
+
+- Die Darstellung wird im Visual Check mit stark unterschiedlichen
+  Planwerten sowie auf Desktop- und Smartphone-Breite geprüft.
+
 ## 2026-07-19 - Alfreds Stufe 3 liest validierte Getquin-Public-Share-Snapshots
 
 Quelle/Ticket: `Alfred-Stufe-3-Getquin`

@@ -2,7 +2,9 @@ import { CategoryVisualMark } from "@/app/components/category-visual";
 import { formatEuro } from "@/src/dashboard/ui";
 import {
   categoryUsageProgressStyle,
+  getCategoryPlanScale,
   getCategoryUsageState,
+  getHighestPlannedAmountCents,
 } from "@/src/months/category-usage";
 
 type CategoryVisual = {
@@ -43,6 +45,10 @@ export function MonthCategoryOverview({
   const categoryVisualById = new Map(
     categoryVisuals.map((category) => [category.id, category]),
   );
+  const highestPlannedAmountCents = getHighestPlannedAmountCents([
+    ...categoryRows.map((row) => row.budgetAmountCents),
+    ...specialBudgetRows.map((row) => row.plannedAmountCents),
+  ]);
 
   if (categoryRows.length === 0 && specialBudgetRows.length === 0) {
     return (
@@ -60,6 +66,10 @@ export function MonthCategoryOverview({
         const hasPlannedBudget =
           row.budgetAmountCents !== null && row.budgetAmountCents > 0;
         const isSavingsCategory = category?.isSavings === true;
+        const planScale = getCategoryPlanScale({
+          budgetAmountCents: row.budgetAmountCents,
+          highestPlannedAmountCents,
+        });
 
         return (
           <div
@@ -82,22 +92,31 @@ export function MonthCategoryOverview({
                     {row.categoryName}
                   </p>
                   <p
-                    className="shrink-0 text-sm font-extrabold text-[color:var(--month-ink)]"
+                    className="shrink-0 whitespace-nowrap text-xs font-extrabold text-[color:var(--month-ink)] sm:text-sm"
                     data-live-amount
                   >
-                    {formatEuro(row.spentAmountCents)}
+                    {hasPlannedBudget
+                      ? `${formatEuro(row.spentAmountCents)} von ${formatEuro(row.budgetAmountCents ?? 0)}`
+                      : formatEuro(row.spentAmountCents)}
                   </p>
                 </div>
-                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/85">
+                {planScale.hasPlannedBudget ? (
                   <div
-                    className="h-full rounded-full"
-                    data-live-progress
-                    style={{
-                      width: `${usageState.progressPercent}%`,
-                      ...categoryUsageProgressStyle(usageState),
-                    }}
-                  />
-                </div>
+                    className="month-category-plan-scale mt-2"
+                    data-plan-scale
+                    data-plan-scale-percent={planScale.scalePercent}
+                    style={{ width: `${planScale.scalePercent}%` }}
+                  >
+                    <div
+                      className="h-full rounded-full"
+                      data-live-progress
+                      style={{
+                        width: `${usageState.progressPercent}%`,
+                        ...categoryUsageProgressStyle(usageState),
+                      }}
+                    />
+                  </div>
+                ) : null}
                 {!isSavingsCategory ? (
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
                     <span data-live-usage-label>
@@ -143,6 +162,10 @@ export function MonthCategoryOverview({
                 spentAmountCents: row.actualExpenseCents,
               });
               const hasPlannedBudget = row.plannedAmountCents > 0;
+              const planScale = getCategoryPlanScale({
+                budgetAmountCents: row.plannedAmountCents,
+                highestPlannedAmountCents,
+              });
 
               return (
                 <div
@@ -165,22 +188,31 @@ export function MonthCategoryOverview({
                           {row.name}
                         </p>
                         <p
-                          className="shrink-0 text-sm font-extrabold text-[color:var(--month-ink)]"
+                          className="shrink-0 whitespace-nowrap text-xs font-extrabold text-[color:var(--month-ink)] sm:text-sm"
                           data-live-amount
                         >
-                          {formatEuro(row.actualExpenseCents)}
+                          {hasPlannedBudget
+                            ? `${formatEuro(row.actualExpenseCents)} von ${formatEuro(row.plannedAmountCents)}`
+                            : formatEuro(row.actualExpenseCents)}
                         </p>
                       </div>
-                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/85">
+                      {planScale.hasPlannedBudget ? (
                         <div
-                          className="h-full rounded-full"
-                          data-live-progress
-                          style={{
-                            width: `${usageState.progressPercent}%`,
-                            ...categoryUsageProgressStyle(usageState),
-                          }}
-                        />
-                      </div>
+                          className="month-category-plan-scale mt-2"
+                          data-plan-scale
+                          data-plan-scale-percent={planScale.scalePercent}
+                          style={{ width: `${planScale.scalePercent}%` }}
+                        >
+                          <div
+                            className="h-full rounded-full"
+                            data-live-progress
+                            style={{
+                              width: `${usageState.progressPercent}%`,
+                              ...categoryUsageProgressStyle(usageState),
+                            }}
+                          />
+                        </div>
+                      ) : null}
                       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
                         <span data-live-usage-label>
                           {!hasPlannedBudget
