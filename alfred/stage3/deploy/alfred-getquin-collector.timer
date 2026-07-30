@@ -1,0 +1,13 @@
+[Unit]
+Description=Refresh Alfred's Getquin portfolio snapshot daily
+
+[Timer]
+OnBootSec=5m
+OnCalendar=*-*-* 06:15:00 Europe/Berlin
+RandomizedDelaySec=5m
+AccuracySec=1m
+Persistent=true
+Unit=alfred-getquin-collector.service
+
+[Install]
+WantedBy=timers.target

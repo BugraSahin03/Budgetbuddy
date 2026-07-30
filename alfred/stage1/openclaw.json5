@@ -1,0 +1,147 @@
+{
+  agents: {
+    defaults: {
+      workspace: "/var/lib/alfred/workspace",
+      model: {
+        primary: "openai/gpt-5.6-sol",
+      },
+      models: {
+        "openai/gpt-5.6-sol": {},
+      },
+      heartbeat: {
+        every: "0m",
+      },
+    },
+  },
+
+  tools: {
+    profile: "minimal",
+    alsoAllow: [
+      "budgetbuddy_snapshot",
+      "getquin_snapshot",
+      "personal_context_snapshot",
+      "memory_propose",
+      "memory_confirm",
+      "memory_cancel",
+    ],
+    elevated: {
+      enabled: false,
+    },
+    deny: [
+      "exec",
+      "process",
+      "group:fs",
+      "browser",
+      "group:web",
+      "cron",
+      "elevated",
+    ],
+  },
+
+  plugins: {
+    enabled: true,
+    bundledDiscovery: "allowlist",
+    allow: [
+      "codex",
+      "openai",
+      "telegram",
+      "budgetbuddy-snapshot",
+      "getquin-snapshot",
+      "personal-context-memory",
+    ],
+    deny: ["memory-core"],
+    load: {
+      paths: [
+        "/opt/alfred-budgetbuddy-tool",
+        "/opt/alfred-getquin-tool",
+        "/opt/alfred-memory-tool",
+      ],
+    },
+    entries: {
+      codex: {
+        enabled: true,
+        hooks: {
+          allowPromptInjection: false,
+          allowConversationAccess: false,
+        },
+        config: {
+          appServer: {
+            mode: "guardian",
+            approvalPolicy: "never",
+            sandbox: "read-only",
+            approvalsReviewer: "user",
+            defaultWorkspaceDir: "/var/lib/alfred/workspace",
+          },
+          codexPlugins: {
+            enabled: false,
+            allow_all_plugins: false,
+            allow_destructive_actions: false,
+          },
+        },
+      },
+      "budgetbuddy-snapshot": {
+        enabled: true,
+        hooks: {
+          allowPromptInjection: false,
+        },
+        config: {
+          snapshotPath: "/var/lib/alfred-snapshots/budgetbuddy/latest.json",
+          maxAgeMinutes: 45,
+        },
+      },
+      "getquin-snapshot": {
+        enabled: true,
+        hooks: {
+          allowPromptInjection: false,
+        },
+        config: {
+          snapshotPath: "/var/lib/alfred-snapshots/getquin/latest.json",
+          maxAgeMinutes: 2160,
+        },
+      },
+      "personal-context-memory": {
+        enabled: true,
+        hooks: {
+          allowPromptInjection: false,
+        },
+        config: {},
+      },
+    },
+  },
+
+  gateway: {
+    mode: "local",
+    port: 18789,
+    bind: "loopback",
+    trustedProxies: ["127.0.0.1", "::1"],
+    auth: {
+      mode: "token",
+      token: "${OPENCLAW_GATEWAY_TOKEN}",
+      allowTailscale: false,
+      rateLimit: {
+        maxAttempts: 10,
+        windowMs: 60000,
+        lockoutMs: 300000,
+        exemptLoopback: true,
+      },
+    },
+    tailscale: {
+      mode: "off",
+      resetOnExit: false,
+    },
+    controlUi: {
+      enabled: true,
+      allowedOrigins: ["https://alfred.taild1a8ca.ts.net"],
+    },
+    terminal: {
+      enabled: false,
+    },
+  },
+
+  ui: {
+    assistant: {
+      name: "Alfred",
+      avatar: "A",
+    },
+  },
+}

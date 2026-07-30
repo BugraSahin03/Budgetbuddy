@@ -1,0 +1,56 @@
+[Unit]
+Description=Alfred OpenClaw Gateway
+Documentation=https://docs.openclaw.ai/gateway
+Wants=network-online.target
+After=network-online.target tailscaled.service
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+User=alfred
+Group=alfred
+SupplementaryGroups=alfred-snapshots
+WorkingDirectory=/var/lib/alfred/workspace
+Environment=HOME=/var/lib/alfred
+Environment=OPENCLAW_STATE_DIR=/var/lib/alfred/.openclaw
+Environment=NODE_ENV=production
+EnvironmentFile=/var/lib/alfred/secrets/gateway.env
+EnvironmentFile=-/var/lib/alfred/secrets/telegram.env
+ExecStartPre=/usr/bin/openclaw config validate
+ExecStart=/usr/bin/openclaw gateway run --port 18789
+Restart=always
+RestartSec=5
+RestartPreventExitStatus=78
+TimeoutStopSec=30
+KillMode=control-group
+OOMPolicy=continue
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadWritePaths=/var/lib/alfred
+ReadOnlyPaths=/var/lib/alfred-snapshots
+TasksMax=256
+LimitNOFILE=65536
+MemoryHigh=1200M
+MemoryMax=1600M
+
+[Install]
+WantedBy=multi-user.target

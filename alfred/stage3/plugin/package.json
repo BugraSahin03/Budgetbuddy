@@ -1,0 +1,12 @@
+{
+  "name": "@alfred/getquin-snapshot-tool",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Verified read-only Getquin portfolio snapshot tool for Alfred",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

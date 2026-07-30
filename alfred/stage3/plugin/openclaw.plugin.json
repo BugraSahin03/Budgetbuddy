@@ -1,0 +1,33 @@
+{
+  "id": "getquin-snapshot",
+  "contracts": {
+    "tools": [
+      "getquin_snapshot"
+    ]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+      "snapshotPath": {
+        "type": "string",
+        "minLength": 1
+      },
+      "maxAgeMinutes": {
+        "type": "integer",
+        "minimum": 60,
+        "maximum": 10080
+      }
+    }
+  },
+  "uiHints": {
+    "snapshotPath": {
+      "label": "Getquin snapshot",
+      "help": "Fixed path to the collector-owned read-only portfolio snapshot."
+    },
+    "maxAgeMinutes": {
+      "label": "Maximum snapshot age",
+      "help": "Reject old portfolio data instead of silently treating it as current."
+    }
+  }
+}

@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+readonly SERVICE="alfred-openclaw.service"
+readonly HOME_DIR="/var/lib/alfred"
+readonly STATE_DIR="/var/lib/alfred/.openclaw"
+readonly ENV_FILE="/var/lib/alfred/secrets/gateway.env"
+readonly TELEGRAM_ENV_FILE="/var/lib/alfred/secrets/telegram.env"
+readonly UI_URL="https://alfred.taild1a8ca.ts.net/"
+
+usage() {
+  cat <<'EOF'
+Usage: alfredctl <command>
+
+Commands:
+  status     Dienststatus anzeigen
+  health     Dienst, Loopback-Port und lokale UI prüfen
+  start      Alfred starten
+  stop       Alfred stoppen
+  restart    Alfred neu starten
+  logs       Live-Logs anzeigen
+  doctor     OpenClaw-Diagnose ausführen
+  audit      Tiefen-Sicherheitsaudit ausführen
+  models     Modell- und OAuth-Status anzeigen
+  url        Private Control-UI-Adresse anzeigen
+  token      Control-UI-Token anzeigen
+  telegram-setup       Bot-Token verdeckt einlesen und Telegram aktivieren
+  telegram-status      Telegram-Verbindung und Bot-Token prüfen
+  telegram-pairings    Offene Telegram-DM-Kopplungen anzeigen
+  telegram-approve CODE  Eigene Telegram-Kopplung freigeben
+EOF
+}
+
+load_gateway_env() {
+  set -a
+  # shellcheck disable=SC1090
+  source "$ENV_FILE"
+  if [[ -f "$TELEGRAM_ENV_FILE" ]]; then
+    # shellcheck disable=SC1090
+    source "$TELEGRAM_ENV_FILE"
+  fi
+  set +a
+}
+
+run_openclaw() {
+  load_gateway_env
+  runuser -u alfred -- env \
+    HOME="$HOME_DIR" \
+    OPENCLAW_STATE_DIR="$STATE_DIR" \
+    OPENCLAW_GATEWAY_TOKEN="$OPENCLAW_GATEWAY_TOKEN" \
+    TELEGRAM_BOT_TOKEN="${TELEGRAM_BOT_TOKEN:-}" \
+    /usr/bin/openclaw "$@"
+}
+
+telegram_setup() {
+  if [[ ! -t 0 ]]; then
+    printf '%s\n' 'telegram-setup muss in einem interaktiven Terminal laufen.' >&2
+    exit 2
+  fi
+
+  local telegram_token token_file_tmp
+  read -r -s -p 'Telegram Bot-Token (Eingabe bleibt unsichtbar): ' telegram_token
+  printf '\n'
+
+  if [[ ! "$telegram_token" =~ ^[0-9]{6,}:[A-Za-z0-9_-]{20,}$ ]]; then
+    unset telegram_token
+    printf '%s\n' 'Der Token hat nicht das erwartete Telegram-Format.' >&2
+    exit 2
+  fi
+
+  umask 0077
+  token_file_tmp="$(mktemp "${TELEGRAM_ENV_FILE}.XXXXXX")"
+  printf 'TELEGRAM_BOT_TOKEN=%s\n' "$telegram_token" >"$token_file_tmp"
+  unset telegram_token
+  chown root:alfred "$token_file_tmp"
+  chmod 0640 "$token_file_tmp"
+  mv -f "$token_file_tmp" "$TELEGRAM_ENV_FILE"
+
+  run_openclaw config set channels.telegram.botToken \
+    --ref-provider default --ref-source env --ref-id TELEGRAM_BOT_TOKEN
+  run_openclaw config set channels.telegram.dmPolicy pairing
+  run_openclaw config set channels.telegram.groupPolicy disabled
+  run_openclaw config set channels.telegram.streaming \
+    '{"mode":"partial","preview":{"toolProgress":false}}' --strict-json
+  run_openclaw config set channels.telegram.enabled true --strict-json
+
+  systemctl restart "$SERVICE"
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if systemctl is-active --quiet "$SERVICE" && \
+      curl --fail --silent --output /dev/null http://127.0.0.1:18789/; then
+      run_openclaw channels status --channel telegram --probe
+      return
+    fi
+    sleep 2
+  done
+
+  systemctl status --no-pager -l "$SERVICE"
+  exit 1
+}
+
+case "${1:-}" in
+  status)
+    systemctl status --no-pager -l "$SERVICE"
+    ;;
+  health)
+    systemctl is-enabled "$SERVICE"
+    systemctl is-active "$SERVICE"
+    ss -H -ltn sport = :18789
+    curl --fail --silent --show-error --output /dev/null \
+      --write-out 'local UI: HTTP %{http_code}\n' \
+      http://127.0.0.1:18789/
+    ;;
+  start|stop|restart)
+    systemctl "$1" "$SERVICE"
+    systemctl is-active "$SERVICE" || true
+    ;;
+  logs)
+    journalctl -u "$SERVICE" -f --no-pager
+    ;;
+  doctor)
+    run_openclaw doctor
+    ;;
+  audit)
+    run_openclaw security audit --deep
+    ;;
+  models)
+    run_openclaw models status
+    ;;
+  url)
+    printf '%s\n' "$UI_URL"
+    ;;
+  token)
+    load_gateway_env
+    printf '%s\n' "$OPENCLAW_GATEWAY_TOKEN"
+    ;;
+  telegram-setup)
+    telegram_setup
+    ;;
+  telegram-status)
+    run_openclaw channels status --channel telegram --probe
+    ;;
+  telegram-pairings)
+    run_openclaw pairing list telegram
+    ;;
+  telegram-approve)
+    if [[ -z "${2:-}" ]]; then
+      printf '%s\n' 'Usage: alfredctl telegram-approve CODE' >&2
+      exit 2
+    fi
+    run_openclaw pairing approve telegram "$2" --notify
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

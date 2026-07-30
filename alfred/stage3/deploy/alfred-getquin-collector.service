@@ -1,0 +1,37 @@
+[Unit]
+Description=Alfred read-only Getquin public portfolio snapshot collector
+Documentation=file:/opt/alfred-getquin-reader/README.md
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+User=alfred-portfolio-collector
+Group=alfred-portfolio-collector
+SupplementaryGroups=alfred-snapshots
+WorkingDirectory=/opt/alfred-getquin-reader
+EnvironmentFile=/var/lib/alfred/secrets/getquin.env
+ExecStart=/usr/bin/node /opt/alfred-getquin-reader/collector.mjs --output /var/lib/alfred-snapshots/getquin
+UMask=0027
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadWritePaths=/var/lib/alfred-snapshots/getquin
+TasksMax=64
+MemoryMax=256M
