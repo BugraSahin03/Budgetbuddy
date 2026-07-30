@@ -1,0 +1,15 @@
+{
+  "id": "personal-context-memory",
+  "contracts": {
+    "tools": [
+      "personal_context_snapshot",
+      "memory_propose",
+      "memory_confirm",
+      "memory_cancel"
+    ]
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false
+  }
+}

@@ -1,6 +1,6 @@
 # Alfred – persönlicher Finanzcoach und ehrlicher Sparringspartner
 
-Status: eigenständiges Produkt- und Architekturkonzept, 12. Juli 2026
+Status: eigenständiges Produkt- und Architekturkonzept, aktualisiert am 14. Juli 2026
 
 ## 1. Einordnung und Abgrenzung
 
@@ -160,7 +160,7 @@ Jeder Eintrag benötigt:
 - Veraltete Ziele und Präferenzen werden regelmäßig erneut bestätigt.
 - Der Nutzer kann jede gespeicherte Information ansehen, korrigieren und löschen.
 - Inferenz und Nutzerfakt bleiben technisch getrennt.
-- Das Modell darf seine eigene `PERSONALITY.md` oder Entscheidungsrichtlinien nicht selbst verändern.
+- Das Modell darf seine eigene `SOUL.md`, `AGENTS.md` oder Entscheidungsrichtlinien nicht selbst verändern.
 
 ## 6. Finanzielle Analysebereiche
 
@@ -232,7 +232,7 @@ Alfred soll beispielsweise beantworten:
 
 ### 7.1 Frag Alfred
 
-Der primäre Zugang ist ein Gespräch mit einem langfristig bekannten Finanzcoach. Alfred lädt pro Frage nur die relevanten bestätigten Fakten, Ziele, Prinzipien und früheren Entscheidungen.
+Der primäre Zugang ist ein privater Telegram-Chat mit einem langfristig bekannten Finanzcoach. Eine eigene fachliche Finanzoberfläche ist für den Start ausdrücklich nicht vorgesehen: Alfred soll wie ein erreichbarer Gesprächspartner wirken und nicht wie eine weitere Finanz-App. OpenClaws eingebaute Control UI dient ausschließlich als private Werkstatt und Betriebsoberfläche, um Persönlichkeit, Sessions, Tool-Aktivität und Logs zu prüfen. Pro Frage lädt Alfred nur die relevanten bestätigten Fakten, Ziele, Prinzipien und früheren Entscheidungen.
 
 ### 7.2 Entscheidungsvorlage
 
@@ -271,43 +271,50 @@ Damit vermeidet Alfred Rückschaufehler und entwickelt ein fundiertes Verständn
 
 ### 8.1 Klare Empfehlung
 
-Alfred sollte als **eigenständige Anwendung mit eigener Datenbank, eigenem API-Dienst und eigener Oberfläche** gebaut werden.
+Alfred startet als **eigenständiger Agent in einer selbst gehosteten OpenClaw-Instanz**. Telegram ist der Gesprächskanal; eine eigene Weboberfläche und ein eigener API-Dienst sind zunächst nicht erforderlich.
 
 Empfohlener Start:
 
-- eigenständiges Repository;
-- serverseitige TypeScript-Anwendung;
-- eigene verschlüsselte Datenbank;
-- lesende Datenadapter für Budget Buddy und spätere Quellen;
-- OpenAI Responses API als Reasoning- und Formulierungsschicht;
+- eigener privater OpenClaw-Workspace und eigener Telegram-Bot;
+- OpenAI-/Codex-Anmeldung über das vorhandene ChatGPT-Abo per OAuth;
+- kein OpenAI-API-Key und kein kostenpflichtiger API-Fallback;
+- lesende Datenadapter für Budget Buddy, Getquin und spätere Quellen;
+- zunächst anonymisierter Testsnapshot, danach automatisch erzeugte Budget-Buddy- und Getquin-Snapshots sowie ein strukturierter Finanzspeicher;
 - alle Berechnungen und Finanzfakten im eigenen Anwendungscode;
-- standardmäßig anwendungsseitig verwalteter Kontext mit `store: false`;
+- strikt begrenzte, standardmäßig lesende Werkzeuge;
 - zunächst ein Alfred-Agent, später optional ein separater Kritiker.
+
+OpenClaw ist dabei Laufzeit, Telegram-Gateway, Workspace, Memory- und Werkzeugorchestrierung. Es ersetzt weder eine belastbare Finanzdatenstruktur noch deterministische Berechnungen oder Qualitätskontrollen.
 
 ### 8.2 Keine „eigene OpenAI-Instanz“
 
-Technisch wird keine dauerhaft laufende, individuelle Modellinstanz benötigt. Ein API-Modell kennt den Haushalt nicht automatisch. Bei jeder Anfrage stellt die Alfred-Anwendung den relevanten Kontext, die erlaubten Werkzeuge und die aktuelle Persönlichkeitsversion bereit.
+Technisch wird keine dauerhaft laufende, individuelle Modellinstanz benötigt. Das Modell kennt den Haushalt nicht automatisch. OpenClaw stellt bei jeder Anfrage den relevanten Workspace-Kontext, die erlaubten Werkzeuge und die aktuelle Persönlichkeitsversion bereit.
 
-Sinnvoll ist ein eigenes OpenAI-API-Projekt mit:
+Für die erste Version wird OpenAI Codex OAuth mit dem vorhandenen ChatGPT-Abo verwendet. Das bedeutet:
 
-- separatem API-Key;
-- eigenen Ausgabenlimits;
-- eigener Modellkonfiguration;
-- eigener Protokollierungs- und Datenschutzkonfiguration;
-- getrennten Test- und Produktivprojekten.
+- kein separater OpenAI-API-Verbrauch, solange kein API-Key hinterlegt wird;
+- Nutzung der vom individuellen Abo freigegebenen Codex-Modelle;
+- planabhängige Nutzungs- und Zeitlimits statt unbegrenzter Ausführung;
+- kein unbemerkter Wechsel auf API-Key-Abrechnung;
+- regelmäßige Prüfung von Anmeldung, verfügbarem Modell und Kontingent.
 
-Die dauerhafte Persönlichkeit und Erinnerung liegen dennoch in Alfreds eigener Anwendung, nicht im Modell.
+Die dauerhafte Persönlichkeit und Erinnerung liegen in Alfreds privatem OpenClaw-Workspace und später zusätzlich in einem strukturierten Finanzspeicher – nicht im Modell selbst.
 
-### 8.3 Personality-Dateien
+### 8.3 Workspace- und Personality-Dateien
 
-Eine versionierte Personality-Datei ist ausdrücklich sinnvoll. Sie enthält jedoch nur Verhalten, Stimme und Prinzipien – keine veränderlichen Finanzdaten.
+Eine versionierte Personality-Datei ist ausdrücklich sinnvoll. OpenClaw verwendet dafür `SOUL.md` zusammen mit weiteren Standarddateien. Sie enthalten Verhalten, Stimme und Regeln, aber keine Zugangsdaten und langfristig auch keine vollständigen veränderlichen Finanzbestände.
 
 Empfohlene Dateien:
 
 ~~~text
-prompts/
-  PERSONALITY.md
-  COACHING_CHARTER.md
+workspace-alfred/
+  AGENTS.md
+  SOUL.md
+  IDENTITY.md
+  USER.md
+  MEMORY.md
+  HEARTBEAT.md
+  FINANCIAL_CHARTER.md
   DECISION_POLICY.md
   CRITIC_POLICY.md
   MEMORY_POLICY.md
@@ -316,18 +323,23 @@ prompts/
 
 Inhaltlich:
 
-- `PERSONALITY.md`: Stimme, Charakter und Gesprächsstil Alfreds;
-- `COACHING_CHARTER.md`: Auftrag, Loyalität, Grenzen und Prioritäten;
+- `SOUL.md`: Stimme, Charakter, Haltung und Gesprächsstil Alfreds;
+- `IDENTITY.md`: Name, kurze Identität und Auftreten;
+- `AGENTS.md`: Arbeitsregeln, Sicherheitsgrenzen und Verifikationspflichten;
+- `USER.md`: kompakter bestätigter Nutzer- und Haushaltskontext;
+- `MEMORY.md`: kuratierte Fakten, Präferenzen und Entscheidungen;
+- `HEARTBEAT.md`: kurze Checkliste für regelmäßige Prüfungen;
+- `FINANCIAL_CHARTER.md`: Auftrag, Loyalität, Grenzen und Prioritäten;
 - `DECISION_POLICY.md`: Ablauf für ehrliche zweite Meinungen;
 - `CRITIC_POLICY.md`: Gegenargumente und Red-Team-Prüfung;
 - `MEMORY_POLICY.md`: was gespeichert, bestätigt oder verworfen wird;
 - `RESEARCH_POLICY.md`: Quellenanforderungen für Markt- und Produktwissen.
 
-Persönliche Fakten gehören nicht in frei lesbare Markdown-Dateien. Sie gehören in die geschützte Datenbank und werden je Anfrage gezielt geladen.
+Kompakte bestätigte Ziele, Prinzipien und Lebenskontexte dürfen im geschützten privaten Workspace stehen. Detaillierte Buchungen, Portfoliobestände und historische Finanzreihen gehören in einen strukturierten, gesicherten Speicher und werden je Anfrage gezielt geladen.
 
 ### 8.4 Heartbeats
 
-Heartbeats sind sinnvoll, aber nicht als Persönlichkeits- oder Gedächtnisdateien. Sie sind geplante Jobs:
+OpenClaw-Heartbeats sind sinnvoll, aber nicht als Ersatz für Gedächtnis oder exakte Zeitplanung. Sie bündeln regelmäßige Prüfungen:
 
 - Datenaktualität prüfen;
 - wöchentlichen Rückblick vorbereiten;
@@ -337,42 +349,53 @@ Heartbeats sind sinnvoll, aber nicht als Persönlichkeits- oder Gedächtnisdatei
 - veraltete Profilinformationen zur Bestätigung vorlegen;
 - relevante, neue Abweichungen erkennen.
 
-Technisch genügt anfangs ein Scheduler wie systemd timer oder Cron. Der Jobstatus gehört in die Datenbank: letzter Lauf, nächster Lauf, Datenstand, Ergebnis und Fehler. Ein Heartbeat erzeugt nur dann eine Nachricht, wenn ein relevantes neues Signal vorliegt.
+OpenClaws Standardheartbeat ist für Alfred zu häufig und würde Abo-Kontingent verbrauchen. Eine Prüfung höchstens alle sechs bis zwölf Stunden reicht; Wochen-, Monats-, Quartals- und Jahrestermine gehören in Cron beziehungsweise Scheduled Tasks. Der Jobstatus umfasst letzter Lauf, nächster Lauf, Datenstand, Ergebnis und Fehler. Alfred schreibt nur bei einem relevanten neuen Signal oder zum vereinbarten Rückblick.
 
 ### 8.5 Architekturfluss
 
 ~~~mermaid
 flowchart LR
-  BB["Budget Buddy Export oder Read-only-Adapter"] --> I["Datenadapter"]
-  D["Depots, Konten und manuelle Daten"] --> I
+  T["Privater Telegram-Chat"] --> O["OpenClaw Gateway"]
+  O --> A["Alfred Hauptagent"]
+  S["ChatGPT-Abo via Codex OAuth"] --> A
+  BB["Budget Buddy Read-only-Adapter"] --> I["Geprüfte Datenadapter"]
+  G["Getquin Export oder isolierter Browser"] --> I
+  D["Konten und manuelle Daten"] --> I
   I --> F["Alfred Finance Core"]
   P["Haushalt, Ziele und Finanzphilosophie"] --> M["Strukturiertes Memory"]
   F --> E["Berechnungen und Evidenz"]
   M --> R["Kontext-Retrieval"]
   E --> R
   X["Aktuelle externe Quellen"] --> R
-  R --> A["Alfred"]
+  R --> A
   A --> C["Kritiker bei wichtigen Entscheidungen"]
   C --> V["Fakten- und Quellenvalidator"]
-  V --> U["Antwort oder Entscheidungsvorlage"]
+  V --> U["Telegram-Antwort oder Entscheidungsvorlage"]
+  U --> T
   U --> J["Entscheidungsjournal und Feedback"]
 ~~~
 
 ### 8.6 Vorgeschlagene Projektstruktur
 
 ~~~text
-alfred/
-  app/                  Oberfläche und Gespräch
-  src/finance/          Cashflow, Vermögen, Portfolio, Schulden
-  src/memory/           Profile, Ziele, Prinzipien, Entscheidungen
-  src/adapters/         Budget Buddy, Broker, Marktpreise, manuell
-  src/coach/            Kontext, Signale und Antwortorchestrierung
-  src/research/         aktuelle externe Quellen
-  src/heartbeat/        geplante Reviews und Datenprüfungen
-  prompts/              Alfreds versionierte Persönlichkeit
-  schemas/              strukturierte Ein- und Ausgaben
-  tests/evals/          fachliche und charakterliche Testfälle
+workspace-alfred/
+  AGENTS.md              Arbeits- und Sicherheitsregeln
+  SOUL.md                Alfreds Persönlichkeit
+  IDENTITY.md            Name und Auftreten
+  USER.md                bestätigter Haushaltskontext
+  MEMORY.md              kuratiertes Langzeitwissen
+  HEARTBEAT.md           kurze regelmäßige Prüfungen
+  policies/              Finanz-, Entscheidungs- und Memory-Regeln
+  skills/                geprüfte read-only Datenleser und Analysen
+  decisions/             Entscheidungsjournal
+alfred-finance-core/
+  finance/               Cashflow, Vermögen, Portfolio, Schulden
+  adapters/              Budget Buddy, Getquin, Broker, manuell
+  schemas/               strukturierte Ein- und Ausgaben
+  tests/evals/           fachliche und charakterliche Testfälle
 ~~~
+
+Die konkrete OpenClaw-, Telegram-, Hosting- und Sicherheitskonfiguration ist im [OpenClaw- und Telegram-Umsetzungsplan](alfred-openclaw-telegram-plan.md) festgehalten.
 
 ## 9. Ablauf einer Frage
 
@@ -425,13 +448,13 @@ alfred/
 - `scheduled_jobs`;
 - `prompt_versions` und `model_runs`.
 
-## 11. OpenAI-Entscheidung
+## 11. OpenClaw- und Modellentscheidung
 
-### 11.1 Start mit Responses API
+### 11.1 Start mit OpenClaw und Subscription-OAuth
 
-Für den ersten Alfred ist die direkte Responses API einfacher und kontrollierbarer als ein komplexes Agentensystem. Sie unterstützt Tool-Aufrufe und strukturierte Ausgaben. Structured Outputs erzwingt ein JSON-Schema, ersetzt aber keine fachliche Wahrheitsprüfung.
+Für den ersten Alfred ist OpenClaw die Laufzeit. Der OpenAI-Provider wird per Codex OAuth mit dem vorhandenen ChatGPT-Abo verbunden. Ein OpenAI-API-Key wird bewusst nicht konfiguriert. Dadurch fallen keine separaten tokenbasierten OpenAI-API-Kosten an; Alfred unterliegt aber den planabhängigen Codex-Nutzungsgrenzen.
 
-Alfred erhält ausschließlich lesende Funktionen wie:
+OpenClaw erhält ausschließlich lesende Alfred-Werkzeuge wie:
 
 - `get_household_snapshot`;
 - `compare_cashflow_periods`;
@@ -444,21 +467,21 @@ Alfred erhält ausschließlich lesende Funktionen wie:
 
 Kein Werkzeug führt Orders, Überweisungen oder Vertragsänderungen aus.
 
-### 11.2 Eigene Zustandsverwaltung
+### 11.2 Privater Workspace und eigener Finanzzustand
 
-Die OpenAI Conversations API kann Gespräche dauerhaft speichern. Für Alfred ist anfangs dennoch eine eigene Zustandsverwaltung empfehlenswert:
+OpenClaw verwaltet Gesprächssitzungen und dateibasiertes Memory. Der fachliche Finanzzustand bleibt dennoch unter eigener Kontrolle:
 
 - maximale Kontrolle über hochsensible Daten;
 - gezieltes Löschen und Korrigieren;
 - klare Trennung zwischen Chat und bestätigtem Langzeitwissen;
 - providerunabhängige Architektur;
-- `store: false` für normale Modellaufrufe möglich.
+- belastbare strukturierte Daten statt freier Chat-Erinnerung.
 
-Die Anwendung speichert Gespräch und Zusammenfassung lokal und stellt pro Turn einen minimierten Kontext zusammen.
+`MEMORY.md` enthält nur kuratierte Fakten, Prinzipien und Entscheidungen. Buchungen, Bestände, Marktwerte und Zeitreihen liegen in einem separaten strukturierten Speicher. Für semantische Suche wird zunächst Keyword-Suche oder ein lokaler Embedding-Anbieter verwendet, damit kein unbemerkter API-Verbrauch entsteht.
 
-### 11.3 Agents SDK erst bei echtem Bedarf
+### 11.3 Spezialisten erst bei echtem Bedarf
 
-Das Agents SDK wird sinnvoll, wenn Alfred mehrere spezialisierte Agenten, Handoffs, Guardrails, Tracing oder komplexe Tool-Orchestrierung benötigt. Für den Start reicht ein einzelner Alfred mit deterministischen Tools und einem optionalen zweiten Kritiker-Aufruf.
+Für den Start reicht ein einzelner Alfred mit deterministischen Tools und einem optionalen Kritiker-Durchlauf. Mehrere Agenten erhöhen Kontextverbrauch, Fehlerfläche und Abo-Nutzung und werden erst nach messbarem Bedarf ergänzt.
 
 Mögliche spätere Spezialisten:
 
@@ -472,29 +495,32 @@ Die endgültige Antwort gehört immer Alfred. Spezialisten liefern nur Teilanaly
 
 ### 11.4 Modellwahl
 
-Die Modell-ID bleibt konfigurierbar und wird mit repräsentativen Alfred-Fragen evaluiert. Ein aktuelles Modell der leistungsfähigen oder ausgewogenen Modellfamilie ist ein sinnvoller Startpunkt; die teuerste Variante ist nicht automatisch für jeden Wochenrückblick erforderlich.
+Die Modell-ID bleibt konfigurierbar und wird mit repräsentativen Alfred-Fragen evaluiert. Verwendet werden nur Modelle, die der konkrete ChatGPT-/Codex-Tarif über OAuth freigibt. Ein starkes Modell ist wegen Finanzkontext, Browserinhalten und möglicher Prompt Injection wichtiger als maximale Turn-Frequenz.
 
 Getrennte Profile sind sinnvoll:
 
-- günstigeres Modell für Datenklassifikation und einfache Rückblicke;
-- stärkeres Reasoning-Modell für größere Entscheidungen;
+- ausgewogenes, im Abo verfügbares Modell für einfache Rückblicke;
+- stärkeres, im Abo verfügbares Reasoning-Modell für größere Entscheidungen;
 - gleicher Faktenvalidator unabhängig vom Modell.
 
 ## 12. Datenschutz und Sicherheit
 
 - Alfred ist standardmäßig rein lesend.
 - Die Finanzdatenbank wird verschlüsselt und separat gesichert.
-- API-Schlüssel und Datenzugänge liegen nur serverseitig.
+- OAuth-Tokens, Telegram-Bot-Token und Datenzugänge liegen nur im geschützten Serverzustand.
 - Externe Datenadapter erhalten minimale, möglichst read-only Berechtigungen.
 - Brokerzugänge, Depotnummern, IBANs und exakte Lagerorte gehen nicht an das Sprachmodell.
 - Pro Frage werden nur erforderliche Daten übertragen.
-- Die UI zeigt, welche Daten und Quellen eine Antwort verwendet.
+- Alfred nennt im Telegram-Gespräch Datenstand und verwendete Quellen.
 - Informationen über die Ehefrau haben eigene Sichtbarkeits-, Zweck- und Löschregeln.
 - Prompts, Tools und importierte Texte können keine Zugriffsrechte erweitern.
 - Alfred darf persönliche Finanzdaten nicht ungefragt in externe Rechercheanfragen aufnehmen.
 - Jede spätere schreibende Aktion benötigt eine separate, sichtbare Bestätigung und sollte nicht Teil der ersten Produktversion sein.
+- Telegram-Bot-Chats sind Cloud-Chats und keine Ende-zu-Ende-verschlüsselten Secret Chats. Passwörter, TANs, vollständige IBANs und andere Zugangsdaten werden dort niemals ausgetauscht.
+- Browserseiten und importierte Dokumente gelten als potenziell feindliche Inhalte. Anweisungen daraus werden ignoriert; Tool-Allowlist, Sandbox, feste Domains und read-only Dateirechte bilden die eigentliche Schutzgrenze.
+- OpenClaw läuft unter einem eigenen Betriebssystembenutzer mit separatem Workspace, Browserprofil und State-Verzeichnis. Der Gateway ist nicht öffentlich erreichbar.
 
-OpenAI beschreibt, dass API-Daten standardmäßig nicht zum Training verwendet werden. Normale Responses können jedoch standardmäßig gespeichert werden, sofern `store: false` nicht gesetzt ist; Conversations bleiben bis zur Löschung bestehen. Die tatsächliche Organisations- und Projektkonfiguration muss deshalb vor der Nutzung mit echten Finanzdaten geprüft werden.
+Die Nutzung per ChatGPT-/Codex-OAuth und Telegram bringt andere Datenschutzbedingungen mit als eine eigene OpenAI-API-Anwendung. Vor echten Finanzdaten werden die Datenschutz- und Datenkontroll-Einstellungen des konkret verwendeten Kontos geprüft. Das Prinzip bleibt Datenminimierung: Telegram erhält verdichtete Antworten, das Modell nur den für die aktuelle Frage erforderlichen Kontext.
 
 ## 13. Evals und Qualitätskontrolle
 
@@ -519,33 +545,48 @@ Für größere Entscheidungen werden synthetische und anonymisierte Golden Cases
 
 ### Phase 0 – Alfreds Mandat
 
-- Personality, Coaching Charter und Antwortvertrag finalisieren.
+- `SOUL.md`, Financial Charter und Antwortvertrag finalisieren.
 - ausführliches Onboarding für Haushalt, Ziele und Finanzphilosophie entwerfen.
 - Regeln für gemeinschaftliche und individuelle Informationen festlegen.
 - 20 repräsentative Fragen und Entscheidungen als Eval-Set definieren.
 
 ### Phase 1 – Eigenständiger Alfred-Prototyp
 
-- eigenes Repository und eigene Anwendung anlegen;
-- geschützte Profil-, Ziel- und Entscheidungsdatenbank bauen;
-- `PERSONALITY.md` und Richtlinien versionieren;
-- manuell eingegebenen Finanzsnapshot unterstützen;
-- Frag-Alfred-Flow mit Responses API und `store: false` umsetzen;
-- rein lesende Tools und Faktenvalidator ergänzen.
+- isolierte OpenClaw-Instanz und privaten Workspace anlegen;
+- privaten Telegram-Bot mit fester User-Allowlist verbinden;
+- OpenAI-/Codex-Subscription per OAuth anmelden, ohne API-Key-Fallback;
+- `SOUL.md`, `AGENTS.md`, `USER.md` und Richtlinien versionieren;
+- zunächst einen anonymisierten Test-Finanzsnapshot unterstützen;
+- Frag-Alfred-Flow über Telegram umsetzen;
+- rein lesende Tools und Faktenvalidator ergänzen;
+- Sandbox, Domain-Allowlist und `openclaw security audit --deep` prüfen;
+- Heartbeats zunächst deaktivieren oder sehr sparsam konfigurieren.
 
-### Phase 2 – Budget-Buddy-Datenadapter
+### Phase 2 – Budget-Buddy-Datenadapter (technisch umgesetzt am 15. Juli 2026)
 
-- stabilen Export oder read-only Adapter definieren;
+- festen SQLite-Reader mit `READONLY`, `query_only` und versionierten Abfragen definieren;
+- JSON-Coach-Snapshots automatisch und ohne Modellturn erzeugen;
 - Cashflow-Daten in Alfreds neutrales Finanzmodell übernehmen;
 - Herkunft, Aktualität und Importstatus sichtbar machen;
-- keine Laufzeitabhängigkeit oder gemeinsame Datenbank erzeugen.
+- Alfred weder SQL-Parameter noch Schreibrechte geben.
 
-### Phase 3 – Vermögen und Investments
+Der produktive Stand, die Sicherheitsabnahme und die verbleibenden Grenzen
+stehen in `docs/alfred-stufe-2-budgetbuddy-plan.md`.
+
+### Phase 3 – Vermögen und Investments (Getquin-Teil technisch umgesetzt am 19. Juli 2026)
 
 - Konten, Depots, Instrumente, Edelmetalle und Schulden erfassen;
 - Brokerdateien importieren;
+- den vorhandenen öffentlichen Getquin-Freigabelink als Server-Secret einbinden;
+- einen loginfreien, auf diese Seite begrenzten Headless-Collector verwenden;
+- sichtbare Getquin-Werte von selbst berechneter Rendite klar unterscheiden;
 - datierte Marktpreise und Wechselkurse anbinden;
 - Nettovermögen, Allokation, Rendite und Konzentrationen berechnen.
+
+Der produktive Getquin-Stand, die Sicherheitsabnahme und die bewusste
+Renditegrenze stehen in `docs/alfred-stufe-3-getquin-plan.md`. Manuelle
+Vermoegenswerte, Edelmetalle, Schulden und eine cashflowbereinigte
+Renditeberechnung bleiben Folgeschritte.
 
 ### Phase 4 – Ehrliche zweite Meinung
 
@@ -564,7 +605,7 @@ Für größere Entscheidungen werden synthetische und anonymisierte Golden Cases
 ### Phase 6 – Erweiterte Research- und Agentenstruktur
 
 - aktuelle externe Quellen mit Zitaten anbinden;
-- bei nachgewiesenem Bedarf Agents SDK und Spezialisten einführen;
+- bei nachgewiesenem Bedarf spezialisierte read-only Analysten einführen;
 - Tracing und erweiterte Evals ergänzen;
 - weiterhin keine autonome Finanztransaktion erlauben.
 
@@ -572,17 +613,17 @@ Für größere Entscheidungen werden synthetische und anonymisierte Golden Cases
 
 Der erste echte Alfred sollte bewusst noch keine vollständige Vermögensplattform sein:
 
-1. eigenständige Anwendung;
-2. ausführliches persönliches und finanzielles Onboarding;
-3. manuell gepflegter Finanzsnapshot;
-4. Ziele, Prinzipien und Zukunftspläne;
-5. Fragen an Alfred;
-6. klare Meinung mit Gegenargument und Unsicherheit;
-7. bestätigbare Erinnerungen;
-8. Entscheidungsjournal;
-9. optionaler Budget-Buddy-Export als erster Datenadapter.
+1. isolierte OpenClaw-Instanz ohne eigene fachliche Finanzoberfläche, aber mit privater Control UI für Betrieb und Tests;
+2. privater Telegram-Chat mit User-Allowlist;
+3. ChatGPT-/Codex-OAuth ohne API-Key;
+4. Alfreds Persönlichkeit und Sicherheitsregeln im privaten Workspace;
+5. ausführliches persönliches und finanzielles Onboarding;
+6. automatisch erzeugter Test- beziehungsweise später Live-Finanzsnapshot;
+7. klare Meinung mit Gegenargument und Unsicherheit;
+8. bestätigbare Erinnerungen und Entscheidungsjournal;
+9. optionaler Budget-Buddy-Export als erster read-only Datenadapter.
 
-Dieser Schnitt prüft zuerst die wichtigste Hypothese: Liefert Alfred tatsächlich eine bessere, persönlich relevante zweite Meinung? Automatische Depot- und Marktdaten folgen, sobald Charakter, Kontextverständnis und Antwortqualität überzeugen.
+Dieser Schnitt prüft zuerst die wichtigste Hypothese: Liefert Alfred im natürlichen Telegram-Gespräch tatsächlich eine bessere, persönlich relevante zweite Meinung? Automatische Budget-, Depot- und Marktdaten folgen, sobald Charakter, Kontextverständnis, Sicherheit und Antwortqualität überzeugen.
 
 ## 16. Noch zu bestätigende Entscheidungen
 
@@ -592,14 +633,19 @@ Dieser Schnitt prüft zuerst die wichtigste Hypothese: Liefert Alfred tatsächli
 4. Welche drei langfristigen Ziele haben höchste Priorität?
 5. Soll Alfred konkrete Handlungspräferenzen aussprechen oder bei Investments zunächst nur kritisch beraten?
 6. Welche Entscheidungen sollen automatisch einen Kritiker-Durchlauf erhalten?
-7. Wo soll Alfred betrieben werden: lokal, auf einem privaten VPS oder in einer anderen geschützten Umgebung?
-8. Ist die minimierte Verarbeitung ausgewählter Finanzdaten über die OpenAI API akzeptabel?
-9. Soll zuerst ein neuer Alfred-Prototyp entstehen oder zunächst nur Personality, Onboarding und Eval-Fälle?
+7. Welche zusätzliche systemd-/Container-Härtung soll neben Unix-Rechten und OpenClaw-Sandbox eingesetzt werden?
+8. Ist das Datenschutzrisiko eines Telegram-Bot-Chats für verdichtete Finanzgespräche akzeptabel?
+9. Ist die öffentliche Sichtbarkeit der per Getquin-Freigabelink veröffentlichten Depotdaten dauerhaft akzeptabel?
 
-## Quellen zur OpenAI-Architektur
+## Quellen zur Startarchitektur
 
-- [OpenAI: Conversation state](https://developers.openai.com/api/docs/guides/conversation-state)
-- [OpenAI: Responses API](https://developers.openai.com/api/docs/guides/migrate-to-responses)
-- [OpenAI: Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs)
-- [OpenAI: Agents SDK – Startpunkt wählen](https://developers.openai.com/api/docs/guides/agents#choose-your-starting-point)
-- [OpenAI: Data controls](https://developers.openai.com/api/docs/guides/your-data)
+- [OpenClaw: OpenAI provider und Subscription-OAuth](https://docs.openclaw.ai/providers/openai)
+- [OpenClaw: Telegram](https://docs.openclaw.ai/channels/telegram)
+- [OpenClaw: Agent Workspace](https://docs.openclaw.ai/concepts/agent-workspace)
+- [OpenClaw: Memory](https://docs.openclaw.ai/concepts/memory)
+- [OpenClaw: Heartbeats](https://docs.openclaw.ai/gateway/heartbeat)
+- [OpenClaw: Security](https://docs.openclaw.ai/gateway/security)
+- [OpenAI: Codex authentication](https://learn.chatgpt.com/docs/auth)
+- [OpenAI: Codex pricing and plan limits](https://learn.chatgpt.com/docs/pricing)
+- [Telegram FAQ: Cloud Chats und Secret Chats](https://telegram.org/faq)
+- [Getquin: Security und read-only Verbindungen](https://www.getquin.com/security/)

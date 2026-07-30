@@ -1,0 +1,10 @@
+{
+  "name": "@alfred/getquin-portfolio-collector",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic read-only collector for a Getquin public portfolio share",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  }
+}

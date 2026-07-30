@@ -1,0 +1,12 @@
+{
+  "name": "@alfred/personal-context-memory-tool",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Controlled, versioned personal context memory for Alfred",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

@@ -1,0 +1,37 @@
+[Unit]
+Description=Alfred read-only BudgetBuddy snapshot collector
+Documentation=file:/opt/alfred-budgetbuddy-reader/README.md
+After=budgetbuddy.service
+Wants=budgetbuddy.service
+
+[Service]
+Type=oneshot
+User=alfred-collector
+Group=alfred-collector
+SupplementaryGroups=budgetbuddy-readers alfred-snapshots
+WorkingDirectory=/opt/alfred-budgetbuddy-reader
+ExecStart=/usr/bin/node /opt/alfred-budgetbuddy-reader/collector.mjs --db /var/lib/budgetbuddy/budgetbuddy.db --output /var/lib/alfred-snapshots/budgetbuddy --months 13 --weeks 12
+UMask=0027
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadOnlyPaths=/var/lib/budgetbuddy
+ReadWritePaths=/var/lib/alfred-snapshots
+TasksMax=64
+MemoryMax=256M

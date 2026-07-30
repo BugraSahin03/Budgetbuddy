@@ -55,6 +55,146 @@ Folgeaktion:
 - ...
 ```
 
+## 2026-07-19 - Alfreds Stufe 3 liest validierte Getquin-Public-Share-Snapshots
+
+Quelle/Ticket: `Alfred-Stufe-3-Getquin`
+
+Erkenntnis/Entscheidung:
+
+- Die aktuelle Getquin-Freigabeseite liefert ihren Portfoliozustand bereits
+  serverseitig als strukturiertes Next.js-JSON. Der Collector benoetigt deshalb
+  keinen Headless-Browser und fuehrt kein fremdes JavaScript aus.
+- Der Share-Link liegt nur als root-eigenes Server-Secret vor. Snapshot,
+  Repository, Workspace und Logs enthalten weder Link noch Share- oder
+  Profildaten.
+- Ein separater `alfred-portfolio-collector` akzeptiert nur den definierten
+  Redirect von `getqu.in` auf die Portfolioseite unter `app.getquin.com` und
+  bricht bei unbekannten Hosts, Pfaden, Queryfeldern oder Datenstrukturen ab.
+- Der taegliche Snapshot enthaelt Positionen, sichtbare Kostenbasis, nicht
+  realisiertes Ergebnis, Dividenden, Assetklassen, Konzentration,
+  Kurszeitpunkte und Datenqualitaet.
+- Ohne Transaktions-Cashflows bezeichnet Alfred Bestands- oder Wertveraenderung
+  nicht als zeit- oder geldgewichtete Rendite.
+- `getquin_snapshot` wird additiv im minimalen Toolprofil freigeschaltet.
+  BudgetBuddy und die zwischenzeitlich installierte Server-Audit-Erweiterung
+  bleiben unveraendert erhalten.
+
+Auswirkung:
+
+- Alfred kann Portfolio-, Allokations- und Konzentrationsfragen beantworten,
+  ohne Login-, Browser-, Shell- oder Schreibzugriff zu erhalten.
+- Der kombinierte E2E-Test hat BudgetBuddy und Portfolio getrennt geladen und
+  korrekt festgestellt, dass damit noch kein vollstaendiges Finanzbild
+  vorliegt.
+- Ziele, Risikotragfaehigkeit, Verbindlichkeiten, Edelmetalle und die
+  Perspektive der Ehefrau folgen im persoenlichen Onboarding und weiteren
+  Datenquellen.
+
+Folgeaktion:
+
+- Betrieb und Abnahme stehen in `docs/alfred-stufe-3-getquin-plan.md`.
+- Die Architekturentscheidung steht in
+  `docs/adr/0013-alfred-getquin-public-share-snapshots.md`.
+- Das naechste persoenliche Kontextgespraech folgt
+  `docs/alfred-onboarding-kontext-plan.md`.
+
+## 2026-07-15 - Alfreds Stufe 2 liest minimierte BudgetBuddy-Snapshots
+
+Quelle/Ticket: `Alfred-Stufe-2-BudgetBuddy`
+
+Erkenntnis/Entscheidung:
+
+- Der OpenClaw-Benutzer `alfred` erhaelt keinen direkten Datenbankzugriff.
+- Ein separater Benutzer `alfred-collector` liest BudgetBuddy mit SQLite
+  `readonly`, `fileMustExist`, `query_only` und einem festen versionierten
+  Query-Katalog.
+- Der automatisch erzeugte Snapshot enthaelt nur Coaching-Aggregate; IDs,
+  Buchungstexte, Gegenparteien, IBANs, Import-Rohfelder und Notizen bleiben in
+  BudgetBuddy.
+- Unix-Gruppen, systemd-Pfade und ein eigenes OpenClaw-Tool trennen
+  Datenbanklesen, Snapshot-Schreiben und Snapshot-Lesen.
+- Alfred behaelt das minimale Toolprofil. Nur `budgetbuddy_snapshot` wird
+  additiv freigeschaltet; das Tool akzeptiert weder SQL noch Dateipfade und
+  prueft Hash sowie Datenfrische.
+- Der Collector laeuft alle 15 Minuten ohne Modellturn. Nach 45 Minuten wird
+  ein Snapshot als veraltet abgelehnt.
+
+Auswirkung:
+
+- Alfred kann Einnahmen, Ausgaben, Budgets, Kontostaende und Trends aus
+  BudgetBuddy analysieren, BudgetBuddy aber weder veraendern noch frei
+  durchsuchen.
+- Ein echter Agent-Test hat den Toolaufruf, Datenstand,
+  `UNASSIGNED_EXPENSES` und fehlenden direkten Datenbankzugriff bestaetigt.
+- Getquin, Portfolio, Marktpreise, Ziele und automatische Berichte bleiben
+  eigene Folgestufen.
+
+Folgeaktion:
+
+- Betrieb und Abnahme stehen in `docs/alfred-stufe-2-budgetbuddy-plan.md`.
+- Die verbindliche Architekturentscheidung steht in
+  `docs/adr/0012-alfred-budgetbuddy-readonly-snapshots.md`.
+
+## 2026-07-14 - Alfreds Stufe 1 nutzt Hetzner und die Tailscale-geschützte Control UI
+
+Quelle/Ticket: `Alfred-Stufe-1-Plan`
+
+Erkenntnis/Entscheidung:
+
+- OpenClaw läuft auf dem bestehenden Hetzner-Server `apps-prod-01`, nicht auf einem separaten Host.
+- Die OpenClaw Control UI wird zusätzlich zu Telegram als private Werkstatt und Betriebsoberfläche eingesetzt.
+- Der Gateway bindet auf `127.0.0.1:18789`; Tailscale Serve veröffentlicht ihn als eigenen privaten Service `svc:alfred`, während `svc:budgetbuddy` unverändert bleibt.
+- Die Control UI bleibt eine Adminoberfläche und benötigt neben Tailnet-Zugriff eine Gateway-Authentifizierung. Funnel und öffentliche Ports bleiben ausgeschlossen.
+- Ein vollständig gestoppter Gateway kann sich nicht aus seiner eigenen UI starten. Kaltstart und Notfallbetrieb erfolgen über `systemd`, SSH/Tailscale und einen begrenzten `alfredctl`-Helfer.
+- Stufe 1 verwendet ein minimales Toolprofil ohne Shell, Browser, Dateiänderungen, Cron oder Finanzdatenzugriff.
+- Der native Codex-Harness wird zusätzlich auf `read-only` ohne Genehmigungseskalation begrenzt; OpenClaw und Codex-Plugin sind exakt auf `2026.7.1` gepinnt.
+- `svc:alfred` ist im Tailnet genehmigt und durch eine eigene Grant-Regel auf den persönlichen Tailnet-Nutzer begrenzt. Der Gateway verlangt zusätzlich seinen eigenen Token.
+- Die OpenAI-Anmeldung wurde per Device-Code als OAuth-Profil abgeschlossen. Es ist weder im Dienst noch in Alfreds Secrets ein `OPENAI_API_KEY` hinterlegt; `openai/gpt-5.6-sol` wurde mit einer echten Alfred-Antwort erfolgreich geprüft.
+- Die Control UI ist mit dem persönlichen Mac als Operator-Gerät gekoppelt. Ein vorsorglich als offengelegt behandelter Gateway-Token wurde sofort rotiert; der alte Wert ist ungültig.
+- Die UI-Vorabtests „keine Daten erfinden“ und „riskante 60-%-Einzelaktienposition nicht schönreden“ sind bestanden. Die vollständige Zehn-Fälle-Abnahme folgt nach Telegram in beiden Kanälen.
+- Telegram ist mit einem serverseitigen Umgebungs-Secret verbunden. Nach der einmaligen Kopplung wurde die DM-Policy auf eine explizite Ein-Personen-Allowlist umgestellt, die Besitzer-ID auch für Owner-Kommandos gesetzt und der Gruppenbetrieb vollständig deaktiviert.
+- Der Telegram-Ende-zu-Ende-Test ist bestanden: erlaubte Direktnachricht, Codex-Modellturn mit minimalem Toolprofil und erfolgreiche Antwortzustellung. Damit ist Stufe 1 technisch abgeschlossen; Persönlichkeit bleibt bewusst ein iterativer Nutzer-Abnahmepunkt.
+
+Auswirkung:
+
+- Der Nutzer kann Alfreds Webchat, Telegram-Session, Tool-Aktivität, Logs, Modell und Kontextverbrauch in der Control UI beobachten.
+- Persönlichkeit und Antwortverhalten werden zuerst mit festen Fällen in einer UI-Werkstattsession versioniert und abgenommen.
+- Budget-Buddy- und Getquin-Zugriffe werden erst nach dieser Abnahme in Stufe 2 und 3 freigeschaltet.
+- Die OpenClaw-Version wird gepinnt und nur nach bewusstem Review aktualisiert.
+
+Folgeaktion:
+
+- Das ausführbare Runbook und die Abnahmekriterien stehen in `docs/alfred-stufe-1-hetzner-plan.md`.
+- Vor der Installation werden Hetzner-Ressourcen, Budget-Buddy-Health/Backup und die bestehende Tailscale-Serve-Konfiguration geprüft.
+
+## 2026-07-13 - Alfred startet als privater Telegram-Coach auf OpenClaw
+
+Quelle/Ticket: `Alfred-OpenClaw-Telegram-Konzept`
+
+Erkenntnis/Entscheidung:
+
+- Alfred erhält für die erste Version keine eigene fachliche Finanzoberfläche. Der primäre Zugang ist ein privater Telegram-Chat; OpenClaws eingebaute Control UI dient nur als Werkstatt und Betriebsoberfläche.
+- Eine dedizierte, selbst gehostete OpenClaw-Instanz übernimmt Telegram, Persönlichkeit, Memory, Werkzeuge und geplante Prüfungen.
+- Die Modellnutzung erfolgt zunächst über OpenAI-/Codex-OAuth mit dem vorhandenen ChatGPT-Abo. Es wird kein OpenAI-API-Key und kein automatischer API-Key-Fallback konfiguriert.
+- Budget Buddy und Getquin sind ausschließlich lesende Datenquellen. Alfred darf keine Buchung, Kategorie, Order, Überweisung oder Vertragsänderung ausführen.
+- Alfred läuft unter einem eigenen Dienstnutzer auf demselben Headless-Server wie Budget Buddy.
+- Budget-Buddy-Daten werden über einen festen SQLite-Reader mit `READONLY`, `query_only` und versionierten Abfragen automatisch in JSON-Coach-Snapshots überführt.
+- Getquin wird über den vorhandenen öffentlichen read-only Freigabelink ohne Login gelesen. Der konkrete Link bleibt ein serverseitiges Secret und wird nicht im Repository dokumentiert.
+
+Auswirkung:
+
+- Abo-Nutzung ersetzt keine unbegrenzte Ausführung: Heartbeats und geplante Analysen müssen sparsam mit dem Codex-Kontingent umgehen.
+- Telegram-Bot-Chats sind keine Ende-zu-Ende-verschlüsselten Secret Chats. Zugangsdaten, TANs, vollständige IBANs und unnötige Rohdaten werden dort nicht verarbeitet.
+- OpenClaw läuft isoliert unter einem eigenen Benutzer, mit privatem Workspace, eigenem Browserprofil, Allowlist, Sandbox und read-only Werkzeugen.
+- Alfreds Persönlichkeit liegt in `SOUL.md`; Arbeits- und Sicherheitsregeln liegen in `AGENTS.md`. Strukturierte Finanzbestände bleiben außerhalb des freien Chat-Memorys.
+- Deterministische Budget-Buddy- und Getquin-Collector laufen ohne Modellturn. Nur die anschließende Beratung und Berichtserstellung verbraucht Abo-Kontingent.
+- Der Getquin-Link schützt vor Änderungen, aber nicht vor Einsicht durch Personen, die den Link kennen. Aktuelle Werte und Allokationen sind auswertbar; reine Wertänderungen zwischen Snapshots gelten nicht automatisch als Rendite.
+
+Folgeaktion:
+
+- Der konkrete Start- und Sicherheitsplan steht in `docs/alfred-openclaw-telegram-plan.md`.
+- Vor echten Daten wird zunächst der reine Telegram-/Persönlichkeits-Prototyp aufgebaut und mit anonymisierten Finanzsnapshots evaluiert. Danach folgen der Budget-Buddy- und der Getquin-Collector.
+
 ## 2026-07-12 - Alfred wird zum übergreifenden Private-Finance-Office
 
 Quelle/Ticket: `Alfred-Produktkonzept`
@@ -70,7 +210,7 @@ Erkenntnis/Entscheidung:
 Auswirkung:
 
 - Es entsteht eine eigene Vermögens- und Investmentdomäne mit Beständen, Transaktionen, datierten Bewertungen, Wechselkursen und Verbindlichkeiten.
-- Die spätere Umsetzung soll in einem eigenen Repository beziehungsweise Dienst erfolgen; es entsteht keine direkte Laufzeit- oder Datenbankkopplung an Budget Buddy.
+- Die spätere Umsetzung bleibt ein eigener Dienst. Ein fester direkter Lesezugriff auf die Budget-Buddy-SQLite-Datei ist zulässig; gemeinsame Schreiblogik, Migrationen und Schreibzugriffe bleiben ausgeschlossen.
 - Künftige Analysen können Cashflow, Liquidität, Nettovermögen, Portfolio, Schulden und Ziele gemeinsam bewerten.
 - Markt- und Produktaussagen benötigen aktuelle, sichtbare Quellen und dürfen nicht aus dem Modellgedächtnis stammen.
 
@@ -2063,3 +2203,103 @@ Auswirkung:
 - Es gibt keine rueckwirkende automatische Umklassifizierung.
 - Grundsatzentscheidung siehe
   `docs/adr/0011-income-deduction-transaction-type.md`.
+
+## 2026-07-22 - Alfreds persoenlicher Finanzrahmen bleibt bewusst veraenderbar
+
+Erkenntnis/Entscheidung:
+
+- Der gemeinsame Haushalt bestaetigt einen ersten Notgroschen von 7.000 EUR
+  als aktuelle Prioritaet.
+- Nach dessen Aufbau wird der verfuegbare Sparbetrag vorlaeufig mit 20 Prozent
+  Urlaub, 40 Prozent Eigenheim und 40 Prozent Depot verteilt.
+- Dividenden werden in der Aufbauphase grundsaetzlich reinvestiert; ein
+  angegriffener Notgroschen erhaelt bis 7.000 EUR erneut Sparprioritaet.
+- Zinsen und verzinste Produkte sind ausgeschlossen; Aktien werden mit Zoya
+  auf Islamkonformitaet geprueft und Zekat wird jaehrlich beruecksichtigt.
+- Die Regeln bilden den aktuellen Stand ab und duerfen nach gemeinsamer
+  Pruefung durch neue Lebenslagen oder bewusst geaenderte Ziele ersetzt werden.
+- Alfred soll neue Anschaffungen und Strategiewechsel im Dialog ausarbeiten.
+  Dauerhaft werden sie erst nach ausdruecklicher Bestaetigung.
+
+Auswirkung:
+
+- `USER.md` enthaelt den kompakten produktiven Grundkontext.
+- `MEMORY_POLICY.md` trennt Idee, Erinnerungsvorschlag und bestaetigte
+  Langzeiterinnerung.
+- Ein spaeteres Gedaechtniswerkzeug darf nur in einen festen Vorschlagseingang
+  schreiben und keine Persoenlichkeits-, Werkzeug- oder Sicherheitsdateien
+  veraendern.
+
+## 2026-07-22 - Alfred und Serverwart erhalten getrennte Werkzeugprofile
+
+Erkenntnis/Entscheidung:
+
+- Die inzwischen eingerichtete Agentenkonfiguration trennt den Finanzcoach
+  `main` vom Agenten `server-auditor`.
+- Alfred erhaelt nur `budgetbuddy_snapshot` und `getquin_snapshot`.
+- Server-Audit, Operationsplaene und deren gesicherte Freigabefunktion bleiben
+  fuer Alfred explizit gesperrt und liegen ausschliesslich beim Serverwart.
+- Beim Einrichten der agentenspezifischen Freigaben war Getquin aus Alfreds
+  `alsoAllow`-Liste gefallen. Die Freigabe wurde additiv wiederhergestellt.
+
+Auswirkung:
+
+- Ein echter Getquin-Werkzeugaufruf durch Alfred war anschliessend erfolgreich.
+- Die globale Werkzeugfreigabe bleibt leer; Berechtigungen werden pro Agent
+  vergeben.
+- Alfreds Workspace behauptet keinen Zugriff mehr auf Server-Audit-Daten.
+
+## 2026-07-22 - Alfred erhaelt ein bestaetigungspflichtiges Langzeitgedaechtnis
+
+Erkenntnis/Entscheidung:
+
+- Alfred darf langfristig relevante Ziele, Anschaffungen, Workflows,
+  Strategien, Haushaltsangaben, Praeferenzen und Entscheidungen strukturiert
+  vorschlagen.
+- Ein Vorschlag wird erst nach einer neuen ausdruecklichen Bestaetigung des
+  gekoppelten Eigentuemers in derselben Unterhaltung dauerhaft uebernommen.
+- Ersetzen, Archivieren und dauerhaftes Vergessen verwenden denselben
+  Vorschlags- und Bestaetigungsprozess.
+- Der kanonische Store ist versioniertes JSON; Markdown wird nur
+  deterministisch daraus generiert. Alfred erhaelt keinen allgemeinen Datei-
+  oder Shellzugriff.
+- Dynamische Finanzwerte, Einzelbuchungen, Zugangsdaten und eigene
+  Persoenlichkeits- oder Sicherheitsregeln sind als Erinnerungsinhalt
+  ausgeschlossen.
+
+Auswirkung:
+
+- Die vier Werkzeuge `personal_context_snapshot`, `memory_propose`,
+  `memory_confirm` und `memory_cancel` sind produktiv ausschliesslich fuer den
+  Finanzcoach `main` freigeschaltet.
+- Serverwart kann den persoenlichen Kontext nicht lesen oder veraendern.
+- Produktiver Erstellen-/Vergessen-Test endete mit leerem Kontextbestand; der
+  Testtext blieb weder im Store noch in generiertem Markdown zurueck.
+- Architekturentscheidung siehe
+  `docs/adr/0014-alfred-controlled-personal-context-memory.md`.
+
+## 2026-07-22 - Alfreds BudgetBuddy-Snapshot trennt Fixkosten fachlich
+
+Erkenntnis/Entscheidung:
+
+- Der Snapshotvertrag v2 trennt den geplanten Fixkostenblock, erkannte
+  gebuchte Fixkostenkontrollen, alle gebuchten Ausgaben und variable Ausgaben.
+- Aktive Fixkostenpositionen werden mit Name, Planbetrag und Abbuchungstag
+  bereitgestellt; Zahlungsnotizen, freie Notizen und Transaktionsrohdaten
+  verlassen BudgetBuddy nicht.
+- Manuelle Include-/Exclude-Korrekturen und automatische Kontrollmuster werden
+  wie in der BudgetBuddy-Monatsansicht ausgewertet.
+- Ein bewusst leerer Fixkosten-Snapshot eines abgeschlossenen Monats bleibt
+  historisch bei null.
+
+Auswirkung:
+
+- Alfred kann die grobe Aussage „rund 2.300 EUR Fixkosten“ aus den aktuellen
+  Planpositionen nachvollziehen und Plan gegen bisherigen Kontroll-Iststand
+  halten.
+- Bereits gebuchte Fixkosten werden nicht mehr mit dem ganzen Planblock
+  doppelt abgezogen.
+- Die Kontrollsicht bleibt eine Erkennung und keine Garantie fuer lueckenlose
+  Buchhaltung.
+- Architekturentscheidung siehe
+  `docs/adr/0015-alfred-fixed-cost-snapshot-semantics.md`.
