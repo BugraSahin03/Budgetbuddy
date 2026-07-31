@@ -195,7 +195,7 @@ export function MonthCategoryOverview({
                         <p
                           className="shrink-0 whitespace-nowrap text-xs font-extrabold text-[color:var(--month-ink)] sm:text-sm"
                           data-live-amount
-                          >
+                        >
                           {formatEuro(row.actualExpenseCents)}
                         </p>
                       </div>
