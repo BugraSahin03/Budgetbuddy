@@ -207,4 +207,48 @@ describe("monthly budget repository", () => {
     expect(freizeitRow?.defaultBudgetAmountCents).toBe(8000);
     expect(freizeitRow?.monthlyOverrideCount).toBe(1);
   });
+
+  it("keeps an inactive transaction-only category visible in its closed month", () => {
+    const parkhaus = db
+      .prepare("SELECT id FROM categories WHERE name = 'Parkhaus' LIMIT 1")
+      .get() as { id: number };
+    const account = db
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse' LIMIT 1")
+      .get() as { id: number };
+
+    db.prepare(
+      `
+        UPDATE categories
+        SET is_active = 0,
+            default_budget_amount_cents = NULL
+        WHERE id = ?
+      `,
+    ).run(parkhaus.id);
+    db.prepare("DELETE FROM monthly_category_budgets WHERE category_id = ?").run(parkhaus.id);
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, description, source_type, category_id
+        )
+        VALUES (?, 'expense', '2099-07-10', '2099-07', -1500,
+                'FIN-124 historisches Parken', 'manual', ?)
+      `,
+    ).run(account.id, parkhaus.id);
+    db.prepare(
+      `
+        INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+        VALUES ('2099-07', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `,
+    ).run();
+
+    expect(
+      listMonthlyBudgetCategories("2099-07").find(
+        (category) => category.categoryId === parkhaus.id,
+      ),
+    ).toMatchObject({
+      isCategoryActive: false,
+      spentAmountCents: 1500,
+    });
+  });
 });

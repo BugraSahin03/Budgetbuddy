@@ -93,16 +93,33 @@ export function BudgetCareEditor({
   specialBudgets,
 }: BudgetCareEditorProps) {
   const [isEditing, setIsEditing] = useState(initialIsEditing);
+  const [changedCategoryIds, setChangedCategoryIds] = useState<number[]>([]);
+  const [changedSpecialBudgetProjectIds, setChangedSpecialBudgetProjectIds] =
+    useState<number[]>([]);
+
+  function markCategoryChanged(categoryId: number): void {
+    setChangedCategoryIds((currentIds) =>
+      currentIds.includes(categoryId) ? currentIds : [...currentIds, categoryId],
+    );
+  }
+
+  function markSpecialBudgetProjectChanged(projectId: number): void {
+    setChangedSpecialBudgetProjectIds((currentIds) =>
+      currentIds.includes(projectId) ? currentIds : [...currentIds, projectId],
+    );
+  }
 
   if (isEditing) {
     return (
       <div className="budget-care-editor is-editing">
-        <form action={action} onSubmit={() => setIsEditing(false)}>
+        <form action={action}>
           <div className="budget-care-header">
             <h2>Kategorien</h2>
             <div className="budget-care-actions">
               <button
                 type="submit"
+                name="intent"
+                value="saveChanges"
                 className="budget-icon-action budget-icon-action-save"
                 aria-label="Änderungen speichern und Editiermodus beenden"
                 title="Speichern"
@@ -112,6 +129,23 @@ export function BudgetCareEditor({
             </div>
           </div>
 
+          {changedCategoryIds.map((categoryId) => (
+            <input
+              key={`changed-category-${categoryId}`}
+              type="hidden"
+              name="changedCategoryIds"
+              value={categoryId}
+            />
+          ))}
+          {changedSpecialBudgetProjectIds.map((projectId) => (
+            <input
+              key={`changed-project-${projectId}`}
+              type="hidden"
+              name="changedSpecialBudgetProjectIds"
+              value={projectId}
+            />
+          ))}
+
           <div className="budget-care-grid">
             <div
               key="budget-edit-list"
@@ -120,7 +154,6 @@ export function BudgetCareEditor({
           >
               {categories.map((category) => (
                 <article key={category.id} className="budget-pot-card">
-                  <input type="hidden" name="categoryIds" value={category.id} />
                   <input type="hidden" name={`colorHex-${category.id}`} value={category.colorHex ?? ""} />
                   {category.isSavings ? (
                     <>
@@ -131,10 +164,6 @@ export function BudgetCareEditor({
                   {category.isDefault || category.isSavings ? (
                     <input type="hidden" name={`isDefault-${category.id}`} value="on" />
                   ) : null}
-                  {category.isActive ? (
-                    <input type="hidden" name={`isActive-${category.id}`} value="on" />
-                  ) : null}
-
                   <div className="budget-pot-main">
                     <CategoryVisualMark
                       name={category.name}
@@ -161,8 +190,8 @@ export function BudgetCareEditor({
                   {!category.isProtected ? (
                     <button
                       type="submit"
-                      name="deactivateCategoryId"
-                      value={category.id}
+                      name="intent"
+                      value={`deactivateCategory:${category.id}`}
                       className="budget-secondary-action"
                     >
                       Deaktivieren
@@ -179,6 +208,7 @@ export function BudgetCareEditor({
                             maxLength={2}
                             defaultValue={category.iconName ?? ""}
                             placeholder="↟"
+                            onChange={() => markCategoryChanged(category.id)}
                           />
                         </label>
                         <div className="rounded-[1rem] border border-sky-100 bg-sky-50/70 px-4 py-3 text-sm font-semibold text-sky-950">
@@ -194,6 +224,7 @@ export function BudgetCareEditor({
                             inputMode="decimal"
                             defaultValue={toInputAmount(category.defaultBudgetAmountCents)}
                             placeholder="0.00"
+                            onChange={() => markCategoryChanged(category.id)}
                           />
                         </label>
                         <label>
@@ -203,6 +234,7 @@ export function BudgetCareEditor({
                             required
                             maxLength={60}
                             defaultValue={category.name}
+                            onChange={() => markCategoryChanged(category.id)}
                           />
                         </label>
                         <label>
@@ -212,6 +244,7 @@ export function BudgetCareEditor({
                             maxLength={2}
                             defaultValue={category.iconName ?? ""}
                             placeholder="EI"
+                            onChange={() => markCategoryChanged(category.id)}
                           />
                         </label>
                       </>
@@ -222,6 +255,7 @@ export function BudgetCareEditor({
             </div>
             <SpecialBudgetList
               isEditing={true}
+              onProjectChange={markSpecialBudgetProjectChanged}
               specialBudgets={specialBudgets}
             />
           </div>
@@ -287,9 +321,11 @@ export function BudgetCareEditor({
 
 function SpecialBudgetList({
   isEditing,
+  onProjectChange,
   specialBudgets,
 }: {
   isEditing: boolean;
+  onProjectChange?: (projectId: number) => void;
   specialBudgets: BudgetEditorSpecialBudget[];
 }) {
   return (
@@ -330,7 +366,6 @@ function SpecialBudgetList({
 
             {isEditing ? (
               <>
-                <input type="hidden" name="specialBudgetProjectIds" value={budget.projectId} />
                 {budget.monthShares.map((share) => (
                   <input
                     key={`share-${share.id}`}
@@ -347,6 +382,7 @@ function SpecialBudgetList({
                       maxLength={24}
                       defaultValue={budget.iconName ?? ""}
                       placeholder="Optional"
+                      onChange={() => onProjectChange?.(budget.projectId)}
                     />
                   </label>
                   {budget.monthShares.map((share) => (
@@ -358,14 +394,15 @@ function SpecialBudgetList({
                         required
                         defaultValue={toInputAmount(share.plannedAmountCents)}
                         placeholder="0.00"
+                        onChange={() => onProjectChange?.(budget.projectId)}
                       />
                     </label>
                   ))}
                 </div>
                 <button
                   type="submit"
-                  name="deactivateSpecialBudgetProjectId"
-                  value={budget.projectId}
+                  name="intent"
+                  value={`archiveSpecialBudgetProject:${budget.projectId}`}
                   className="budget-secondary-action budget-special-deactivate-action"
                 >
                   Archivieren

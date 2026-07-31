@@ -107,6 +107,21 @@ Seit FIN-072 gibt es zusaetzlich die geschuetzte Systemkategorie `Sparen`:
 - Der Ist-Wert von `Sparen` entsteht ausschliesslich aus echten Ausgaben, die dieser Kategorie zugeordnet sind.
 - Sparbuchungen bleiben budgetwirksame Ausgaben, koennen aber ueber den Systemschluessel `savings` separat von normalen Konsumausgaben erkannt werden.
 
+FIN-124 trennt die globale Kategoriepflege von monatsbezogenen Schreibpfaden:
+
+- Umbenennen, Iconpflege und Deaktivieren einer festen Kategorie schreiben nur
+  die bewusst geaenderten Kategorie-/Standardbudgetdaten. Sichtbare, aber
+  unveraenderte Sonderbudget-Monatsanteile werden nicht erneut gespeichert.
+- Deaktivieren setzt nur den globalen Aktivstatus der Kategorie und benoetigt
+  deshalb keine Oeffnung historischer Monate. Monatsbudgets und Transaktionen
+  werden weder veraendert noch geloescht.
+- Deaktivierte Kategorien verschwinden aus aktiver Pflege und neuen
+  Zuordnungen, bleiben im Kategoriearchiv reaktivierbar und in Monaten mit
+  eingefrorenem Planwert oder zugeordneten Buchungen sichtbar.
+- Historische Namen und Icons werden durch FIN-124 noch nicht eingefroren; die
+  vollstaendige Metadaten-Snapshot-Regel fuer abgeschlossene Monate bleibt
+  FIN-125 vorbehalten.
+
 ### Monatsbudget
 
 Ein Monatsbudget ist der Orientierungswert einer festen Kategorie fuer einen bestimmten Monat.

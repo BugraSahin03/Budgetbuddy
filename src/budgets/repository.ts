@@ -161,12 +161,20 @@ export function listMonthlyBudgetCategories(
         WHERE c.is_active = 1
            OR c.default_budget_amount_cents IS NOT NULL
            OR mb.id IS NOT NULL
+           OR EXISTS (
+             SELECT 1
+             FROM transactions historical_transaction
+             WHERE historical_transaction.category_id = c.id
+               AND historical_transaction.transaction_type = 'expense'
+               AND historical_transaction.effective_month_key = ?
+           )
         ORDER BY c.is_active DESC, c.name COLLATE NOCASE ASC
       `,
     )
     .all(
       normalizedMonthKey,
       ...excludedTransactionIds,
+      normalizedMonthKey,
       normalizedMonthKey,
     ) as Array<{
     categoryId: number;

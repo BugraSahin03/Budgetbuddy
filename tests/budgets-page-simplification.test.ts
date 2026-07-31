@@ -42,7 +42,9 @@ describe("budgets page simplification", () => {
     expect(editorSource).toContain('name={`iconName-${category.id}`}');
     expect(editorSource).toContain("maxLength={2}");
     expect(editorSource).toContain("initialIsEditing");
-    expect(editorSource).toContain("deactivateCategoryId");
+    expect(editorSource).toContain("changedCategoryIds");
+    expect(editorSource).toContain("markCategoryChanged");
+    expect(editorSource).toContain("deactivateCategory:");
     expect(editorSource).toContain("budget-secondary-action");
     expect(editorSource).not.toContain("form={formId}");
     expect(dialogSource).toContain("showModal()");
@@ -111,7 +113,9 @@ describe("budgets page simplification", () => {
     expect(cssSource).not.toContain(".budget-special-panel");
     expect(actionSource).toContain("updateBudgetSpecialBudgetStateAction");
     expect(actionSource).toContain("setSpecialBudgetProjectActive(specialBudgetProjectId, false)");
-    expect(editorSource).toContain("deactivateSpecialBudgetProjectId");
+    expect(editorSource).toContain("changedSpecialBudgetProjectIds");
+    expect(editorSource).toContain("markSpecialBudgetProjectChanged");
+    expect(editorSource).toContain("archiveSpecialBudgetProject:");
   });
 
   it("adds dedicated styling for the simplified surface", () => {

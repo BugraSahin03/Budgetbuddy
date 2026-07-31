@@ -97,9 +97,9 @@ function parseSpecialBudgetShareIds(formData: FormData): number[] {
     .filter((shareId) => Number.isInteger(shareId) && shareId > 0);
 }
 
-function parseSpecialBudgetProjectIds(formData: FormData): number[] {
+function parseChangedSpecialBudgetProjectIds(formData: FormData): number[] {
   return formData
-    .getAll("specialBudgetProjectIds")
+    .getAll("changedSpecialBudgetProjectIds")
     .map((value) => Number.parseInt(toSingleString(value), 10))
     .filter((projectId) => Number.isInteger(projectId) && projectId > 0);
 }
@@ -212,39 +212,59 @@ export async function createBudgetSpecialBudgetAction(formData: FormData): Promi
   redirect(redirectTarget);
 }
 
-function parseCategoryIds(formData: FormData): number[] {
+function parseChangedCategoryIds(formData: FormData): number[] {
   return formData
-    .getAll("categoryIds")
+    .getAll("changedCategoryIds")
     .map((value) => Number.parseInt(toSingleString(value), 10))
     .filter((categoryId) => Number.isInteger(categoryId) && categoryId > 0);
+}
+
+type BudgetCareIntent =
+  | { type: "save" }
+  | { categoryId: number; type: "deactivateCategory" }
+  | { projectId: number; type: "archiveSpecialBudgetProject" };
+
+function parseBudgetCareIntent(formData: FormData): BudgetCareIntent {
+  const intent = toSingleString(formData.get("intent")).trim();
+  const deactivateCategoryPrefix = "deactivateCategory:";
+  const archiveSpecialBudgetProjectPrefix = "archiveSpecialBudgetProject:";
+
+  if (intent === "saveChanges") {
+    return { type: "save" };
+  }
+
+  if (intent.startsWith(deactivateCategoryPrefix)) {
+    return {
+      categoryId: parseCategoryId(intent.slice(deactivateCategoryPrefix.length)),
+      type: "deactivateCategory",
+    };
+  }
+
+  if (intent.startsWith(archiveSpecialBudgetProjectPrefix)) {
+    return {
+      projectId: parseSpecialBudgetProjectId(
+        intent.slice(archiveSpecialBudgetProjectPrefix.length),
+      ),
+      type: "archiveSpecialBudgetProject",
+    };
+  }
+
+  throw new Error("Unbekannte Aktion.");
 }
 
 export async function updateBudgetCategoriesAction(formData: FormData): Promise<never> {
   let redirectTarget = "/budgets";
 
   try {
-    const deactivatedCategoryId = toSingleString(
-      formData.get("deactivateCategoryId"),
-    ).trim();
-    const deactivatedSpecialBudgetProjectId = toSingleString(
-      formData.get("deactivateSpecialBudgetProjectId"),
-    ).trim();
-    const hasImmediateDeactivation =
-      deactivatedCategoryId.length > 0 || deactivatedSpecialBudgetProjectId.length > 0;
+    const intent = parseBudgetCareIntent(formData);
     const categoryIdToDeactivate =
-      deactivatedCategoryId.length > 0 ? parseCategoryId(deactivatedCategoryId) : null;
+      intent.type === "deactivateCategory" ? intent.categoryId : null;
     const specialBudgetProjectIdToDeactivate =
-      deactivatedSpecialBudgetProjectId.length > 0
-        ? parseSpecialBudgetProjectId(deactivatedSpecialBudgetProjectId)
-        : null;
+      intent.type === "archiveSpecialBudgetProject" ? intent.projectId : null;
+    const changedCategoryIds = parseChangedCategoryIds(formData);
+    const changedSpecialBudgetProjectIds = parseChangedSpecialBudgetProjectIds(formData);
 
-    const categoryIds = parseCategoryIds(formData);
-
-    if (categoryIds.length === 0) {
-      throw new Error("Keine Kategorien zum Speichern gefunden.");
-    }
-
-    for (const categoryId of categoryIds) {
+    for (const categoryId of changedCategoryIds) {
       const budgetAmount = toSingleString(formData.get(`budgetAmount-${categoryId}`));
 
       validateOptionalBudgetAmount(budgetAmount);
@@ -254,15 +274,10 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
         iconName: toOptionalString(formData.get(`iconName-${categoryId}`)),
         isDefault: formData.get(`isDefault-${categoryId}`) === "on",
       });
-      setCategoryActive(
-        categoryId,
-        categoryId !== categoryIdToDeactivate &&
-          formData.get(`isActive-${categoryId}`) === "on",
-      );
       setCategoryDefaultBudget(categoryId, budgetAmount);
     }
 
-    for (const projectId of parseSpecialBudgetProjectIds(formData)) {
+    for (const projectId of changedSpecialBudgetProjectIds) {
       if (projectId === specialBudgetProjectIdToDeactivate) {
         continue;
       }
@@ -285,13 +300,17 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
       });
     }
 
+    if (categoryIdToDeactivate !== null) {
+      setCategoryActive(categoryIdToDeactivate, false);
+    }
+
     if (specialBudgetProjectIdToDeactivate !== null) {
       setSpecialBudgetProjectActive(specialBudgetProjectIdToDeactivate, false);
     }
 
     refreshBudgetPaths();
 
-    if (hasImmediateDeactivation) {
+    if (categoryIdToDeactivate !== null || specialBudgetProjectIdToDeactivate !== null) {
       redirectTarget = `/budgets?edit=1&notice=${encodeMessage(
         categoryIdToDeactivate !== null
           ? "Kategorie deaktiviert."
