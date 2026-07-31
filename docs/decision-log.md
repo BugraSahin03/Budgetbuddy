@@ -67,9 +67,14 @@ Erkenntnis/Entscheidung:
 - Die Füllung innerhalb dieser Breite und die bestehenden FIN-064-Farben
   zeigen weiterhin ausschließlich den relativen Verbrauch des jeweiligen
   Planwerts.
-- Kleine positive Planwerte erhalten eine ruhige Mindestbreite. Fehlende und
-  0-EUR-Planwerte werden weder als Skalierungsbasis verwendet noch mit einem
-  irreführenden Größenbalken dargestellt.
+- Kleine positive Planwerte bleiben bis auf einen rein visuellen Endmarker
+  proportional zur gemeinsamen Skala; eine künstliche Mindestbreite darf die
+  Größenverhältnisse nicht verfälschen. Fehlende und 0-EUR-Planwerte werden
+  weder als Skalierungsbasis verwendet noch mit einem irreführenden
+  Größenbalken dargestellt.
+- Der Ist-Betrag und der Planwert bleiben als getrennte Texte sichtbar. Der
+  Nutzungsgrad wird kompakt als Prozent-Badge hervorgehoben, statt den
+  Betragstext mit einer zusätzlichen `Ist von Plan`-Formulierung zu überladen.
 
 Auswirkung:
 
