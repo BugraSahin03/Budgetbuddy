@@ -650,6 +650,7 @@ function listSpecialBudgetRows(
           sb.month_key AS monthKey,
           sb.planned_amount_cents AS plannedAmountCents,
           CASE
+            WHEN COALESCE(ms.status, 'open') = 'closed' THEN sb.is_active
             WHEN sb.is_active = 1 AND COALESCE(sbp.status, 'active') = 'active' THEN 1
             ELSE 0
           END AS isActive,
@@ -665,6 +666,7 @@ function listSpecialBudgetRows(
           ) AS actualExpenseCents
         FROM special_budgets sb
         LEFT JOIN special_budget_projects sbp ON sbp.id = sb.project_id
+        LEFT JOIN monthly_statuses ms ON ms.month_key = sb.month_key
         WHERE sb.month_key = ?
         ORDER BY isActive DESC, sb.name COLLATE NOCASE ASC
       `,

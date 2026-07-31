@@ -262,23 +262,25 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
       setCategoryDefaultBudget(categoryId, budgetAmount);
     }
 
-    for (const projectId of parseSpecialBudgetProjectIds(formData)) {
-      const shareIds = parseProjectShareIds(formData, projectId);
+    if (specialBudgetProjectIdToDeactivate === null) {
+      for (const projectId of parseSpecialBudgetProjectIds(formData)) {
+        const shareIds = parseProjectShareIds(formData, projectId);
 
-      if (shareIds.length === 0) {
-        continue;
+        if (shareIds.length === 0) {
+          continue;
+        }
+
+        updateSpecialBudgetProject({
+          projectId,
+          iconName: toOptionalString(formData.get(`specialBudgetIconName-${projectId}`)),
+          shares: shareIds.map((shareId) => ({
+            id: shareId,
+            plannedAmountCents: parsePlannedAmountCents(
+              toSingleString(formData.get(`plannedAmount-${shareId}`)),
+            ),
+          })),
+        });
       }
-
-      updateSpecialBudgetProject({
-        projectId,
-        iconName: toOptionalString(formData.get(`specialBudgetIconName-${projectId}`)),
-        shares: shareIds.map((shareId) => ({
-          id: shareId,
-          plannedAmountCents: parsePlannedAmountCents(
-            toSingleString(formData.get(`plannedAmount-${shareId}`)),
-          ),
-        })),
-      });
     }
 
     if (specialBudgetProjectIdToDeactivate !== null) {
@@ -291,7 +293,7 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
       redirectTarget = `/budgets?edit=1&notice=${encodeMessage(
         categoryIdToDeactivate !== null
           ? "Kategorie deaktiviert."
-          : "Sonderkategorie deaktiviert.",
+          : "Sonderkategorie archiviert.",
       )}`;
     } else {
       redirectTarget = `/budgets?notice=${encodeMessage("Budgetpflege gespeichert.")}`;
@@ -336,7 +338,7 @@ export async function updateBudgetSpecialBudgetStateAction(formData: FormData): 
     } else if (intent.startsWith(deactivateProjectPrefix)) {
       setSpecialBudgetProjectActive(specialBudgetProjectId, false);
       refreshBudgetPaths();
-      redirectTarget = `/budgets?notice=${encodeMessage("Sonderkategorie deaktiviert.")}`;
+      redirectTarget = `/budgets?notice=${encodeMessage("Sonderkategorie archiviert.")}`;
     } else {
       throw new Error("Unbekannte Aktion.");
     }

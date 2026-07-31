@@ -2303,3 +2303,37 @@ Auswirkung:
   Buchhaltung.
 - Architekturentscheidung siehe
   `docs/adr/0015-alfred-fixed-cost-snapshot-semantics.md`.
+
+## 2026-07-31 - FIN-123 trennt Vorhabenarchiv und Sonderbudget-Monatsanteile
+
+Quelle/Ticket: `FIN-123`
+
+Erkenntnis/Entscheidung:
+
+- Der Status eines Sonderkategorie-Vorhabens ist ein expliziter
+  Lebenszyklusstatus und wird nicht mehr bei Listenaufrufen aus den
+  `is_active`-Werten seiner Monatsanteile neu abgeleitet.
+- Archivieren setzt nur `special_budget_projects.status = archived`.
+  Monatsanteile, Planwerte, Transaktionsreferenzen und historische Zeitstempel
+  werden nicht veraendert.
+- Aktive Anteile offener Monate blockieren das Archivieren mit einer
+  vollstaendigen Monatsliste. Aktive Anteile geschlossener Monate bleiben als
+  historische Daten erhalten und sind kein Blocker.
+- Geschlossene Monats-Readmodels werten den gespeicherten Anteilstatus
+  unabhaengig vom spaeteren Projektarchiv aus. Plan, Ist, Rest,
+  Transaktionszuordnung und Monats-KPIs bleiben dadurch stabil.
+- Reaktivieren setzt nur den Projektstatus auf `active`; es reaktiviert keinen
+  alten Monatsanteil. Ein neuer Anteil fuer einen offenen Monat bleibt eine
+  separate Pflegeaktion.
+
+Auswirkung:
+
+- Erledigte Vorhaben mit ausschliesslich historischen Anteilen lassen sich aus
+  der Budgetpflege archivieren, ohne die Monatsabschluss-Sperre zu umgehen
+  oder abgeschlossene Monatsdaten zu mutieren.
+- Archivierte Vorhaben bleiben aus neuer Buchungszuordnung und normaler
+  Budgetpflege ausgeblendet, sind aber im Kategoriearchiv und in
+  abgeschlossenen Monatsansichten nachvollziehbar.
+- Die fruehere FIN-065-Ableitung des Projektstatus aus Monatsanteilen gilt fuer
+  explizit archivierte Vorhaben nicht mehr; Legacy-Verknuepfung darf einen
+  vorhandenen Archivstatus nicht aufheben.

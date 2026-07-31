@@ -23,6 +23,9 @@ const {
   clearFixedCostControlOverrideForMonth,
   setFixedCostControlOverrideForMonth,
 } = await import("@/src/months/repository");
+const { setSpecialBudgetProjectActive } = await import(
+  "@/src/special-budgets/repository"
+);
 
 describe("months repository", () => {
   beforeEach(() => {
@@ -818,6 +821,106 @@ describe("months repository", () => {
     expect(specialBudget?.remainingAmountCents).toBe(18500);
     expect(specialBudget?.isActive).toBe(false);
     expect(snapshot.planSummary.plannedSpecialBudgetCents).toBe(0);
+  });
+
+  it("keeps a closed month's special budget history stable when its project is archived", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const projectId = Number(
+      db
+        .prepare(
+          `
+            INSERT INTO special_budget_projects (name, status, icon_name)
+            VALUES ('TEST-FIN-123 Sommerreise', 'active', 'SR')
+          `,
+        )
+        .run().lastInsertRowid,
+    );
+    const specialBudgetId = Number(
+      db
+        .prepare(
+          `
+            INSERT INTO special_budgets (
+              project_id, name, month_key, planned_amount_cents, note, is_active
+            )
+            VALUES (?, 'TEST-FIN-123 Sommerreise', '2099-07', 50000, 'Historie', 1)
+          `,
+        )
+        .run(projectId).lastInsertRowid,
+    );
+
+    const transactionId = Number(
+      db
+        .prepare(
+          `
+            INSERT INTO transactions (
+              account_id, destination_account_id, transaction_type, booking_date,
+              effective_month_key, amount_cents, currency_code, description,
+              source_type, category_id, special_budget_id
+            )
+            VALUES (?, NULL, 'expense', '2099-07-15', '2099-07', -12500, 'EUR',
+                    'TEST-FIN-123 Flug', 'manual', NULL, ?)
+          `,
+        )
+        .run(sparkasseId, specialBudgetId).lastInsertRowid,
+    );
+
+    db.prepare(
+      `
+        INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+        VALUES ('2099-07', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+      `,
+    ).run();
+
+    const shareBeforeArchive = db
+      .prepare(
+        `
+          SELECT id, project_id AS projectId, month_key AS monthKey,
+                 planned_amount_cents AS plannedAmountCents, note,
+                 is_active AS isActive, updated_at AS updatedAt
+          FROM special_budgets
+          WHERE id = ?
+        `,
+      )
+      .get(specialBudgetId);
+    const snapshotBeforeArchive = getMonthSnapshot("2099-07");
+
+    setSpecialBudgetProjectActive(projectId, false);
+
+    const snapshotAfterArchive = getMonthSnapshot("2099-07");
+    const shareAfterArchive = db
+      .prepare(
+        `
+          SELECT id, project_id AS projectId, month_key AS monthKey,
+                 planned_amount_cents AS plannedAmountCents, note,
+                 is_active AS isActive, updated_at AS updatedAt
+          FROM special_budgets
+          WHERE id = ?
+        `,
+      )
+      .get(specialBudgetId);
+    const transactionAfterArchive = db
+      .prepare("SELECT special_budget_id AS specialBudgetId FROM transactions WHERE id = ?")
+      .get(transactionId) as { specialBudgetId: number };
+    const projectAfterArchive = db
+      .prepare("SELECT status FROM special_budget_projects WHERE id = ?")
+      .get(projectId) as { status: string };
+
+    expect(projectAfterArchive.status).toBe("archived");
+    expect(shareAfterArchive).toEqual(shareBeforeArchive);
+    expect(transactionAfterArchive.specialBudgetId).toBe(specialBudgetId);
+    expect(snapshotAfterArchive.totals).toEqual(snapshotBeforeArchive.totals);
+    expect(snapshotAfterArchive.planSummary).toEqual(snapshotBeforeArchive.planSummary);
+    expect(
+      snapshotAfterArchive.specialBudgetRows.find((row) => row.id === specialBudgetId),
+    ).toEqual(
+      snapshotBeforeArchive.specialBudgetRows.find((row) => row.id === specialBudgetId),
+    );
+    expect(
+      snapshotAfterArchive.specialBudgetRows.find((row) => row.id === specialBudgetId)
+        ?.isActive,
+    ).toBe(true);
   });
 
   it("keeps open months on the live active fixed-cost plan until close", () => {
