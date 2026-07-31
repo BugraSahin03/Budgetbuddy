@@ -237,7 +237,7 @@ describe("special budgets repository", () => {
     expect(optionsAfterDeactivate.some((option) => option.id === created.id)).toBe(false);
   });
 
-  it("archives projects when all monthly shares are inactive and can reactivate the latest share", () => {
+  it("reactivates an archived project without changing its inactive monthly shares", () => {
     cleanupSpecialBudgets();
 
     repository.createSpecialBudget({
@@ -284,13 +284,13 @@ describe("special budgets repository", () => {
     const reactivatedShares = repository
       .listSpecialBudgets()
       .filter((budget) => budget.projectId === projectId);
-    const latestShare = reactivatedShares.find((budget) => budget.monthKey === "2026-08");
 
-    expect(latestShare?.isActive).toBe(true);
+    expect(reactivatedShares.every((share) => share.isActive === false)).toBe(true);
+    expect(reactivatedShares.every((share) => share.projectStatus === "active")).toBe(true);
     expect(repository.listArchivedSpecialBudgetProjects().some((project) => project.projectId === projectId)).toBe(false);
   });
 
-  it("archives an entire active project from budget care", () => {
+  it("archives a project with active shares in closed months without changing the shares", () => {
     cleanupSpecialBudgets();
 
     repository.createSpecialBudgetShares({
@@ -298,11 +298,11 @@ describe("special budgets repository", () => {
       note: "",
       shares: [
         {
-          monthKey: "2026-09",
+          monthKey: "2099-06",
           plannedAmountCents: 15000,
         },
         {
-          monthKey: "2026-10",
+          monthKey: "2099-07",
           plannedAmountCents: 25000,
         },
       ],
@@ -318,7 +318,45 @@ describe("special budgets repository", () => {
       return;
     }
 
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+          VALUES
+            ('2099-06', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+            ('2099-07', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+      )
+      .run();
+
+    const sharesBeforeArchive = dbClient
+      .getDb()
+      .prepare(
+        `
+          SELECT id, month_key AS monthKey, planned_amount_cents AS plannedAmountCents,
+                 note, is_active AS isActive, updated_at AS updatedAt
+          FROM special_budgets
+          WHERE project_id = ?
+          ORDER BY month_key ASC, id ASC
+        `,
+      )
+      .all(project.projectId);
+
     repository.setSpecialBudgetProjectActive(project.projectId, false);
+
+    const sharesAfterArchive = dbClient
+      .getDb()
+      .prepare(
+        `
+          SELECT id, month_key AS monthKey, planned_amount_cents AS plannedAmountCents,
+                 note, is_active AS isActive, updated_at AS updatedAt
+          FROM special_budgets
+          WHERE project_id = ?
+          ORDER BY month_key ASC, id ASC
+        `,
+      )
+      .all(project.projectId);
 
     expect(
       repository
@@ -328,6 +366,94 @@ describe("special budgets repository", () => {
     expect(
       repository
         .listArchivedSpecialBudgetProjects()
+        .some((item) => item.projectId === project.projectId),
+    ).toBe(true);
+    expect(sharesAfterArchive).toEqual(sharesBeforeArchive);
+    expect(
+      repository
+        .listActiveSpecialBudgetOptions("2099-07")
+        .some((item) => item.id === project.monthShares[1]?.id),
+    ).toBe(false);
+
+    repository.listSpecialBudgets();
+
+    const archivedStatus = dbClient
+      .getDb()
+      .prepare("SELECT status FROM special_budget_projects WHERE id = ?")
+      .get(project.projectId) as { status: string };
+
+    expect(archivedStatus.status).toBe("archived");
+    expect(() =>
+      repository.createSpecialBudget({
+        name: `${TEST_NAME_PREFIX}ArchiveProject`,
+        monthKey: "2099-08",
+        plannedAmountCents: 35000,
+        note: "Neuer Anteil",
+      }),
+    ).toThrow(
+      "Sonderkategorie ist archiviert. Reaktiviere zuerst das Vorhaben im Kategoriearchiv.",
+    );
+
+    repository.reactivateSpecialBudgetProject(project.projectId);
+
+    const sharesAfterReactivation = dbClient
+      .getDb()
+      .prepare(
+        `
+          SELECT id, month_key AS monthKey, planned_amount_cents AS plannedAmountCents,
+                 note, is_active AS isActive, updated_at AS updatedAt
+          FROM special_budgets
+          WHERE project_id = ?
+          ORDER BY month_key ASC, id ASC
+        `,
+      )
+      .all(project.projectId);
+
+    expect(sharesAfterReactivation).toEqual(sharesBeforeArchive);
+  });
+
+  it("blocks project archiving and lists active shares in open months", () => {
+    cleanupSpecialBudgets();
+
+    repository.createSpecialBudgetShares({
+      name: `${TEST_NAME_PREFIX}ArchiveBlocked`,
+      note: "",
+      shares: [
+        { monthKey: "2099-08", plannedAmountCents: 10000 },
+        { monthKey: "2099-09", plannedAmountCents: 20000 },
+        { monthKey: "2099-10", plannedAmountCents: 30000 },
+      ],
+    });
+
+    const project = repository
+      .listActiveSpecialBudgetProjects()
+      .find((item) => item.name === `${TEST_NAME_PREFIX}ArchiveBlocked`);
+
+    expect(project).toBeDefined();
+
+    if (!project) {
+      return;
+    }
+
+    dbClient
+      .getDb()
+      .prepare(
+        `
+          INSERT INTO monthly_statuses (month_key, status, closed_at, updated_at)
+          VALUES ('2099-08', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        `,
+      )
+      .run();
+
+    expect(() =>
+      repository.setSpecialBudgetProjectActive(project.projectId, false),
+    ).toThrow(
+      "Sonderkategorie kann nicht archiviert werden. Aktive Monatsanteile in offenen Monaten zuerst deaktivieren oder bereinigen: 2099-09, 2099-10.",
+    );
+
+    expect(
+      repository
+        .listActiveSpecialBudgetProjects()
         .some((item) => item.projectId === project.projectId),
     ).toBe(true);
   });

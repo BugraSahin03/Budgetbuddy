@@ -155,10 +155,34 @@ Seit FIN-039 gilt fuer bestehende Sonderkategorien im Monatskontext:
 
 Seit FIN-065 gilt zusaetzlich:
 
-- Vorhaben mit keinem aktiven Monatsanteil gelten als archiviert.
+- Das bewusste Deaktivieren des letzten aktiven Monatsanteils archiviert das
+  bis dahin aktive Vorhaben im selben Schreibvorgang; Listenaufrufe leiten den
+  Projektstatus nicht nachtraeglich aus Monatsanteilen ab.
 - Das Sonderkategorie-Archiv unter `Einstellungen` zeigt archivierte Vorhaben mit Zeitraum, Plan- und Ist-Summe.
-- Reaktivieren aktiviert das Vorhaben wieder und stellt den juengsten Monatsanteil aktiv.
 - Es entsteht keine automatische Transfer- oder Sparlogik.
+
+FIN-123 trennt den Lebenszyklusstatus des Vorhabens von seinen Monatsanteilen:
+
+- `special_budget_projects.status` ist der explizite Status `active | archived`
+  und wird bei Listen-/Legacy-Reconciliation nicht aus historischen
+  `special_budgets.is_active`-Werten zurueck auf `active` gesetzt.
+- Das Archivieren eines Vorhabens aendert ausschliesslich den Projektstatus.
+  Monatszuordnung, Planbetrag, `is_active`, bestehende Transaktionsreferenzen
+  und Zeitstempel der Monatsanteile bleiben unveraendert.
+- Aktive Monatsanteile in offenen Monaten blockieren das Archivieren. Die
+  Fehlermeldung nennt alle betroffenen Monate, damit sie zuerst bewusst
+  deaktiviert oder bereinigt werden koennen. Aktive Anteile geschlossener
+  Monate sind kein Blocker.
+- In geschlossenen Monatsansichten richtet sich die historische Sichtbarkeit
+  eines Anteils nach dessen gespeichertem `is_active`-Wert zum Abschluss. Ein
+  spaeter archiviertes Vorhaben entfernt den Anteil deshalb nicht nachtraeglich
+  aus Plan, Ist, Rest oder Kategorieuebersicht.
+- Reaktivieren aendert ausschliesslich den Projektstatus auf `active`. Es
+  aktiviert oder bearbeitet keinen Monatsanteil; ein neuer Anteil fuer einen
+  offenen Monat bleibt eine separate bewusste Pflegeaktion.
+- Neue Monatsanteile koennen nicht still an ein archiviertes Vorhaben
+  angehaengt werden. Das Vorhaben muss zuvor im Kategoriearchiv reaktiviert
+  werden.
 
 ### Fixkosten
 

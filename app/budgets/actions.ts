@@ -263,6 +263,10 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
     }
 
     for (const projectId of parseSpecialBudgetProjectIds(formData)) {
+      if (projectId === specialBudgetProjectIdToDeactivate) {
+        continue;
+      }
+
       const shareIds = parseProjectShareIds(formData, projectId);
 
       if (shareIds.length === 0) {
@@ -291,7 +295,7 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
       redirectTarget = `/budgets?edit=1&notice=${encodeMessage(
         categoryIdToDeactivate !== null
           ? "Kategorie deaktiviert."
-          : "Sonderkategorie deaktiviert.",
+          : "Sonderkategorie archiviert.",
       )}`;
     } else {
       redirectTarget = `/budgets?notice=${encodeMessage("Budgetpflege gespeichert.")}`;
@@ -336,7 +340,7 @@ export async function updateBudgetSpecialBudgetStateAction(formData: FormData): 
     } else if (intent.startsWith(deactivateProjectPrefix)) {
       setSpecialBudgetProjectActive(specialBudgetProjectId, false);
       refreshBudgetPaths();
-      redirectTarget = `/budgets?notice=${encodeMessage("Sonderkategorie deaktiviert.")}`;
+      redirectTarget = `/budgets?notice=${encodeMessage("Sonderkategorie archiviert.")}`;
     } else {
       throw new Error("Unbekannte Aktion.");
     }

@@ -206,7 +206,6 @@ function ensureProjectForName(name: string, note: string | null, iconName: strin
         )
         VALUES (?, 'active', ?, ?, CURRENT_TIMESTAMP)
         ON CONFLICT(name) DO UPDATE SET
-          status = 'active',
           note = COALESCE(excluded.note, special_budget_projects.note),
           icon_name = COALESCE(excluded.icon_name, special_budget_projects.icon_name),
           updated_at = CURRENT_TIMESTAMP
@@ -217,16 +216,24 @@ function ensureProjectForName(name: string, note: string | null, iconName: strin
   const project = getDb()
     .prepare(
       `
-        SELECT id
+        SELECT id, status
         FROM special_budget_projects
         WHERE name = ?
         LIMIT 1
       `,
     )
-    .get(name) as { id: number } | undefined;
+    .get(name) as
+      | { id: number; status: SpecialBudgetProjectStatus }
+      | undefined;
 
   if (!project) {
     throw new Error("Sonderkategorie konnte nicht vorbereitet werden.");
+  }
+
+  if (project.status === "archived") {
+    throw new Error(
+      "Sonderkategorie ist archiviert. Reaktiviere zuerst das Vorhaben im Kategoriearchiv.",
+    );
   }
 
   return project.id;
@@ -244,43 +251,20 @@ function updateProjectStatusFromMonthlyShares(projectId: number): void {
     )
     .get(projectId) as { activeShareCount: number };
 
-  getDb()
-    .prepare(
-      `
-        UPDATE special_budget_projects
-        SET
-          status = ?,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `,
-    )
-    .run(row.activeShareCount > 0 ? "active" : "archived", projectId);
-}
-
-function reconcileProjectStatuses(): void {
-  getDb()
-    .prepare(
-      `
-        UPDATE special_budget_projects
-        SET
-          status = CASE
-            WHEN EXISTS (
-              SELECT 1
-              FROM special_budgets sb
-              WHERE sb.project_id = special_budget_projects.id
-                AND sb.is_active = 1
-            ) THEN 'active'
-            ELSE 'archived'
-          END,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE EXISTS (
-          SELECT 1
-          FROM special_budgets sb
-          WHERE sb.project_id = special_budget_projects.id
-        )
-      `,
-    )
-    .run();
+  if (row.activeShareCount === 0) {
+    getDb()
+      .prepare(
+        `
+          UPDATE special_budget_projects
+          SET
+            status = 'archived',
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+            AND status = 'active'
+        `,
+      )
+      .run(projectId);
+  }
 }
 
 export function ensureProjectsForUnlinkedMonthlyShares(): void {
@@ -296,7 +280,6 @@ export function ensureProjectsForUnlinkedMonthlyShares(): void {
     .all() as Array<{ name: string }>;
 
   if (rows.length === 0) {
-    reconcileProjectStatuses();
     return;
   }
 
@@ -332,7 +315,6 @@ export function ensureProjectsForUnlinkedMonthlyShares(): void {
             WHERE sb.name = ?
             GROUP BY sb.name
             ON CONFLICT(name) DO UPDATE SET
-              status = excluded.status,
               note = COALESCE(excluded.note, special_budget_projects.note),
               updated_at = CURRENT_TIMESTAMP
           `,
@@ -358,7 +340,6 @@ export function ensureProjectsForUnlinkedMonthlyShares(): void {
   });
 
   transaction(rows.map((row) => row.name));
-  reconcileProjectStatuses();
 }
 
 export function listSpecialBudgets(): SpecialBudgetListItem[] {
@@ -779,17 +760,31 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
     .prepare(
       `
         SELECT
-          project_id AS projectId,
-          month_key AS monthKey
-        FROM special_budgets
-        WHERE id = ?
+          sb.project_id AS projectId,
+          sb.month_key AS monthKey,
+          COALESCE(sbp.status, 'active') AS projectStatus
+        FROM special_budgets sb
+        LEFT JOIN special_budget_projects sbp ON sbp.id = sb.project_id
+        WHERE sb.id = ?
         LIMIT 1
       `,
     )
-    .get(specialBudgetId) as { projectId: number | null; monthKey: string } | undefined;
+    .get(specialBudgetId) as
+      | {
+          projectId: number | null;
+          monthKey: string;
+          projectStatus: SpecialBudgetProjectStatus;
+        }
+      | undefined;
 
   if (!existing) {
     throw new Error("Sonderkategorie wurde nicht gefunden.");
+  }
+
+  if (isActive && existing.projectStatus === "archived") {
+    throw new Error(
+      "Sonderkategorie ist archiviert. Reaktiviere zuerst das Vorhaben im Kategoriearchiv.",
+    );
   }
 
   assertMonthIsOpen(existing.monthKey);
@@ -811,22 +806,8 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
       throw new Error("Sonderkategorie wurde nicht gefunden.");
     }
 
-    if (existing.projectId) {
-      if (isActive) {
-        getDb()
-          .prepare(
-            `
-              UPDATE special_budget_projects
-              SET
-                status = 'active',
-                updated_at = CURRENT_TIMESTAMP
-              WHERE id = ?
-            `,
-          )
-          .run(existing.projectId);
-      } else {
-        updateProjectStatusFromMonthlyShares(existing.projectId);
-      }
+    if (existing.projectId && !isActive) {
+      updateProjectStatusFromMonthlyShares(existing.projectId);
     }
   });
 
@@ -834,70 +815,7 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
 }
 
 export function reactivateSpecialBudgetProject(projectId: number): void {
-  if (!Number.isInteger(projectId) || projectId <= 0) {
-    throw new Error("Sonderkategorie ist ungültig.");
-  }
-
-  const project = getDb()
-    .prepare(
-      `
-        SELECT id
-        FROM special_budget_projects
-        WHERE id = ?
-        LIMIT 1
-      `,
-    )
-    .get(projectId) as { id: number } | undefined;
-
-  if (!project) {
-    throw new Error("Sonderkategorie wurde nicht gefunden.");
-  }
-
-  const transaction = getDb().transaction(() => {
-    getDb()
-      .prepare(
-        `
-          UPDATE special_budget_projects
-          SET
-            status = 'active',
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `,
-      )
-      .run(projectId);
-
-    const share = getDb()
-      .prepare(
-        `
-          SELECT id, month_key AS monthKey
-          FROM special_budgets
-          WHERE project_id = ?
-          ORDER BY month_key DESC, id DESC
-          LIMIT 1
-        `,
-      )
-      .get(projectId) as { id: number; monthKey: string } | undefined;
-
-    if (!share) {
-      throw new Error("Monatsanteil der Sonderkategorie wurde nicht gefunden.");
-    }
-
-    assertMonthIsOpen(share.monthKey);
-
-    getDb()
-      .prepare(
-        `
-          UPDATE special_budgets
-          SET
-            is_active = 1,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `,
-      )
-      .run(share.id);
-  });
-
-  transaction();
+  setSpecialBudgetProjectActive(projectId, true);
 }
 
 export function setSpecialBudgetProjectActive(projectId: number, isActive: boolean): void {
@@ -908,59 +826,55 @@ export function setSpecialBudgetProjectActive(projectId: number, isActive: boole
   const project = getDb()
     .prepare(
       `
-        SELECT id
+        SELECT id, status
         FROM special_budget_projects
         WHERE id = ?
         LIMIT 1
       `,
     )
-    .get(projectId) as { id: number } | undefined;
+    .get(projectId) as
+      | { id: number; status: SpecialBudgetProjectStatus }
+      | undefined;
 
   if (!project) {
     throw new Error("Sonderkategorie wurde nicht gefunden.");
   }
 
-  const affectedShares = getDb()
-    .prepare(
-      `
-        SELECT month_key AS monthKey
-        FROM special_budgets
-        WHERE project_id = ?
-      `,
-    )
-    .all(projectId) as Array<{ monthKey: string }>;
+  if (!isActive) {
+    const blockingMonths = getDb()
+      .prepare(
+        `
+          SELECT DISTINCT sb.month_key AS monthKey
+          FROM special_budgets sb
+          LEFT JOIN monthly_statuses ms ON ms.month_key = sb.month_key
+          WHERE sb.project_id = ?
+            AND sb.is_active = 1
+            AND COALESCE(ms.status, 'open') = 'open'
+          ORDER BY sb.month_key ASC
+        `,
+      )
+      .all(projectId) as Array<{ monthKey: string }>;
 
-  for (const share of affectedShares) {
-    assertMonthIsOpen(share.monthKey);
+    if (blockingMonths.length > 0) {
+      throw new Error(
+        `Sonderkategorie kann nicht archiviert werden. Aktive Monatsanteile in offenen Monaten zuerst deaktivieren oder bereinigen: ${blockingMonths
+          .map((share) => share.monthKey)
+          .join(", ")}.`,
+      );
+    }
   }
 
-  const transaction = getDb().transaction(() => {
-    getDb()
-      .prepare(
-        `
-          UPDATE special_budgets
-          SET
-            is_active = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE project_id = ?
-        `,
-      )
-      .run(isActive ? 1 : 0, projectId);
-
-    getDb()
-      .prepare(
-        `
-          UPDATE special_budget_projects
-          SET
-            status = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-        `,
-      )
-      .run(isActive ? "active" : "archived", projectId);
-  });
-
-  transaction();
+  getDb()
+    .prepare(
+      `
+        UPDATE special_budget_projects
+        SET
+          status = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+      `,
+    )
+    .run(isActive ? "active" : "archived", projectId);
 }
 
 export function updateSpecialBudgetPlannedAmount(

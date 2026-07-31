@@ -2,7 +2,7 @@
 
 ## Status
 
-Angenommen
+Angenommen; Lebenszyklusregeln durch FIN-123 fortgeschrieben
 
 ## Kontext
 
@@ -19,8 +19,16 @@ Mehrmonatige Sonderkategorien werden als Vorhaben mit Monatsanteilen modelliert:
 - Ein Monatsanteil verweist ueber `project_id` auf das Vorhaben.
 - Beim Anlegen einer Sonderkategorie mit gleichem Namen in einem weiteren Monat wird dasselbe Vorhaben genutzt.
 - Transaktionen bleiben weiterhin am konkreten Monatsanteil (`special_budgets.id`) verankert.
-- Ein Vorhaben wird archiviert, wenn kein Monatsanteil mehr aktiv ist.
-- Reaktivieren holt das Vorhaben zurueck und aktiviert den juengsten Monatsanteil.
+- Seit FIN-123 ist `special_budget_projects.status` ein expliziter
+  Lebenszyklusstatus. Listen- und Legacy-Reconciliation leiten ihn nicht aus
+  aktiven Monatsanteilen neu ab.
+- Ein Vorhaben kann nur archiviert werden, wenn es keine aktiven
+  Monatsanteile in offenen Monaten hat. Das Archivieren aendert nur den
+  Projektstatus; Anteile geschlossener Monate und ihre historischen Werte
+  bleiben unveraendert.
+- Reaktivieren setzt nur den Projektstatus auf `active` und aktiviert oder
+  veraendert keinen Monatsanteil. Ein neuer Anteil fuer einen offenen Monat
+  bleibt eine separate Pflegeaktion.
 
 ## Begruendung
 

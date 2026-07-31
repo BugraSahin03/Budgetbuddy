@@ -368,7 +368,7 @@ function SpecialBudgetList({
                   value={budget.projectId}
                   className="budget-secondary-action budget-special-deactivate-action"
                 >
-                  Deaktivieren
+                  Archivieren
                 </button>
               </>
             ) : null}
