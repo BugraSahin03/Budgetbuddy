@@ -262,25 +262,27 @@ export async function updateBudgetCategoriesAction(formData: FormData): Promise<
       setCategoryDefaultBudget(categoryId, budgetAmount);
     }
 
-    if (specialBudgetProjectIdToDeactivate === null) {
-      for (const projectId of parseSpecialBudgetProjectIds(formData)) {
-        const shareIds = parseProjectShareIds(formData, projectId);
-
-        if (shareIds.length === 0) {
-          continue;
-        }
-
-        updateSpecialBudgetProject({
-          projectId,
-          iconName: toOptionalString(formData.get(`specialBudgetIconName-${projectId}`)),
-          shares: shareIds.map((shareId) => ({
-            id: shareId,
-            plannedAmountCents: parsePlannedAmountCents(
-              toSingleString(formData.get(`plannedAmount-${shareId}`)),
-            ),
-          })),
-        });
+    for (const projectId of parseSpecialBudgetProjectIds(formData)) {
+      if (projectId === specialBudgetProjectIdToDeactivate) {
+        continue;
       }
+
+      const shareIds = parseProjectShareIds(formData, projectId);
+
+      if (shareIds.length === 0) {
+        continue;
+      }
+
+      updateSpecialBudgetProject({
+        projectId,
+        iconName: toOptionalString(formData.get(`specialBudgetIconName-${projectId}`)),
+        shares: shareIds.map((shareId) => ({
+          id: shareId,
+          plannedAmountCents: parsePlannedAmountCents(
+            toSingleString(formData.get(`plannedAmount-${shareId}`)),
+          ),
+        })),
+      });
     }
 
     if (specialBudgetProjectIdToDeactivate !== null) {

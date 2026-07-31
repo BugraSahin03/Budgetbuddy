@@ -155,8 +155,9 @@ Seit FIN-039 gilt fuer bestehende Sonderkategorien im Monatskontext:
 
 Seit FIN-065 gilt zusaetzlich:
 
-- Vorhaben mit keinem aktiven Monatsanteil werden beim bewussten Deaktivieren
-  des letzten Anteils archiviert.
+- Das bewusste Deaktivieren des letzten aktiven Monatsanteils archiviert das
+  bis dahin aktive Vorhaben im selben Schreibvorgang; Listenaufrufe leiten den
+  Projektstatus nicht nachtraeglich aus Monatsanteilen ab.
 - Das Sonderkategorie-Archiv unter `Einstellungen` zeigt archivierte Vorhaben mit Zeitraum, Plan- und Ist-Summe.
 - Es entsteht keine automatische Transfer- oder Sparlogik.
 

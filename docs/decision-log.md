@@ -2344,8 +2344,9 @@ Quelle/Ticket: `FIN-123`
 Erkenntnis/Entscheidung:
 
 - Der Status eines Sonderkategorie-Vorhabens ist ein expliziter
-  Lebenszyklusstatus und wird nicht mehr bei Listenaufrufen aus den
-  `is_active`-Werten seiner Monatsanteile neu abgeleitet.
+  Lebenszyklusstatus. Er kann durch eine bewusste Lebenszyklusaktion gesetzt
+  werden, wird aber nicht mehr bei Listenaufrufen aus den `is_active`-Werten
+  seiner Monatsanteile neu abgeleitet.
 - Archivieren setzt nur `special_budget_projects.status = archived`.
   Monatsanteile, Planwerte, Transaktionsreferenzen und historische Zeitstempel
   werden nicht veraendert.
