@@ -19,8 +19,6 @@ export type CategoryPlanScale = {
   scalePercent: number;
 };
 
-const MINIMUM_PLAN_SCALE_PERCENT = 1;
-
 const TONE_STYLES: Record<
   CategoryUsageTone,
   {
@@ -182,11 +180,11 @@ export function getCategoryPlanScale({
 
   const relativePercent = Math.min(
     100,
-    Math.round((budgetAmountCents / highestPlannedAmountCents) * 100),
+    (budgetAmountCents / highestPlannedAmountCents) * 100,
   );
 
   return {
     hasPlannedBudget: true,
-    scalePercent: Math.max(MINIMUM_PLAN_SCALE_PERCENT, relativePercent),
+    scalePercent: relativePercent,
   };
 }

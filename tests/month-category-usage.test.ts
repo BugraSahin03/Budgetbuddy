@@ -89,7 +89,16 @@ describe("FIN-064 category usage colors", () => {
         budgetAmountCents: 2000,
         highestPlannedAmountCents: 90000,
       }),
-    ).toEqual({ hasPlannedBudget: true, scalePercent: 2 });
+    ).toEqual({
+      hasPlannedBudget: true,
+      scalePercent: 2.2222222222222223,
+    });
+    expect(
+      getCategoryPlanScale({
+        budgetAmountCents: 50,
+        highestPlannedAmountCents: 100000,
+      }),
+    ).toEqual({ hasPlannedBudget: true, scalePercent: 0.05 });
     expect(
       getCategoryPlanScale({
         budgetAmountCents: 0,

@@ -117,6 +117,11 @@ export function MonthCategoryOverview({
                         }}
                       />
                     </div>
+                    <span
+                      aria-hidden="true"
+                      className="month-category-plan-end-marker"
+                      style={{ left: `${planScale.scalePercent}%` }}
+                    />
                   </div>
                 ) : null}
                 {!isSavingsCategory ? (
@@ -218,6 +223,11 @@ export function MonthCategoryOverview({
                               }}
                             />
                           </div>
+                          <span
+                            aria-hidden="true"
+                            className="month-category-plan-end-marker"
+                            style={{ left: `${planScale.scalePercent}%` }}
+                          />
                         </div>
                       ) : null}
                       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
