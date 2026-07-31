@@ -95,31 +95,36 @@ export function MonthCategoryOverview({
                     className="shrink-0 whitespace-nowrap text-xs font-extrabold text-[color:var(--month-ink)] sm:text-sm"
                     data-live-amount
                   >
-                    {hasPlannedBudget
-                      ? `${formatEuro(row.spentAmountCents)} von ${formatEuro(row.budgetAmountCents ?? 0)}`
-                      : formatEuro(row.spentAmountCents)}
+                    {formatEuro(row.spentAmountCents)}
                   </p>
                 </div>
                 {planScale.hasPlannedBudget ? (
                   <div
-                    className="month-category-plan-scale mt-2"
+                    className="month-category-scale-guide mt-2"
                     data-plan-scale
                     data-plan-scale-percent={planScale.scalePercent}
-                    style={{ width: `${planScale.scalePercent}%` }}
                   >
                     <div
-                      className="h-full rounded-full"
-                      data-live-progress
-                      style={{
-                        width: `${usageState.progressPercent}%`,
-                        ...categoryUsageProgressStyle(usageState),
-                      }}
-                    />
+                      className="month-category-plan-scale"
+                      style={{ width: `${planScale.scalePercent}%` }}
+                    >
+                      <div
+                        className="h-full rounded-full"
+                        data-live-progress
+                        style={{
+                          width: `${usageState.progressPercent}%`,
+                          ...categoryUsageProgressStyle(usageState),
+                        }}
+                      />
+                    </div>
                   </div>
                 ) : null}
                 {!isSavingsCategory ? (
                   <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-                    <span data-live-usage-label>
+                    <span
+                      className="month-category-usage-badge"
+                      data-live-usage-label
+                    >
                       {!hasPlannedBudget
                         ? "Budget fehlt"
                         : `${usageState.percent}% genutzt`}
@@ -190,31 +195,36 @@ export function MonthCategoryOverview({
                         <p
                           className="shrink-0 whitespace-nowrap text-xs font-extrabold text-[color:var(--month-ink)] sm:text-sm"
                           data-live-amount
-                        >
-                          {hasPlannedBudget
-                            ? `${formatEuro(row.actualExpenseCents)} von ${formatEuro(row.plannedAmountCents)}`
-                            : formatEuro(row.actualExpenseCents)}
+                          >
+                          {formatEuro(row.actualExpenseCents)}
                         </p>
                       </div>
                       {planScale.hasPlannedBudget ? (
                         <div
-                          className="month-category-plan-scale mt-2"
+                          className="month-category-scale-guide mt-2"
                           data-plan-scale
                           data-plan-scale-percent={planScale.scalePercent}
-                          style={{ width: `${planScale.scalePercent}%` }}
                         >
                           <div
-                            className="h-full rounded-full"
-                            data-live-progress
-                            style={{
-                              width: `${usageState.progressPercent}%`,
-                              ...categoryUsageProgressStyle(usageState),
-                            }}
-                          />
+                            className="month-category-plan-scale"
+                            style={{ width: `${planScale.scalePercent}%` }}
+                          >
+                            <div
+                              className="h-full rounded-full"
+                              data-live-progress
+                              style={{
+                                width: `${usageState.progressPercent}%`,
+                                ...categoryUsageProgressStyle(usageState),
+                              }}
+                            />
+                          </div>
                         </div>
                       ) : null}
                       <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs font-semibold text-[color:var(--month-ink-soft)]">
-                        <span data-live-usage-label>
+                        <span
+                          className="month-category-usage-badge"
+                          data-live-usage-label
+                        >
                           {!hasPlannedBudget
                             ? "Budget fehlt"
                             : `${usageState.percent}% genutzt`}

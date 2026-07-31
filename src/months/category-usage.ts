@@ -19,7 +19,7 @@ export type CategoryPlanScale = {
   scalePercent: number;
 };
 
-const MINIMUM_PLAN_SCALE_PERCENT = 12;
+const MINIMUM_PLAN_SCALE_PERCENT = 1;
 
 const TONE_STYLES: Record<
   CategoryUsageTone,

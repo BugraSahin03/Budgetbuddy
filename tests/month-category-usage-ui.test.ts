@@ -41,7 +41,10 @@ describe("FIN-121 shared monthly plan scale", () => {
     expect(overview).toContain("...specialBudgetRows.map");
     expect(overview).toContain("getCategoryPlanScale");
     expect(overview).toContain("data-plan-scale-percent");
+    expect(globals).toContain(".month-category-scale-guide");
     expect(globals).toContain(".month-category-plan-scale");
-    expect(globals).toContain("min-width: 2.75rem");
+    expect(globals).toContain(".month-category-usage-badge");
+    expect(globals).toContain("min-width: 0.4rem");
+    expect(overview).not.toContain(" von ${formatEuro");
   });
 });

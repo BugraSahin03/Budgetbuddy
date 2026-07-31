@@ -77,13 +77,19 @@ describe("FIN-064 category usage colors", () => {
     ).toEqual({ hasPlannedBudget: true, scalePercent: 50 });
   });
 
-  it("keeps small plans visible without allowing missing plans to distort the scale", () => {
+  it("keeps small plans proportional without allowing missing plans to distort the scale", () => {
     expect(
       getCategoryPlanScale({
         budgetAmountCents: 2000,
         highestPlannedAmountCents: 40000,
       }),
-    ).toEqual({ hasPlannedBudget: true, scalePercent: 12 });
+    ).toEqual({ hasPlannedBudget: true, scalePercent: 5 });
+    expect(
+      getCategoryPlanScale({
+        budgetAmountCents: 2000,
+        highestPlannedAmountCents: 90000,
+      }),
+    ).toEqual({ hasPlannedBudget: true, scalePercent: 2 });
     expect(
       getCategoryPlanScale({
         budgetAmountCents: 0,
