@@ -118,9 +118,9 @@ FIN-124 trennt die globale Kategoriepflege von monatsbezogenen Schreibpfaden:
 - Deaktivierte Kategorien verschwinden aus aktiver Pflege und neuen
   Zuordnungen, bleiben im Kategoriearchiv reaktivierbar und in Monaten mit
   eingefrorenem Planwert oder zugeordneten Buchungen sichtbar.
-- Historische Namen und Icons werden durch FIN-124 noch nicht eingefroren; die
-  vollstaendige Metadaten-Snapshot-Regel fuer abgeschlossene Monate bleibt
-  FIN-125 vorbehalten.
+- Historische Namen, Icons, Sichtbarkeit und effektive Planwerte werden beim
+  ersten Monatsabschluss durch FIN-125 eingefroren. FIN-124 selbst mutiert
+  diese Abschlussdaten nicht.
 
 ### Monatsbudget
 
@@ -272,7 +272,38 @@ Monatsabschluss-Sperrregel (FIN-071):
 - Das Wieder-Oeffnen erlaubt diese Schreiboperationen wieder.
 - Offene importierte Ausgaben sind beim Abschluss ein Warnhinweis, aber kein harter Blocker.
 - Der vorhandene Fixkosten-Snapshot bleibt auch nach Wieder-Oeffnen erhalten und wird nicht automatisch neu berechnet.
-- Planlose Kategorien koennen technisch nicht als `NULL`-Monatswert eingefroren werden; sie bleiben planlos, bis ein expliziter Monatswert oder globaler Standard existiert.
+- Planlose Kategorien bleiben planlos, bis ein expliziter Monatswert oder
+  globaler Standard existiert.
+
+Kategorien- und Sonderbudget-Snapshot (FIN-125):
+
+- Beim ersten Abschluss speichert `monthly_statuses` mit
+  `budget_snapshot_created_at` auch fuer einen bewusst leeren Stand einen
+  eindeutigen Marker.
+- `monthly_category_snapshots` speichert je sichtbarer fester Kategorie die
+  stabile `category_id`, damaligen Namen und Icon, Aktiv-/Sichtbarstatus,
+  Sparen-Kennzeichnung und den damaligen effektiven Planwert. Ein planloser
+  Stand wird ausdruecklich als `NULL` erhalten.
+- `monthly_special_budget_snapshots` speichert je Monatsanteil die stabile
+  `special_budget_id` und `project_id`, damaligen Namen und Icon, Planwert
+  sowie Aktiv-/Sichtbarstatus.
+- Monate mit Snapshot lesen Namen, Icons, Planwerte und Sichtbarkeit aus
+  diesen Abschlussdaten. Ist-Werte werden weiterhin dynamisch aus den
+  unveraenderten Transaktionsreferenzen summiert.
+- Globale Umbenennung, Iconpflege, Deaktivierung, Vorhabenarchivierung und
+  Aenderung eines Standardbudgets veraendern einen vorhandenen Snapshot nicht.
+  Offene Monate ohne Abschluss-Snapshot lesen weiterhin die aktuellen
+  Stammdaten.
+- Wieder-Oeffnen behaelt den Snapshot. Wird dabei erstmals eine weitere
+  Kategorie oder ein weiterer Sonderbudget-Anteil bewusst verwendet, wird
+  nur der fehlende Snapshot-Eintrag atomar ergaenzt; vorhandene Eintraege
+  werden nicht neu berechnet oder ueberschrieben.
+- Die Migration `0019_fin_125` uebernimmt fuer bereits geschlossene oder schon
+  wieder geoeffnete Altdaten mangels historischer Metadatenquelle einmalig den
+  zum Migrationszeitpunkt aktuellen Stand. Buchungen, Betraege und
+  Zuordnungen werden dabei nicht veraendert.
+- Der bestehende Fixkosten-Snapshot nach FIN-070 bleibt fachlich und technisch
+  unveraendert.
 
 ### Importlauf
 

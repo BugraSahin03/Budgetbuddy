@@ -37,7 +37,7 @@ describe("FIN-068 month savings KPI UI", () => {
     );
 
     expect(overview).toContain(
-      "const isSavingsCategory = category?.isSavings === true",
+      "const isSavingsCategory = row.isSavingsCategory",
     );
     expect(overview).toContain("{!isSavingsCategory ? (");
     expect(overview).toContain("Budget fehlt");

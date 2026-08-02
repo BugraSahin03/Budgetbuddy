@@ -2,12 +2,18 @@ import "server-only";
 
 import { isSavingsCategoryId } from "@/src/categories/repository";
 import { getDb } from "@/src/db/client";
+import {
+  ensureCategoryBudgetSnapshot,
+  hasBudgetSnapshot,
+} from "@/src/months/budget-snapshots";
 import { assertMonthIsOpen } from "@/src/months/status";
 
 export type MonthlyBudgetCategoryRow = {
   categoryId: number;
   categoryName: string;
+  categoryIconName: string | null;
   isCategoryActive: boolean;
+  isSavingsCategory: boolean;
   defaultBudgetAmountCents: number | null;
   monthOverrideAmountCents: number | null;
   budgetAmountCents: number | null;
@@ -136,13 +142,77 @@ export function listMonthlyBudgetCategories(
       ? `AND t.id NOT IN (${excludedTransactionIds.map(() => "?").join(", ")})`
       : "";
 
+  if (hasBudgetSnapshot(normalizedMonthKey)) {
+    const rows = getDb()
+      .prepare(
+        `
+          SELECT
+            snapshot.category_id AS categoryId,
+            snapshot.name_snapshot AS categoryName,
+            snapshot.icon_name_snapshot AS categoryIconName,
+            snapshot.is_active_snapshot AS isCategoryActive,
+            snapshot.is_savings_snapshot AS isSavingsCategory,
+            NULL AS defaultBudgetAmountCents,
+            snapshot.budget_amount_cents_snapshot AS monthOverrideAmountCents,
+            snapshot.budget_amount_cents_snapshot AS budgetAmountCents,
+            COALESCE((
+              SELECT SUM(-t.amount_cents)
+              FROM transactions t
+              WHERE t.transaction_type = 'expense'
+                AND t.category_id = snapshot.category_id
+                AND t.effective_month_key = ?
+                ${excludedTransactionFilter}
+            ), 0) AS spentAmountCents
+          FROM monthly_category_snapshots snapshot
+          WHERE snapshot.month_key = ?
+            AND snapshot.is_visible_snapshot = 1
+          ORDER BY
+            snapshot.is_active_snapshot DESC,
+            snapshot.name_snapshot COLLATE NOCASE ASC
+        `,
+      )
+      .all(
+        normalizedMonthKey,
+        ...excludedTransactionIds,
+        normalizedMonthKey,
+      ) as Array<{
+      categoryId: number;
+      categoryName: string;
+      categoryIconName: string | null;
+      isCategoryActive: number;
+      isSavingsCategory: number;
+      defaultBudgetAmountCents: null;
+      monthOverrideAmountCents: number | null;
+      budgetAmountCents: number | null;
+      spentAmountCents: number;
+    }>;
+
+    return rows.map((row) => ({
+      categoryId: row.categoryId,
+      categoryName: row.categoryName,
+      categoryIconName: row.categoryIconName,
+      isCategoryActive: mapSqliteBoolean(row.isCategoryActive),
+      isSavingsCategory: mapSqliteBoolean(row.isSavingsCategory),
+      defaultBudgetAmountCents: row.defaultBudgetAmountCents,
+      monthOverrideAmountCents: row.monthOverrideAmountCents,
+      budgetAmountCents: row.budgetAmountCents,
+      spentAmountCents: row.spentAmountCents,
+      remainingAmountCents:
+        row.budgetAmountCents === null
+          ? null
+          : row.budgetAmountCents - row.spentAmountCents,
+    }));
+  }
+
   const rows = getDb()
     .prepare(
       `
         SELECT
           c.id AS categoryId,
           c.name AS categoryName,
+          c.icon_name AS categoryIconName,
           c.is_active AS isCategoryActive,
+          CASE WHEN c.system_key = 'savings' THEN 1 ELSE 0 END AS isSavingsCategory,
           c.default_budget_amount_cents AS defaultBudgetAmountCents,
           mb.budget_amount_cents AS monthOverrideAmountCents,
           COALESCE(mb.budget_amount_cents, c.default_budget_amount_cents) AS budgetAmountCents,
@@ -179,7 +249,9 @@ export function listMonthlyBudgetCategories(
     ) as Array<{
     categoryId: number;
     categoryName: string;
+    categoryIconName: string | null;
     isCategoryActive: number;
+    isSavingsCategory: number;
     defaultBudgetAmountCents: number | null;
     monthOverrideAmountCents: number | null;
     budgetAmountCents: number | null;
@@ -189,7 +261,9 @@ export function listMonthlyBudgetCategories(
   return rows.map((row) => ({
     categoryId: row.categoryId,
     categoryName: row.categoryName,
+    categoryIconName: row.categoryIconName,
     isCategoryActive: mapSqliteBoolean(row.isCategoryActive),
+    isSavingsCategory: mapSqliteBoolean(row.isSavingsCategory),
     defaultBudgetAmountCents: row.defaultBudgetAmountCents,
     monthOverrideAmountCents: row.monthOverrideAmountCents,
     budgetAmountCents: row.budgetAmountCents,
@@ -243,23 +317,28 @@ export function setMonthlyCategoryBudget(
     return;
   }
 
-  getDb()
-    .prepare(
+  const db = getDb();
+  const updateBudget = db.transaction(() => {
+    db.prepare(
       `
-        INSERT INTO monthly_category_budgets (
-          month_key,
-          category_id,
-          budget_amount_cents,
-          updated_at
-        )
-        VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(month_key, category_id)
-        DO UPDATE SET
-          budget_amount_cents = excluded.budget_amount_cents,
-          updated_at = CURRENT_TIMESTAMP
-      `,
-    )
-    .run(normalizedMonthKey, categoryId, normalizedAmountCents);
+          INSERT INTO monthly_category_budgets (
+            month_key,
+            category_id,
+            budget_amount_cents,
+            updated_at
+          )
+          VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+          ON CONFLICT(month_key, category_id)
+          DO UPDATE SET
+            budget_amount_cents = excluded.budget_amount_cents,
+            updated_at = CURRENT_TIMESTAMP
+        `,
+    ).run(normalizedMonthKey, categoryId, normalizedAmountCents);
+
+    ensureCategoryBudgetSnapshot(normalizedMonthKey, categoryId);
+  });
+
+  updateBudget();
 }
 
 export function freezeMonthlyCategoryBudgetValues(monthKey: string): void {

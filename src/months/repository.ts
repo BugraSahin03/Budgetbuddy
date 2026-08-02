@@ -19,6 +19,7 @@ import {
   buildMonthPlanSummary,
   type MonthPlanSummary,
 } from "@/src/months/plan-summary";
+import { hasBudgetSnapshot } from "@/src/months/budget-snapshots";
 import {
   assertMonthIsOpen,
   closeMonth as closeMonthStatus,
@@ -194,13 +195,18 @@ function hasFixedCostSnapshot(monthKey: string): boolean {
 
 export function closeMonth(monthKey: string): MonthStatus {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
-  const status = getMonthStatus(normalizedMonthKey);
+  const db = getDb();
+  const close = db.transaction(() => {
+    const status = getMonthStatus(normalizedMonthKey);
 
-  if (status.status === "open") {
-    freezeMonthlyCategoryBudgetValues(normalizedMonthKey);
-  }
+    if (status.status === "open") {
+      freezeMonthlyCategoryBudgetValues(normalizedMonthKey);
+    }
 
-  return closeMonthStatus(normalizedMonthKey);
+    return closeMonthStatus(normalizedMonthKey);
+  });
+
+  return close();
 }
 
 export function reopenMonth(monthKey: string): MonthStatus {
@@ -640,6 +646,58 @@ function listSpecialBudgetRows(
       ? `AND t.id NOT IN (${excludedTransactionIds.map(() => "?").join(", ")})`
       : "";
 
+  if (hasBudgetSnapshot(monthKey)) {
+    const snapshotRows = getDb()
+      .prepare(
+        `
+          SELECT
+            snapshot.special_budget_id AS id,
+            snapshot.name_snapshot AS name,
+            snapshot.icon_name_snapshot AS iconName,
+            snapshot.month_key AS monthKey,
+            snapshot.planned_amount_cents_snapshot AS plannedAmountCents,
+            snapshot.is_visible_snapshot AS isActive,
+            COALESCE(
+              (
+                SELECT SUM(-t.amount_cents)
+                FROM transactions t
+                WHERE t.transaction_type = 'expense'
+                  AND t.special_budget_id = snapshot.special_budget_id
+                  AND t.effective_month_key = snapshot.month_key
+                  ${excludedTransactionFilter}
+              ),
+              0
+            ) AS actualExpenseCents
+          FROM monthly_special_budget_snapshots snapshot
+          WHERE snapshot.month_key = ?
+          ORDER BY
+            snapshot.is_visible_snapshot DESC,
+            snapshot.name_snapshot COLLATE NOCASE ASC
+        `,
+      )
+      .all(...excludedTransactionIds, monthKey) as Array<{
+      id: number;
+      name: string;
+      iconName: string | null;
+      monthKey: string;
+      plannedAmountCents: number;
+      isActive: number;
+      actualExpenseCents: number;
+    }>;
+
+    return snapshotRows.map((row) => ({
+      id: row.id,
+      name: row.name,
+      iconName: row.iconName,
+      monthKey: row.monthKey,
+      plannedAmountCents: row.plannedAmountCents,
+      actualExpenseCents: row.actualExpenseCents,
+      remainingAmountCents:
+        row.plannedAmountCents - row.actualExpenseCents,
+      isActive: mapSqliteBoolean(row.isActive),
+    }));
+  }
+
   const rows = getDb()
     .prepare(
       `
@@ -765,11 +823,23 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
           destination.name AS destinationAccountName,
           t.counterparty_name AS counterpartyName,
           t.category_id AS categoryId,
-          c.name AS categoryName,
-          c.icon_name AS categoryIconName,
+          CASE
+            WHEN ms.budget_snapshot_created_at IS NOT NULL THEN category_snapshot.name_snapshot
+            ELSE c.name
+          END AS categoryName,
+          CASE
+            WHEN ms.budget_snapshot_created_at IS NOT NULL THEN category_snapshot.icon_name_snapshot
+            ELSE c.icon_name
+          END AS categoryIconName,
           t.special_budget_id AS specialBudgetId,
-          sb.name AS specialBudgetName,
-          sbp.icon_name AS specialBudgetIconName,
+          CASE
+            WHEN ms.budget_snapshot_created_at IS NOT NULL THEN special_snapshot.name_snapshot
+            ELSE sb.name
+          END AS specialBudgetName,
+          CASE
+            WHEN ms.budget_snapshot_created_at IS NOT NULL THEN special_snapshot.icon_name_snapshot
+            ELSE sbp.icon_name
+          END AS specialBudgetIconName,
           t.import_run_id AS importRunId
         FROM transactions t
         INNER JOIN accounts source ON source.id = t.account_id
@@ -778,6 +848,13 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
         LEFT JOIN categories c ON c.id = t.category_id
         LEFT JOIN special_budgets sb ON sb.id = t.special_budget_id
         LEFT JOIN special_budget_projects sbp ON sbp.id = sb.project_id
+        LEFT JOIN monthly_statuses ms ON ms.month_key = t.effective_month_key
+        LEFT JOIN monthly_category_snapshots category_snapshot
+          ON category_snapshot.month_key = t.effective_month_key
+         AND category_snapshot.category_id = t.category_id
+        LEFT JOIN monthly_special_budget_snapshots special_snapshot
+          ON special_snapshot.month_key = t.effective_month_key
+         AND special_snapshot.special_budget_id = t.special_budget_id
         WHERE t.effective_month_key = ?
         ORDER BY
           t.booking_date DESC,

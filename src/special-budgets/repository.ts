@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDb } from "@/src/db/client";
+import { ensureSpecialBudgetSnapshot } from "@/src/months/budget-snapshots";
 import { assertMonthIsOpen } from "@/src/months/status";
 
 export type SpecialBudgetProjectStatus = "active" | "archived";
@@ -627,7 +628,7 @@ export function createSpecialBudgetShares(input: {
       const projectId = ensureProjectForName(name, note, iconName);
 
       for (const share of normalizedShares) {
-        getDb()
+        const insertResult = getDb()
           .prepare(
             `
               INSERT INTO special_budgets (
@@ -643,6 +644,11 @@ export function createSpecialBudgetShares(input: {
             `,
           )
           .run(projectId, name, share.monthKey, share.plannedAmountCents, note);
+
+        ensureSpecialBudgetSnapshot(
+          share.monthKey,
+          Number(insertResult.lastInsertRowid),
+        );
       }
     });
 
@@ -747,6 +753,8 @@ export function updateSpecialBudgetProject(input: {
       if (result.changes === 0) {
         throw new Error("Monatsanteil der Sonderkategorie wurde nicht gefunden.");
       }
+
+      ensureSpecialBudgetSnapshot(existingShare.monthKey, share.id);
     }
   });
 
@@ -804,6 +812,10 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
 
     if (result.changes === 0) {
       throw new Error("Sonderkategorie wurde nicht gefunden.");
+    }
+
+    if (isActive) {
+      ensureSpecialBudgetSnapshot(existing.monthKey, specialBudgetId);
     }
 
     if (existing.projectId && !isActive) {
@@ -899,21 +911,28 @@ export function updateSpecialBudgetPlannedAmount(
 
   assertMonthIsOpen(existing.monthKey);
 
-  const result = getDb()
-    .prepare(
-      `
-        UPDATE special_budgets
-        SET
-          planned_amount_cents = ?,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `,
-    )
-    .run(normalizedPlannedAmountCents, specialBudgetId);
+  const db = getDb();
+  const updateBudget = db.transaction(() => {
+    const result = db
+      .prepare(
+        `
+          UPDATE special_budgets
+          SET
+            planned_amount_cents = ?,
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `,
+      )
+      .run(normalizedPlannedAmountCents, specialBudgetId);
 
-  if (result.changes === 0) {
-    throw new Error("Sonderkategorie wurde nicht gefunden.");
-  }
+    if (result.changes === 0) {
+      throw new Error("Sonderkategorie wurde nicht gefunden.");
+    }
+
+    ensureSpecialBudgetSnapshot(existing.monthKey, specialBudgetId);
+  });
+
+  updateBudget();
 }
 
 export function updateSpecialBudgetPlannedAmountForMonth(

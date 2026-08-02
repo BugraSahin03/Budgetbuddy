@@ -61,7 +61,6 @@ type CategoryVisual = {
   name: string;
   iconName: string | null;
   colorHex: string | null;
-  isSavings: boolean;
 };
 
 function categoryVisualById(
@@ -74,7 +73,6 @@ function categoryVisualById(
         name: category.name,
         iconName: category.iconName,
         colorHex: category.colorHex,
-        isSavings: category.isSavings,
       },
     ]),
   );
@@ -230,8 +228,8 @@ function TransactionVisualMark({
 
     return (
       <CategoryVisualMark
-        name={category?.name ?? transaction.categoryName ?? "Kategorie"}
-        iconName={category?.iconName}
+        name={transaction.categoryName ?? "Kategorie"}
+        iconName={transaction.categoryIconName}
         colorHex={category?.colorHex}
         className="h-10 w-10 text-xs"
         variant="neutral"
@@ -923,9 +921,8 @@ export default async function MonthDetailPage({
                       </div>
                       <div className="mt-5 grid gap-4 lg:grid-cols-2">
                         {month.dashboard.categoryRows.map((row) => {
-                          const category = categoryVisuals.get(row.categoryId);
                           const usageState = getCategoryUsageState(row);
-                          const isSavingsCategory = category?.isSavings === true;
+                          const isSavingsCategory = row.isSavingsCategory;
 
                           return (
                             <article
@@ -936,8 +933,8 @@ export default async function MonthDetailPage({
                               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="flex min-w-0 gap-3">
                                   <CategoryVisualMark
-                                    name={category?.name ?? row.categoryName}
-                                    iconName={category?.iconName}
+                                    name={row.categoryName}
+                                    iconName={row.categoryIconName}
                                     className="h-11 w-11 text-sm"
                                     variant="neutral"
                                   />
@@ -1134,12 +1131,6 @@ export default async function MonthDetailPage({
           <div className="mt-7 space-y-5">
             <MonthCategoryOverview
               categoryRows={month.dashboard.categoryRows}
-              categoryVisuals={Array.from(categoryVisuals, ([id, category]) => ({
-                id,
-                name: category.name,
-                iconName: category.iconName,
-                isSavings: category.isSavings,
-              }))}
               planRestAfterBudgetPotsCents={
                 month.dashboard.planSummary.planRestAfterBudgetPotsCents
               }

@@ -2,6 +2,7 @@ import "server-only";
 
 import { getDb } from "@/src/db/client";
 import { listFixedCosts } from "@/src/fixed-costs/repository";
+import { insertBudgetSnapshotRows } from "@/src/months/budget-snapshots";
 
 export type MonthStatusValue = "open" | "closed";
 
@@ -9,6 +10,7 @@ export type MonthStatus = {
   monthKey: string;
   status: MonthStatusValue;
   hasFixedCostSnapshot: boolean;
+  hasBudgetSnapshot: boolean;
   closedAt: string | null;
   reopenedAt: string | null;
 };
@@ -31,6 +33,7 @@ function mapMonthStatusRow(row: {
   monthKey: string;
   status: MonthStatusValue;
   fixedCostSnapshotCreatedAt: string | null;
+  budgetSnapshotCreatedAt: string | null;
   closedAt: string | null;
   reopenedAt: string | null;
 }): MonthStatus {
@@ -38,6 +41,7 @@ function mapMonthStatusRow(row: {
     monthKey: row.monthKey,
     status: row.status,
     hasFixedCostSnapshot: row.fixedCostSnapshotCreatedAt !== null,
+    hasBudgetSnapshot: row.budgetSnapshotCreatedAt !== null,
     closedAt: row.closedAt,
     reopenedAt: row.reopenedAt,
   };
@@ -52,6 +56,7 @@ export function getMonthStatus(monthKey: string): MonthStatus {
           month_key AS monthKey,
           status,
           fixed_cost_snapshot_created_at AS fixedCostSnapshotCreatedAt,
+          budget_snapshot_created_at AS budgetSnapshotCreatedAt,
           closed_at AS closedAt,
           reopened_at AS reopenedAt
         FROM monthly_statuses
@@ -63,6 +68,7 @@ export function getMonthStatus(monthKey: string): MonthStatus {
         monthKey: string;
         status: MonthStatusValue;
         fixedCostSnapshotCreatedAt: string | null;
+        budgetSnapshotCreatedAt: string | null;
         closedAt: string | null;
         reopenedAt: string | null;
       }
@@ -73,6 +79,7 @@ export function getMonthStatus(monthKey: string): MonthStatus {
       monthKey: normalizedMonthKey,
       status: "open",
       hasFixedCostSnapshot: false,
+      hasBudgetSnapshot: false,
       closedAt: null,
       reopenedAt: null,
     };
@@ -129,6 +136,7 @@ export function closeMonth(monthKey: string): MonthStatus {
   const close = db.transaction(() => {
     const beforeClose = getMonthStatus(normalizedMonthKey);
     const shouldCreateFixedCostSnapshot = !beforeClose.hasFixedCostSnapshot;
+    const shouldCreateBudgetSnapshot = !beforeClose.hasBudgetSnapshot;
 
     db.prepare(
       `
@@ -136,13 +144,22 @@ export function closeMonth(monthKey: string): MonthStatus {
           month_key,
           status,
           fixed_cost_snapshot_created_at,
+          budget_snapshot_created_at,
           closed_at,
           updated_at
         )
-        VALUES (?, 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+        VALUES (
+          ?,
+          'closed',
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP,
+          CURRENT_TIMESTAMP
+        )
         ON CONFLICT(month_key) DO UPDATE SET
           status = 'closed',
           fixed_cost_snapshot_created_at = COALESCE(monthly_statuses.fixed_cost_snapshot_created_at, CURRENT_TIMESTAMP),
+          budget_snapshot_created_at = COALESCE(monthly_statuses.budget_snapshot_created_at, CURRENT_TIMESTAMP),
           closed_at = CURRENT_TIMESTAMP,
           updated_at = CURRENT_TIMESTAMP
       `,
@@ -150,6 +167,10 @@ export function closeMonth(monthKey: string): MonthStatus {
 
     if (shouldCreateFixedCostSnapshot) {
       insertFixedCostSnapshotRows(normalizedMonthKey);
+    }
+
+    if (shouldCreateBudgetSnapshot) {
+      insertBudgetSnapshotRows(normalizedMonthKey);
     }
   });
 

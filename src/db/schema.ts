@@ -1068,6 +1068,126 @@ WHERE display_name_override IS NOT NULL;
 PRAGMA foreign_keys = ON;
 `;
 
+const fin125StatusColumnMigrationSql = `
+ALTER TABLE monthly_statuses
+ADD COLUMN budget_snapshot_created_at TEXT;
+`;
+
+const fin125MigrationSql = `
+${fin125StatusColumnMigrationSql}
+CREATE TABLE IF NOT EXISTS monthly_category_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  month_key TEXT NOT NULL REFERENCES monthly_statuses(month_key) ON DELETE CASCADE,
+  category_id INTEGER NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
+  name_snapshot TEXT NOT NULL CHECK (length(trim(name_snapshot)) > 0),
+  icon_name_snapshot TEXT,
+  is_active_snapshot INTEGER NOT NULL CHECK (is_active_snapshot IN (0, 1)),
+  is_visible_snapshot INTEGER NOT NULL DEFAULT 1 CHECK (is_visible_snapshot IN (0, 1)),
+  is_savings_snapshot INTEGER NOT NULL DEFAULT 0 CHECK (is_savings_snapshot IN (0, 1)),
+  budget_amount_cents_snapshot INTEGER CHECK (
+    budget_amount_cents_snapshot IS NULL OR budget_amount_cents_snapshot >= 0
+  ),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (month_key, category_id)
+);
+
+CREATE TABLE IF NOT EXISTS monthly_special_budget_snapshots (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  month_key TEXT NOT NULL REFERENCES monthly_statuses(month_key) ON DELETE CASCADE,
+  special_budget_id INTEGER NOT NULL REFERENCES special_budgets(id) ON DELETE RESTRICT,
+  project_id INTEGER REFERENCES special_budget_projects(id) ON DELETE RESTRICT,
+  name_snapshot TEXT NOT NULL CHECK (length(trim(name_snapshot)) > 0),
+  icon_name_snapshot TEXT,
+  planned_amount_cents_snapshot INTEGER NOT NULL CHECK (planned_amount_cents_snapshot >= 0),
+  is_active_snapshot INTEGER NOT NULL CHECK (is_active_snapshot IN (0, 1)),
+  is_visible_snapshot INTEGER NOT NULL DEFAULT 1 CHECK (is_visible_snapshot IN (0, 1)),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE (month_key, special_budget_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_monthly_category_snapshots_month_visible
+ON monthly_category_snapshots(month_key, is_visible_snapshot, category_id);
+
+CREATE INDEX IF NOT EXISTS idx_monthly_special_budget_snapshots_month_visible
+ON monthly_special_budget_snapshots(month_key, is_visible_snapshot, special_budget_id);
+
+CREATE INDEX IF NOT EXISTS idx_monthly_special_budget_snapshots_project
+ON monthly_special_budget_snapshots(project_id);
+
+INSERT INTO monthly_category_snapshots (
+  month_key,
+  category_id,
+  name_snapshot,
+  icon_name_snapshot,
+  is_active_snapshot,
+  is_visible_snapshot,
+  is_savings_snapshot,
+  budget_amount_cents_snapshot
+)
+SELECT
+  ms.month_key,
+  c.id,
+  c.name,
+  c.icon_name,
+  c.is_active,
+  1,
+  CASE WHEN c.system_key = 'savings' THEN 1 ELSE 0 END,
+  COALESCE(mb.budget_amount_cents, c.default_budget_amount_cents)
+FROM monthly_statuses ms
+CROSS JOIN categories c
+LEFT JOIN monthly_category_budgets mb
+  ON mb.month_key = ms.month_key
+ AND mb.category_id = c.id
+WHERE (ms.status = 'closed' OR ms.fixed_cost_snapshot_created_at IS NOT NULL)
+  AND (
+    c.is_active = 1
+    OR c.default_budget_amount_cents IS NOT NULL
+    OR mb.id IS NOT NULL
+    OR EXISTS (
+      SELECT 1
+      FROM transactions t
+      WHERE t.effective_month_key = ms.month_key
+        AND t.transaction_type = 'expense'
+        AND t.category_id = c.id
+    )
+  )
+ON CONFLICT(month_key, category_id) DO NOTHING;
+
+INSERT INTO monthly_special_budget_snapshots (
+  month_key,
+  special_budget_id,
+  project_id,
+  name_snapshot,
+  icon_name_snapshot,
+  planned_amount_cents_snapshot,
+  is_active_snapshot,
+  is_visible_snapshot
+)
+SELECT
+  ms.month_key,
+  sb.id,
+  sb.project_id,
+  sb.name,
+  sbp.icon_name,
+  sb.planned_amount_cents,
+  sb.is_active,
+  CASE
+    WHEN sb.is_active = 1 AND COALESCE(sbp.status, 'active') = 'active' THEN 1
+    ELSE 0
+  END
+FROM monthly_statuses ms
+INNER JOIN special_budgets sb ON sb.month_key = ms.month_key
+LEFT JOIN special_budget_projects sbp ON sbp.id = sb.project_id
+WHERE ms.status = 'closed' OR ms.fixed_cost_snapshot_created_at IS NOT NULL
+ON CONFLICT(month_key, special_budget_id) DO NOTHING;
+
+UPDATE monthly_statuses
+SET
+  budget_snapshot_created_at = COALESCE(budget_snapshot_created_at, CURRENT_TIMESTAMP),
+  updated_at = CURRENT_TIMESTAMP
+WHERE status = 'closed' OR fixed_cost_snapshot_created_at IS NOT NULL;
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -1159,6 +1279,11 @@ export const migrations: readonly Migration[] = [
     name: "FIN-120 add income deduction rules and transaction type",
     sql: fin120MigrationSql,
   },
+  {
+    id: "0019_fin_125",
+    name: "FIN-125 freeze category and special budget month context",
+    sql: fin125MigrationSql,
+  },
 ];
 
 type MigrationRow = {
@@ -1206,6 +1331,11 @@ export function applyMigrations(db: Database.Database): void {
       }
 
       if (
+        pendingMigration.id === "0019_fin_125" &&
+        tableColumnExists(db, "monthly_statuses", "budget_snapshot_created_at")
+      ) {
+        db.exec(pendingMigration.sql.replace(fin125StatusColumnMigrationSql, ""));
+      } else if (
         pendingMigration.id === "0013_fin_081" &&
         tableColumnExists(db, "fixed_costs", "sort_order")
       ) {

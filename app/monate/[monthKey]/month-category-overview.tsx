@@ -7,16 +7,11 @@ import {
   getHighestPlannedAmountCents,
 } from "@/src/months/category-usage";
 
-type CategoryVisual = {
-  id: number;
-  name: string;
-  iconName: string | null;
-  isSavings: boolean;
-};
-
 type CategoryOverviewRow = {
   categoryId: number;
   categoryName: string;
+  categoryIconName: string | null;
+  isSavingsCategory: boolean;
   budgetAmountCents: number | null;
   spentAmountCents: number;
 };
@@ -31,20 +26,15 @@ type SpecialBudgetOverviewRow = {
 
 type MonthCategoryOverviewProps = {
   categoryRows: CategoryOverviewRow[];
-  categoryVisuals: CategoryVisual[];
   planRestAfterBudgetPotsCents: number;
   specialBudgetRows: SpecialBudgetOverviewRow[];
 };
 
 export function MonthCategoryOverview({
   categoryRows,
-  categoryVisuals,
   planRestAfterBudgetPotsCents,
   specialBudgetRows,
 }: MonthCategoryOverviewProps) {
-  const categoryVisualById = new Map(
-    categoryVisuals.map((category) => [category.id, category]),
-  );
   const highestPlannedAmountCents = getHighestPlannedAmountCents([
     ...categoryRows.map((row) => row.budgetAmountCents),
     ...specialBudgetRows.map((row) => row.plannedAmountCents),
@@ -61,11 +51,10 @@ export function MonthCategoryOverview({
   return (
     <>
       {categoryRows.map((row) => {
-        const category = categoryVisualById.get(row.categoryId);
         const usageState = getCategoryUsageState(row);
         const hasPlannedBudget =
           row.budgetAmountCents !== null && row.budgetAmountCents > 0;
-        const isSavingsCategory = category?.isSavings === true;
+        const isSavingsCategory = row.isSavingsCategory;
         const planScale = getCategoryPlanScale({
           budgetAmountCents: row.budgetAmountCents,
           highestPlannedAmountCents,
@@ -81,8 +70,8 @@ export function MonthCategoryOverview({
           >
             <div className="flex items-center gap-4">
               <CategoryVisualMark
-                name={category?.name ?? row.categoryName}
-                iconName={category?.iconName}
+                name={row.categoryName}
+                iconName={row.categoryIconName}
                 className="h-12 w-12 text-sm"
                 variant="neutral"
               />

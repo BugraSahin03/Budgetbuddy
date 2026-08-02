@@ -1,6 +1,7 @@
 import "server-only";
 
 import { getDb } from "@/src/db/client";
+import { ensureAssignedBudgetSnapshot } from "@/src/months/budget-snapshots";
 import { assertMonthIsOpen } from "@/src/months/status";
 import { ensureProjectsForUnlinkedMonthlyShares } from "@/src/special-budgets/repository";
 
@@ -609,8 +610,9 @@ export function createManualTransaction(input: ManualTransactionInput): void {
   assertMonthIsOpen(shaped.effectiveMonthKey);
 
   try {
-    getDb()
-      .prepare(
+    const db = getDb();
+    const createTransaction = db.transaction(() => {
+      db.prepare(
         `
           INSERT INTO transactions (
             account_id,
@@ -628,8 +630,7 @@ export function createManualTransaction(input: ManualTransactionInput): void {
           )
           VALUES (?, ?, ?, ?, ?, ?, 'EUR', ?, 'manual', ?, ?, CURRENT_TIMESTAMP)
         `,
-      )
-      .run(
+      ).run(
         shaped.accountId,
         shaped.destinationAccountId,
         shaped.transactionType,
@@ -640,6 +641,15 @@ export function createManualTransaction(input: ManualTransactionInput): void {
         shaped.categoryId,
         shaped.specialBudgetId,
       );
+
+      ensureAssignedBudgetSnapshot({
+        monthKey: shaped.effectiveMonthKey,
+        categoryId: shaped.categoryId,
+        specialBudgetId: shaped.specialBudgetId,
+      });
+    });
+
+    createTransaction();
   } catch (error) {
     throw mapError(error);
   }
@@ -671,41 +681,52 @@ export function updateManualTransaction(
   assertMonthIsOpen(shaped.effectiveMonthKey);
 
   try {
-    const result = getDb()
-      .prepare(
-        `
-          UPDATE transactions
-          SET
-            account_id = ?,
-            destination_account_id = ?,
-            transaction_type = ?,
-            booking_date = ?,
-            effective_month_key = ?,
-            amount_cents = ?,
-            description = ?,
-            category_id = ?,
-            special_budget_id = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-            AND source_type = 'manual'
-        `,
-      )
-      .run(
-        shaped.accountId,
-        shaped.destinationAccountId,
-        shaped.transactionType,
-        shaped.bookingDate,
-        shaped.effectiveMonthKey,
-        shaped.amountCents,
-        shaped.description,
-        shaped.categoryId,
-        shaped.specialBudgetId,
-        id,
-      );
+    const db = getDb();
+    const updateTransaction = db.transaction(() => {
+      const result = db
+        .prepare(
+          `
+            UPDATE transactions
+            SET
+              account_id = ?,
+              destination_account_id = ?,
+              transaction_type = ?,
+              booking_date = ?,
+              effective_month_key = ?,
+              amount_cents = ?,
+              description = ?,
+              category_id = ?,
+              special_budget_id = ?,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+              AND source_type = 'manual'
+          `,
+        )
+        .run(
+          shaped.accountId,
+          shaped.destinationAccountId,
+          shaped.transactionType,
+          shaped.bookingDate,
+          shaped.effectiveMonthKey,
+          shaped.amountCents,
+          shaped.description,
+          shaped.categoryId,
+          shaped.specialBudgetId,
+          id,
+        );
 
-    if (result.changes === 0) {
-      throw new Error("Transaktion wurde nicht gefunden.");
-    }
+      if (result.changes === 0) {
+        throw new Error("Transaktion wurde nicht gefunden.");
+      }
+
+      ensureAssignedBudgetSnapshot({
+        monthKey: shaped.effectiveMonthKey,
+        categoryId: shaped.categoryId,
+        specialBudgetId: shaped.specialBudgetId,
+      });
+    });
+
+    updateTransaction();
   } catch (error) {
     throw mapError(error);
   }
@@ -843,29 +864,40 @@ export function updateExpenseAssignmentForMonth(
   });
 
   try {
-    const result = getDb()
-      .prepare(
-        `
-          UPDATE transactions
-          SET
-            category_id = ?,
-            special_budget_id = ?,
-            updated_at = CURRENT_TIMESTAMP
-          WHERE id = ?
-            AND effective_month_key = ?
-            AND transaction_type = 'expense'
-        `,
-      )
-      .run(
-        assignment.categoryId,
-        assignment.specialBudgetId,
-        id,
-        effectiveMonthKey,
-      );
+    const db = getDb();
+    const updateAssignment = db.transaction(() => {
+      const result = db
+        .prepare(
+          `
+            UPDATE transactions
+            SET
+              category_id = ?,
+              special_budget_id = ?,
+              updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+              AND effective_month_key = ?
+              AND transaction_type = 'expense'
+          `,
+        )
+        .run(
+          assignment.categoryId,
+          assignment.specialBudgetId,
+          id,
+          effectiveMonthKey,
+        );
 
-    if (result.changes === 0) {
-      throw new Error("Buchung konnte nicht aktualisiert werden.");
-    }
+      if (result.changes === 0) {
+        throw new Error("Buchung konnte nicht aktualisiert werden.");
+      }
+
+      ensureAssignedBudgetSnapshot({
+        monthKey: effectiveMonthKey,
+        categoryId: assignment.categoryId,
+        specialBudgetId: assignment.specialBudgetId,
+      });
+    });
+
+    updateAssignment();
   } catch (error) {
     throw mapError(error);
   }
