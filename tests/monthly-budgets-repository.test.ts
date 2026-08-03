@@ -17,6 +17,7 @@ const {
   setCategoryDefaultBudget,
   setMonthlyCategoryBudget,
 } = await import("@/src/budgets/repository");
+const { setCategoryActive } = await import("@/src/categories/repository");
 
 describe("monthly budget repository", () => {
   beforeEach(() => {
@@ -162,6 +163,88 @@ describe("monthly budget repository", () => {
     expect(effective?.defaultBudgetAmountCents).toBe(17500);
     expect(effective?.monthOverrideAmountCents).toBeNull();
     expect(effective?.budgetAmountCents).toBe(17500);
+  });
+
+  it("keeps inactive category plans dormant in open and future months", () => {
+    const freizeit = db
+      .prepare("SELECT id FROM categories WHERE name = 'Freizeit' LIMIT 1")
+      .get() as { id: number };
+
+    setCategoryActive(freizeit.id, false);
+
+    expect(
+      listMonthlyBudgetCategories("2026-07").some(
+        (row) => row.categoryId === freizeit.id,
+      ),
+    ).toBe(false);
+    expect(
+      listMonthlyBudgetCategories("2026-05").find(
+        (row) => row.categoryId === freizeit.id,
+      ),
+    ).toMatchObject({
+      isCategoryActive: false,
+      defaultBudgetAmountCents: null,
+      monthOverrideAmountCents: null,
+      budgetAmountCents: null,
+      spentAmountCents: 1200,
+      remainingAmountCents: null,
+    });
+    expect(
+      listMonthlyBudgetCategories("2026-06").find(
+        (row) => row.categoryId === freizeit.id,
+      ),
+    ).toMatchObject({
+      isCategoryActive: false,
+      defaultBudgetAmountCents: null,
+      monthOverrideAmountCents: null,
+      budgetAmountCents: null,
+      spentAmountCents: 2300,
+      remainingAmountCents: null,
+    });
+    expect(() =>
+      setMonthlyCategoryBudget("2026-07", freizeit.id, "75.00"),
+    ).toThrow("Kategorie ist deaktiviert");
+    expect(
+      db.prepare(
+        `
+          SELECT default_budget_amount_cents AS defaultBudgetAmountCents
+          FROM categories
+          WHERE id = ?
+        `,
+      ).get(freizeit.id),
+    ).toEqual({ defaultBudgetAmountCents: 8000 });
+    expect(
+      db.prepare(
+        `
+          SELECT budget_amount_cents AS budgetAmountCents
+          FROM monthly_category_budgets
+          WHERE month_key = '2026-06' AND category_id = ?
+        `,
+      ).get(freizeit.id),
+    ).toEqual({ budgetAmountCents: 5000 });
+
+    setCategoryActive(freizeit.id, true);
+
+    expect(
+      listMonthlyBudgetCategories("2026-07").find(
+        (row) => row.categoryId === freizeit.id,
+      ),
+    ).toMatchObject({
+      isCategoryActive: true,
+      defaultBudgetAmountCents: 8000,
+      monthOverrideAmountCents: null,
+      budgetAmountCents: 8000,
+    });
+    expect(
+      listMonthlyBudgetCategories("2026-06").find(
+        (row) => row.categoryId === freizeit.id,
+      ),
+    ).toMatchObject({
+      isCategoryActive: true,
+      defaultBudgetAmountCents: 8000,
+      monthOverrideAmountCents: 5000,
+      budgetAmountCents: 5000,
+    });
   });
 
   it("rejects invalid month input", () => {

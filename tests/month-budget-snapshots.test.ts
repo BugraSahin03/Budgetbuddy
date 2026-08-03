@@ -257,7 +257,7 @@ describe("FIN-125 month budget snapshots", () => {
     db.prepare(
       `
         UPDATE categories
-        SET is_active = 0, default_budget_amount_cents = NULL
+        SET is_active = 0
         WHERE id = ?
       `,
     ).run(categoryId);
@@ -282,6 +282,195 @@ describe("FIN-125 month budget snapshots", () => {
       openAfterArchive.specialBudgetRows.find((row) => row.id === augustSpecialBudgetId)
         ?.isActive,
     ).toBe(false);
+  });
+
+  it("freezes the live visibility of categories that were already inactive at first close", () => {
+    const monthKey = "2041-09";
+    const accountId = getId("SELECT id FROM accounts WHERE name = 'Sparkasse'");
+    const booklessCategoryId = getId(
+      "SELECT id FROM categories WHERE name = 'Einkauf'",
+    );
+    const bookedCategoryId = getId(
+      "SELECT id FROM categories WHERE name = 'Freizeit'",
+    );
+
+    db.prepare(
+      `
+        UPDATE categories
+        SET is_active = 0, default_budget_amount_cents = 30000
+        WHERE id = ?
+      `,
+    ).run(booklessCategoryId);
+    db.prepare(
+      `
+        UPDATE categories
+        SET is_active = 0, default_budget_amount_cents = 20000
+        WHERE id = ?
+      `,
+    ).run(bookedCategoryId);
+    db.prepare(
+      `
+        INSERT INTO monthly_category_budgets (
+          month_key, category_id, budget_amount_cents
+        ) VALUES (?, ?, 40000), (?, ?, 15000)
+      `,
+    ).run(
+      monthKey,
+      booklessCategoryId,
+      monthKey,
+      bookedCategoryId,
+    );
+    insertExpense({
+      accountId,
+      monthKey,
+      description: "Historisch zugeordnet",
+      amountCents: -2500,
+      categoryId: bookedCategoryId,
+    });
+
+    closeMonth(monthKey);
+
+    expect(
+      db.prepare(
+        `
+          SELECT COUNT(*) AS count
+          FROM monthly_category_snapshots
+          WHERE month_key = ? AND category_id = ?
+        `,
+      ).get(monthKey, booklessCategoryId),
+    ).toEqual({ count: 0 });
+    expect(
+      getMonthSnapshot(monthKey).categoryRows.find(
+        (row) => row.categoryId === bookedCategoryId,
+      ),
+    ).toMatchObject({
+      isCategoryActive: false,
+      budgetAmountCents: null,
+      spentAmountCents: 2500,
+      remainingAmountCents: null,
+    });
+
+    reopenMonth(monthKey);
+    db.prepare(
+      `
+        UPDATE categories
+        SET is_active = 1, name = 'Heute Freizeit', default_budget_amount_cents = 99000
+        WHERE id = ?
+      `,
+    ).run(bookedCategoryId);
+
+    expect(() =>
+      setMonthlyCategoryBudget(monthKey, bookedCategoryId, "99.00"),
+    ).toThrow("im vorhandenen Snapshot eingefroren");
+    expect(
+      db.prepare(
+        `
+          SELECT budget_amount_cents AS budgetAmountCents
+          FROM monthly_category_budgets
+          WHERE month_key = ? AND category_id = ?
+        `,
+      ).get(monthKey, bookedCategoryId),
+    ).toEqual({ budgetAmountCents: 15000 });
+
+    expect(
+      getMonthSnapshot(monthKey).categoryRows.find(
+        (row) => row.categoryId === bookedCategoryId,
+      ),
+    ).toMatchObject({
+      categoryName: "Freizeit",
+      isCategoryActive: false,
+      budgetAmountCents: null,
+      spentAmountCents: 2500,
+    });
+  });
+
+  it("ignores an empty first use before adding one missing category snapshot", () => {
+    const monthKey = "2041-10";
+
+    closeMonth(monthKey);
+    reopenMonth(monthKey);
+
+    const categoryId = Number(
+      db.prepare(
+        `
+          INSERT INTO categories (
+            name, color_hex, icon_name, is_default, is_active, default_budget_amount_cents
+          ) VALUES ('Neue Plankorrektur', '#123456', 'NP', 0, 1, NULL)
+        `,
+      ).run().lastInsertRowid,
+    );
+
+    setMonthlyCategoryBudget(monthKey, categoryId, "");
+
+    expect(
+      db.prepare(
+        `
+          SELECT COUNT(*) AS count
+          FROM monthly_category_budgets
+          WHERE month_key = ? AND category_id = ?
+        `,
+      ).get(monthKey, categoryId),
+    ).toEqual({ count: 0 });
+    expect(
+      db.prepare(
+        `
+          SELECT COUNT(*) AS count
+          FROM monthly_category_snapshots
+          WHERE month_key = ? AND category_id = ?
+        `,
+      ).get(monthKey, categoryId),
+    ).toEqual({ count: 0 });
+    expect(
+      db.prepare(
+        `
+          SELECT default_budget_amount_cents AS defaultBudgetAmountCents
+          FROM categories
+          WHERE id = ?
+        `,
+      ).get(categoryId),
+    ).toEqual({ defaultBudgetAmountCents: null });
+
+    setMonthlyCategoryBudget(monthKey, categoryId, "44.00");
+
+    expect(
+      db.prepare(
+        `
+          SELECT budget_amount_cents AS budgetAmountCents
+          FROM monthly_category_budgets
+          WHERE month_key = ? AND category_id = ?
+        `,
+      ).get(monthKey, categoryId),
+    ).toEqual({ budgetAmountCents: 4400 });
+    expect(
+      db.prepare(
+        `
+          SELECT budget_amount_cents_snapshot AS budgetAmountCents
+          FROM monthly_category_snapshots
+          WHERE month_key = ? AND category_id = ?
+        `,
+      ).get(monthKey, categoryId),
+    ).toEqual({ budgetAmountCents: 4400 });
+
+    expect(() =>
+      setMonthlyCategoryBudget(monthKey, categoryId, "55.00"),
+    ).toThrow("im vorhandenen Snapshot eingefroren");
+    expect(
+      db.prepare(
+        `
+          SELECT budget_amount_cents AS budgetAmountCents
+          FROM monthly_category_budgets
+          WHERE month_key = ? AND category_id = ?
+        `,
+      ).get(monthKey, categoryId),
+    ).toEqual({ budgetAmountCents: 4400 });
+    expect(
+      getMonthSnapshot(monthKey).categoryRows.find(
+        (row) => row.categoryId === categoryId,
+      ),
+    ).toMatchObject({
+      categoryName: "Neue Plankorrektur",
+      budgetAmountCents: 4400,
+    });
   });
 
   it("adds only missing snapshots for conscious corrections after reopening", () => {
@@ -420,8 +609,20 @@ describe("FIN-125 month budget snapshots", () => {
     db.prepare(
       "UPDATE special_budgets SET name = 'Projekt Spaeter' WHERE id = ?",
     ).run(newSpecialBudgetId);
-    setMonthlyCategoryBudget(monthKey, newCategoryId, "170.00");
+    expect(() =>
+      setMonthlyCategoryBudget(monthKey, newCategoryId, "170.00"),
+    ).toThrow("im vorhandenen Snapshot eingefroren");
     updateSpecialBudgetPlannedAmount(newSpecialBudgetId, 21000);
+
+    expect(
+      db.prepare(
+        `
+          SELECT COUNT(*) AS count
+          FROM monthly_category_budgets
+          WHERE month_key = ? AND category_id = ?
+        `,
+      ).get(monthKey, newCategoryId),
+    ).toEqual({ count: 0 });
 
     const reopenedSnapshot = getMonthSnapshot(monthKey);
 

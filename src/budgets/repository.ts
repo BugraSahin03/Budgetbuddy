@@ -65,13 +65,53 @@ function mapSqliteBoolean(value: number): boolean {
   return value === 1;
 }
 
-function assertCategoryExists(categoryId: number): void {
+function getCategoryActivity(categoryId: number): { isActive: number } {
   const category = getDb()
-    .prepare("SELECT id FROM categories WHERE id = ? LIMIT 1")
-    .get(categoryId) as { id: number } | undefined;
+    .prepare("SELECT is_active AS isActive FROM categories WHERE id = ? LIMIT 1")
+    .get(categoryId) as { isActive: number } | undefined;
 
   if (!category) {
     throw new Error("Kategorie wurde nicht gefunden.");
+  }
+
+  return category;
+}
+
+function assertCategoryExists(categoryId: number): void {
+  getCategoryActivity(categoryId);
+}
+
+function assertCategoryIsActive(categoryId: number): void {
+  if (getCategoryActivity(categoryId).isActive !== 1) {
+    throw new Error(
+      "Kategorie ist deaktiviert. Reaktiviere sie zuerst im Kategoriearchiv.",
+    );
+  }
+}
+
+function assertCategoryBudgetSnapshotIsMissing(
+  monthKey: string,
+  categoryId: number,
+): void {
+  const existingSnapshot = getDb()
+    .prepare(
+      `
+        SELECT snapshot.id
+        FROM monthly_category_snapshots snapshot
+        INNER JOIN monthly_statuses status
+          ON status.month_key = snapshot.month_key
+        WHERE snapshot.month_key = ?
+          AND snapshot.category_id = ?
+          AND status.budget_snapshot_created_at IS NOT NULL
+        LIMIT 1
+      `,
+    )
+    .get(monthKey, categoryId) as { id: number } | undefined;
+
+  if (existingSnapshot) {
+    throw new Error(
+      "Monatsbudget ist im vorhandenen Snapshot eingefroren und kann nicht geändert werden.",
+    );
   }
 }
 
@@ -213,9 +253,19 @@ export function listMonthlyBudgetCategories(
           c.icon_name AS categoryIconName,
           c.is_active AS isCategoryActive,
           CASE WHEN c.system_key = 'savings' THEN 1 ELSE 0 END AS isSavingsCategory,
-          c.default_budget_amount_cents AS defaultBudgetAmountCents,
-          mb.budget_amount_cents AS monthOverrideAmountCents,
-          COALESCE(mb.budget_amount_cents, c.default_budget_amount_cents) AS budgetAmountCents,
+          CASE
+            WHEN c.is_active = 1 THEN c.default_budget_amount_cents
+            ELSE NULL
+          END AS defaultBudgetAmountCents,
+          CASE
+            WHEN c.is_active = 1 THEN mb.budget_amount_cents
+            ELSE NULL
+          END AS monthOverrideAmountCents,
+          CASE
+            WHEN c.is_active = 1
+              THEN COALESCE(mb.budget_amount_cents, c.default_budget_amount_cents)
+            ELSE NULL
+          END AS budgetAmountCents,
           COALESCE((
             SELECT SUM(-t.amount_cents)
             FROM transactions t
@@ -229,8 +279,6 @@ export function listMonthlyBudgetCategories(
           ON mb.category_id = c.id
          AND mb.month_key = ?
         WHERE c.is_active = 1
-           OR c.default_budget_amount_cents IS NOT NULL
-           OR mb.id IS NOT NULL
            OR EXISTS (
              SELECT 1
              FROM transactions historical_transaction
@@ -300,25 +348,25 @@ export function setMonthlyCategoryBudget(
   const normalizedAmountCents = normalizeBudgetAmountCents(budgetAmount);
 
   assertMonthIsOpen(normalizedMonthKey);
-  assertCategoryExists(categoryId);
+  assertCategoryIsActive(categoryId);
   assertCategoryCanHavePlannedBudget(categoryId, normalizedAmountCents);
 
-  if (normalizedAmountCents === null) {
-    getDb()
-      .prepare(
+  const db = getDb();
+  const updateBudget = db.transaction(() => {
+    assertCategoryBudgetSnapshotIsMissing(normalizedMonthKey, categoryId);
+
+    if (normalizedAmountCents === null) {
+      db.prepare(
         `
           DELETE FROM monthly_category_budgets
           WHERE month_key = ?
             AND category_id = ?
         `,
-      )
-      .run(normalizedMonthKey, categoryId);
+      ).run(normalizedMonthKey, categoryId);
 
-    return;
-  }
+      return;
+    }
 
-  const db = getDb();
-  const updateBudget = db.transaction(() => {
     db.prepare(
       `
           INSERT INTO monthly_category_budgets (

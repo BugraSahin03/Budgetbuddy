@@ -2401,6 +2401,20 @@ Auswirkung:
 - Spaetere Umbenennung, Iconpflege, Deaktivierung, Vorhabenarchivierung oder
   Standardbudget-Aenderung schreibt historische Monatsansichten nicht mehr
   optisch oder fachlich um.
+- Deaktivierte Kategorien behalten ihre gespeicherten Defaults und
+  Monats-Overrides fuer eine spaetere Reaktivierung. In offenen und kuenftigen
+  Monaten ohne Budget-Snapshot sind diese Werte dormant: Buchungslose
+  Kategorien werden ausgeblendet, Kategorien mit vorhandenen Buchungen bleiben
+  als Ist-Kontext ohne Planbeitrag sichtbar und koennen dort keinen neuen
+  Monatswert erhalten.
+- In wieder geoeffneten Monaten lehnt das Repository Monatsbudget-Overrides
+  fuer bereits vorhandene Snapshot-Zeilen ab, weil sie sonst erfolgreich in
+  Live-Daten geschrieben, aber im insert-only Snapshot unsichtbar blieben. Nur
+  eine erstmals fehlende Kategorie darf ihren Snapshot atomar ergaenzen.
+- Beim regulaeren ersten Abschluss friert ein dormanter Default oder Override
+  eine deaktivierte, buchungslose Kategorie nicht neu ein. Der einmalige
+  Legacy-Backfill bleibt bewusst konservativ, weil fuer alte Abschlussmonate
+  keine verlaessliche historische Aktivitaetsquelle existiert.
 - Planrest, Kategorie-/Sonderbudget-Planwerte und historischer
   Buchungskontext bleiben stabil; bewusste Buchungskorrekturen aktualisieren
   weiterhin die Ist-Werte.

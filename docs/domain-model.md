@@ -118,6 +118,12 @@ FIN-124 trennt die globale Kategoriepflege von monatsbezogenen Schreibpfaden:
 - Deaktivierte Kategorien verschwinden aus aktiver Pflege und neuen
   Zuordnungen, bleiben im Kategoriearchiv reaktivierbar und in Monaten mit
   eingefrorenem Planwert oder zugeordneten Buchungen sichtbar.
+- In offenen Monaten ohne Budget-Snapshot bleiben gespeicherte Standardwerte
+  und Monats-Overrides beim Deaktivieren unveraendert, sind aber solange
+  dormant: Ohne Buchung wird die Kategorie ausgeblendet; mit Buchung bleibt nur
+  ihr Ist-Kontext ohne Planbeitrag und ohne editierbaren Monatswert sichtbar.
+  Reaktivieren setzt die gespeicherten Planwerte fuer solche offenen und
+  kuenftigen Monate wieder in Kraft.
 - Historische Namen, Icons, Sichtbarkeit und effektive Planwerte werden beim
   ersten Monatsabschluss durch FIN-125 eingefroren. FIN-124 selbst mutiert
   diese Abschlussdaten nicht.
@@ -294,10 +300,17 @@ Kategorien- und Sonderbudget-Snapshot (FIN-125):
   Aenderung eines Standardbudgets veraendern einen vorhandenen Snapshot nicht.
   Offene Monate ohne Abschluss-Snapshot lesen weiterhin die aktuellen
   Stammdaten.
+- Beim ersten Abschluss werden bereits deaktivierte Kategorien nur dann neu
+  eingefroren, wenn der Monat eine zugeordnete Buchung enthaelt. Gespeicherte,
+  aber dormante Defaults oder Overrides erzeugen allein keine Sichtbarkeit und
+  keinen historischen Planbeitrag. Der konservative Legacy-Backfill bestehender
+  Abschlussmonate bleibt davon unberuehrt.
 - Wieder-Oeffnen behaelt den Snapshot. Wird dabei erstmals eine weitere
   Kategorie oder ein weiterer Sonderbudget-Anteil bewusst verwendet, wird
   nur der fehlende Snapshot-Eintrag atomar ergaenzt; vorhandene Eintraege
-  werden nicht neu berechnet oder ueberschrieben.
+  werden nicht neu berechnet oder ueberschrieben. Ein Monatsbudget-Override
+  darf deshalb nur einen noch fehlenden Kategorie-Snapshot einmalig ergaenzen;
+  fuer eine vorhandene Snapshot-Zeile wird der Write abgelehnt.
 - Die Migration `0019_fin_125` uebernimmt fuer bereits geschlossene oder schon
   wieder geoeffnete Altdaten mangels historischer Metadatenquelle einmalig den
   zum Migrationszeitpunkt aktuellen Stand. Buchungen, Betraege und

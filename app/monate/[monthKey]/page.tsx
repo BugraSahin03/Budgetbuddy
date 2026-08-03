@@ -567,6 +567,11 @@ export default async function MonthDetailPage({
   const month = getMonthDetail(monthKey);
   const allCategories = listCategories();
   const categoryVisuals = categoryVisualById(allCategories);
+  const activeCategoryIds = new Set(
+    allCategories
+      .filter((category) => category.isActive)
+      .map((category) => category.id),
+  );
   const visualCategoryOptions = allCategories
     .filter((category) => category.isActive)
     .map((category) => ({
@@ -923,6 +928,10 @@ export default async function MonthDetailPage({
                         {month.dashboard.categoryRows.map((row) => {
                           const usageState = getCategoryUsageState(row);
                           const isSavingsCategory = row.isSavingsCategory;
+                          const canEditCategoryBudget =
+                            !month.status.hasBudgetSnapshot &&
+                            row.isCategoryActive &&
+                            activeCategoryIds.has(row.categoryId);
 
                           return (
                             <article
@@ -958,41 +967,49 @@ export default async function MonthDetailPage({
                                 </span>
                               </div>
                               {!isSavingsCategory ? (
-                                <form
-                                  action={setMonthlyBudgetOverrideAction}
-                                  className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
-                                >
-                                  <input
-                                    type="hidden"
-                                    name="monthKey"
-                                    value={month.monthKey}
-                                  />
-                                  <input
-                                    type="hidden"
-                                    name="categoryId"
-                                    value={row.categoryId}
-                                  />
-                                  <input
-                                    name="budgetAmount"
-                                    inputMode="decimal"
-                                    defaultValue={toInputAmount(
-                                      row.monthOverrideAmountCents ??
-                                        row.budgetAmountCents,
-                                    )}
-                                    placeholder={
-                                      row.defaultBudgetAmountCents === null
-                                        ? "z. B. 250.00"
-                                        : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`
-                                    }
-                                    className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
-                                  />
-                                  <button
-                                    type="submit"
-                                    className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                                canEditCategoryBudget ? (
+                                  <form
+                                    action={setMonthlyBudgetOverrideAction}
+                                    className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
                                   >
-                                    Speichern
-                                  </button>
-                                </form>
+                                    <input
+                                      type="hidden"
+                                      name="monthKey"
+                                      value={month.monthKey}
+                                    />
+                                    <input
+                                      type="hidden"
+                                      name="categoryId"
+                                      value={row.categoryId}
+                                    />
+                                    <input
+                                      name="budgetAmount"
+                                      inputMode="decimal"
+                                      defaultValue={toInputAmount(
+                                        row.monthOverrideAmountCents ??
+                                          row.budgetAmountCents,
+                                      )}
+                                      placeholder={
+                                        row.defaultBudgetAmountCents === null
+                                          ? "z. B. 250.00"
+                                          : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`
+                                      }
+                                      className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
+                                    />
+                                    <button
+                                      type="submit"
+                                      className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                                    >
+                                      Speichern
+                                    </button>
+                                  </form>
+                                ) : (
+                                  <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-bold leading-5 text-slate-600">
+                                    {month.status.hasBudgetSnapshot
+                                      ? "Historischer Monatsstand · vorhandene Planwerte sind eingefroren."
+                                      : "In diesem Monatsstand deaktivierte Kategorie · bestehende Buchungen bleiben sichtbar, ein Monatsbudget ist hier nicht editierbar."}
+                                  </p>
+                                )
                               ) : (
                                 <p className="mt-5 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs font-bold leading-5 text-emerald-800">
                                   Sparen entsteht durch echte Buchungen und bekommt keinen Planbetrag.

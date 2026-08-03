@@ -55,14 +55,16 @@ export function insertBudgetSnapshotRows(monthKey: string): void {
         c.is_active,
         1,
         CASE WHEN c.system_key = 'savings' THEN 1 ELSE 0 END,
-        COALESCE(mb.budget_amount_cents, c.default_budget_amount_cents)
+        CASE
+          WHEN c.is_active = 1
+            THEN COALESCE(mb.budget_amount_cents, c.default_budget_amount_cents)
+          ELSE NULL
+        END
       FROM categories c
       LEFT JOIN monthly_category_budgets mb
         ON mb.month_key = ?
        AND mb.category_id = c.id
       WHERE c.is_active = 1
-         OR c.default_budget_amount_cents IS NOT NULL
-         OR mb.id IS NOT NULL
          OR EXISTS (
            SELECT 1
            FROM transactions t
