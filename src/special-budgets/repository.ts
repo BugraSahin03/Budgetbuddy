@@ -125,6 +125,32 @@ function assertSpecialBudgetBelongsToMonth(
   }
 }
 
+function assertSpecialBudgetSnapshotIsMissing(
+  monthKey: string,
+  specialBudgetId: number,
+): void {
+  const existingSnapshot = getDb()
+    .prepare(
+      `
+        SELECT snapshot.id
+        FROM monthly_special_budget_snapshots snapshot
+        INNER JOIN monthly_statuses status
+          ON status.month_key = snapshot.month_key
+        WHERE snapshot.month_key = ?
+          AND snapshot.special_budget_id = ?
+          AND status.budget_snapshot_created_at IS NOT NULL
+        LIMIT 1
+      `,
+    )
+    .get(monthKey, specialBudgetId) as { id: number } | undefined;
+
+  if (existingSnapshot) {
+    throw new Error(
+      "Sonderkategorie ist im vorhandenen Monats-Snapshot eingefroren und kann nicht geändert werden.",
+    );
+  }
+}
+
 function normalizePlannedAmountCents(plannedAmountCents: number): number {
   if (!Number.isInteger(plannedAmountCents) || plannedAmountCents < 0) {
     throw new Error("Geplanter Betrag muss 0 oder größer sein.");
@@ -675,15 +701,12 @@ export function updateSpecialBudgetProject(input: {
   }
 
   const iconName = normalizeIconName(input.iconName);
-  const normalizedShares = input.shares.map((share) => {
+  const requestedShares = input.shares.map((share) => {
     if (!Number.isInteger(share.id) || share.id <= 0) {
       throw new Error("Monatsanteil der Sonderkategorie ist ungültig.");
     }
 
-    return {
-      id: share.id,
-      plannedAmountCents: normalizePlannedAmountCents(share.plannedAmountCents),
-    };
+    return share;
   });
 
   const transaction = getDb().transaction(() => {
@@ -702,6 +725,57 @@ export function updateSpecialBudgetProject(input: {
       throw new Error("Sonderkategorie wurde nicht gefunden.");
     }
 
+    const updateShare = getDb().prepare(
+      `
+        UPDATE special_budgets
+        SET
+          planned_amount_cents = ?,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = ?
+          AND project_id = ?
+      `,
+    );
+
+    const existingShares = requestedShares.map((share) => {
+      const existingShare = getDb()
+        .prepare(
+          `
+            SELECT
+              month_key AS monthKey,
+              planned_amount_cents AS plannedAmountCents
+            FROM special_budgets
+            WHERE id = ?
+              AND project_id = ?
+            LIMIT 1
+          `,
+        )
+        .get(share.id, input.projectId) as
+        | { monthKey: string; plannedAmountCents: number }
+        | undefined;
+
+      if (!existingShare) {
+        throw new Error("Monatsanteil der Sonderkategorie wurde nicht gefunden.");
+      }
+
+      const isAmountChanged =
+        existingShare.plannedAmountCents !== share.plannedAmountCents;
+      const nextPlannedAmountCents = isAmountChanged
+        ? normalizePlannedAmountCents(share.plannedAmountCents)
+        : existingShare.plannedAmountCents;
+
+      if (isAmountChanged) {
+        assertMonthIsOpen(existingShare.monthKey);
+        assertSpecialBudgetSnapshotIsMissing(existingShare.monthKey, share.id);
+      }
+
+      return {
+        id: share.id,
+        monthKey: existingShare.monthKey,
+        currentPlannedAmountCents: existingShare.plannedAmountCents,
+        nextPlannedAmountCents,
+      };
+    });
+
     getDb()
       .prepare(
         `
@@ -714,38 +788,13 @@ export function updateSpecialBudgetProject(input: {
       )
       .run(iconName, input.projectId);
 
-    const updateShare = getDb().prepare(
-      `
-        UPDATE special_budgets
-        SET
-          planned_amount_cents = ?,
-          updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-          AND project_id = ?
-      `,
-    );
-
-    for (const share of normalizedShares) {
-      const existingShare = getDb()
-        .prepare(
-          `
-            SELECT month_key AS monthKey
-            FROM special_budgets
-            WHERE id = ?
-              AND project_id = ?
-            LIMIT 1
-          `,
-        )
-        .get(share.id, input.projectId) as { monthKey: string } | undefined;
-
-      if (!existingShare) {
-        throw new Error("Monatsanteil der Sonderkategorie wurde nicht gefunden.");
+    for (const share of existingShares) {
+      if (share.currentPlannedAmountCents === share.nextPlannedAmountCents) {
+        continue;
       }
 
-      assertMonthIsOpen(existingShare.monthKey);
-
       const result = updateShare.run(
-        share.plannedAmountCents,
+        share.nextPlannedAmountCents,
         share.id,
         input.projectId,
       );
@@ -754,7 +803,7 @@ export function updateSpecialBudgetProject(input: {
         throw new Error("Monatsanteil der Sonderkategorie wurde nicht gefunden.");
       }
 
-      ensureSpecialBudgetSnapshot(existingShare.monthKey, share.id);
+      ensureSpecialBudgetSnapshot(share.monthKey, share.id);
     }
   });
 
@@ -798,6 +847,8 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
   assertMonthIsOpen(existing.monthKey);
 
   const transaction = getDb().transaction(() => {
+    assertSpecialBudgetSnapshotIsMissing(existing.monthKey, specialBudgetId);
+
     const result = getDb()
       .prepare(
         `
@@ -814,9 +865,7 @@ export function setSpecialBudgetActive(specialBudgetId: number, isActive: boolea
       throw new Error("Sonderkategorie wurde nicht gefunden.");
     }
 
-    if (isActive) {
-      ensureSpecialBudgetSnapshot(existing.monthKey, specialBudgetId);
-    }
+    ensureSpecialBudgetSnapshot(existing.monthKey, specialBudgetId);
 
     if (existing.projectId && !isActive) {
       updateProjectStatusFromMonthlyShares(existing.projectId);
@@ -913,6 +962,8 @@ export function updateSpecialBudgetPlannedAmount(
 
   const db = getDb();
   const updateBudget = db.transaction(() => {
+    assertSpecialBudgetSnapshotIsMissing(existing.monthKey, specialBudgetId);
+
     const result = db
       .prepare(
         `

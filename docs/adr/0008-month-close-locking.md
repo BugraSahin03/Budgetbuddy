@@ -38,7 +38,14 @@ dynamisch ableitbar.
 
 Offene Ausgaben-Zuordnungen blockieren den Abschluss nicht hart. Die Monatsseite zeigt sie als Warnhinweis, damit Nutzer bewusst entscheiden koennen.
 
-Das Wieder-Oeffnen setzt den Monatsstatus zurueck auf `open` und erlaubt die gesperrten Schreiboperationen wieder. Vorhandene Fixkosten- und Kategorien-/Sonderbudget-Snapshots bleiben erhalten und werden nicht automatisch neu berechnet. Eine erstmals verwendete Kategorie oder ein erstmals verwendeter Sonderbudget-Anteil ergaenzt nur den fehlenden Snapshot-Eintrag; vorhandene Eintraege werden nicht ueberschrieben.
+Das Wieder-Oeffnen setzt den Monatsstatus zurueck auf `open` und erlaubt
+Buchungen, Zuordnungen und Importe wieder. Vorhandene Fixkosten- und
+Kategorien-/Sonderbudget-Snapshots bleiben erhalten und werden nicht
+automatisch neu berechnet. Deshalb bleiben vorhandene Kategorie-Planwerte
+sowie Betrag und Aktivstatus vorhandener Sonderbudget-Eintraege eingefroren.
+Eine erstmals verwendete Kategorie oder ein erstmals verwendeter
+Sonderbudget-Anteil ergaenzt nur den fehlenden Snapshot-Eintrag; vorhandene
+Eintraege werden nicht ueberschrieben.
 
 ## Begruendung
 

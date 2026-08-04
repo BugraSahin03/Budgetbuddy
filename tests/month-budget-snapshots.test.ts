@@ -17,7 +17,9 @@ const { closeMonth, getMonthSnapshot, getMonthStatus, reopenMonth } = await impo
 const { setMonthlyCategoryBudget } = await import("@/src/budgets/repository");
 const {
   createSpecialBudget,
+  setSpecialBudgetActive,
   updateSpecialBudgetPlannedAmount,
+  updateSpecialBudgetProject,
 } = await import("@/src/special-budgets/repository");
 const {
   createManualTransaction,
@@ -282,6 +284,278 @@ describe("FIN-125 month budget snapshots", () => {
       openAfterArchive.specialBudgetRows.find((row) => row.id === augustSpecialBudgetId)
         ?.isActive,
     ).toBe(false);
+  });
+
+  it("blocks closed and reopened amount changes for an existing special budget snapshot without mutating either source", () => {
+    const monthKey = "2041-09";
+
+    createSpecialBudget({
+      name: "Snapshot Reisebetrag",
+      monthKey,
+      plannedAmountCents: 15000,
+      note: "",
+    });
+    const specialBudgetId = getId(
+      "SELECT id FROM special_budgets WHERE name = 'Snapshot Reisebetrag'",
+    );
+
+    updateSpecialBudgetPlannedAmount(specialBudgetId, 16000);
+    expect(
+      db.prepare(
+        "SELECT planned_amount_cents AS amount FROM special_budgets WHERE id = ?",
+      ).get(specialBudgetId),
+    ).toEqual({ amount: 16000 });
+    expect(
+      db.prepare(
+        "SELECT COUNT(*) AS count FROM monthly_special_budget_snapshots WHERE month_key = ? AND special_budget_id = ?",
+      ).get(monthKey, specialBudgetId),
+    ).toEqual({ count: 0 });
+
+    closeMonth(monthKey);
+    expect(() =>
+      updateSpecialBudgetPlannedAmount(specialBudgetId, 17000),
+    ).toThrow("Monat ist abgeschlossen");
+
+    reopenMonth(monthKey);
+    expect(() =>
+      updateSpecialBudgetPlannedAmount(specialBudgetId, 18000),
+    ).toThrow("im vorhandenen Monats-Snapshot eingefroren");
+
+    expect(
+      db.prepare(
+        "SELECT planned_amount_cents AS amount FROM special_budgets WHERE id = ?",
+      ).get(specialBudgetId),
+    ).toEqual({ amount: 16000 });
+    expect(
+      db.prepare(
+        `
+          SELECT planned_amount_cents_snapshot AS amount
+          FROM monthly_special_budget_snapshots
+          WHERE month_key = ? AND special_budget_id = ?
+        `,
+      ).get(monthKey, specialBudgetId),
+    ).toEqual({ amount: 16000 });
+  });
+
+  it("blocks state changes for an existing special budget snapshot without changing its project", () => {
+    const monthKey = "2041-10";
+
+    createSpecialBudget({
+      name: "Snapshot Reisestatus",
+      monthKey,
+      plannedAmountCents: 22000,
+      note: "",
+    });
+    const specialBudgetId = getId(
+      "SELECT id FROM special_budgets WHERE name = 'Snapshot Reisestatus'",
+    );
+    const projectId = getId(
+      "SELECT project_id AS id FROM special_budgets WHERE id = ?",
+      specialBudgetId,
+    );
+
+    closeMonth(monthKey);
+    reopenMonth(monthKey);
+
+    expect(() => setSpecialBudgetActive(specialBudgetId, false)).toThrow(
+      "im vorhandenen Monats-Snapshot eingefroren",
+    );
+    expect(
+      db.prepare(
+        "SELECT is_active AS isActive FROM special_budgets WHERE id = ?",
+      ).get(specialBudgetId),
+    ).toEqual({ isActive: 1 });
+    expect(
+      db.prepare(
+        "SELECT status FROM special_budget_projects WHERE id = ?",
+      ).get(projectId),
+    ).toEqual({ status: "active" });
+    expect(
+      db.prepare(
+        `
+          SELECT
+            is_active_snapshot AS isActive,
+            is_visible_snapshot AS isVisible
+          FROM monthly_special_budget_snapshots
+          WHERE month_key = ? AND special_budget_id = ?
+        `,
+      ).get(monthKey, specialBudgetId),
+    ).toEqual({ isActive: 1, isVisible: 1 });
+  });
+
+  it("adds a missing special budget snapshot exactly once on first use and freezes later changes", () => {
+    const monthKey = "2041-11";
+
+    closeMonth(monthKey);
+    reopenMonth(monthKey);
+
+    const projectId = Number(
+      db.prepare(
+        `
+          INSERT INTO special_budget_projects (name, status, icon_name)
+          VALUES ('Neue Snapshot-Reise', 'active', 'NR')
+        `,
+      ).run().lastInsertRowid,
+    );
+    const specialBudgetId = Number(
+      db.prepare(
+        `
+          INSERT INTO special_budgets (
+            project_id, name, month_key, planned_amount_cents, is_active
+          ) VALUES (?, 'Neue Snapshot-Reise', ?, 19000, 1)
+        `,
+      ).run(projectId, monthKey).lastInsertRowid,
+    );
+
+    updateSpecialBudgetPlannedAmount(specialBudgetId, 23000);
+
+    expect(
+      db.prepare(
+        `
+          SELECT COUNT(*) AS count,
+                 MAX(planned_amount_cents_snapshot) AS amount
+          FROM monthly_special_budget_snapshots
+          WHERE month_key = ? AND special_budget_id = ?
+        `,
+      ).get(monthKey, specialBudgetId),
+    ).toEqual({ count: 1, amount: 23000 });
+
+    expect(() =>
+      updateSpecialBudgetPlannedAmount(specialBudgetId, 31000),
+    ).toThrow("im vorhandenen Monats-Snapshot eingefroren");
+    expect(() => setSpecialBudgetActive(specialBudgetId, false)).toThrow(
+      "im vorhandenen Monats-Snapshot eingefroren",
+    );
+
+    expect(
+      db.prepare(
+        "SELECT planned_amount_cents AS amount, is_active AS isActive FROM special_budgets WHERE id = ?",
+      ).get(specialBudgetId),
+    ).toEqual({ amount: 23000, isActive: 1 });
+    expect(
+      db.prepare(
+        "SELECT COUNT(*) AS count FROM monthly_special_budget_snapshots WHERE month_key = ? AND special_budget_id = ?",
+      ).get(monthKey, specialBudgetId),
+    ).toEqual({ count: 1 });
+  });
+
+  it("rolls back missing special budget first use when snapshot insertion fails", () => {
+    const monthKey = "2041-12";
+
+    closeMonth(monthKey);
+    reopenMonth(monthKey);
+
+    const projectId = Number(
+      db.prepare(
+        "INSERT INTO special_budget_projects (name, status) VALUES ('Ungueltige Snapshot-Reise', 'active')",
+      ).run().lastInsertRowid,
+    );
+    const specialBudgetId = Number(
+      db.prepare(
+        `
+          INSERT INTO special_budgets (
+            project_id, name, month_key, planned_amount_cents, is_active
+          ) VALUES (?, ' ', ?, 14000, 1)
+        `,
+      ).run(projectId, monthKey).lastInsertRowid,
+    );
+
+    expect(() =>
+      updateSpecialBudgetPlannedAmount(specialBudgetId, 27000),
+    ).toThrow();
+    expect(
+      db.prepare(
+        "SELECT planned_amount_cents AS amount FROM special_budgets WHERE id = ?",
+      ).get(specialBudgetId),
+    ).toEqual({ amount: 14000 });
+    expect(
+      db.prepare(
+        "SELECT COUNT(*) AS count FROM monthly_special_budget_snapshots WHERE month_key = ? AND special_budget_id = ?",
+      ).get(monthKey, specialBudgetId),
+    ).toEqual({ count: 0 });
+  });
+
+  it("lets project maintenance passively retain closed shares while changing live shares atomically", () => {
+    const historicalMonthKey = "2042-01";
+    const liveMonthKey = "2042-02";
+
+    createSpecialBudget({
+      name: "Mehrmonatige Snapshot-Reise",
+      monthKey: historicalMonthKey,
+      plannedAmountCents: 30000,
+      note: "",
+      iconName: "MR",
+    });
+    createSpecialBudget({
+      name: "Mehrmonatige Snapshot-Reise",
+      monthKey: liveMonthKey,
+      plannedAmountCents: 40000,
+      note: "",
+      iconName: "MR",
+    });
+    const shares = db.prepare(
+      `
+        SELECT id, project_id AS projectId, month_key AS monthKey,
+               planned_amount_cents AS plannedAmountCents
+        FROM special_budgets
+        WHERE name = 'Mehrmonatige Snapshot-Reise'
+        ORDER BY month_key
+      `,
+    ).all() as Array<{
+      id: number;
+      projectId: number;
+      monthKey: string;
+      plannedAmountCents: number;
+    }>;
+    const historicalShare = shares[0];
+    const liveShare = shares[1];
+
+    closeMonth(historicalMonthKey);
+
+    updateSpecialBudgetProject({
+      projectId: historicalShare.projectId,
+      iconName: "OK",
+      shares: [
+        { id: historicalShare.id, plannedAmountCents: 30000 },
+        { id: liveShare.id, plannedAmountCents: 45000 },
+      ],
+    });
+
+    expect(() =>
+      updateSpecialBudgetProject({
+        projectId: historicalShare.projectId,
+        iconName: "NO",
+        shares: [
+          { id: historicalShare.id, plannedAmountCents: 35000 },
+          { id: liveShare.id, plannedAmountCents: 50000 },
+        ],
+      }),
+    ).toThrow("Monat ist abgeschlossen");
+
+    expect(
+      db.prepare(
+        "SELECT icon_name AS iconName FROM special_budget_projects WHERE id = ?",
+      ).get(historicalShare.projectId),
+    ).toEqual({ iconName: "OK" });
+    expect(
+      db.prepare(
+        "SELECT planned_amount_cents AS amount FROM special_budgets WHERE id = ?",
+      ).get(historicalShare.id),
+    ).toEqual({ amount: 30000 });
+    expect(
+      db.prepare(
+        "SELECT planned_amount_cents AS amount FROM special_budgets WHERE id = ?",
+      ).get(liveShare.id),
+    ).toEqual({ amount: 45000 });
+    expect(
+      db.prepare(
+        `
+          SELECT planned_amount_cents_snapshot AS amount
+          FROM monthly_special_budget_snapshots
+          WHERE month_key = ? AND special_budget_id = ?
+        `,
+      ).get(historicalMonthKey, historicalShare.id),
+    ).toEqual({ amount: 30000 });
   });
 
   it("freezes the live visibility of categories that were already inactive at first close", () => {
@@ -612,7 +886,9 @@ describe("FIN-125 month budget snapshots", () => {
     expect(() =>
       setMonthlyCategoryBudget(monthKey, newCategoryId, "170.00"),
     ).toThrow("im vorhandenen Snapshot eingefroren");
-    updateSpecialBudgetPlannedAmount(newSpecialBudgetId, 21000);
+    expect(() =>
+      updateSpecialBudgetPlannedAmount(newSpecialBudgetId, 21000),
+    ).toThrow("im vorhandenen Monats-Snapshot eingefroren");
 
     expect(
       db.prepare(
@@ -623,6 +899,15 @@ describe("FIN-125 month budget snapshots", () => {
         `,
       ).get(monthKey, newCategoryId),
     ).toEqual({ count: 0 });
+    expect(
+      db.prepare(
+        `
+          SELECT planned_amount_cents AS plannedAmountCents
+          FROM special_budgets
+          WHERE id = ?
+        `,
+      ).get(newSpecialBudgetId),
+    ).toEqual({ plannedAmountCents: 11000 });
 
     const reopenedSnapshot = getMonthSnapshot(monthKey);
 

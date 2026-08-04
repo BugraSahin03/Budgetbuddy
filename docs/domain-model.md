@@ -275,9 +275,15 @@ Monatsabschluss-Sperrregel (FIN-071):
 - Beim Abschluss werden vorhandene effektive Kategorie-Planwerte als Monatswerte gespeichert, damit spaetere globale Standardwert-Aenderungen geplante Werte mit vorhandenem Plan nicht rueckwirkend veraendern.
 - Ein geschlossener Monat sperrt monatsbezogene Schreiboperationen:
   neue manuelle Buchungen, Buchungsbearbeitung, Buchungsloeschung, Importloeschung, Kategorie-/Sonderbudget-Zuordnung, CSV-Importe, Monatsbudget-Overrides und Sonderbudget-Monatsanteile.
-- Das Wieder-Oeffnen erlaubt diese Schreiboperationen wieder.
+- Das Wieder-Oeffnen erlaubt Buchungen, Zuordnungen und Importe wieder. Der
+  Planstand aus Fixkosten, Kategorien und Sonderbudgets bleibt jedoch vom
+  ersten Abschluss erhalten; bestehende Snapshot-Zeilen werden nicht neu
+  berechnet oder ueberschrieben.
 - Offene importierte Ausgaben sind beim Abschluss ein Warnhinweis, aber kein harter Blocker.
-- Der vorhandene Fixkosten-Snapshot bleibt auch nach Wieder-Oeffnen erhalten und wird nicht automatisch neu berechnet.
+- Die vorhandenen Fixkosten-, Kategorien- und Sonderbudget-Snapshots bleiben
+  auch nach Wieder-Oeffnen erhalten und werden nicht automatisch neu
+  berechnet. Fehlende Eintraege werden nur bei bewusster erster Verwendung
+  insert-only ergaenzt.
 - Planlose Kategorien bleiben planlos, bis ein expliziter Monatswert oder
   globaler Standard existiert.
 
@@ -310,7 +316,10 @@ Kategorien- und Sonderbudget-Snapshot (FIN-125):
   nur der fehlende Snapshot-Eintrag atomar ergaenzt; vorhandene Eintraege
   werden nicht neu berechnet oder ueberschrieben. Ein Monatsbudget-Override
   darf deshalb nur einen noch fehlenden Kategorie-Snapshot einmalig ergaenzen;
-  fuer eine vorhandene Snapshot-Zeile wird der Write abgelehnt.
+  fuer eine vorhandene Snapshot-Zeile wird der Write abgelehnt. Dasselbe gilt
+  fuer Betrag und Aktivstatus eines vorhandenen Sonderbudget-Snapshots; eine
+  fehlende Zeile darf nur zusammen mit ihrer bewussten ersten Verwendung
+  atomar ergaenzt werden.
 - Die Migration `0019_fin_125` uebernimmt fuer bereits geschlossene oder schon
   wieder geoeffnete Altdaten mangels historischer Metadatenquelle einmalig den
   zum Migrationszeitpunkt aktuellen Stand. Buchungen, Betraege und

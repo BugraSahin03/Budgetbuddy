@@ -61,7 +61,7 @@ describe("FIN-068 month savings KPI UI", () => {
     expect(page).toContain("activeCategoryIds.has(row.categoryId)");
     expect(page).toContain("canEditCategoryBudget ? (");
     expect(page).toContain(
-      "Historischer Monatsstand · vorhandene Planwerte sind eingefroren.",
+      "Wieder geöffneter historischer Monatsstand · der Planstand vom ersten Abschluss bleibt erhalten.",
     );
     expect(page).toContain("In diesem Monatsstand deaktivierte Kategorie");
     expect(page).toContain("ein Monatsbudget ist hier nicht editierbar");
