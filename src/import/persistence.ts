@@ -4,13 +4,19 @@ import { createHash } from "node:crypto";
 
 import { getDb } from "@/src/db/client";
 import { parseSparkasseCsvToPreview, type SparkasseCsvRow } from "@/src/import/sparkasse-csv";
-import { isCashTransferRule } from "@/src/import-rules/classification";
+import {
+  isCashTransferRule,
+  isN26FixedCostControlRule,
+} from "@/src/import-rules/classification";
 import {
   hasIncomeDeductionForMonth,
   listActiveIncomeDeductionRules,
   matchIncomeDeductionRule,
 } from "@/src/import-rules/income-deductions";
-import type { ImportRuleSuggestion } from "@/src/import-rules/matcher";
+import {
+  buildImportRuleSuggestions,
+  type ImportRuleSuggestion,
+} from "@/src/import-rules/matcher";
 import { listActiveImportRules, type ImportRule } from "@/src/import-rules/repository";
 import { assertMonthIsOpen } from "@/src/months/status";
 
@@ -22,9 +28,7 @@ export type ImportPersistenceResult = {
   parseErrors: string[];
 };
 
-export type ImportPreviewFilteredReason =
-  | "duplicate"
-  | "fixed_cost_control";
+export type ImportPreviewFilteredReason = "duplicate";
 
 export type ImportPreviewFilteredRow = {
   rowIndex: number;
@@ -95,10 +99,6 @@ function findExistingDuplicateByFingerprint(dedupeFingerprint: string): boolean 
   return Boolean(alreadyPersistedTransaction);
 }
 
-function isFixedCostControlSuggestion(suggestion: ImportRuleSuggestion | undefined): boolean {
-  return suggestion?.label.startsWith("Fixkosten-Kontrolle:") ?? false;
-}
-
 export function buildSparkasseImportPreviewPlan(params: {
   rows: SparkasseCsvRow[];
   suggestions?: ImportRuleSuggestion[];
@@ -140,17 +140,6 @@ export function buildSparkasseImportPreviewPlan(params: {
     }
 
     seenFingerprints.add(dedupeFingerprint);
-
-    if (suggestion && isFixedCostControlSuggestion(suggestion)) {
-      filteredRows.push({
-        rowIndex,
-        reason: "fixed_cost_control",
-        reasonLabel: "Fixkosten-Kontrolle",
-        ruleName: suggestion.ruleName,
-        suggestionLabel: suggestion.label,
-      });
-      return;
-    }
 
     if (suggestion?.kind === "income_deduction") {
       if (incomeDeductionReserved) {
@@ -365,7 +354,6 @@ export function persistSparkasseCsvImport(params: {
   fileContent: string;
   effectiveMonthKey?: string | null;
   previewPlan?: ImportPreviewPlan | null;
-  suggestions?: ImportRuleSuggestion[];
 }): ImportPersistenceResult {
   const parseResult = parseSparkasseCsvToPreview(params.fileContent);
   const importEffectiveMonthKey = resolveImportEffectiveMonthKey(
@@ -403,8 +391,16 @@ export function persistSparkasseCsvImport(params: {
   );
   const activeImportRules = listActiveImportRules();
   const activeIncomeDeductionRules = listActiveIncomeDeductionRules();
+  const currentSuggestions = buildImportRuleSuggestions({
+    rows: parseResult.rows,
+    rules: activeImportRules,
+    incomeDeductionRules: activeIncomeDeductionRules,
+  });
   const suggestionByRowIndex = new Map(
-    (params.suggestions ?? []).map((suggestion) => [suggestion.rowIndex, suggestion]),
+    currentSuggestions.map((suggestion) => [suggestion.rowIndex, suggestion]),
+  );
+  const activeImportRuleById = new Map(
+    activeImportRules.map((rule) => [rule.id, rule]),
   );
   let incomeDeductionReserved = hasIncomeDeductionForMonth(importEffectiveMonthKey);
 
@@ -520,6 +516,35 @@ export function persistSparkasseCsvImport(params: {
         dedupeFingerprint,
       );
 
+      const fixedCostControlRule = suggestion?.ruleId
+        ? activeImportRuleById.get(suggestion.ruleId)
+        : undefined;
+      if (
+        shape.transactionType === "expense" &&
+        suggestion?.kind === "fixed_cost_control" &&
+        fixedCostControlRule &&
+        isN26FixedCostControlRule(fixedCostControlRule)
+      ) {
+        db.prepare(
+          `
+            INSERT INTO transaction_fixed_cost_control_matches (
+              transaction_id,
+              import_rule_id,
+              rule_name_snapshot,
+              rule_pattern_snapshot,
+              rule_match_field_snapshot
+            )
+            VALUES (?, ?, ?, ?, ?)
+          `,
+        ).run(
+          transactionId,
+          fixedCostControlRule.id,
+          fixedCostControlRule.name,
+          fixedCostControlRule.pattern,
+          fixedCostControlRule.matchField,
+        );
+      }
+
       importedRows += 1;
     }
   });
@@ -540,6 +565,7 @@ export function persistSparkasseCsvImport(params: {
     ).run(importedRows, duplicateRows, importRunId);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unbekannter Fehler";
+    importedRows = 0;
 
     db.prepare(
       `

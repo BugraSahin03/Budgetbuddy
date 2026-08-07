@@ -56,10 +56,6 @@ function filteredReasonTone(reason: string): string {
     return "border-amber-200 bg-amber-50 text-amber-800";
   }
 
-  if (reason === "fixed_cost_control") {
-    return "border-violet-200 bg-violet-50 text-violet-700";
-  }
-
   return "border-violet-200 bg-violet-50 text-violet-700";
 }
 
@@ -279,7 +275,7 @@ export function ImportForm({
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.12em] text-violet-700">
-                Herausgefiltert / Kontrolltreffer
+                Herausgefiltert
               </p>
               <h3 className="mt-1 text-lg font-black tracking-[-0.03em] text-violet-950">
                 Nicht in der normalen Importliste
@@ -290,8 +286,7 @@ export function ImportForm({
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold leading-6 text-violet-900">
-            Diese Zeilen werden nicht als normale Monatsbuchungen importiert. Der Grund steht
-            direkt an der Zeile.
+            Diese Zeilen werden nicht erneut importiert. Der Grund steht direkt an der Zeile.
           </p>
           {filteredRows.length > 0 ? (
             <ul className="mt-4 space-y-2 text-sm text-violet-950">
@@ -332,7 +327,7 @@ export function ImportForm({
             </ul>
           ) : (
             <p className="mt-4 rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm font-semibold text-violet-900">
-              Keine Duplikate oder Kontrolltreffer in dieser Vorschau.
+              Keine Duplikate in dieser Vorschau.
             </p>
           )}
         </section>
@@ -354,8 +349,8 @@ export function ImportForm({
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold leading-6 text-emerald-900">
-            Diese Zeilen werden beim Bestätigen übernommen. Einkommensabzüge sind markiert und
-            werden nicht als normale Ausgabe gezählt.
+            Diese Zeilen werden beim Bestätigen gespeichert. Einkommensabzüge werden nicht als normale Ausgabe gezählt.
+            Fixkosten-Kontrolltreffer sind markiert und werden nicht als variable Ausgabe gezählt.
           </p>
           {surface === "embedded" ? (
             <div className="month-import-preview-cards">

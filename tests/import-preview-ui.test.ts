@@ -10,7 +10,7 @@ function readProjectFile(path: string): string {
 }
 
 describe("FIN-116 import preview UI", () => {
-  it("splits preview rows into importable and filtered control lists", () => {
+  it("keeps persistent controls in the import list and filters only duplicates", () => {
     const importForm = readProjectFile("app/import/import-form.tsx");
     const state = readProjectFile("app/import/state.ts");
     const actions = readProjectFile("app/import/actions.ts");
@@ -19,13 +19,15 @@ describe("FIN-116 import preview UI", () => {
     expect(actions).toContain("buildSparkasseImportPreviewPlan");
     expect(importForm).toContain("Wird importiert");
     expect(importForm).toContain("Finale Importliste");
-    expect(importForm).toContain("Herausgefiltert / Kontrolltreffer");
+    expect(importForm).toContain("Herausgefiltert");
     expect(importForm).toContain("Nicht in der normalen Importliste");
     expect(importForm).toContain("decision.reasonLabel");
     expect(importForm).toContain("Regel: {decision.ruleName}");
     expect(importForm).not.toContain("Fixkosten-Kontrollsicht");
     expect(importForm).not.toContain("Transfer/Bargeld-Regel");
-    expect(importForm.indexOf("Herausgefiltert / Kontrolltreffer")).toBeLessThan(
+    expect(importForm).toContain("Fixkosten-Kontrolltreffer sind markiert");
+    expect(importForm).toContain("Keine Duplikate in dieser Vorschau.");
+    expect(importForm.indexOf("Herausgefiltert")).toBeLessThan(
       importForm.indexOf("Wird importiert"),
     );
   });

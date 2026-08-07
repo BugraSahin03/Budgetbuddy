@@ -1,6 +1,6 @@
 # Alfred – Stufe 2: BudgetBuddy Read-only-Datenadapter
 
-Status: technisch produktiv; Fixkostenvertrag am 22. Juli 2026 auf v2 erweitert
+Status: technisch produktiv; Fixkostenvertrag am 4. August 2026 fuer FIN-126 praezisiert
 
 ## 1. Ergebnis
 
@@ -44,8 +44,8 @@ den Snapshot als zusaetzlichen `ReadOnlyPaths`-Pfad.
 ## 3. Snapshot-Vertrag
 
 Vertrag: `budgetbuddy.coach.snapshot.v2`
-Query-Katalog: `2026-07-22.1`
-Unterstuetztes BudgetBuddy-Schema: `0018_fin_120`
+Query-Katalog: `2026-08-04.1`
+Unterstuetztes BudgetBuddy-Schema: `0020_fin_126`
 
 Der Snapshot enthaelt:
 
@@ -57,8 +57,9 @@ Der Snapshot enthaelt:
 - aktuelle einzelne Fixkosten-Planpositionen mit Betrag und Abbuchungstag;
 - geplante Fixkosten aus eingefrorenen Monatsabschluss-Snapshots
   beziehungsweise der aktuellen Fixkostenplanung;
-- aggregierte erkannte Fixkosten-Kontrollbuchungen, getrennt nach
-  Kontrollmuster, direktem Match und manueller Markierung;
+- aggregierte persistierte Fixkosten-Kontrollbuchungen aus expliziten
+  Importregeln und manuellen Markierungen; der aus Kompatibilitaetsgruenden
+  weiter enthaltene Zaehler `automaticDirect` bleibt null;
 - getrennte Werte fuer alle gebuchten Ausgaben, erkannte Fixkosten und die
   danach verbleibenden variablen Ausgaben;
 - berechnete BudgetBuddy-Kontostaende;
@@ -183,6 +184,8 @@ Erfolgreich geprueft wurden:
   getrennt geliefert;
 - manuelle Include-/Exclude-Overrides und ein absichtlich leerer historischer
   Fixkosten-Snapshot sind automatisiert getestet.
+- Fixkosten-Stammdaten erzeugen ohne explizite Kontrollregel keinen Treffer;
+  persistierte Treffer bleiben bei spaeteren Regelaenderungen stabil.
 
 Die lokalen automatisierten Tests liegen in
 `tests/alfred-budgetbuddy-collector.test.ts` und

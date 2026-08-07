@@ -1,6 +1,12 @@
 import "server-only";
 
 import { getDb } from "@/src/db/client";
+import {
+  ensureImportRulePurposeCompatibility,
+  LEGACY_N26_CONTROL_RULE_NAME,
+  N26_CONTROL_PATTERN,
+  N26_CONTROL_RULE_NAME,
+} from "@/src/import-rules/schema-compatibility";
 
 export type ImportRuleMatchField = "description" | "counterparty" | "combined";
 export type ImportRuleTargetType = "category" | "special_budget" | "transfer_cash";
@@ -31,9 +37,6 @@ export type ImportRuleInput = {
   priority: number;
 };
 
-const N26_CONTROL_RULE_NAME = "N26 Sammeltransfer Kontrolle";
-const LEGACY_N26_CONTROL_RULE_NAME = "N26 Transfer-Kandidat";
-const N26_CONTROL_PATTERN = "N26-Fix.";
 const N26_CONTROL_SEED_KEY = "import_rule_seed_n26_control_v2";
 
 function ensureImportRulesTable(): void {
@@ -57,40 +60,7 @@ function ensureImportRulesTable(): void {
       ON import_rules(is_active, priority, id);
   `);
 
-  const columns = getDb().prepare("PRAGMA table_info(import_rules)").all() as Array<{ name: string }>;
-  if (!columns.some((column) => column.name === "rule_purpose")) {
-    getDb().exec(`
-      ALTER TABLE import_rules
-      ADD COLUMN rule_purpose TEXT NOT NULL DEFAULT 'cash_transfer'
-        CHECK (rule_purpose IN ('assignment', 'fixed_cost_control', 'cash_transfer'));
-    `);
-  }
-
-  getDb()
-    .prepare(
-      `
-        UPDATE import_rules
-        SET rule_purpose = 'assignment'
-        WHERE target_type IN ('category', 'special_budget')
-      `,
-    )
-    .run();
-
-  getDb()
-    .prepare(
-      `
-        UPDATE import_rules
-        SET rule_purpose = 'fixed_cost_control'
-        WHERE target_type = 'transfer_cash'
-          AND (
-            name IN (?, ?)
-            OR UPPER(name) LIKE '%N26%KONTROLLE%'
-            OR UPPER(name) LIKE '%N26%TRANSFER%'
-            OR UPPER(pattern) LIKE '%N26-FIX.%'
-          )
-      `,
-    )
-    .run(N26_CONTROL_RULE_NAME, LEGACY_N26_CONTROL_RULE_NAME);
+  ensureImportRulePurposeCompatibility(getDb());
 
   // FIN-029 default: editable N26 control rule for transfer hints.
   // Seed must run at most once and must respect user edits/deactivation.

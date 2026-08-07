@@ -19,7 +19,7 @@ beforeAll(async () => {
 });
 
 describe("fixed-cost control matches", () => {
-  it("lists N26 and direct debit controls without manual assignment model", async () => {
+  it("lists only persistently stored rule controls, not direct master-data matches", async () => {
     cleanup();
 
     const db = dbClient.getDb();
@@ -36,7 +36,7 @@ describe("fixed-cost control matches", () => {
       note: "",
     });
 
-    db.prepare(
+    const explicitControlTransaction = db.prepare(
       `
         INSERT INTO transactions (
           account_id,
@@ -74,19 +74,35 @@ describe("fixed-cost control matches", () => {
       `,
     ).run(sparkasseId, `${PREFIX}LASTSCHRIFT`, `${PREFIX}FITNESS STUDIO`);
 
+    const importRules = await import("@/src/import-rules/repository");
+    const rule = importRules
+      .listActiveImportRules()
+      .find((candidate) => candidate.rulePurpose === "fixed_cost_control");
+    expect(rule).toBeDefined();
+    db.prepare(
+      `
+        INSERT INTO transaction_fixed_cost_control_matches (
+          transaction_id, import_rule_id, rule_name_snapshot,
+          rule_pattern_snapshot, rule_match_field_snapshot
+        ) VALUES (?, ?, ?, ?, ?)
+      `,
+    ).run(
+      Number(explicitControlTransaction.lastInsertRowid),
+      rule!.id,
+      rule!.name,
+      rule!.pattern,
+      rule!.matchField,
+    );
+
     const controls = fixedCosts
       .listFixedCostControlMatches(40)
       .filter((row) => row.description.startsWith(PREFIX));
 
-    expect(
-      controls.some(
-        (row) => row.controlLabel === "Fixkosten-Kontrolle: Kontrollmuster",
-      ),
-    ).toBe(true);
-    expect(
-      controls.some((row) =>
-        row.controlLabel.startsWith("Fixkosten-Kontrolle: Direktabbuchung"),
-      ),
-    ).toBe(true);
+    expect(controls).toEqual([
+      expect.objectContaining({
+        controlLabel: "Fixkosten-Kontrolle: Kontrollmuster",
+        ruleName: rule!.name,
+      }),
+    ]);
   });
 });

@@ -7,12 +7,8 @@ import {
   type MonthlyBudgetCategoryRow,
 } from "@/src/budgets/repository";
 import { getSavingsActualCents } from "@/src/categories/repository";
-import { listFixedCosts } from "@/src/fixed-costs/repository";
-import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
-import { listActiveImportRules } from "@/src/import-rules/repository";
 import { resolveImportDisplayName } from "@/src/import/display-name";
 import { listImportDisplayAliases } from "@/src/settings/import-display-aliases/repository";
-import type { SparkasseCsvRow } from "@/src/import/sparkasse-csv";
 import { getCashAccountSnapshot } from "@/src/transactions/repository";
 import type { TransactionType } from "@/src/transactions/repository";
 import {
@@ -247,7 +243,7 @@ function getIncomeCents(monthKey: string): number {
   return getGrossIncomeCents(monthKey) - getIncomeDeductionCents(monthKey);
 }
 
-function listImportedExpenseRowsForMonth(monthKey: string): Array<{
+function listPersistedFixedCostControlRowsForMonth(monthKey: string): Array<{
   id: number;
   bookingDate: string;
   amountCents: number;
@@ -255,23 +251,26 @@ function listImportedExpenseRowsForMonth(monthKey: string): Array<{
   displayNameOverride: string | null;
   counterpartyName: string | null;
   importRunId: number | null;
+  ruleName: string;
 }> {
   return getDb()
     .prepare(
       `
         SELECT
-          id,
-          booking_date AS bookingDate,
-          amount_cents AS amountCents,
-          description,
-          display_name_override AS displayNameOverride,
-          counterparty_name AS counterpartyName,
-          import_run_id AS importRunId
-        FROM transactions
-        WHERE source_type = 'import'
-          AND transaction_type = 'expense'
-          AND effective_month_key = ?
-        ORDER BY booking_date ASC, id ASC
+          t.id,
+          t.booking_date AS bookingDate,
+          t.amount_cents AS amountCents,
+          t.description,
+          t.display_name_override AS displayNameOverride,
+          t.counterparty_name AS counterpartyName,
+          t.import_run_id AS importRunId,
+          control.rule_name_snapshot AS ruleName
+        FROM transaction_fixed_cost_control_matches control
+        INNER JOIN transactions t ON t.id = control.transaction_id
+        WHERE t.source_type = 'import'
+          AND t.transaction_type = 'expense'
+          AND t.effective_month_key = ?
+        ORDER BY t.booking_date ASC, t.id ASC
       `,
     )
     .all(monthKey) as Array<{
@@ -282,98 +281,36 @@ function listImportedExpenseRowsForMonth(monthKey: string): Array<{
     displayNameOverride: string | null;
     counterpartyName: string | null;
     importRunId: number | null;
+    ruleName: string;
   }>;
-}
-
-function mapImportedExpenseToMatcherRow(
-  row: ReturnType<typeof listImportedExpenseRowsForMonth>[number],
-): SparkasseCsvRow {
-  return {
-    accountIban: "",
-    bookingDate: row.bookingDate,
-    valueDate: row.bookingDate,
-    bookingText: row.description,
-    purpose: "",
-    counterparty: row.counterpartyName ?? "",
-    counterpartyIban: "",
-    counterpartyBic: "",
-    amountCents: row.amountCents,
-    currencyCode: "EUR",
-    info: "",
-    endToEndReference: "",
-    mandateReference: "",
-    description: row.description,
-  };
 }
 
 function buildImportedFixedCostControlMatches(
   monthKey: string,
 ): MonthFixedCostControlMatchRow[] {
-  const importedExpenses = listImportedExpenseRowsForMonth(monthKey);
-  if (importedExpenses.length === 0) {
-    return [];
-  }
-
-  const rules = listActiveImportRules();
-  const fixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
+  const persistedControls = listPersistedFixedCostControlRowsForMonth(monthKey);
   const aliases = listImportDisplayAliases();
-  const mappedRows = importedExpenses.map(mapImportedExpenseToMatcherRow);
-  const suggestions = buildImportRuleSuggestions({
-    rows: mappedRows,
-    rules,
-    fixedCosts,
-  });
 
-  const controlsByIndex = new Map<
-    number,
-    { label: string; ruleName: string }
-  >();
-
-  for (const suggestion of suggestions) {
-    if (!suggestion.label.startsWith("Fixkosten-Kontrolle:")) {
-      continue;
-    }
-
-    if (controlsByIndex.has(suggestion.rowIndex)) {
-      continue;
-    }
-
-    controlsByIndex.set(suggestion.rowIndex, {
-      label: suggestion.label,
-      ruleName: suggestion.ruleName,
-    });
-  }
-
-  const result: MonthFixedCostControlMatchRow[] = [];
-  for (const [index, control] of controlsByIndex) {
-    const row = importedExpenses[index];
-    if (!row) {
-      continue;
-    }
-
-    result.push({
-      transactionId: row.id,
-      bookingDate: row.bookingDate,
+  return persistedControls.map((row) => ({
+    transactionId: row.id,
+    bookingDate: row.bookingDate,
+    description: row.description,
+    displayNameOverride: row.displayNameOverride,
+    displayName: resolveImportDisplayName({
+      sourceType: "import",
       description: row.description,
       displayNameOverride: row.displayNameOverride,
-      displayName: resolveImportDisplayName({
-        sourceType: "import",
-        description: row.description,
-        displayNameOverride: row.displayNameOverride,
-        counterpartyName: row.counterpartyName,
-        aliases,
-      }),
       counterpartyName: row.counterpartyName,
-      amountCents: row.amountCents,
-      controlAmountCents: Math.max(0, -row.amountCents),
-      importRunId: row.importRunId,
-      controlLabel: control.label,
-      ruleName: control.ruleName,
-      controlSource: "automatic",
-    });
-  }
-
-  return result;
+      aliases,
+    }),
+    counterpartyName: row.counterpartyName,
+    amountCents: row.amountCents,
+    controlAmountCents: Math.max(0, -row.amountCents),
+    importRunId: row.importRunId,
+    controlLabel: "Fixkosten-Kontrolle: Kontrollmuster",
+    ruleName: row.ruleName,
+    controlSource: "automatic",
+  }));
 }
 
 function listFixedCostControlOverrideRowsForMonth(monthKey: string): Array<{

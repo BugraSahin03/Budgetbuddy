@@ -12,7 +12,6 @@ import {
 import { parseSparkasseCsvToPreview } from "@/src/import/sparkasse-csv";
 import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
 import { listActiveIncomeDeductionRules } from "@/src/import-rules/income-deductions";
-import { listFixedCosts } from "@/src/fixed-costs/repository";
 import { listActiveImportRules } from "@/src/import-rules/repository";
 
 import { type ImportPreviewState, importPreviewInitialState } from "@/app/import/state";
@@ -107,7 +106,6 @@ export async function parseSparkasseCsvAction(
   try {
     const parsed = parseSparkasseCsvToPreview(resolvedFile.fileContent);
     const detectedMonthKey = detectDefaultImportMonthKey(parsed.rows);
-    const activeFixedCosts = listFixedCosts().filter((fixedCost) => fixedCost.isActive);
     const activeIncomeDeductionRules = listActiveIncomeDeductionRules();
 
     if (intent === "confirm") {
@@ -116,7 +114,6 @@ export async function parseSparkasseCsvAction(
         rows: parsed.rows,
         rules: activeRules,
         incomeDeductionRules: activeIncomeDeductionRules,
-        fixedCosts: activeFixedCosts,
       });
       const previewPlan = buildSparkasseImportPreviewPlan({
         rows: parsed.rows,
@@ -133,7 +130,6 @@ export async function parseSparkasseCsvAction(
         fileContent: resolvedFile.fileContent,
         effectiveMonthKey,
         previewPlan,
-        suggestions,
       });
 
       revalidatePath("/transaktionen");
@@ -159,7 +155,6 @@ export async function parseSparkasseCsvAction(
       rows: parsed.rows,
       rules: activeRules,
       incomeDeductionRules: activeIncomeDeductionRules,
-      fixedCosts: activeFixedCosts,
     });
     const previewPlan = buildSparkasseImportPreviewPlan({
       rows: parsed.rows,

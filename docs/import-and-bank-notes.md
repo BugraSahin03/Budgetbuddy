@@ -131,8 +131,9 @@ Ein Import soll:
   eine Einkommensabzugsregel matcht.
 - Eine falsche Einkommensabzug-Klassifizierung kann im offenen Monat als normale
   offene Ausgabe zurueckgestuft werden, ohne die Importspur zu loeschen.
-- Einkommensabzuege werden nicht von der direkten Fixkosten-Heuristik oder von
-  Kategorie-/Sonderkategorie-Regeln uebernommen.
+- Einkommensabzuege werden nicht von Fixkosten-Kontrollregeln oder von
+  Kategorie-/Sonderkategorie-Regeln uebernommen. Fixkosten-Stammdaten sind
+  grundsaetzlich keine Import-Matching-Quelle.
 
 ## Zielmonat im Import (FIN-031)
 
@@ -256,17 +257,36 @@ Aktueller Stand:
 - Diese Treffer sind Kontrollhinweise und sollen nicht als normale variable Monatsausgaben behandelt werden.
 - Die technische Umstellung auf das Monatsblock-Modell ist durch die FIN-Reihe `#56` bis `#60` umgesetzt.
 
-## Import-Kontrollmarkierungen fuer Fixkosten (FIN-026)
+## Import-Kontrollmarkierungen fuer Fixkosten (FIN-126)
 
-Stand ab FIN-029:
+Aktueller Stand:
 
-- Neben dem N26-Hinweis gibt es jetzt eine zweite Erkennung:
-  `Fixkosten-Kontrolle: Direktabbuchung (<Fixkostenname>)`.
-- Direkte Sparkassen-Fixkostenmatches werden ueber eine einfache Heuristik erkannt:
-  - Ausgabe-Betrag (absolut) entspricht dem geplanten Fixkostenbetrag
-  - und Beschreibung/Gegenpartei enthalten Abbuchungsinfo oder Fixkostenname.
-- Diese Treffer werden in der Import-Vorschau als eigene Fixkosten-Kontrollsicht dargestellt.
-- Die Kontrollmarkierung ist bewusst getrennt von normalen Kategorie-/Sonderkategorie-Regelvorschlaegen.
+- Nur eine explizite, aktive Regel mit Zweck `fixed_cost_control` kann einen
+  automatischen Fixkosten-Kontrolltreffer erzeugen.
+- Fixkosten-Stammdaten werden nicht fuer das Import-Matching verwendet. Ein
+  gleicher Betrag plus passender Name oder passende Abbuchungsinfo genuegt
+  nicht.
+- Ein Regel-Treffer bleibt in der Vorschau positiv markiert und wird normal als
+  importierte Ausgabe gespeichert. In derselben SQLite-Transaktion wird der
+  Kontrollstatus mit Regelname, Pattern und Match-Feld als Snapshot persistiert.
+- Importbuchung, Importspur und Kontrollstatus sind atomar: schlaegt ein Teil
+  fehl, bleibt kein halber Import zurueck.
+- Monatsansicht, Fixkosten-Kontrollliste und Alfred lesen nur diesen
+  persistierten Status. Spaetere Regel-Aenderungen oder -Deaktivierungen
+  schreiben die Historie nicht um.
+- Beim Upgrade von `0018_fin_120` werden bereits gespeicherte Importausgaben
+  einmalig gegen die zu diesem Zeitpunkt aktiven Importregeln in ihrer
+  bestehenden Prioritaetsreihenfolge ausgewertet. Nur wenn der erste Treffer
+  eine explizite `fixed_cost_control`-Regel ist, wird ihr Snapshot idempotent
+  nachgetragen; die alte Fixkosten-Stammdatenheuristik ist kein Backfill-Pfad.
+- Existiert dabei noch die alte lazy Runtime-Tabelle `import_rules` ohne
+  `rule_purpose`, hebt die Migration sie vor dem Backfill mit derselben
+  FIN-117-Kompatibilitaetslogik an: Kategorie-/Sonderkategorie-Regeln werden
+  `assignment`, bestehende N26-Altformate `fixed_cost_control` und sonstige
+  Transferregeln `cash_transfer`.
+- Manuelle Include-/Exclude-Overrides bleiben als Korrekturebene erhalten.
+- Die Kontrollmarkierung bleibt bewusst getrennt von normalen
+  Kategorie-/Sonderkategorie-Regelvorschlaegen.
 
 ## Bankanbindung spaeter
 

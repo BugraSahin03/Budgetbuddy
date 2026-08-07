@@ -126,7 +126,7 @@ describe("dashboard repository", () => {
       `${PREFIX}OFFENER BUCHUNGSTEXT`,
     );
 
-    db.prepare(
+    const n26ControlExpense = db.prepare(
       `
         INSERT INTO transactions (
           account_id, destination_account_id, transaction_type, booking_date, effective_month_key, amount_cents,
@@ -134,6 +134,17 @@ describe("dashboard repository", () => {
         ) VALUES (?, NULL, 'expense', '2031-01-17', '2031-01', -4000, 'EUR', ?, ?, 'import', NULL, NULL)
       `,
     ).run(sparkasseId, `${PREFIX}UEBERWEISUNG | N26-Fix. Monatsblock`, "N26 BANK");
+    db.prepare(
+      `
+        INSERT INTO transaction_fixed_cost_control_matches (
+          transaction_id,
+          import_rule_id,
+          rule_name_snapshot,
+          rule_pattern_snapshot,
+          rule_match_field_snapshot
+        ) VALUES (?, NULL, 'Test N26 Kontrollregel', 'N26-Fix.', 'description')
+      `,
+    ).run(Number(n26ControlExpense.lastInsertRowid));
 
     db.prepare(
       `
@@ -151,23 +162,27 @@ describe("dashboard repository", () => {
     const snapshot = getDashboardMonthSnapshot(TEST_MONTH);
 
     expect(snapshot.totals.incomeCents).toBe(200000);
-    expect(snapshot.totals.expenseCents).toBe(17500);
+    expect(snapshot.totals.expenseCents).toBe(20990);
     expect(snapshot.totals.plannedFixedCostsCents).toBe(
       baselinePlannedFixedCostsCents + fixedCostPlanCents,
     );
-    expect(snapshot.totals.actualFixedCostsCents).toBe(7490);
+    expect(snapshot.totals.actualFixedCostsCents).toBe(4000);
     expect(snapshot.totals.availableCents).toBe(
-      200000 - 17500 - (baselinePlannedFixedCostsCents + fixedCostPlanCents),
+      200000 - 20990 - (baselinePlannedFixedCostsCents + fixedCostPlanCents),
     );
-    expect(snapshot.openAssignmentCount).toBe(1);
+    expect(snapshot.openAssignmentCount).toBe(2);
     expect(snapshot.recentTransactions).toHaveLength(5);
     expect(
       snapshot.recentTransactions.some(
         (transaction) =>
-          transaction.description === `${PREFIX}Lastschrift Fitness` ||
           transaction.description === `${PREFIX}UEBERWEISUNG | N26-Fix. Monatsblock`,
       ),
     ).toBe(false);
+    expect(
+      snapshot.recentTransactions.some(
+        (transaction) => transaction.description === `${PREFIX}Lastschrift Fitness`,
+      ),
+    ).toBe(true);
 
     const einkauf = snapshot.categoryRows.find((row) => row.categoryName === "Einkauf");
     expect(einkauf?.spentAmountCents).toBe(10000);
