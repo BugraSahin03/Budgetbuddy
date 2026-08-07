@@ -240,7 +240,13 @@ MVP-Regel (FIN-024):
 - Einzeltransaktionen werden nicht mehr als geplante Fixkosten-Zuordnung
   gepflegt.
 - `wirkt_fuer_monat` ist nicht Teil des Zielmodells.
-- N26-Sammeltransfer und direkte Sparkassen-Fixkostenmatches sind Kontrollinformationen, keine normalen variablen Monatsausgaben.
+- Treffer einer expliziten, aktiven Fixkosten-Kontrollregel sind
+  Kontrollinformationen und keine normalen variablen Monatsausgaben.
+- Der Kontrollstatus wird zusammen mit der importierten Buchung gespeichert und
+  bleibt auch dann historisch stabil, wenn die Regel spaeter geaendert oder
+  deaktiviert wird.
+- Fixkosten-Stammdaten sind reine Planungsdaten. Uebereinstimmende Betraege,
+  Namen oder Abbuchungsinfos erzeugen ohne Kontrollregel keinen Treffer.
 
 Ergaenzung fuer die Kontrollsicht (FIN-100):
 
@@ -432,8 +438,10 @@ Dabei gilt:
 - aktive Fixkostensumme ist der monatliche Planungsblock aus `fixed_costs` (aktiv).
 - variable Ausgaben enthalten normale Monatsausgaben, aber keine als Fixkosten-Kontrolle erkannten
   Importtreffer.
-- erkannte N26-Sammeltransfers und direkte Fixkostenmatches werden als separater
-  Ist-Kontrollwert gefuehrt und nicht in die variable Ausgabensumme eingerechnet.
+- persistierte Treffer expliziter Kontrollregeln und manuelle Includes werden
+  als separater Ist-Kontrollwert gefuehrt und nicht in die variable
+  Ausgabensumme eingerechnet; manuelle Excludes heben dies fuer die konkrete
+  Buchung auf.
 
 ### Monatsdetailseite (FIN-033)
 

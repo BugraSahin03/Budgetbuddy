@@ -218,6 +218,8 @@ describe("import rules", () => {
     expect(suggestions).toHaveLength(1);
     expect(suggestions[0].label).toBe("Fixkosten-Kontrolle: Kontrollmuster");
     expect(suggestions[0].ruleName).toBe("N26 Sammeltransfer Kontrolle");
+    expect(suggestions[0].kind).toBe("fixed_cost_control");
+    expect(suggestions[0].ruleId).toBe(n26Rule?.id);
   });
 
   it("keeps edited fixed-cost control rules separate from cash transfer rules", () => {
@@ -261,7 +263,7 @@ describe("import rules", () => {
     expect(suggestions[0].ruleName).toBe("Garage Kontrolle");
   });
 
-  it("recognizes direct fixed-cost debit as control hit", async () => {
+  it("does not derive a control hit from an active fixed-cost master record", async () => {
     const fixedCosts = await import("@/src/fixed-costs/repository");
     fixedCosts.createFixedCost({
       name: "Fitness Studio",
@@ -275,7 +277,6 @@ describe("import rules", () => {
       rules: repo
         .listActiveImportRules()
         .filter((rule) => rule.name !== "N26 Sammeltransfer Kontrolle"),
-      fixedCosts: fixedCosts.listFixedCosts(),
       rows: [
         {
           accountIban: "DE001",
@@ -296,10 +297,8 @@ describe("import rules", () => {
       ],
     });
 
-    expect(suggestions).toHaveLength(1);
-    expect(suggestions[0].label).toBe(
-      "Fixkosten-Kontrolle: Direktabbuchung (Fitness Studio)",
-    );
+    expect(fixedCosts.listFixedCosts().some((row) => row.name === "Fitness Studio")).toBe(true);
+    expect(suggestions).toEqual([]);
   });
 
   it("does not recreate N26 default rule after edits or deactivation", () => {
@@ -324,5 +323,28 @@ describe("import rules", () => {
     expect(after[0].name).toBe("N26 Sammeltransfer Kontrolle (angepasst)");
     expect(after[0].pattern).toBe("N26-ALT");
     expect(after[0].isActive).toBe(false);
+
+    const suggestions = matcher.buildImportRuleSuggestions({
+      rules: repo.listActiveImportRules(),
+      rows: [
+        {
+          accountIban: "DE001",
+          bookingDate: "2026-05-23",
+          valueDate: "2026-05-23",
+          bookingText: "UEBERWEISUNG",
+          purpose: "N26-ALT Monatsblock",
+          counterparty: "Musterbank",
+          counterpartyIban: "",
+          counterpartyBic: "",
+          amountCents: -4000,
+          currencyCode: "EUR",
+          info: "Umsatz gebucht",
+          endToEndReference: "",
+          mandateReference: "",
+          description: "UEBERWEISUNG | N26-ALT Monatsblock",
+        },
+      ],
+    });
+    expect(suggestions).toEqual([]);
   });
 });

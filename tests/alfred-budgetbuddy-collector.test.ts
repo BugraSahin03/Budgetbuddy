@@ -16,7 +16,7 @@ import {
 
 const temporaryDirectories: string[] = [];
 
-function createFixture(schemaVersion = "0018_fin_120") {
+function createFixture(schemaVersion = "0020_fin_126") {
   const directory = mkdtempSync(path.join(tmpdir(), "alfred-budgetbuddy-"));
   temporaryDirectories.push(directory);
   const databasePath = path.join(directory, "budgetbuddy.db");
@@ -79,6 +79,13 @@ function createFixture(schemaVersion = "0018_fin_120") {
     CREATE TABLE transaction_fixed_cost_control_overrides (
       transaction_id INTEGER PRIMARY KEY,
       mode TEXT NOT NULL
+    );
+    CREATE TABLE transaction_fixed_cost_control_matches (
+      transaction_id INTEGER PRIMARY KEY,
+      import_rule_id INTEGER,
+      rule_name_snapshot TEXT NOT NULL,
+      rule_pattern_snapshot TEXT NOT NULL,
+      rule_match_field_snapshot TEXT NOT NULL
     );
     CREATE TABLE special_budget_projects (
       id INTEGER PRIMARY KEY,
@@ -164,6 +171,14 @@ function createFixture(schemaVersion = "0018_fin_120") {
       (9, 1, NULL, 'income', '2026-06-01', '2026-06', 250000, 'EUR', 'older income', NULL, NULL, 'i', NULL, NULL),
       (10, 1, NULL, 'expense', '2026-07-01', '2026-07', -80000, 'EUR', 'direct fixed cost', 'LANDLORD RENT', NULL, 'j', NULL, NULL),
       (11, 1, NULL, 'expense', '2026-07-01', '2026-07', -10000, 'EUR', 'N26-Fix. monthly block', NULL, NULL, 'k', NULL, NULL);
+
+    INSERT INTO transaction_fixed_cost_control_matches VALUES (
+      11,
+      1,
+      'N26 fixed-cost control',
+      'N26-Fix.',
+      'description'
+    );
   `);
 
   db.close();
@@ -212,13 +227,13 @@ describe("Alfred BudgetBuddy collector", () => {
       netIncomeCents: 280000,
       refundCents: 5000,
       totalExpenseCents: 193000,
-      fixedCostControlCents: 90000,
-      expenseCents: 103000,
+      fixedCostControlCents: 10000,
+      expenseCents: 183000,
       savingsCents: 40000,
-      consumerExpenseCents: 63000,
+      consumerExpenseCents: 143000,
       netCashflowCents: 92000,
-      unassignedExpenseCount: 1,
-      unassignedExpenseCents: 1000,
+      unassignedExpenseCount: 2,
+      unassignedExpenseCents: 81000,
       plannedFixedCostsCents: 90000,
       plannedCategoryBudgetsCents: 70000,
       plannedSpecialBudgetsCents: 30000,
@@ -227,12 +242,12 @@ describe("Alfred BudgetBuddy collector", () => {
       planSource: "active_fixed_costs",
       plannedCents: 90000,
       plannedItemCount: 2,
-      actualControlCents: 90000,
-      actualControlCount: 2,
-      outstandingPlanCents: 0,
+      actualControlCents: 10000,
+      actualControlCount: 1,
+      outstandingPlanCents: 80000,
       actualControlSourceCounts: {
         automaticRule: 1,
-        automaticDirect: 1,
+        automaticDirect: 0,
         manual: 0,
       },
     });
@@ -352,7 +367,7 @@ describe("Alfred BudgetBuddy collector", () => {
     const db = new Database(databasePath);
     db.exec(`
       INSERT INTO transaction_fixed_cost_control_overrides VALUES (7, 'include');
-      INSERT INTO transaction_fixed_cost_control_overrides VALUES (10, 'exclude');
+      INSERT INTO transaction_fixed_cost_control_overrides VALUES (11, 'exclude');
     `);
     db.close();
 
@@ -368,15 +383,15 @@ describe("Alfred BudgetBuddy collector", () => {
       month.monthKey === "2026-07"
     );
     expect(july.fixedCosts).toMatchObject({
-      actualControlCents: 11000,
-      actualControlCount: 2,
+      actualControlCents: 1000,
+      actualControlCount: 1,
       actualControlSourceCounts: {
-        automaticRule: 1,
+        automaticRule: 0,
         automaticDirect: 0,
         manual: 1,
       },
     });
-    expect(july.unassignedExpenseCents).toBe(80000);
+    expect(july.unassignedExpenseCents).toBe(90000);
   });
 
   it("fails closed for an unknown BudgetBuddy schema", () => {

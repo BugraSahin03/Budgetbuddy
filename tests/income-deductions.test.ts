@@ -59,7 +59,7 @@ describe("FIN-120 income deductions", () => {
       description: "LASTSCHRIFT | Beitrag",
     };
     const suggestions = matcher.buildImportRuleSuggestions({
-      rows: [row], rules: [], incomeDeductionRules: rules.listActiveIncomeDeductionRules(), fixedCosts: [{ name: "PKV", plannedAmountCents: 30000, paymentNote: "PRIVATE KRANKENVERSICHERUNG", isActive: true }],
+      rows: [row], rules: [], incomeDeductionRules: rules.listActiveIncomeDeductionRules(),
     });
 
     expect(suggestions).toEqual([{ rowIndex: 0, label: "Einkommensabzug", ruleName: "PKV Sena", kind: "income_deduction" }]);
@@ -72,7 +72,7 @@ describe("FIN-120 income deductions", () => {
     const parsed = (await import("@/src/import/sparkasse-csv")).parseSparkasseCsvToPreview(INCOME_DEDUCTION_CSV);
     const suggestions = matcher.buildImportRuleSuggestions({ rows: parsed.rows, rules: [], incomeDeductionRules: rules.listActiveIncomeDeductionRules() });
     const previewPlan = persistence.buildSparkasseImportPreviewPlan({ rows: parsed.rows, suggestions, effectiveMonthKey: "2026-07" });
-    persistence.persistSparkasseCsvImport({ sourceFilename: "pkv.csv", fileContent: INCOME_DEDUCTION_CSV, effectiveMonthKey: "2026-07", previewPlan, suggestions });
+    persistence.persistSparkasseCsvImport({ sourceFilename: "pkv.csv", fileContent: INCOME_DEDUCTION_CSV, effectiveMonthKey: "2026-07", previewPlan });
 
     const snapshot = months.getMonthSnapshot("2026-07");
     expect(snapshot.totals.grossIncomeCents).toBe(200000);
@@ -91,7 +91,7 @@ describe("FIN-120 income deductions", () => {
     expect(plan.importableRowIndexes).toEqual([0, 1]);
     expect(plan.incomeDeductionConflictRowIndexes).toEqual([1]);
 
-    persistence.persistSparkasseCsvImport({ sourceFilename: "pkv.csv", fileContent: TWO_DEDUCTIONS_CSV, effectiveMonthKey: "2026-07", previewPlan: plan, suggestions });
+    persistence.persistSparkasseCsvImport({ sourceFilename: "pkv.csv", fileContent: TWO_DEDUCTIONS_CSV, effectiveMonthKey: "2026-07", previewPlan: plan });
     expect((db.prepare("SELECT COUNT(*) AS count FROM transactions WHERE transaction_type = 'income_deduction'").get() as { count: number }).count).toBe(1);
     expect((db.prepare("SELECT COUNT(*) AS count FROM transactions WHERE transaction_type = 'expense'").get() as { count: number }).count).toBe(1);
   });
@@ -114,7 +114,6 @@ describe("FIN-120 income deductions", () => {
       fileContent: INCOME_DEDUCTION_CSV,
       effectiveMonthKey: "2026-07",
       previewPlan: firstPlan,
-      suggestions: firstSuggestions,
     });
 
     const secondCsv = TWO_DEDUCTIONS_CSV.split("\n").slice(0, 1).concat(
@@ -140,7 +139,6 @@ describe("FIN-120 income deductions", () => {
       fileContent: secondCsv,
       effectiveMonthKey: "2026-07",
       previewPlan: secondPlan,
-      suggestions: secondSuggestions,
     });
     expect((db.prepare("SELECT transaction_type AS type FROM transactions WHERE description LIKE '%Zusatzbeitrag%'").get() as { type: string }).type).toBe("expense");
   });
@@ -163,7 +161,6 @@ describe("FIN-120 income deductions", () => {
       fileContent: INCOME_DEDUCTION_CSV,
       effectiveMonthKey: "2026-07",
       previewPlan,
-      suggestions,
     });
     const stored = db.prepare("SELECT id FROM transactions WHERE transaction_type = 'income_deduction'").get() as { id: number };
 
@@ -188,7 +185,7 @@ describe("FIN-120 income deductions", () => {
       incomeDeductionRules: rules.listActiveIncomeDeductionRules(),
     });
     const firstPlan = persistence.buildSparkasseImportPreviewPlan({ rows, suggestions, effectiveMonthKey: "2026-07" });
-    persistence.persistSparkasseCsvImport({ sourceFilename: "pkv.csv", fileContent: INCOME_DEDUCTION_CSV, effectiveMonthKey: "2026-07", previewPlan: firstPlan, suggestions });
+    persistence.persistSparkasseCsvImport({ sourceFilename: "pkv.csv", fileContent: INCOME_DEDUCTION_CSV, effectiveMonthKey: "2026-07", previewPlan: firstPlan });
 
     const duplicatePlan = persistence.buildSparkasseImportPreviewPlan({ rows, suggestions, effectiveMonthKey: "2026-07" });
     expect(duplicatePlan.importableRowIndexes).toEqual([]);

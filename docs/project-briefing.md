@@ -184,7 +184,8 @@ Leitregel (FIN-024):
 - `wirkt_fuer_monat` ist nicht Teil des Zielmodells.
 - Einzelne Transaktionen werden nicht mehr manuell als Fixkosten markiert.
 - N26 ist kein eigenes Fachobjekt, sondern nur ein technischer Zahlungsweg fuer bereits bekannte Fixkosten.
-- Erkannte N26-Sammeltransfers und direkte Sparkassen-Fixkostenmatches bleiben als Kontrollsicht sichtbar, werden aber nicht als normale variable Monats-Transaktionen behandelt.
+- Nur Treffer einer expliziten, aktiven Fixkosten-Kontrollregel werden beim Import dauerhaft als Kontrollsicht gespeichert und nicht als normale variable Monats-Transaktionen behandelt.
+- Fixkosten-Stammdaten dienen ausschliesslich der Planung; Name, Abbuchungsinfo und Betrag loesen selbst keinen Kontrolltreffer aus.
 - Es gibt keine direkte N26-Bankanbindung; N26-Hinweise entstehen nur aus dem Sparkassen-Import.
 
 ## Nicht-Ziele fuer den Start

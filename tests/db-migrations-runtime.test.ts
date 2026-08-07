@@ -421,6 +421,345 @@ describe("database migrations runtime behavior", () => {
     ).toThrow(/FOREIGN KEY constraint failed/);
   });
 
+  it("upgrades legacy runtime rules and backfills only explicit controls idempotently", () => {
+    const legacyDb = new Database(":memory:");
+    legacyDb.exec("PRAGMA foreign_keys = ON;");
+    applyMigrations(legacyDb);
+    legacyDb.exec(`
+      DROP TABLE transaction_fixed_cost_control_matches;
+      DELETE FROM schema_migrations WHERE id = '0020_fin_126';
+      UPDATE app_meta SET value = '0019_fin_125' WHERE key = 'schema_version';
+
+      CREATE TABLE import_rules (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        pattern TEXT NOT NULL,
+        match_field TEXT NOT NULL,
+        target_type TEXT NOT NULL,
+        category_id INTEGER,
+        special_budget_id INTEGER,
+        is_active INTEGER NOT NULL,
+        priority INTEGER NOT NULL
+      );
+    `);
+
+    const category = legacyDb
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as CategoryRow;
+    const account = legacyDb
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as AccountRow;
+    const importRunId = Number(
+      legacyDb
+        .prepare(
+          `
+            INSERT INTO import_runs (source_format, source_filename, status)
+            VALUES ('sparkasse_csv', 'legacy-fin126.csv', 'completed')
+          `,
+        )
+        .run().lastInsertRowid,
+    );
+
+    legacyDb
+      .prepare(
+        `
+          INSERT INTO import_rules (
+            id, name, pattern, match_field, target_type,
+            category_id, special_budget_id, is_active, priority
+          ) VALUES
+            (1, 'Hoeher priorisierte Kategorie', 'SHADOWED', 'description', 'category', ?, NULL, 1, 1),
+            (2, 'N26 Transfer-Kandidat', 'N26-Fix.', 'combined', 'transfer_cash', NULL, NULL, 1, 5),
+            (3, 'Nachrangiger Shadow-Transfer', 'SHADOWED', 'description', 'transfer_cash', NULL, NULL, 1, 10),
+            (4, 'N26 Inaktive Kontrolle', 'INACTIVE-CONTROL', 'description', 'transfer_cash', NULL, NULL, 0, 1),
+            (5, 'N26 Nachrangige Kontrolle', 'N26', 'combined', 'transfer_cash', NULL, NULL, 1, 20)
+        `,
+      )
+      .run(category.id);
+
+    legacyDb
+      .prepare(
+        `
+          INSERT INTO fixed_costs (
+            name, planned_amount_cents, booking_day_of_month,
+            payment_note, note, is_active
+          ) VALUES ('Miete Musterhaushalt', 143000, 1, 'MIETE-MUSTER', '', 1)
+        `,
+      )
+      .run();
+
+    const insertTransaction = legacyDb.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, currency_code, description, counterparty_name,
+          source_type, import_run_id, import_fingerprint
+        ) VALUES (?, 'expense', ?, '2026-08', ?, 'EUR', ?, ?, 'import', ?, ?)
+      `,
+    );
+    const insertImportedTransaction = legacyDb.prepare(
+      `
+        INSERT INTO imported_transactions (
+          transaction_id, import_run_id, source_row_index, account_iban,
+          booking_date, amount_cents, counterparty, purpose, dedupe_fingerprint
+        ) VALUES (?, ?, ?, 'DE001', ?, ?, ?, ?, ?)
+      `,
+    );
+    const addLegacyImport = (params: {
+      rowIndex: number;
+      bookingDate: string;
+      amountCents: number;
+      description: string;
+      counterparty: string;
+      purpose: string;
+      fingerprint: string;
+    }): number => {
+      const transactionId = Number(
+        insertTransaction.run(
+          account.id,
+          params.bookingDate,
+          params.amountCents,
+          params.description,
+          params.counterparty,
+          importRunId,
+          params.fingerprint,
+        ).lastInsertRowid,
+      );
+      insertImportedTransaction.run(
+        transactionId,
+        importRunId,
+        params.rowIndex,
+        params.bookingDate,
+        params.amountCents,
+        params.counterparty,
+        params.purpose,
+        params.fingerprint,
+      );
+      return transactionId;
+    };
+
+    const automaticId = addLegacyImport({
+      rowIndex: 0,
+      bookingDate: "2026-08-02",
+      amountCents: -6000,
+      description: "UEBERWEISUNG | Monatsblock",
+      counterparty: "N26-Fix. Empfaenger",
+      purpose: "Monatsblock",
+      fingerprint: "legacy-fin126-automatic",
+    });
+    const excludedId = addLegacyImport({
+      rowIndex: 1,
+      bookingDate: "2026-08-03",
+      amountCents: -6000,
+      description: "UEBERWEISUNG | N26-Fix. ausgeschlossen",
+      counterparty: "N26 Bank",
+      purpose: "N26-Fix. ausgeschlossen",
+      fingerprint: "legacy-fin126-excluded",
+    });
+    const includedId = addLegacyImport({
+      rowIndex: 2,
+      bookingDate: "2026-08-04",
+      amountCents: -6000,
+      description: "UEBERWEISUNG | N26-Fix. manuell",
+      counterparty: "N26 Bank",
+      purpose: "N26-Fix. manuell",
+      fingerprint: "legacy-fin126-included",
+    });
+    const directFixedCostId = addLegacyImport({
+      rowIndex: 3,
+      bookingDate: "2026-08-05",
+      amountCents: -143000,
+      description: "DAUERAUFTRAG | MIETE-MUSTER",
+      counterparty: "Muster Hausverwaltung",
+      purpose: "MIETE-MUSTER",
+      fingerprint: "legacy-fin126-direct",
+    });
+    const inactiveRuleId = addLegacyImport({
+      rowIndex: 4,
+      bookingDate: "2026-08-06",
+      amountCents: -2000,
+      description: "LASTSCHRIFT | INACTIVE-CONTROL",
+      counterparty: "Muster Anbieter",
+      purpose: "INACTIVE-CONTROL",
+      fingerprint: "legacy-fin126-inactive",
+    });
+    const shadowedId = addLegacyImport({
+      rowIndex: 5,
+      bookingDate: "2026-08-07",
+      amountCents: -2500,
+      description: "LASTSCHRIFT | SHADOWED",
+      counterparty: "Muster Anbieter",
+      purpose: "SHADOWED",
+      fingerprint: "legacy-fin126-shadowed",
+    });
+
+    legacyDb
+      .prepare(
+        `
+          INSERT INTO transaction_fixed_cost_control_overrides (transaction_id, mode)
+          VALUES (?, 'exclude'), (?, 'include'), (?, 'include')
+        `,
+      )
+      .run(excludedId, includedId, directFixedCostId);
+
+    applyMigrations(legacyDb);
+
+    expect(
+      (
+        legacyDb
+          .prepare("PRAGMA table_info(import_rules)")
+          .all() as Array<{ name: string }>
+      ).map((column) => column.name),
+    ).toContain("rule_purpose");
+    expect(
+      legacyDb
+        .prepare(
+          `
+            SELECT id, rule_purpose AS rulePurpose
+            FROM import_rules
+            ORDER BY id
+          `,
+        )
+        .all(),
+    ).toEqual([
+      { id: 1, rulePurpose: "assignment" },
+      { id: 2, rulePurpose: "fixed_cost_control" },
+      { id: 3, rulePurpose: "cash_transfer" },
+      { id: 4, rulePurpose: "fixed_cost_control" },
+      { id: 5, rulePurpose: "fixed_cost_control" },
+    ]);
+
+    const matches = legacyDb
+      .prepare(
+        `
+          SELECT
+            transaction_id AS transactionId,
+            import_rule_id AS ruleId,
+            rule_name_snapshot AS ruleName,
+            rule_pattern_snapshot AS pattern,
+            rule_match_field_snapshot AS matchField
+          FROM transaction_fixed_cost_control_matches
+          ORDER BY transaction_id
+        `,
+      )
+      .all() as Array<{
+      transactionId: number;
+      ruleId: number;
+      ruleName: string;
+      pattern: string;
+      matchField: string;
+    }>;
+
+    expect(matches).toEqual([
+      {
+        transactionId: automaticId,
+        ruleId: 2,
+        ruleName: "N26 Transfer-Kandidat",
+        pattern: "N26-Fix.",
+        matchField: "combined",
+      },
+      {
+        transactionId: excludedId,
+        ruleId: 2,
+        ruleName: "N26 Transfer-Kandidat",
+        pattern: "N26-Fix.",
+        matchField: "combined",
+      },
+      {
+        transactionId: includedId,
+        ruleId: 2,
+        ruleName: "N26 Transfer-Kandidat",
+        pattern: "N26-Fix.",
+        matchField: "combined",
+      },
+    ]);
+    expect(matches.map((row) => row.transactionId)).not.toContain(directFixedCostId);
+    expect(matches.map((row) => row.transactionId)).not.toContain(inactiveRuleId);
+    expect(matches.map((row) => row.transactionId)).not.toContain(shadowedId);
+    expect(
+      legacyDb
+        .prepare(
+          `
+            SELECT mode
+            FROM transaction_fixed_cost_control_overrides
+            WHERE transaction_id = ?
+          `,
+        )
+        .get(includedId),
+    ).toEqual({ mode: "include" });
+    expect(
+      legacyDb
+        .prepare(
+          `
+            SELECT mode
+            FROM transaction_fixed_cost_control_overrides
+            WHERE transaction_id = ?
+          `,
+        )
+        .get(excludedId),
+    ).toEqual({ mode: "exclude" });
+    expect(
+      legacyDb
+        .prepare(
+          `
+            SELECT mode
+            FROM transaction_fixed_cost_control_overrides
+            WHERE transaction_id = ?
+          `,
+        )
+        .get(directFixedCostId),
+    ).toEqual({ mode: "include" });
+    expect(
+      legacyDb
+        .prepare(
+          `
+            SELECT control.transaction_id AS transactionId
+            FROM transaction_fixed_cost_control_matches control
+            LEFT JOIN transaction_fixed_cost_control_overrides override
+              ON override.transaction_id = control.transaction_id
+            WHERE COALESCE(override.mode, '') != 'exclude'
+            ORDER BY control.transaction_id
+          `,
+        )
+        .all(),
+    ).toEqual([
+      { transactionId: automaticId },
+      { transactionId: includedId },
+    ]);
+    expect(
+      legacyDb
+        .prepare(
+          `
+            SELECT transaction_id AS transactionId
+            FROM transaction_fixed_cost_control_overrides
+            WHERE mode = 'include'
+            ORDER BY transaction_id
+          `,
+        )
+        .all(),
+    ).toEqual([
+      { transactionId: includedId },
+      { transactionId: directFixedCostId },
+    ]);
+
+    applyMigrations(legacyDb);
+    legacyDb
+      .prepare("DELETE FROM schema_migrations WHERE id = '0020_fin_126'")
+      .run();
+    applyMigrations(legacyDb);
+
+    expect(
+      (
+        legacyDb
+          .prepare(
+            "SELECT COUNT(*) AS count FROM transaction_fixed_cost_control_matches",
+          )
+          .get() as { count: number }
+      ).count,
+    ).toBe(3);
+    expect(legacyDb.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+    legacyDb.close();
+  });
+
   it("stores special budget monthly shares under a project", () => {
     const project = db
       .prepare(

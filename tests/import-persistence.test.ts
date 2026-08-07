@@ -147,7 +147,7 @@ describe("import persistence and dedupe", () => {
     expect(cashIncoming.total).toBe(4000);
   });
 
-  it("does not persist fixed-cost control rule matches as cash transfers after user edits", () => {
+  it("persists fixed-cost control rule matches as expenses with durable rule context", () => {
     createImportRule({
       name: "Garage Kontrolle",
       pattern: "GARAGE-FAMILIE",
@@ -183,6 +183,80 @@ describe("import persistence and dedupe", () => {
 
     expect(stored.transactionType).toBe("expense");
     expect(stored.destinationAccountId).toBeNull();
+
+    const control = db
+      .prepare(
+        `
+          SELECT
+            rule_name_snapshot AS ruleName,
+            rule_pattern_snapshot AS rulePattern,
+            rule_match_field_snapshot AS ruleMatchField
+          FROM transaction_fixed_cost_control_matches control
+          INNER JOIN transactions t ON t.id = control.transaction_id
+          WHERE t.import_run_id = ?
+        `,
+      )
+      .get(result.importRunId) as {
+      ruleName: string;
+      rulePattern: string;
+      ruleMatchField: string;
+    };
+
+    expect(control).toEqual({
+      ruleName: "Garage Kontrolle",
+      rulePattern: "GARAGE-FAMILIE",
+      ruleMatchField: "combined",
+    });
+  });
+
+  it("rolls back the complete import batch when control-status persistence fails", () => {
+    createImportRule({
+      name: "Supermarkt Kontrolle",
+      pattern: "SUPERMARKT A",
+      matchField: "combined",
+      targetType: "transfer_cash",
+      rulePurpose: "fixed_cost_control",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 5,
+    });
+    db.exec(`
+      CREATE TRIGGER fail_fin126_control_insert
+      BEFORE INSERT ON transaction_fixed_cost_control_matches
+      BEGIN
+        SELECT RAISE(ABORT, 'forced control persistence failure');
+      END;
+    `);
+
+    expect(() =>
+      persistSparkasseCsvImport({
+        sourceFilename: "atomic-control.csv",
+        fileContent: SAMPLE_CSV,
+      }),
+    ).toThrow("forced control persistence failure");
+
+    const run = db
+      .prepare(
+        `
+          SELECT id, status, imported_rows AS importedRows
+          FROM import_runs
+          WHERE source_filename = 'atomic-control.csv'
+        `,
+      )
+      .get() as { id: number; status: string; importedRows: number };
+    expect(run.status).toBe("failed");
+    expect(run.importedRows).toBe(0);
+    expect(
+      (db.prepare("SELECT COUNT(*) AS count FROM transactions WHERE import_run_id = ?").get(
+        run.id,
+      ) as { count: number }).count,
+    ).toBe(0);
+    expect(
+      (db.prepare("SELECT COUNT(*) AS count FROM imported_transactions WHERE import_run_id = ?").get(
+        run.id,
+      ) as { count: number }).count,
+    ).toBe(0);
   });
 
   it("marks second identical import as duplicates", () => {
@@ -243,8 +317,9 @@ describe("import persistence and dedupe", () => {
       suggestions: [
         {
           rowIndex: 0,
-          label: "Fixkosten-Kontrolle: Direktabbuchung (Fitness)",
-          ruleName: "Fixkosten-Matching (Direktabbuchung)",
+          label: "Fixkosten-Kontrolle: Kontrollmuster",
+          ruleName: "Fitness Kontrollregel",
+          kind: "fixed_cost_control",
         },
       ],
     });
@@ -253,19 +328,20 @@ describe("import persistence and dedupe", () => {
       rowIndex: 0,
       reason: "duplicate",
       reasonLabel: "Duplikat",
-      suggestionLabel: "Fixkosten-Kontrolle: Direktabbuchung (Fitness)",
+      suggestionLabel: "Fixkosten-Kontrolle: Kontrollmuster",
     });
   });
 
-  it("separates fixed-cost control suggestions but keeps transfer hints importable", () => {
+  it("keeps fixed-cost controls and transfer hints in the persistable preview list", () => {
     const parsed = parseSparkasseCsvToPreview(SAMPLE_CSV);
     const preview = buildSparkasseImportPreviewPlan({
       rows: parsed.rows,
       suggestions: [
         {
           rowIndex: 0,
-          label: "Fixkosten-Kontrolle: N26-Sammeltransfer",
+          label: "Fixkosten-Kontrolle: Kontrollmuster",
           ruleName: "N26 Sammeltransfer Kontrolle",
+          kind: "fixed_cost_control",
         },
         {
           rowIndex: 1,
@@ -275,21 +351,31 @@ describe("import persistence and dedupe", () => {
       ],
     });
 
-    expect(preview.importableRowIndexes).toEqual([1, 2]);
-    expect(preview.filteredRows.map((row) => row.reasonLabel)).toEqual([
-      "Fixkosten-Kontrolle",
-    ]);
+    expect(preview.importableRowIndexes).toEqual([0, 1, 2]);
+    expect(preview.filteredRows).toEqual([]);
   });
 
-  it("persists only preview-importable rows and keeps cash transfers importable", () => {
+  it("persists preview controls and cash transfers without losing either row", () => {
+    createImportRule({
+      name: "Supermarkt Fixkostenkontrolle",
+      pattern: "SUPERMARKT A",
+      matchField: "combined",
+      targetType: "transfer_cash",
+      rulePurpose: "fixed_cost_control",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 5,
+    });
     const parsed = parseSparkasseCsvToPreview(SAMPLE_CSV);
     const preview = buildSparkasseImportPreviewPlan({
       rows: parsed.rows,
       suggestions: [
         {
           rowIndex: 0,
-          label: "Fixkosten-Kontrolle: N26-Sammeltransfer",
-          ruleName: "N26 Sammeltransfer Kontrolle",
+          label: "Fixkosten-Kontrolle: Kontrollmuster",
+          ruleName: "Supermarkt Fixkostenkontrolle",
+          kind: "fixed_cost_control",
         },
         {
           rowIndex: 1,
@@ -306,7 +392,7 @@ describe("import persistence and dedupe", () => {
     });
 
     expect(result.detectedRows).toBe(3);
-    expect(result.importedRows).toBe(2);
+    expect(result.importedRows).toBe(3);
     expect(result.duplicateRows).toBe(0);
 
     const rows = db
@@ -321,11 +407,18 @@ describe("import persistence and dedupe", () => {
       .all() as Array<{ description: string; transactionType: string }>;
 
     expect(rows.map((row) => row.description)).toEqual([
+      "DIG. KARTE (APPLE PAY) | 2026-04-23T20:21 Debitk.10 2029-12",
       "BARGELDAUSZAHLUNG | GA NR 12345678 AUTOMAT STADT",
       "EINGANG | Lohn April",
     ]);
     expect(rows.some((row) => row.transactionType === "transfer")).toBe(true);
-    expect(rows.some((row) => row.description.includes("SUPERMARKT A"))).toBe(false);
+    expect(
+      (
+        db.prepare("SELECT COUNT(*) AS count FROM transaction_fixed_cost_control_matches").get() as {
+          count: number;
+        }
+      ).count,
+    ).toBe(1);
   });
 
   it("treats existing transaction fingerprints as duplicates even without metadata row", () => {

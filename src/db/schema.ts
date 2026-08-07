@@ -1,5 +1,7 @@
 import type Database from "better-sqlite3";
 
+import { ensureImportRulePurposeCompatibility } from "@/src/import-rules/schema-compatibility";
+
 export type Migration = {
   id: string;
   name: string;
@@ -1188,6 +1190,26 @@ SET
 WHERE status = 'closed' OR fixed_cost_snapshot_created_at IS NOT NULL;
 `;
 
+const fin126MigrationSql = `
+CREATE TABLE IF NOT EXISTS transaction_fixed_cost_control_matches (
+  transaction_id INTEGER PRIMARY KEY REFERENCES transactions(id) ON DELETE CASCADE,
+  import_rule_id INTEGER,
+  rule_name_snapshot TEXT NOT NULL CHECK (
+    length(trim(rule_name_snapshot)) BETWEEN 2 AND 80
+  ),
+  rule_pattern_snapshot TEXT NOT NULL CHECK (
+    length(trim(rule_pattern_snapshot)) BETWEEN 2 AND 120
+  ),
+  rule_match_field_snapshot TEXT NOT NULL CHECK (
+    rule_match_field_snapshot IN ('description', 'counterparty', 'combined')
+  ),
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX IF NOT EXISTS idx_transaction_fixed_cost_control_matches_rule
+ON transaction_fixed_cost_control_matches(import_rule_id);
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -1284,6 +1306,11 @@ export const migrations: readonly Migration[] = [
     name: "FIN-125 freeze category and special budget month context",
     sql: fin125MigrationSql,
   },
+  {
+    id: "0020_fin_126",
+    name: "FIN-126 persist explicit fixed-cost control rule matches",
+    sql: fin126MigrationSql,
+  },
 ];
 
 type MigrationRow = {
@@ -1305,6 +1332,153 @@ function tableColumnExists(db: Database.Database, tableName: string, columnName:
   return rows.some((row) => row.name === columnName);
 }
 
+function tableExists(db: Database.Database, tableName: string): boolean {
+  return Boolean(
+    db
+      .prepare(
+        `
+          SELECT 1
+          FROM sqlite_master
+          WHERE type = 'table' AND name = ?
+          LIMIT 1
+        `,
+      )
+      .get(tableName),
+  );
+}
+
+function normalizeLegacyImportRuleText(value: string | null): string {
+  return (value ?? "").trim().toUpperCase();
+}
+
+// Before FIN-126 the control readmodel re-evaluated the current active import
+// rules for every persisted import row. The original match inputs needed by
+// that algorithm are still available as transaction description and imported
+// counterparty. Replaying the full priority order captures that last effective
+// automatic rule state without consulting fixed-cost master data.
+function backfillLegacyFixedCostControlMatches(db: Database.Database): void {
+  if (!tableExists(db, "import_rules")) {
+    return;
+  }
+
+  const requiredRuleColumns = [
+    "id",
+    "name",
+    "pattern",
+    "match_field",
+    "target_type",
+    "is_active",
+    "priority",
+  ];
+  if (
+    !requiredRuleColumns.every((columnName) =>
+      tableColumnExists(db, "import_rules", columnName),
+    )
+  ) {
+    return;
+  }
+
+  ensureImportRulePurposeCompatibility(db);
+
+  const activeRules = db
+    .prepare(
+      `
+        SELECT
+          id,
+          name,
+          pattern,
+          match_field AS matchField,
+          target_type AS targetType,
+          rule_purpose AS rulePurpose
+        FROM import_rules
+        WHERE is_active = 1
+        ORDER BY priority ASC, id ASC
+      `,
+    )
+    .all() as Array<{
+    id: number;
+    name: string;
+    pattern: string;
+    matchField: "description" | "counterparty" | "combined";
+    targetType: string;
+    rulePurpose: string;
+  }>;
+
+  if (activeRules.length === 0) {
+    return;
+  }
+
+  const legacyImportedExpenses = db
+    .prepare(
+      `
+        SELECT
+          t.id AS transactionId,
+          t.description,
+          COALESCE(imported.counterparty, t.counterparty_name, '') AS counterparty
+        FROM imported_transactions imported
+        INNER JOIN transactions t ON t.id = imported.transaction_id
+        LEFT JOIN transaction_fixed_cost_control_matches control
+          ON control.transaction_id = t.id
+        WHERE t.source_type = 'import'
+          AND t.transaction_type = 'expense'
+          AND t.amount_cents < 0
+          AND control.transaction_id IS NULL
+        ORDER BY t.id ASC
+      `,
+    )
+    .all() as Array<{
+    transactionId: number;
+    description: string;
+    counterparty: string;
+  }>;
+
+  const insertMatch = db.prepare(
+    `
+      INSERT OR IGNORE INTO transaction_fixed_cost_control_matches (
+        transaction_id,
+        import_rule_id,
+        rule_name_snapshot,
+        rule_pattern_snapshot,
+        rule_match_field_snapshot
+      ) VALUES (?, ?, ?, ?, ?)
+    `,
+  );
+
+  for (const row of legacyImportedExpenses) {
+    const description = normalizeLegacyImportRuleText(row.description);
+    const counterparty = normalizeLegacyImportRuleText(row.counterparty);
+    const matchedRule = activeRules.find((rule) => {
+      const needle = normalizeLegacyImportRuleText(rule.pattern);
+      if (needle.length === 0) {
+        return false;
+      }
+
+      const haystack = rule.matchField === "description"
+        ? description
+        : rule.matchField === "counterparty"
+          ? counterparty
+          : normalizeLegacyImportRuleText(`${row.description} ${row.counterparty}`);
+      return haystack.includes(needle);
+    });
+
+    if (
+      !matchedRule ||
+      matchedRule.targetType !== "transfer_cash" ||
+      matchedRule.rulePurpose !== "fixed_cost_control"
+    ) {
+      continue;
+    }
+
+    insertMatch.run(
+      row.transactionId,
+      matchedRule.id,
+      matchedRule.name,
+      matchedRule.pattern,
+      matchedRule.matchField,
+    );
+  }
+}
+
 export function getLatestSchemaVersion(): string {
   return migrations.at(-1)?.id ?? "fin-001";
 }
@@ -1323,6 +1497,13 @@ export function applyMigrations(db: Database.Database): void {
     }
 
     const transaction = db.transaction((pendingMigration: Migration) => {
+      const alreadyApplied = db
+        .prepare("SELECT 1 FROM schema_migrations WHERE id = ? LIMIT 1")
+        .get(pendingMigration.id);
+      if (alreadyApplied) {
+        return;
+      }
+
       if (
         pendingMigration.id === "0018_fin_120" &&
         !tableColumnExists(db, "transactions", "display_name_override")
@@ -1353,13 +1534,17 @@ export function applyMigrations(db: Database.Database): void {
         db.exec(pendingMigration.sql);
       }
 
+      if (pendingMigration.id === "0020_fin_126") {
+        backfillLegacyFixedCostControlMatches(db);
+      }
+
       db.prepare(
         "INSERT OR IGNORE INTO schema_migrations (id, name) VALUES (?, ?)",
       ).run(pendingMigration.id, pendingMigration.name);
       upsertSchemaVersion(db, pendingMigration.id);
     });
 
-    transaction(migration);
+    transaction.immediate(migration);
   }
 
   upsertSchemaVersion(db, getLatestSchemaVersion());

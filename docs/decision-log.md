@@ -50,10 +50,58 @@ Auswirkung:
 
 - ...
 
-Folgeaktion:
+Umsetzung:
 
 - ...
 ```
+
+## 2026-08-04 - FIN-126 persistiert Fixkosten-Kontrolltreffer beim Import
+
+Quelle/Ticket: `FIN-126`
+
+Erkenntnis/Entscheidung:
+
+- Automatische Fixkosten-Kontrolltreffer duerfen nur aus expliziten, aktiven
+  Regeln mit Zweck `fixed_cost_control` entstehen.
+- Die bisherige Direkt-Heuristik aus Fixkostenbetrag plus Name oder
+  Abbuchungsinfo wird entfernt. Fixkosten-Stammdaten bleiben reine
+  Planungsdaten.
+- Ein Regel-Treffer wird gemeinsam mit Buchung und Importspur atomar
+  persistiert. Regelname, Pattern und Match-Feld werden als historischer
+  Snapshot gespeichert.
+- Monats-Readmodel, Fixkosten-Kontrollliste und Alfred werten nur den
+  persistierten Status plus manuelle Include-/Exclude-Overrides aus.
+- Fuer bereits persistierte Importausgaben aus Schema `0018_fin_120` wird der
+  zuletzt dynamisch sichtbare Regelstand einmalig und idempotent reproduziert:
+  Originalbeschreibung plus gespeicherte Import-Gegenpartei werden gegen alle
+  aktiven Importregeln in `priority, id`-Reihenfolge gematcht. Nur ein zuerst
+  treffendes explizites `fixed_cost_control` wird gespeichert. Direkte
+  Fixkosten-Stammdatenmatches werden nicht uebernommen; bestehende Overrides
+  bleiben als separate, wirksame Korrekturebene erhalten.
+- Alte lazy `import_rules`-Tabellen ohne `rule_purpose` werden innerhalb
+  derselben Migration vor dem Backfill mit der bereits bestehenden
+  FIN-117-Kompatibilitaetslogik angehoben und klassifiziert. Repository und
+  Migration verwenden dafuer dieselbe Implementierung, damit die Migration
+  nicht dauerhaft ohne Backfill als angewendet markiert werden kann.
+
+Auswirkung:
+
+- Vorschau und Bestaetigung zeigen einen Kontrolltreffer positiv und
+  importieren die Bankbuchung vollstaendig; nur die variable Ausgabensumme
+  nimmt den persistierten Kontrollbetrag heraus.
+- Spaetere Regel-Aenderungen oder -Deaktivierungen schreiben bestehende
+  Monate nicht um. Ohne explizite Regel bleiben auch passend benannte
+  Miete-/Garage-Buchungen normale variable Ausgaben.
+- Aeltere Decision-Log-Eintraege zur direkten Fixkosten-Heuristik beschreiben
+  den damaligen Stand und sind durch diese Entscheidung fachlich abgeloest.
+
+Folgeaktion:
+
+- ADR 0015 und der Alfred-Query-Katalog werden auf die persistierte Semantik
+  aktualisiert.
+- Nach dem FIN-125-Merge folgt FIN-126 als Migration `0020_fin_126` auf
+  `0019_fin_125`. Collector-Schemafreigabe, ADR-/Betriebsdokumentation und
+  Tests verwenden denselben finalen Schemastand.
 
 ## 2026-07-30 - FIN-121 trennt Planwertgröße und Budgetverbrauch visuell
 

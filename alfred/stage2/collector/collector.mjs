@@ -20,8 +20,8 @@ import { pathToFileURL } from "node:url";
 import Database from "better-sqlite3";
 
 export const SNAPSHOT_CONTRACT_VERSION = "budgetbuddy.coach.snapshot.v2";
-export const QUERY_CATALOG_VERSION = "2026-07-22.1";
-export const SUPPORTED_SCHEMA_VERSIONS = new Set(["0018_fin_120"]);
+export const QUERY_CATALOG_VERSION = "2026-08-04.1";
+export const SUPPORTED_SCHEMA_VERSIONS = new Set(["0020_fin_126"]);
 
 const DEFAULT_DATABASE_PATH = "/var/lib/budgetbuddy/budgetbuddy.db";
 const DEFAULT_OUTPUT_DIRECTORY = "/var/lib/alfred-snapshots/budgetbuddy";
@@ -157,9 +157,6 @@ function readTransactionRows(db, fromMonthKey, toMonthKey) {
           t.transaction_type AS transactionType,
           t.amount_cents AS amountCents,
           t.currency_code AS currencyCode,
-          t.source_type AS sourceType,
-          t.description,
-          t.counterparty_name AS counterpartyName,
           t.category_id AS categoryId,
           t.special_budget_id AS specialBudgetId,
           c.name AS categoryName,
@@ -280,36 +277,32 @@ function readFixedCostSnapshotPlans(db, fromMonthKey, toMonthKey) {
   return result;
 }
 
-function normalizeMatchText(value) {
-  return String(value ?? "").trim().toUpperCase();
-}
-
-function normalizeMatchToken(value) {
-  return normalizeMatchText(value).replace(/[^A-Z0-9]+/g, " ").trim();
-}
-
-function matchFieldText(row, matchField) {
-  if (matchField === "description") return normalizeMatchText(row.description);
-  if (matchField === "counterparty") return normalizeMatchText(row.counterpartyName);
-  return normalizeMatchText(`${row.description ?? ""} ${row.counterpartyName ?? ""}`);
-}
-
-function readActiveImportRules(db) {
-  return db
-    .prepare(
-      `
-        SELECT
-          name,
-          pattern,
-          match_field AS matchField,
-          target_type AS targetType,
-          rule_purpose AS rulePurpose
-        FROM import_rules
-        WHERE is_active = 1
-        ORDER BY priority ASC, id ASC
-      `,
-    )
-    .all();
+function readPersistedFixedCostControlMatches(db, fromMonthKey, toMonthKey) {
+  return new Map(
+    db
+      .prepare(
+        `
+          SELECT
+            control.transaction_id AS transactionId,
+            t.effective_month_key AS monthKey,
+            t.booking_date AS bookingDate,
+            t.amount_cents AS amountCents
+          FROM transaction_fixed_cost_control_matches control
+          INNER JOIN transactions t ON t.id = control.transaction_id
+          WHERE t.transaction_type = 'expense'
+            AND t.effective_month_key BETWEEN ? AND ?
+        `,
+      )
+      .all(fromMonthKey, toMonthKey)
+      .map((row) => [Number(row.transactionId), {
+        transactionId: Number(row.transactionId),
+        monthKey: row.monthKey,
+        bookingDate: row.bookingDate,
+        amountCents: Math.max(0, -Number(row.amountCents)),
+        controlSource: "automatic_rule",
+        fixedCostName: null,
+      }]),
+  );
 }
 
 function readFixedCostControlOverrides(db, fromMonthKey, toMonthKey) {
@@ -328,66 +321,15 @@ function readFixedCostControlOverrides(db, fromMonthKey, toMonthKey) {
   );
 }
 
-function directFixedCostMatch(row, activeFixedCosts) {
-  const amountCents = Math.max(0, -Number(row.amountCents));
-  const haystack = normalizeMatchToken(
-    `${row.description ?? ""} ${row.counterpartyName ?? ""}`,
-  );
-  for (const fixedCost of activeFixedCosts) {
-    if (fixedCost.plannedAmountCents !== amountCents) continue;
-    const token = normalizeMatchToken(fixedCost.paymentNote || fixedCost.name);
-    if (token.length >= 3 && haystack.includes(token)) return fixedCost.name;
-  }
-  return null;
-}
-
 function buildFixedCostControlMatches(
   transactionRows,
-  activeFixedCosts,
-  activeImportRules,
+  persistedMatches,
   overrides,
 ) {
   const matches = new Map();
-  const importedExpenses = transactionRows.filter(
-    (row) => row.transactionType === "expense" && row.sourceType === "import",
-  );
-
-  for (const row of importedExpenses) {
-    if (overrides.get(Number(row.id)) === "exclude") continue;
-    let matchedRule = null;
-    for (const rule of activeImportRules) {
-      const needle = normalizeMatchText(rule.pattern);
-      if (needle.length > 0 && matchFieldText(row, rule.matchField).includes(needle)) {
-        matchedRule = rule;
-        break;
-      }
-    }
-    if (matchedRule) {
-      if (
-        matchedRule.targetType === "transfer_cash" &&
-        matchedRule.rulePurpose === "fixed_cost_control"
-      ) {
-        matches.set(Number(row.id), {
-          transactionId: Number(row.id),
-          monthKey: row.monthKey,
-          bookingDate: row.bookingDate,
-          amountCents: Math.max(0, -Number(row.amountCents)),
-          controlSource: "automatic_rule",
-          fixedCostName: null,
-        });
-      }
-      continue;
-    }
-    const fixedCostName = directFixedCostMatch(row, activeFixedCosts);
-    if (fixedCostName) {
-      matches.set(Number(row.id), {
-        transactionId: Number(row.id),
-        monthKey: row.monthKey,
-        bookingDate: row.bookingDate,
-        amountCents: Math.max(0, -Number(row.amountCents)),
-        controlSource: "automatic_direct",
-        fixedCostName,
-      });
+  for (const [transactionId, match] of persistedMatches) {
+    if (overrides.get(transactionId) !== "exclude") {
+      matches.set(transactionId, match);
     }
   }
 
@@ -413,7 +355,7 @@ function summarizeFixedCostControls(matches) {
   const entries = [...matches.values()];
   const sourceCounts = {
     automaticRule: entries.filter((entry) => entry.controlSource === "automatic_rule").length,
-    automaticDirect: entries.filter((entry) => entry.controlSource === "automatic_direct").length,
+    automaticDirect: 0,
     manual: entries.filter((entry) => entry.controlSource === "manual").length,
   };
   return {
@@ -783,7 +725,11 @@ export function buildSnapshot(db, options = {}) {
       monthKeys[0],
       monthKeys.at(-1),
     );
-    const activeImportRules = readActiveImportRules(db);
+    const persistedFixedCostControlMatches = readPersistedFixedCostControlMatches(
+      db,
+      monthKeys[0],
+      monthKeys.at(-1),
+    );
     const fixedCostControlOverrides = readFixedCostControlOverrides(
       db,
       monthKeys[0],
@@ -791,8 +737,7 @@ export function buildSnapshot(db, options = {}) {
     );
     const fixedCostControlMatches = buildFixedCostControlMatches(
       transactionRows,
-      activeFixedCosts,
-      activeImportRules,
+      persistedFixedCostControlMatches,
       fixedCostControlOverrides,
     );
     const months = buildMonths(
@@ -842,8 +787,9 @@ export function buildSnapshot(db, options = {}) {
           "Planned monthly fixed-cost block. Open months use the current active list; " +
           "months closed with a snapshot use their frozen month-close plan.",
         actualControl:
-          "Recognized posted expense transactions used by BudgetBuddy's fixed-cost " +
-          "control view. It is an observed control total, not a forecast.",
+          "Posted expense transactions persistently marked by an explicit control " +
+          "rule at import time or by a manual override. It is an observed control " +
+          "total, not a forecast.",
         expense:
           "expenseCents excludes recognized fixed-cost controls; totalExpenseCents " +
           "includes every posted expense transaction. Never subtract the fixed-cost " +

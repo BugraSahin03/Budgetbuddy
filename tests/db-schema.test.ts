@@ -219,7 +219,20 @@ describe("schema migrations", () => {
     expect(sql).toContain("ON CONFLICT(month_key, special_budget_id) DO NOTHING");
   });
 
+  it("contains migration for persistent explicit fixed-cost control matches", () => {
+    const sql = migrations.find((migration) => migration.id === "0020_fin_126")?.sql ?? "";
+
+    expect(sql).toContain(
+      "CREATE TABLE IF NOT EXISTS transaction_fixed_cost_control_matches",
+    );
+    expect(sql).toContain("transaction_id INTEGER PRIMARY KEY");
+    expect(sql).toContain("REFERENCES transactions(id) ON DELETE CASCADE");
+    expect(sql).toContain("rule_name_snapshot TEXT NOT NULL");
+    expect(sql).toContain("rule_pattern_snapshot TEXT NOT NULL");
+    expect(sql).toContain("rule_match_field_snapshot TEXT NOT NULL");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0019_fin_125");
+    expect(getLatestSchemaVersion()).toBe("0020_fin_126");
   });
 });

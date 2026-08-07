@@ -26,6 +26,7 @@ const {
 const { setSpecialBudgetProjectActive } = await import(
   "@/src/special-budgets/repository"
 );
+const { listActiveImportRules } = await import("@/src/import-rules/repository");
 
 describe("months repository", () => {
   beforeEach(() => {
@@ -415,7 +416,7 @@ describe("months repository", () => {
     ]);
   });
 
-  it("calculates the month budget stand without double-counting recognized fixed-cost controls", () => {
+  it("calculates the month budget stand without double-counting persisted fixed-cost controls", () => {
     const sparkasseId = (
       db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
     ).id;
@@ -470,12 +471,36 @@ describe("months repository", () => {
       sparkasseId,
     );
 
+    const n26Transaction = db
+      .prepare(
+        "SELECT id FROM transactions WHERE description = 'TEST-FIN-063 N26-Fix. Monatsblock'",
+      )
+      .get() as { id: number };
+    const n26Rule = listActiveImportRules().find(
+      (rule) => rule.rulePurpose === "fixed_cost_control",
+    );
+    expect(n26Rule).toBeDefined();
+    db.prepare(
+      `
+        INSERT INTO transaction_fixed_cost_control_matches (
+          transaction_id, import_rule_id, rule_name_snapshot,
+          rule_pattern_snapshot, rule_match_field_snapshot
+        ) VALUES (?, ?, ?, ?, ?)
+      `,
+    ).run(
+      n26Transaction.id,
+      n26Rule!.id,
+      n26Rule!.name,
+      n26Rule!.pattern,
+      n26Rule!.matchField,
+    );
+
     const plannedFixedCostsCents = baselinePlannedFixedCostsCents + 3490;
     const snapshot = getMonthSnapshot("2031-08");
 
     expect(snapshot.totals.incomeCents).toBe(200000);
-    expect(snapshot.totals.actualFixedCostsCents).toBe(7490);
-    expect(snapshot.fixedCostControlMatches).toHaveLength(2);
+    expect(snapshot.totals.actualFixedCostsCents).toBe(4000);
+    expect(snapshot.fixedCostControlMatches).toHaveLength(1);
     expect(
       snapshot.fixedCostControlMatches.reduce(
         (sum, match) => sum + match.controlAmountCents,
@@ -484,26 +509,24 @@ describe("months repository", () => {
     ).toBe(snapshot.totals.actualFixedCostsCents);
     expect(snapshot.fixedCostControlMatches.map((match) => match.bookingDate)).toEqual([
       "2031-08-05",
-      "2031-08-06",
     ]);
     expect(snapshot.fixedCostControlMatches.map((match) => match.controlLabel)).toEqual([
       "Fixkosten-Kontrolle: Kontrollmuster",
-      "Fixkosten-Kontrolle: Direktabbuchung (TEST-FIN-063 Fitness Studio)",
     ]);
     expect(snapshot.fixedCostControlMatches.map((match) => match.displayName)).toEqual([
       "Test-fin-063 N26-Fix. Monatsblock",
-      "Test-fin-063 Lastschrift Fitness",
     ]);
     expect(snapshot.transactions.map((transaction) => transaction.description)).toEqual([
       "TEST-FIN-063 Nicht erkannte Fixkostenbuchung",
+      "TEST-FIN-063 Lastschrift Fitness",
       "TEST-FIN-063 Cash Transfer",
       "TEST-FIN-063 Groceries",
       "TEST-FIN-063 Salary",
     ]);
-    expect(snapshot.totals.expenseCents).toBe(11700);
+    expect(snapshot.totals.expenseCents).toBe(15190);
     expect(snapshot.totals.plannedFixedCostsCents).toBe(plannedFixedCostsCents);
     expect(snapshot.totals.availableCents).toBe(
-      200000 - 11700 - plannedFixedCostsCents,
+      200000 - 15190 - plannedFixedCostsCents,
     );
   });
 
@@ -614,7 +637,7 @@ describe("months repository", () => {
     ).toBe(10000);
   });
 
-  it("can exclude automatically recognized fixed-cost control matches", () => {
+  it("can exclude persisted fixed-cost control matches", () => {
     const sparkasseId = (
       db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
     ).id;
@@ -638,6 +661,18 @@ describe("months repository", () => {
       )
       .run(sparkasseId);
     const transactionId = Number(recognizedExpense.lastInsertRowid);
+    const rule = listActiveImportRules().find(
+      (candidate) => candidate.rulePurpose === "fixed_cost_control",
+    );
+    expect(rule).toBeDefined();
+    db.prepare(
+      `
+        INSERT INTO transaction_fixed_cost_control_matches (
+          transaction_id, import_rule_id, rule_name_snapshot,
+          rule_pattern_snapshot, rule_match_field_snapshot
+        ) VALUES (?, ?, ?, ?, ?)
+      `,
+    ).run(transactionId, rule!.id, rule!.name, rule!.pattern, rule!.matchField);
 
     expect(getMonthSnapshot("2032-01").fixedCostControlMatches).toHaveLength(1);
 

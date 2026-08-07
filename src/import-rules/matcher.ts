@@ -8,18 +8,12 @@ import {
 } from "@/src/import-rules/income-deductions";
 import type { ImportRule } from "@/src/import-rules/repository";
 
-type FixedCostForImportMatching = {
-  name: string;
-  plannedAmountCents: number;
-  paymentNote: string | null;
-  isActive: boolean;
-};
-
 export type ImportRuleSuggestion = {
   rowIndex: number;
   label: string;
   ruleName: string;
-  kind?: "standard" | "income_deduction";
+  kind?: "standard" | "fixed_cost_control" | "income_deduction";
+  ruleId?: number;
 };
 
 function normalize(value: string): string {
@@ -54,63 +48,12 @@ function suggestionLabel(rule: ImportRule): string {
   return `Sonderkategorie-ID ${rule.specialBudgetId}`;
 }
 
-function normalizeToken(value: string | null): string {
-  return normalize(value ?? "").replace(/[^A-Z0-9]+/g, " ").trim();
-}
-
-function tokenFromFixedCost(fixedCost: FixedCostForImportMatching): string {
-  const paymentNote = normalizeToken(fixedCost.paymentNote);
-  if (paymentNote.length >= 3) {
-    return paymentNote;
-  }
-
-  return normalizeToken(fixedCost.name);
-}
-
-function buildDirectFixedCostSuggestion(
-  row: SparkasseCsvRow,
-  fixedCosts: FixedCostForImportMatching[],
-): Omit<ImportRuleSuggestion, "rowIndex"> | null {
-  if (row.amountCents >= 0) {
-    return null;
-  }
-
-  const haystack = normalizeToken(`${row.description} ${row.counterparty}`);
-  const absoluteAmount = Math.abs(row.amountCents);
-
-  for (const fixedCost of fixedCosts) {
-    if (!fixedCost.isActive) {
-      continue;
-    }
-
-    if (fixedCost.plannedAmountCents !== absoluteAmount) {
-      continue;
-    }
-
-    const token = tokenFromFixedCost(fixedCost);
-    if (token.length < 3) {
-      continue;
-    }
-
-    if (haystack.includes(token)) {
-      return {
-        label: `Fixkosten-Kontrolle: Direktabbuchung (${fixedCost.name})`,
-        ruleName: "Fixkosten-Matching (Direktabbuchung)",
-      };
-    }
-  }
-
-  return null;
-}
-
 export function buildImportRuleSuggestions(params: {
   rows: SparkasseCsvRow[];
   rules: ImportRule[];
   incomeDeductionRules?: IncomeDeductionRule[];
-  fixedCosts?: FixedCostForImportMatching[];
 }): ImportRuleSuggestion[] {
   const activeRules = params.rules.filter((rule) => rule.isActive);
-  const fixedCosts = params.fixedCosts ?? [];
   const suggestions: ImportRuleSuggestion[] = [];
 
   for (let rowIndex = 0; rowIndex < params.rows.length; rowIndex += 1) {
@@ -133,6 +76,11 @@ export function buildImportRuleSuggestions(params: {
     let ruleMatched = false;
 
     for (const rule of activeRules) {
+      const isFixedCostControlRule = isN26FixedCostControlRule(rule);
+      if (isFixedCostControlRule && row.amountCents >= 0) {
+        continue;
+      }
+
       const haystack = getMatchText(row, rule.matchField);
       const needle = normalize(rule.pattern);
 
@@ -145,7 +93,8 @@ export function buildImportRuleSuggestions(params: {
           rowIndex,
           label: suggestionLabel(rule),
           ruleName: rule.name,
-          kind: "standard",
+          kind: isFixedCostControlRule ? "fixed_cost_control" : "standard",
+          ruleId: rule.id,
         });
         ruleMatched = true;
         break;
@@ -154,15 +103,6 @@ export function buildImportRuleSuggestions(params: {
 
     if (ruleMatched) {
       continue;
-    }
-
-    const directFixedCostSuggestion = buildDirectFixedCostSuggestion(row, fixedCosts);
-    if (directFixedCostSuggestion) {
-      suggestions.push({
-        rowIndex,
-        kind: "standard",
-        ...directFixedCostSuggestion,
-      });
     }
   }
 

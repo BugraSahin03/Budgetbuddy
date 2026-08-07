@@ -18,7 +18,7 @@ Schreibschutz zur Laufzeit vom Modellverhalten abhaengig machen.
 - Ein eigener Systembenutzer `alfred-collector` liest die produktive
   SQLite-Datei mit `readonly`, `fileMustExist` und `PRAGMA query_only=ON`.
 - Der Collector akzeptiert ausschliesslich den bekannten BudgetBuddy-
-  Schemastand `0018_fin_120` und fest versionierte Abfragen. Unbekannte
+  Schemastand `0020_fin_126` und fest versionierte Abfragen. Unbekannte
   Schemata fuehren zu einem Fehler statt zu einer bestmoeglichen Schaetzung.
 - Der Collector erzeugt alle 15 Minuten einen atomaren JSON-Snapshot mit
   Monats-, Wochen-, Kategorie-, Budget-, Konto- und Datenqualitaetsaggregaten.
