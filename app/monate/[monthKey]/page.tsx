@@ -61,7 +61,6 @@ type CategoryVisual = {
   name: string;
   iconName: string | null;
   colorHex: string | null;
-  isSavings: boolean;
 };
 
 function categoryVisualById(
@@ -74,7 +73,6 @@ function categoryVisualById(
         name: category.name,
         iconName: category.iconName,
         colorHex: category.colorHex,
-        isSavings: category.isSavings,
       },
     ]),
   );
@@ -230,8 +228,8 @@ function TransactionVisualMark({
 
     return (
       <CategoryVisualMark
-        name={category?.name ?? transaction.categoryName ?? "Kategorie"}
-        iconName={category?.iconName}
+        name={transaction.categoryName ?? "Kategorie"}
+        iconName={transaction.categoryIconName}
         colorHex={category?.colorHex}
         className="h-10 w-10 text-xs"
         variant="neutral"
@@ -487,7 +485,7 @@ function MonthCloseControl({
       <MonthDialog
         eyebrow="Monatsstatus"
         title="Monat wieder öffnen"
-        description="Nach dem Wieder-Öffnen können Buchungen, Zuordnungen, Importe und Monatsbudgets wieder verändert werden. Der Fixkosten-Snapshot bleibt erhalten."
+        description="Nach dem Wiederöffnen können Buchungen, Zuordnungen und Importe wieder bearbeitet werden. Der Planstand aus Fixkosten, Kategorien und Sonderkategorien bleibt vom ersten Abschluss erhalten und wird nicht automatisch neu berechnet. Vorhandene Monatsbudgets bleiben eingefroren; fehlende Kategorien oder Sonderkategorien werden erst bei bewusster erster Verwendung ergänzt."
         triggerLabel="Wieder öffnen"
         triggerClassName="month-dialog-trigger"
       >
@@ -500,7 +498,7 @@ function MonthCloseControl({
               className="mt-1 h-4 w-4 rounded border-[color:var(--month-line-strong)]"
             />
             Ich möchte diesen Monat wieder öffnen und Bearbeitungen bewusst
-            erlauben.
+            erlauben. Der Planstand vom ersten Abschluss bleibt erhalten.
           </label>
           <button
             type="submit"
@@ -569,6 +567,11 @@ export default async function MonthDetailPage({
   const month = getMonthDetail(monthKey);
   const allCategories = listCategories();
   const categoryVisuals = categoryVisualById(allCategories);
+  const activeCategoryIds = new Set(
+    allCategories
+      .filter((category) => category.isActive)
+      .map((category) => category.id),
+  );
   const visualCategoryOptions = allCategories
     .filter((category) => category.isActive)
     .map((category) => ({
@@ -600,6 +603,8 @@ export default async function MonthDetailPage({
   );
   const monthlyTodos = listMonthlyTodos(month.monthKey);
   const isMonthClosed = month.status.status === "closed";
+  const isReopenedHistoricalMonth =
+    !isMonthClosed && month.status.hasBudgetSnapshot;
   const canEditMonth = !isMonthClosed;
   const canEditBookings = isBookingEditMode && canEditMonth;
   const openAssignmentCount = month.transactions.filter(
@@ -622,6 +627,9 @@ export default async function MonthDetailPage({
             />
             {isMonthClosed ? (
               <MonthChip tone="neutral">Abgeschlossen</MonthChip>
+            ) : null}
+            {isReopenedHistoricalMonth ? (
+              <MonthChip tone="accent">Wieder geöffnet</MonthChip>
             ) : null}
             <MonthCloseControl
               monthKey={month.monthKey}
@@ -720,6 +728,18 @@ export default async function MonthDetailPage({
             Dieser Monat ist gegen neue Buchungen, Importe, Zuordnungen,
             Löschungen und Monatsbudget-Änderungen gesperrt. Zum Bearbeiten
             bitte bewusst wieder öffnen.
+          </p>
+        </section>
+      ) : null}
+
+      {isReopenedHistoricalMonth ? (
+        <section className="rounded-[1.7rem] border border-amber-200 bg-[linear-gradient(135deg,rgba(255,251,235,0.98),rgba(255,255,255,0.94))] p-5 text-sm leading-6 text-amber-950 shadow-[0_16px_40px_rgba(120,53,15,0.06)]">
+          <p className="month-eyebrow text-amber-700">Monat wieder geöffnet</p>
+          <p className="mt-2 font-semibold">
+            Der Planstand vom ersten Abschluss bleibt erhalten. Globale
+            Änderungen an Kategorien und Sonderkategorien werden hier nicht
+            automatisch übernommen. Fehlende Einträge werden erst bei einer
+            bewussten ersten Verwendung in diesem Monat ergänzt.
           </p>
         </section>
       ) : null}
@@ -923,9 +943,12 @@ export default async function MonthDetailPage({
                       </div>
                       <div className="mt-5 grid gap-4 lg:grid-cols-2">
                         {month.dashboard.categoryRows.map((row) => {
-                          const category = categoryVisuals.get(row.categoryId);
                           const usageState = getCategoryUsageState(row);
-                          const isSavingsCategory = category?.isSavings === true;
+                          const isSavingsCategory = row.isSavingsCategory;
+                          const canEditCategoryBudget =
+                            !month.status.hasBudgetSnapshot &&
+                            row.isCategoryActive &&
+                            activeCategoryIds.has(row.categoryId);
 
                           return (
                             <article
@@ -936,8 +959,8 @@ export default async function MonthDetailPage({
                               <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                                 <div className="flex min-w-0 gap-3">
                                   <CategoryVisualMark
-                                    name={category?.name ?? row.categoryName}
-                                    iconName={category?.iconName}
+                                    name={row.categoryName}
+                                    iconName={row.categoryIconName}
                                     className="h-11 w-11 text-sm"
                                     variant="neutral"
                                   />
@@ -961,41 +984,49 @@ export default async function MonthDetailPage({
                                 </span>
                               </div>
                               {!isSavingsCategory ? (
-                                <form
-                                  action={setMonthlyBudgetOverrideAction}
-                                  className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
-                                >
-                                  <input
-                                    type="hidden"
-                                    name="monthKey"
-                                    value={month.monthKey}
-                                  />
-                                  <input
-                                    type="hidden"
-                                    name="categoryId"
-                                    value={row.categoryId}
-                                  />
-                                  <input
-                                    name="budgetAmount"
-                                    inputMode="decimal"
-                                    defaultValue={toInputAmount(
-                                      row.monthOverrideAmountCents ??
-                                        row.budgetAmountCents,
-                                    )}
-                                    placeholder={
-                                      row.defaultBudgetAmountCents === null
-                                        ? "z. B. 250.00"
-                                        : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`
-                                    }
-                                    className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
-                                  />
-                                  <button
-                                    type="submit"
-                                    className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                                canEditCategoryBudget ? (
+                                  <form
+                                    action={setMonthlyBudgetOverrideAction}
+                                    className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
                                   >
-                                    Speichern
-                                  </button>
-                                </form>
+                                    <input
+                                      type="hidden"
+                                      name="monthKey"
+                                      value={month.monthKey}
+                                    />
+                                    <input
+                                      type="hidden"
+                                      name="categoryId"
+                                      value={row.categoryId}
+                                    />
+                                    <input
+                                      name="budgetAmount"
+                                      inputMode="decimal"
+                                      defaultValue={toInputAmount(
+                                        row.monthOverrideAmountCents ??
+                                          row.budgetAmountCents,
+                                      )}
+                                      placeholder={
+                                        row.defaultBudgetAmountCents === null
+                                          ? "z. B. 250.00"
+                                          : `Standard ${toInputAmount(row.defaultBudgetAmountCents)}`
+                                      }
+                                      className="rounded-xl border border-[color:var(--month-line-strong)] bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-sky-400 focus:outline-none"
+                                    />
+                                    <button
+                                      type="submit"
+                                      className="rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                                    >
+                                      Speichern
+                                    </button>
+                                  </form>
+                                ) : (
+                                  <p className="mt-5 rounded-xl border border-slate-200 bg-slate-50/80 px-3 py-2 text-xs font-bold leading-5 text-slate-600">
+                                    {month.status.hasBudgetSnapshot
+                                      ? "Wieder geöffneter historischer Monatsstand · der Planstand vom ersten Abschluss bleibt erhalten."
+                                      : "In diesem Monatsstand deaktivierte Kategorie · bestehende Buchungen bleiben sichtbar, ein Monatsbudget ist hier nicht editierbar."}
+                                  </p>
+                                )
                               ) : (
                                 <p className="mt-5 rounded-xl border border-emerald-100 bg-emerald-50/70 px-3 py-2 text-xs font-bold leading-5 text-emerald-800">
                                   Sparen entsteht durch echte Buchungen und bekommt keinen Planbetrag.
@@ -1053,70 +1084,80 @@ export default async function MonthDetailPage({
                                   {specialBudgetStatusLabel(row)}
                                 </span>
                               </div>
-                              <form
-                                action={updateMonthlySpecialBudgetAction}
-                                className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
-                              >
-                                <input
-                                  type="hidden"
-                                  name="monthKey"
-                                  value={month.monthKey}
-                                />
-                                <input
-                                  type="hidden"
-                                  name="specialBudgetId"
-                                  value={row.id}
-                                />
-                                <input
-                                  name="plannedAmount"
-                                  inputMode="decimal"
-                                  defaultValue={toInputAmount(
-                                    row.plannedAmountCents,
-                                  )}
-                                  placeholder="z. B. 120.00"
-                                  className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-amber-400 focus:outline-none"
-                                />
-                                <button
-                                  type="submit"
-                                  className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
-                                >
-                                  Speichern
-                                </button>
-                              </form>
-                              <form
-                                action={updateMonthlySpecialBudgetStateAction}
-                                className="mt-3"
-                              >
-                                <input
-                                  type="hidden"
-                                  name="monthKey"
-                                  value={month.monthKey}
-                                />
-                                <input
-                                  type="hidden"
-                                  name="specialBudgetId"
-                                  value={row.id}
-                                />
-                                {row.isActive ? (
-                                  <button
-                                    type="submit"
-                                    name="intent"
-                                    value="deactivate"
-                                    className="text-xs font-bold text-amber-800 underline decoration-amber-300 underline-offset-4"
+                              {month.status.hasBudgetSnapshot ? (
+                                <p className="mt-5 rounded-xl border border-amber-200 bg-amber-50/80 px-3 py-2 text-xs font-bold leading-5 text-amber-900">
+                                  Historischer Monatsstand · Betrag und
+                                  Aktivstatus dieser Sonderkategorie sind
+                                  eingefroren.
+                                </p>
+                              ) : (
+                                <>
+                                  <form
+                                    action={updateMonthlySpecialBudgetAction}
+                                    className="mt-5 grid gap-2 sm:grid-cols-[minmax(0,1fr)_auto]"
                                   >
-                                    Sonderkategorie deaktivieren
-                                  </button>
-                                ) : (
-                                  <button
-                                    type="submit"
-                                    name="intent"
-                                    value="reactivate"
-                                    className="text-xs font-bold text-emerald-700 underline decoration-emerald-200 underline-offset-4"
+                                    <input
+                                      type="hidden"
+                                      name="monthKey"
+                                      value={month.monthKey}
+                                    />
+                                    <input
+                                      type="hidden"
+                                      name="specialBudgetId"
+                                      value={row.id}
+                                    />
+                                    <input
+                                      name="plannedAmount"
+                                      inputMode="decimal"
+                                      defaultValue={toInputAmount(
+                                        row.plannedAmountCents,
+                                      )}
+                                      placeholder="z. B. 120.00"
+                                      className="rounded-xl border border-amber-200 bg-white px-3 py-2 text-sm text-[color:var(--month-ink)] focus:border-amber-400 focus:outline-none"
+                                    />
+                                    <button
+                                      type="submit"
+                                      className="rounded-xl bg-amber-500 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white transition hover:-translate-y-0.5"
+                                    >
+                                      Speichern
+                                    </button>
+                                  </form>
+                                  <form
+                                    action={updateMonthlySpecialBudgetStateAction}
+                                    className="mt-3"
                                   >
-                                    Sonderkategorie reaktivieren
-                                  </button>
-                                )}
-                              </form>
+                                    <input
+                                      type="hidden"
+                                      name="monthKey"
+                                      value={month.monthKey}
+                                    />
+                                    <input
+                                      type="hidden"
+                                      name="specialBudgetId"
+                                      value={row.id}
+                                    />
+                                    {row.isActive ? (
+                                      <button
+                                        type="submit"
+                                        name="intent"
+                                        value="deactivate"
+                                        className="text-xs font-bold text-amber-800 underline decoration-amber-300 underline-offset-4"
+                                      >
+                                        Sonderkategorie deaktivieren
+                                      </button>
+                                    ) : (
+                                      <button
+                                        type="submit"
+                                        name="intent"
+                                        value="reactivate"
+                                        className="text-xs font-bold text-emerald-700 underline decoration-emerald-200 underline-offset-4"
+                                      >
+                                        Sonderkategorie reaktivieren
+                                      </button>
+                                    )}
+                                  </form>
+                                </>
+                              )}
                             </article>
                           ))
                         )}
@@ -1134,12 +1175,6 @@ export default async function MonthDetailPage({
           <div className="mt-7 space-y-5">
             <MonthCategoryOverview
               categoryRows={month.dashboard.categoryRows}
-              categoryVisuals={Array.from(categoryVisuals, ([id, category]) => ({
-                id,
-                name: category.name,
-                iconName: category.iconName,
-                isSavings: category.isSavings,
-              }))}
               planRestAfterBudgetPotsCents={
                 month.dashboard.planSummary.planRestAfterBudgetPotsCents
               }

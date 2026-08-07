@@ -37,7 +37,7 @@ describe("FIN-068 month savings KPI UI", () => {
     );
 
     expect(overview).toContain(
-      "const isSavingsCategory = category?.isSavings === true",
+      "const isSavingsCategory = row.isSavingsCategory",
     );
     expect(overview).toContain("{!isSavingsCategory ? (");
     expect(overview).toContain("Budget fehlt");
@@ -50,5 +50,20 @@ describe("FIN-068 month savings KPI UI", () => {
     expect(page).toContain("Sparen entsteht durch echte Buchungen");
     expect(page).toContain("{!isSavingsCategory ? (");
     expect(page).not.toContain("Leerer Wert entfernt nur den Monats-Override");
+  });
+
+  it("does not offer a monthly budget editor for an inactive transaction category", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+
+    expect(page).toContain("const activeCategoryIds = new Set(");
+    expect(page).toContain("!month.status.hasBudgetSnapshot &&");
+    expect(page).toContain("row.isCategoryActive &&");
+    expect(page).toContain("activeCategoryIds.has(row.categoryId)");
+    expect(page).toContain("canEditCategoryBudget ? (");
+    expect(page).toContain(
+      "Wieder geöffneter historischer Monatsstand · der Planstand vom ersten Abschluss bleibt erhalten.",
+    );
+    expect(page).toContain("In diesem Monatsstand deaktivierte Kategorie");
+    expect(page).toContain("ein Monatsbudget ist hier nicht editierbar");
   });
 });

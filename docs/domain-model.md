@@ -118,9 +118,15 @@ FIN-124 trennt die globale Kategoriepflege von monatsbezogenen Schreibpfaden:
 - Deaktivierte Kategorien verschwinden aus aktiver Pflege und neuen
   Zuordnungen, bleiben im Kategoriearchiv reaktivierbar und in Monaten mit
   eingefrorenem Planwert oder zugeordneten Buchungen sichtbar.
-- Historische Namen und Icons werden durch FIN-124 noch nicht eingefroren; die
-  vollstaendige Metadaten-Snapshot-Regel fuer abgeschlossene Monate bleibt
-  FIN-125 vorbehalten.
+- In offenen Monaten ohne Budget-Snapshot bleiben gespeicherte Standardwerte
+  und Monats-Overrides beim Deaktivieren unveraendert, sind aber solange
+  dormant: Ohne Buchung wird die Kategorie ausgeblendet; mit Buchung bleibt nur
+  ihr Ist-Kontext ohne Planbeitrag und ohne editierbaren Monatswert sichtbar.
+  Reaktivieren setzt die gespeicherten Planwerte fuer solche offenen und
+  kuenftigen Monate wieder in Kraft.
+- Historische Namen, Icons, Sichtbarkeit und effektive Planwerte werden beim
+  ersten Monatsabschluss durch FIN-125 eingefroren. FIN-124 selbst mutiert
+  diese Abschlussdaten nicht.
 
 ### Monatsbudget
 
@@ -269,10 +275,57 @@ Monatsabschluss-Sperrregel (FIN-071):
 - Beim Abschluss werden vorhandene effektive Kategorie-Planwerte als Monatswerte gespeichert, damit spaetere globale Standardwert-Aenderungen geplante Werte mit vorhandenem Plan nicht rueckwirkend veraendern.
 - Ein geschlossener Monat sperrt monatsbezogene Schreiboperationen:
   neue manuelle Buchungen, Buchungsbearbeitung, Buchungsloeschung, Importloeschung, Kategorie-/Sonderbudget-Zuordnung, CSV-Importe, Monatsbudget-Overrides und Sonderbudget-Monatsanteile.
-- Das Wieder-Oeffnen erlaubt diese Schreiboperationen wieder.
+- Das Wieder-Oeffnen erlaubt Buchungen, Zuordnungen und Importe wieder. Der
+  Planstand aus Fixkosten, Kategorien und Sonderbudgets bleibt jedoch vom
+  ersten Abschluss erhalten; bestehende Snapshot-Zeilen werden nicht neu
+  berechnet oder ueberschrieben.
 - Offene importierte Ausgaben sind beim Abschluss ein Warnhinweis, aber kein harter Blocker.
-- Der vorhandene Fixkosten-Snapshot bleibt auch nach Wieder-Oeffnen erhalten und wird nicht automatisch neu berechnet.
-- Planlose Kategorien koennen technisch nicht als `NULL`-Monatswert eingefroren werden; sie bleiben planlos, bis ein expliziter Monatswert oder globaler Standard existiert.
+- Die vorhandenen Fixkosten-, Kategorien- und Sonderbudget-Snapshots bleiben
+  auch nach Wieder-Oeffnen erhalten und werden nicht automatisch neu
+  berechnet. Fehlende Eintraege werden nur bei bewusster erster Verwendung
+  insert-only ergaenzt.
+- Planlose Kategorien bleiben planlos, bis ein expliziter Monatswert oder
+  globaler Standard existiert.
+
+Kategorien- und Sonderbudget-Snapshot (FIN-125):
+
+- Beim ersten Abschluss speichert `monthly_statuses` mit
+  `budget_snapshot_created_at` auch fuer einen bewusst leeren Stand einen
+  eindeutigen Marker.
+- `monthly_category_snapshots` speichert je sichtbarer fester Kategorie die
+  stabile `category_id`, damaligen Namen und Icon, Aktiv-/Sichtbarstatus,
+  Sparen-Kennzeichnung und den damaligen effektiven Planwert. Ein planloser
+  Stand wird ausdruecklich als `NULL` erhalten.
+- `monthly_special_budget_snapshots` speichert je Monatsanteil die stabile
+  `special_budget_id` und `project_id`, damaligen Namen und Icon, Planwert
+  sowie Aktiv-/Sichtbarstatus.
+- Monate mit Snapshot lesen Namen, Icons, Planwerte und Sichtbarkeit aus
+  diesen Abschlussdaten. Ist-Werte werden weiterhin dynamisch aus den
+  unveraenderten Transaktionsreferenzen summiert.
+- Globale Umbenennung, Iconpflege, Deaktivierung, Vorhabenarchivierung und
+  Aenderung eines Standardbudgets veraendern einen vorhandenen Snapshot nicht.
+  Offene Monate ohne Abschluss-Snapshot lesen weiterhin die aktuellen
+  Stammdaten.
+- Beim ersten Abschluss werden bereits deaktivierte Kategorien nur dann neu
+  eingefroren, wenn der Monat eine zugeordnete Buchung enthaelt. Gespeicherte,
+  aber dormante Defaults oder Overrides erzeugen allein keine Sichtbarkeit und
+  keinen historischen Planbeitrag. Der konservative Legacy-Backfill bestehender
+  Abschlussmonate bleibt davon unberuehrt.
+- Wieder-Oeffnen behaelt den Snapshot. Wird dabei erstmals eine weitere
+  Kategorie oder ein weiterer Sonderbudget-Anteil bewusst verwendet, wird
+  nur der fehlende Snapshot-Eintrag atomar ergaenzt; vorhandene Eintraege
+  werden nicht neu berechnet oder ueberschrieben. Ein Monatsbudget-Override
+  darf deshalb nur einen noch fehlenden Kategorie-Snapshot einmalig ergaenzen;
+  fuer eine vorhandene Snapshot-Zeile wird der Write abgelehnt. Dasselbe gilt
+  fuer Betrag und Aktivstatus eines vorhandenen Sonderbudget-Snapshots; eine
+  fehlende Zeile darf nur zusammen mit ihrer bewussten ersten Verwendung
+  atomar ergaenzt werden.
+- Die Migration `0019_fin_125` uebernimmt fuer bereits geschlossene oder schon
+  wieder geoeffnete Altdaten mangels historischer Metadatenquelle einmalig den
+  zum Migrationszeitpunkt aktuellen Stand. Buchungen, Betraege und
+  Zuordnungen werden dabei nicht veraendert.
+- Der bestehende Fixkosten-Snapshot nach FIN-070 bleibt fachlich und technisch
+  unveraendert.
 
 ### Importlauf
 

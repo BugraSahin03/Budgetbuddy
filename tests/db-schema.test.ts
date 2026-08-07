@@ -206,7 +206,20 @@ describe("schema migrations", () => {
     expect(sql).toContain("idx_transactions_one_income_deduction_per_month");
   });
 
+  it("contains migration for immutable category and special budget snapshots", () => {
+    const sql = migrations.find((migration) => migration.id === "0019_fin_125")
+      ?.sql ?? "";
+
+    expect(sql).toContain("budget_snapshot_created_at");
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS monthly_category_snapshots");
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS monthly_special_budget_snapshots");
+    expect(sql).toContain("UNIQUE (month_key, category_id)");
+    expect(sql).toContain("UNIQUE (month_key, special_budget_id)");
+    expect(sql).toContain("ON CONFLICT(month_key, category_id) DO NOTHING");
+    expect(sql).toContain("ON CONFLICT(month_key, special_budget_id) DO NOTHING");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0018_fin_120");
+    expect(getLatestSchemaVersion()).toBe("0019_fin_125");
   });
 });

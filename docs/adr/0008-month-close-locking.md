@@ -2,7 +2,7 @@
 
 ## Status
 
-Angenommen
+Angenommen; Kategorien-/Sonderbudget-Snapshotregeln durch FIN-125 fortgeschrieben
 
 ## Kontext
 
@@ -24,11 +24,28 @@ Geschlossene Monate sperren monatsbezogene Schreiboperationen:
 - Monatsbudget-Overrides fester Kategorien
 - Sonderbudget-Monatsanteile, inklusive Betrag, Aktiv-Status und projektweite Updates betroffener Anteile
 
-Beim Abschluss wird zusaetzlich der aktuell effektive Kategorie-Planwert als Monatswert gespeichert, sofern ein Planwert existiert. Dadurch veraendern spaetere globale Kategorie-Standardwerte bereits geplante abgeschlossene Monate nicht rueckwirkend.
+Beim ersten Abschluss wird zusaetzlich ein Kategorien- und
+Sonderbudget-Snapshot angelegt. Er speichert die damals sichtbaren
+Kategorien, Namen, Icons, Aktiv-/Sichtbarstatus und effektiven Planwerte mit
+stabilen Kategorie-, Monatsanteil- und Vorhabenreferenzen. Ein eigener Marker
+im Monatsstatus unterscheidet auch einen bewusst leeren Snapshot von einem
+noch nie abgeschlossenen Monat.
+
+Spaetere globale Aenderungen an Namen, Icons, Aktivstatus, Vorhabenstatus und
+Standardbudgets veraendern vorhandene Snapshot-Eintraege nicht. Ist-Werte
+bleiben dagegen aus den Transaktionen und ihren stabilen Zuordnungen
+dynamisch ableitbar.
 
 Offene Ausgaben-Zuordnungen blockieren den Abschluss nicht hart. Die Monatsseite zeigt sie als Warnhinweis, damit Nutzer bewusst entscheiden koennen.
 
-Das Wieder-Oeffnen setzt den Monatsstatus zurueck auf `open` und erlaubt die gesperrten Schreiboperationen wieder. Vorhandene Fixkosten-Snapshots bleiben erhalten und werden nicht automatisch neu berechnet.
+Das Wieder-Oeffnen setzt den Monatsstatus zurueck auf `open` und erlaubt
+Buchungen, Zuordnungen und Importe wieder. Vorhandene Fixkosten- und
+Kategorien-/Sonderbudget-Snapshots bleiben erhalten und werden nicht
+automatisch neu berechnet. Deshalb bleiben vorhandene Kategorie-Planwerte
+sowie Betrag und Aktivstatus vorhandener Sonderbudget-Eintraege eingefroren.
+Eine erstmals verwendete Kategorie oder ein erstmals verwendeter
+Sonderbudget-Anteil ergaenzt nur den fehlenden Snapshot-Eintrag; vorhandene
+Eintraege werden nicht ueberschrieben.
 
 ## Begruendung
 
@@ -36,12 +53,17 @@ Die Sperre gehoert in die Repository-Schreibpfade, weil UI-only-Schutz bei Impor
 
 Warnen statt Blockieren bei offenen Zuordnungen passt zum aktuellen MVP: Importierte Ausgaben duerfen temporaer offen sein, und ein Monatsabschluss kann fachlich trotzdem sinnvoll sein, wenn der Nutzer das bewusst bestaetigt.
 
-Das Einfrieren vorhandener Kategorie-Planwerte nutzt die bestehende Tabelle `monthly_category_budgets` und vermeidet ein neues Snapshot-Schema fuer Kategorieplaene.
+Das getrennte Snapshot-Schema macht planlose Werte, bewusst leere
+Abschlussstaende und historische Metadaten eindeutig. Insert-only-Ergaenzungen
+nach einer Wieder-Oeffnung halten bewusste Korrekturen nachvollziehbar, ohne
+den vorhandenen Abschlussstand still neu zu berechnen.
 
 ## Abgrenzung
 
-- Planlose Kategorien werden nicht als eigener `NULL`-Snapshot gespeichert, weil `monthly_category_budgets.budget_amount_cents` nicht nullable ist.
-- Globale Kategorie-Stammdaten wie Name, Icon oder Aktiv-Status werden nicht historisiert.
+- Bestehende geschlossene Altdaten besitzen keine echte historische
+  Metadatenquelle. Die Migration uebernimmt deshalb den zum
+  Migrationszeitpunkt aktuellen Stand einmalig und dokumentiert diese Grenze
+  transparent.
 - Der Fixkosten-Snapshot bleibt durch ADR 0007 geregelt.
 - Es gibt keine automatische Review-, Reset- oder Recalculate-Funktion fuer abgeschlossene Monate.
 
@@ -49,5 +71,10 @@ Das Einfrieren vorhandener Kategorie-Planwerte nutzt die bestehende Tabelle `mon
 
 - Schreibfunktionen muessen den Monatsstatus pruefen, bevor sie monatsbezogene Daten veraendern.
 - Neue monatsbezogene Schreibpfade muessen dieselbe Sperrregel anwenden.
+- Monats-Readmodels muessen bei vorhandenem Kategorien-/Sonderbudget-Snapshot
+  historische Metadaten und Planwerte daraus lesen; Ist-Werte bleiben an den
+  Transaktionen verankert.
+- Snapshot-Zeilen sind je Monat und stabiler Entitaetsreferenz eindeutig und
+  werden nach dem ersten Speichern nicht automatisch aktualisiert.
 - UI-Komponenten fuer geschlossene Monate duerfen keine Bearbeitungsformulare anbieten, sondern sollen Wieder-Oeffnen als bewusste Aktion zeigen.
 - Tests muessen Repository-Sperren, Import-Sperren und UI-Indikatoren fuer geschlossene Monate absichern.

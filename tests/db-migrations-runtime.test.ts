@@ -35,7 +35,9 @@ describe("database migrations runtime behavior", () => {
               'accounts',
               'categories',
               'monthly_category_budgets',
+              'monthly_category_snapshots',
               'monthly_fixed_cost_snapshots',
+              'monthly_special_budget_snapshots',
               'monthly_statuses',
               'special_budget_projects',
               'special_budgets',
@@ -58,7 +60,9 @@ describe("database migrations runtime behavior", () => {
       "imported_transactions",
       "income_deduction_rules",
       "monthly_category_budgets",
+      "monthly_category_snapshots",
       "monthly_fixed_cost_snapshots",
+      "monthly_special_budget_snapshots",
       "monthly_statuses",
       "special_budget_projects",
       "special_budgets",
@@ -164,6 +168,257 @@ describe("database migrations runtime behavior", () => {
     expect((legacyDb.prepare("SELECT COUNT(*) AS count FROM transaction_fixed_cost_control_overrides").get() as { count: number }).count).toBe(1);
     expect(legacyDb.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
     legacyDb.close();
+  });
+
+  it("backfills closed and reopened legacy months once without changing assignments", () => {
+    const legacyDb = new Database(":memory:");
+    legacyDb.exec("PRAGMA foreign_keys = ON;");
+    legacyDb.exec(`
+      CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+      CREATE TABLE schema_migrations (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    for (const migration of migrations) {
+      if (migration.id === "0019_fin_125") break;
+      legacyDb.exec(migration.sql);
+      legacyDb.prepare("INSERT INTO schema_migrations (id, name) VALUES (?, ?)").run(
+        migration.id,
+        migration.name,
+      );
+    }
+
+    const account = legacyDb
+      .prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'")
+      .get() as AccountRow;
+    const category = legacyDb
+      .prepare("SELECT id FROM categories WHERE name = 'Einkauf'")
+      .get() as CategoryRow;
+
+    legacyDb.prepare(
+      `
+        UPDATE categories
+        SET name = 'Legacy Einkauf', icon_name = 'LE', default_budget_amount_cents = 22000
+        WHERE id = ?
+      `,
+    ).run(category.id);
+    legacyDb.exec(`
+      INSERT INTO monthly_statuses (
+        month_key, status, fixed_cost_snapshot_created_at, closed_at, reopened_at
+      ) VALUES
+        ('2040-01', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, NULL),
+        ('2040-02', 'open', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    `);
+    legacyDb.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, transaction_type, booking_date, effective_month_key,
+          amount_cents, description, source_type, category_id
+        ) VALUES (?, 'expense', '2040-01-10', '2040-01', -3300, 'Legacy assignment', 'manual', ?)
+      `,
+    ).run(account.id, category.id);
+    const projectId = Number(
+      legacyDb.prepare(
+        `
+          INSERT INTO special_budget_projects (name, status, icon_name)
+          VALUES ('Legacy Reise', 'active', 'LR')
+        `,
+      ).run().lastInsertRowid,
+    );
+    const specialBudgetId = Number(
+      legacyDb.prepare(
+        `
+          INSERT INTO special_budgets (
+            project_id, name, month_key, planned_amount_cents, is_active
+          ) VALUES (?, 'Legacy Reise', '2040-01', 45000, 1)
+        `,
+      ).run(projectId).lastInsertRowid,
+    );
+
+    applyMigrations(legacyDb);
+
+    const categorySnapshot = legacyDb.prepare(
+      `
+        SELECT
+          name_snapshot AS name,
+          icon_name_snapshot AS iconName,
+          budget_amount_cents_snapshot AS budgetAmountCents
+        FROM monthly_category_snapshots
+        WHERE month_key = '2040-01' AND category_id = ?
+      `,
+    ).get(category.id);
+    const reopenedSnapshotCount = (
+      legacyDb.prepare(
+        `
+          SELECT COUNT(*) AS count
+          FROM monthly_category_snapshots
+          WHERE month_key = '2040-02'
+        `,
+      ).get() as { count: number }
+    ).count;
+    const specialSnapshot = legacyDb.prepare(
+      `
+        SELECT
+          project_id AS projectId,
+          name_snapshot AS name,
+          icon_name_snapshot AS iconName,
+          planned_amount_cents_snapshot AS plannedAmountCents
+        FROM monthly_special_budget_snapshots
+        WHERE month_key = '2040-01' AND special_budget_id = ?
+      `,
+    ).get(specialBudgetId);
+
+    expect(categorySnapshot).toEqual({
+      name: "Legacy Einkauf",
+      iconName: "LE",
+      budgetAmountCents: 22000,
+    });
+    expect(reopenedSnapshotCount).toBeGreaterThan(0);
+    expect(specialSnapshot).toEqual({
+      projectId,
+      name: "Legacy Reise",
+      iconName: "LR",
+      plannedAmountCents: 45000,
+    });
+    expect(
+      legacyDb.prepare(
+        "SELECT COUNT(*) AS count FROM transactions WHERE description = 'Legacy assignment' AND category_id = ?",
+      ).get(category.id),
+    ).toEqual({ count: 1 });
+
+    legacyDb.prepare(
+      "UPDATE categories SET name = 'Neuer Live-Name', icon_name = 'NN' WHERE id = ?",
+    ).run(category.id);
+    applyMigrations(legacyDb);
+
+    expect(
+      legacyDb.prepare(
+        `
+          SELECT name_snapshot AS name, icon_name_snapshot AS iconName
+          FROM monthly_category_snapshots
+          WHERE month_key = '2040-01' AND category_id = ?
+        `,
+      ).get(category.id),
+    ).toEqual({ name: "Legacy Einkauf", iconName: "LE" });
+    expect(legacyDb.prepare("PRAGMA foreign_key_check").all()).toEqual([]);
+
+    legacyDb.close();
+  });
+
+  it("finishes FIN-125 safely when the status marker column already exists", () => {
+    const legacyDb = new Database(":memory:");
+    legacyDb.exec("PRAGMA foreign_keys = ON;");
+    legacyDb.exec(`
+      CREATE TABLE app_meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+      CREATE TABLE schema_migrations (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
+    for (const migration of migrations) {
+      if (migration.id === "0019_fin_125") break;
+      legacyDb.exec(migration.sql);
+      legacyDb.prepare("INSERT INTO schema_migrations (id, name) VALUES (?, ?)").run(
+        migration.id,
+        migration.name,
+      );
+    }
+
+    legacyDb.exec(
+      "ALTER TABLE monthly_statuses ADD COLUMN budget_snapshot_created_at TEXT;",
+    );
+    legacyDb.exec(`
+      INSERT INTO monthly_statuses (month_key, status, closed_at)
+      VALUES ('2040-03', 'closed', CURRENT_TIMESTAMP);
+    `);
+
+    applyMigrations(legacyDb);
+
+    expect(
+      legacyDb.prepare(
+        `
+          SELECT budget_snapshot_created_at AS snapshotCreatedAt
+          FROM monthly_statuses
+          WHERE month_key = '2040-03'
+        `,
+      ).get(),
+    ).toMatchObject({ snapshotCreatedAt: expect.any(String) });
+    expect(
+      legacyDb.prepare(
+        `
+          SELECT COUNT(*) AS count
+          FROM sqlite_master
+          WHERE type = 'table'
+            AND name IN ('monthly_category_snapshots', 'monthly_special_budget_snapshots')
+        `,
+      ).get(),
+    ).toEqual({ count: 2 });
+    expect(
+      legacyDb.prepare(
+        "SELECT COUNT(*) AS count FROM schema_migrations WHERE id = '0019_fin_125'",
+      ).get(),
+    ).toEqual({ count: 1 });
+
+    legacyDb.close();
+  });
+
+  it("enforces FIN-125 snapshot uniqueness, amount checks and references", () => {
+    const categoryId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as CategoryRow
+    ).id;
+    const otherCategoryId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Freizeit'").get() as CategoryRow
+    ).id;
+
+    db.exec(`
+      INSERT INTO monthly_statuses (
+        month_key, status, budget_snapshot_created_at, closed_at
+      ) VALUES ('2040-04', 'closed', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    `);
+    db.prepare(
+      `
+        INSERT INTO monthly_category_snapshots (
+          month_key, category_id, name_snapshot, is_active_snapshot,
+          is_visible_snapshot, is_savings_snapshot, budget_amount_cents_snapshot
+        ) VALUES ('2040-04', ?, 'Snapshot', 1, 1, 0, 1000)
+      `,
+    ).run(categoryId);
+
+    expect(() =>
+      db.prepare(
+        `
+          INSERT INTO monthly_category_snapshots (
+            month_key, category_id, name_snapshot, is_active_snapshot,
+            is_visible_snapshot, is_savings_snapshot, budget_amount_cents_snapshot
+          ) VALUES ('2040-04', ?, 'Doppelt', 1, 1, 0, 2000)
+        `,
+      ).run(categoryId),
+    ).toThrow(/UNIQUE constraint failed/);
+    expect(() =>
+      db.prepare(
+        `
+          INSERT INTO monthly_category_snapshots (
+            month_key, category_id, name_snapshot, is_active_snapshot,
+            is_visible_snapshot, is_savings_snapshot, budget_amount_cents_snapshot
+          ) VALUES ('2040-04', ?, 'Negativ', 1, 1, 0, -1)
+        `,
+      ).run(otherCategoryId),
+    ).toThrow(/CHECK constraint failed/);
+    expect(() =>
+      db.prepare(
+        `
+          INSERT INTO monthly_category_snapshots (
+            month_key, category_id, name_snapshot, is_active_snapshot,
+            is_visible_snapshot, is_savings_snapshot
+          ) VALUES ('2040-04', 999999, 'Fehlende Referenz', 1, 1, 0)
+        `,
+      ).run(),
+    ).toThrow(/FOREIGN KEY constraint failed/);
   });
 
   it("stores special budget monthly shares under a project", () => {
@@ -480,7 +735,8 @@ describe("database migrations runtime behavior", () => {
       if (
         migration.id === "0005_fin_030" ||
         migration.id === "0008_fin_040" ||
-        migration.id === "0018_fin_120"
+        migration.id === "0018_fin_120" ||
+        migration.id === "0019_fin_125"
       ) {
         continue;
       }

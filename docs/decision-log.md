@@ -2371,3 +2371,53 @@ Auswirkung:
 - Die fruehere FIN-065-Ableitung des Projektstatus aus Monatsanteilen gilt fuer
   explizit archivierte Vorhaben nicht mehr; Legacy-Verknuepfung darf einen
   vorhandenen Archivstatus nicht aufheben.
+
+## 2026-08-02 - FIN-125 friert Kategorien und Sonderbudgets beim Monatsabschluss ein
+
+Quelle/Ticket: `FIN-125`
+
+Erkenntnis/Entscheidung:
+
+- Der erste Monatsabschluss erzeugt neben dem unveraenderten
+  Fixkosten-Snapshot einen eigenen Kategorien-/Sonderbudget-Snapshot mit
+  eindeutigem Marker im Monatsstatus.
+- Historisch gespeichert werden stabile Kategorie-, Monatsanteil- und
+  Vorhabenreferenzen, damalige Namen und Icons, Sichtbarkeit/Aktivstatus sowie
+  der effektive Planwert. Planlose Kategorien behalten dabei ausdruecklich
+  `NULL` als historischen Planstand.
+- Geschlossene und wieder geoeffnete Monate lesen vorhandene historische
+  Metadaten und Planwerte aus dem Snapshot. Ist-Werte und Buchungszuordnungen
+  bleiben dynamisch an `transactions` verankert.
+- Wieder-Oeffnen berechnet bestehende Snapshot-Zeilen nicht neu. Eine bewusst
+  erstmals verwendete Kategorie oder ein neuer Sonderbudget-Monatsanteil wird
+  atomar und ausschliesslich als fehlender Eintrag ergaenzt.
+- `0019_fin_125` backfillt bereits geschlossene oder schon wieder geoeffnete
+  Monate einmalig mit dem zum Migrationszeitpunkt aktuellen Stand. Eine echte
+  Rueckdatierung alter Namen und Icons ist mangels historischer Quelle nicht
+  moeglich.
+
+Auswirkung:
+
+- Spaetere Umbenennung, Iconpflege, Deaktivierung, Vorhabenarchivierung oder
+  Standardbudget-Aenderung schreibt historische Monatsansichten nicht mehr
+  optisch oder fachlich um.
+- Deaktivierte Kategorien behalten ihre gespeicherten Defaults und
+  Monats-Overrides fuer eine spaetere Reaktivierung. In offenen und kuenftigen
+  Monaten ohne Budget-Snapshot sind diese Werte dormant: Buchungslose
+  Kategorien werden ausgeblendet, Kategorien mit vorhandenen Buchungen bleiben
+  als Ist-Kontext ohne Planbeitrag sichtbar und koennen dort keinen neuen
+  Monatswert erhalten.
+- In wieder geoeffneten Monaten lehnt das Repository Monatsbudget-Overrides
+  fuer bereits vorhandene Snapshot-Zeilen ab, weil sie sonst erfolgreich in
+  Live-Daten geschrieben, aber im insert-only Snapshot unsichtbar blieben. Nur
+  eine erstmals fehlende Kategorie darf ihren Snapshot atomar ergaenzen.
+- Beim regulaeren ersten Abschluss friert ein dormanter Default oder Override
+  eine deaktivierte, buchungslose Kategorie nicht neu ein. Der einmalige
+  Legacy-Backfill bleibt bewusst konservativ, weil fuer alte Abschlussmonate
+  keine verlaessliche historische Aktivitaetsquelle existiert.
+- Planrest, Kategorie-/Sonderbudget-Planwerte und historischer
+  Buchungskontext bleiben stabil; bewusste Buchungskorrekturen aktualisieren
+  weiterhin die Ist-Werte.
+- Der Kategorienplan-Freeze, Monatsstatus und alle Sperrregeln aus FIN-071
+  bleiben erhalten. ADR 0008 ist nur in seiner Snapshot-Abgrenzung
+  fortgeschrieben; ADR 0007 und der Fixkosten-Snapshot bleiben unveraendert.

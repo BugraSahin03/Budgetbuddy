@@ -60,6 +60,50 @@ describe("FIN-060/FIN-084 month bookings edit UI", () => {
     expect(page).toContain("{canEditMonth ? (");
   });
 
+  it("distinguishes reopened historical months from regular open months", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+
+    expect(page).toContain("const isReopenedHistoricalMonth =");
+    expect(page).toContain("!isMonthClosed && month.status.hasBudgetSnapshot");
+    expect(page).toContain('<MonthChip tone="accent">Wieder geöffnet</MonthChip>');
+    expect(page).toContain("Monat wieder geöffnet");
+    expect(page).toContain("Der Planstand vom ersten Abschluss bleibt erhalten.");
+    expect(page).toContain(
+      "Fehlende Einträge werden erst bei einer",
+    );
+    expect(page).toContain(
+      "Der Planstand aus Fixkosten, Kategorien und Sonderkategorien bleibt vom ersten Abschluss erhalten",
+    );
+    expect(page).not.toContain("Monatsbudgets wieder verändert werden");
+    expect(page).not.toContain("Der Fixkosten-Snapshot bleibt erhalten.");
+  });
+
+  it("keeps existing special budget snapshot rows read-only after reopening", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const specialBudgetSection = page.slice(
+      page.indexOf("Monatsspezifische Ausgabenziele"),
+    );
+    const snapshotGuardIndex = specialBudgetSection.indexOf(
+      "{month.status.hasBudgetSnapshot ? (",
+    );
+
+    expect(snapshotGuardIndex).toBeGreaterThanOrEqual(0);
+    expect(specialBudgetSection).toContain(
+      "Betrag und\n                                  Aktivstatus dieser Sonderkategorie sind",
+    );
+    expect(specialBudgetSection).not.toContain(
+      "Aktivstatus dieser Sonderkategorie bleiben\n                                  vom ersten Abschluss erhalten",
+    );
+    expect(snapshotGuardIndex).toBeLessThan(
+      specialBudgetSection.indexOf("action={updateMonthlySpecialBudgetAction}"),
+    );
+    expect(snapshotGuardIndex).toBeLessThan(
+      specialBudgetSection.indexOf(
+        "action={updateMonthlySpecialBudgetStateAction}",
+      ),
+    );
+  });
+
   it("uses one Kategoriezuordnung control and explicit delete confirmation in edit mode", () => {
     const page = readProjectFile("app/monate/[monthKey]/page.tsx");
 
