@@ -137,7 +137,10 @@ describe("FIN-052 month action overlay", () => {
     const globals = readProjectFile("app/globals.css");
 
     expect(monthPage).toContain("Aktueller Budgetstand");
-    expect(monthPage).toContain("month.dashboard.totals.availableCents");
+    expect(monthPage).toContain("month.dashboard.totals.currentBudgetCents");
+    expect(monthPage).toContain(
+      "month.dashboard.totals.projectedAfterFixedCostsCents",
+    );
     expect(monthPage).toContain("budgetStandTone");
     expect(monthPage).toContain('return "text-[#d24d5a]"');
     expect(monthPage).not.toContain(

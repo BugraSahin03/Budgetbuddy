@@ -36,7 +36,7 @@ describe("dashboard repository", () => {
     db.close();
   });
 
-  it("calculates available from income - planned fixed costs - variable expenses", () => {
+  it("separates the actual current budget from the planned projection", () => {
     const sparkasseId = getAccountId("Sparkasse");
     const cashId = getAccountId("Bargeld");
     const einkaufId = getCategoryId("Einkauf");
@@ -167,7 +167,10 @@ describe("dashboard repository", () => {
       baselinePlannedFixedCostsCents + fixedCostPlanCents,
     );
     expect(snapshot.totals.actualFixedCostsCents).toBe(4000);
-    expect(snapshot.totals.availableCents).toBe(
+    expect(snapshot.totals.currentBudgetCents).toBe(
+      200000 - 20990 - 4000,
+    );
+    expect(snapshot.totals.projectedAfterFixedCostsCents).toBe(
       200000 - 20990 - (baselinePlannedFixedCostsCents + fixedCostPlanCents),
     );
     expect(snapshot.openAssignmentCount).toBe(2);

@@ -163,7 +163,11 @@ describe("months repository", () => {
       "2031-04",
     ]);
     expect(months.some((month) => month.monthKey === "2031-05")).toBe(false);
-    expect(months.find((month) => month.monthKey === "2031-06")?.availableCents).toBeLessThanOrEqual(0);
+    expect(months.find((month) => month.monthKey === "2031-06")?.currentBudgetCents).toBe(0);
+    expect(
+      months.find((month) => month.monthKey === "2031-06")
+        ?.projectedAfterFixedCostsCents,
+    ).toBeLessThanOrEqual(0);
   });
 
   it("builds simple month comparison values and excludes transfers from expenses", () => {
@@ -525,7 +529,10 @@ describe("months repository", () => {
     ]);
     expect(snapshot.totals.expenseCents).toBe(15190);
     expect(snapshot.totals.plannedFixedCostsCents).toBe(plannedFixedCostsCents);
-    expect(snapshot.totals.availableCents).toBe(
+    expect(snapshot.totals.currentBudgetCents).toBe(
+      200000 - 15190 - 4000,
+    );
+    expect(snapshot.totals.projectedAfterFixedCostsCents).toBe(
       200000 - 15190 - plannedFixedCostsCents,
     );
   });
@@ -550,6 +557,7 @@ describe("months repository", () => {
       )
       .run(sparkasseId, einkaufId);
     const transactionId = Number(manualExpense.lastInsertRowid);
+    const unmarkedSnapshot = getMonthSnapshot("2031-12");
 
     setFixedCostControlOverrideForMonth(transactionId, "2031-12", "include");
 
@@ -567,6 +575,9 @@ describe("months repository", () => {
     );
     expect(markedSnapshot.totals.actualFixedCostsCents).toBe(2890);
     expect(markedSnapshot.totals.expenseCents).toBe(0);
+    expect(markedSnapshot.totals.currentBudgetCents).toBe(
+      unmarkedSnapshot.totals.currentBudgetCents,
+    );
     expect(
       markedSnapshot.categoryRows.find((row) => row.categoryId === einkaufId)
         ?.spentAmountCents,
@@ -582,10 +593,102 @@ describe("months repository", () => {
     );
     expect(clearedSnapshot.totals.actualFixedCostsCents).toBe(0);
     expect(clearedSnapshot.totals.expenseCents).toBe(2890);
+    expect(clearedSnapshot.totals.currentBudgetCents).toBe(
+      markedSnapshot.totals.currentBudgetCents,
+    );
     expect(
       clearedSnapshot.categoryRows.find((row) => row.categoryId === einkaufId)
         ?.spentAmountCents,
     ).toBe(2890);
+  });
+
+  it("keeps the current budget stable while an include corrects the planned projection", () => {
+    const sparkasseId = (
+      db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
+    ).id;
+    const einkaufId = (
+      db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+
+    db.prepare("UPDATE fixed_costs SET is_active = 0").run();
+    db.prepare(
+      `
+        INSERT INTO fixed_costs (
+          name, planned_amount_cents, booking_day_of_month,
+          payment_note, note, is_active
+        ) VALUES
+          (
+            'TEST-FIN-127 Miete Plan', 60000, 1,
+            'Test', 'Verbindliches Umklassifizierungsbeispiel', 1
+          ),
+          (
+            'TEST-FIN-127 Sonstiger Fixkostenplan', 40000, 2,
+            'Test', 'Verbindliches Umklassifizierungsbeispiel', 1
+          )
+      `,
+    ).run();
+
+    db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date,
+          effective_month_key, amount_cents, currency_code, description,
+          source_type, category_id, special_budget_id
+        ) VALUES
+          (?, NULL, 'income', '2033-01-01', '2033-01', 300000, 'EUR',
+            'TEST-FIN-127 Einkommen', 'manual', NULL, NULL),
+          (?, NULL, 'expense', '2033-01-02', '2033-01', -50000, 'EUR',
+            'TEST-FIN-127 Sonstige variable Ausgaben', 'manual', ?, NULL)
+      `,
+    ).run(sparkasseId, sparkasseId, einkaufId);
+
+    const rentExpense = db.prepare(
+      `
+        INSERT INTO transactions (
+          account_id, destination_account_id, transaction_type, booking_date,
+          effective_month_key, amount_cents, currency_code, description,
+          source_type, category_id, special_budget_id
+        ) VALUES (
+          ?, NULL, 'expense', '2033-01-03', '2033-01', -60000, 'EUR',
+          'TEST-FIN-127 Miete', 'manual', ?, NULL
+        )
+      `,
+    ).run(sparkasseId, einkaufId);
+    const rentTransactionId = Number(rentExpense.lastInsertRowid);
+
+    const beforeInclude = getMonthSnapshot("2033-01");
+
+    expect(beforeInclude.totals).toMatchObject({
+      incomeCents: 300000,
+      expenseCents: 110000,
+      actualFixedCostsCents: 0,
+      plannedFixedCostsCents: 100000,
+      currentBudgetCents: 190000,
+      projectedAfterFixedCostsCents: 90000,
+    });
+
+    setFixedCostControlOverrideForMonth(
+      rentTransactionId,
+      "2033-01",
+      "include",
+    );
+
+    const afterInclude = getMonthSnapshot("2033-01");
+
+    expect(afterInclude.totals).toMatchObject({
+      incomeCents: 300000,
+      expenseCents: 50000,
+      actualFixedCostsCents: 60000,
+      plannedFixedCostsCents: 100000,
+      currentBudgetCents: 190000,
+      projectedAfterFixedCostsCents: 150000,
+    });
+    expect(afterInclude.totals.currentBudgetCents).toBe(
+      beforeInclude.totals.currentBudgetCents,
+    );
+    expect(afterInclude.totals.projectedAfterFixedCostsCents).toBe(
+      beforeInclude.totals.projectedAfterFixedCostsCents + 60000,
+    );
   });
 
   it("excludes manual fixed-cost control overrides from special budget actuals", () => {
@@ -637,7 +740,7 @@ describe("months repository", () => {
     ).toBe(10000);
   });
 
-  it("can exclude persisted fixed-cost control matches", () => {
+  it("keeps current stable while exclude makes the planned double count visible", () => {
     const sparkasseId = (
       db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
     ).id;
@@ -674,7 +777,8 @@ describe("months repository", () => {
       `,
     ).run(transactionId, rule!.id, rule!.name, rule!.pattern, rule!.matchField);
 
-    expect(getMonthSnapshot("2032-01").fixedCostControlMatches).toHaveLength(1);
+    const automaticallyControlledSnapshot = getMonthSnapshot("2032-01");
+    expect(automaticallyControlledSnapshot.fixedCostControlMatches).toHaveLength(1);
 
     setFixedCostControlOverrideForMonth(transactionId, "2032-01", "exclude");
 
@@ -686,6 +790,13 @@ describe("months repository", () => {
     );
     expect(snapshot.totals.actualFixedCostsCents).toBe(0);
     expect(snapshot.totals.expenseCents).toBe(1299);
+    expect(snapshot.totals.currentBudgetCents).toBe(
+      automaticallyControlledSnapshot.totals.currentBudgetCents,
+    );
+    expect(snapshot.totals.projectedAfterFixedCostsCents).toBe(
+      automaticallyControlledSnapshot.totals.projectedAfterFixedCostsCents -
+        1299,
+    );
   });
 
   it("keeps the month budget stand negative when expenses and fixed costs exceed income", () => {
@@ -726,10 +837,11 @@ describe("months repository", () => {
 
     expect(snapshot.totals.incomeCents).toBe(10000);
     expect(snapshot.totals.expenseCents).toBe(25000);
-    expect(snapshot.totals.availableCents).toBe(
+    expect(snapshot.totals.currentBudgetCents).toBe(10000 - 25000);
+    expect(snapshot.totals.projectedAfterFixedCostsCents).toBe(
       10000 - 25000 - plannedFixedCostsCents,
     );
-    expect(snapshot.totals.availableCents).toBeLessThan(0);
+    expect(snapshot.totals.currentBudgetCents).toBeLessThan(0);
   });
 
   it("keeps cash balance separate from the month budget stand across months", () => {
@@ -777,7 +889,8 @@ describe("months repository", () => {
 
     expect(snapshot.totals.incomeCents).toBe(plannedFixedCostsCents + 2000);
     expect(snapshot.totals.expenseCents).toBe(2000);
-    expect(snapshot.totals.availableCents).toBe(0);
+    expect(snapshot.totals.currentBudgetCents).toBe(plannedFixedCostsCents);
+    expect(snapshot.totals.projectedAfterFixedCostsCents).toBe(0);
     expect(snapshot.totals.cashBalanceCents).toBe(3000);
     expect(snapshot.transactions.map((transaction) => transaction.description)).toEqual([
       "TEST-FIN-078 Cash Dinner",
@@ -999,6 +1112,9 @@ describe("months repository", () => {
       hasFixedCostSnapshot: true,
     });
     expect(getMonthSnapshot("2032-05").totals.plannedFixedCostsCents).toBe(90000);
+    expect(
+      getMonthSnapshot("2032-05").totals.projectedAfterFixedCostsCents,
+    ).toBe(-90000);
 
     db.prepare(
       `
@@ -1008,8 +1124,12 @@ describe("months repository", () => {
       `,
     ).run();
 
-    expect(getMonthSnapshot("2032-05").totals.plannedFixedCostsCents).toBe(90000);
-    expect(getMonthSnapshot("2032-06").totals.plannedFixedCostsCents).toBe(99000);
+    const frozenMonth = getMonthSnapshot("2032-05");
+    const liveMonth = getMonthSnapshot("2032-06");
+    expect(frozenMonth.totals.plannedFixedCostsCents).toBe(90000);
+    expect(frozenMonth.totals.projectedAfterFixedCostsCents).toBe(-90000);
+    expect(liveMonth.totals.plannedFixedCostsCents).toBe(99000);
+    expect(liveMonth.totals.projectedAfterFixedCostsCents).toBe(-99000);
   });
 
   it("freezes effective category budget values when a month is closed", () => {

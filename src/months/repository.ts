@@ -40,7 +40,8 @@ export type MonthTimelinePreview = {
   incomeCents: number;
   variableExpenseCents: number;
   plannedFixedCostsCents: number;
-  availableCents: number;
+  currentBudgetCents: number;
+  projectedAfterFixedCostsCents: number;
 };
 
 export type MonthComparisonRow = {
@@ -107,7 +108,8 @@ export type MonthTotals = {
   savingsCents: number;
   plannedFixedCostsCents: number;
   actualFixedCostsCents: number;
-  availableCents: number;
+  currentBudgetCents: number;
+  projectedAfterFixedCostsCents: number;
   cashBalanceCents: number;
 };
 
@@ -861,6 +863,10 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   );
   const savingsCents = getSavingsActualCents(normalizedMonthKey);
   const plannedFixedCostsCents = getPlannedFixedCostsCents(normalizedMonthKey);
+  const currentBudgetCents =
+    incomeCents - expenseCents - actualFixedCostsCents;
+  const projectedAfterFixedCostsCents =
+    incomeCents - expenseCents - plannedFixedCostsCents;
   const cashBalanceCents = getCashAccountSnapshot().currentBalanceCents;
   const fixedCostControlTransactionIds = fixedCostControlMatches.map(
     (match) => match.transactionId,
@@ -889,7 +895,8 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
       savingsCents,
       plannedFixedCostsCents,
       actualFixedCostsCents,
-      availableCents: incomeCents - expenseCents - plannedFixedCostsCents,
+      currentBudgetCents,
+      projectedAfterFixedCostsCents,
       cashBalanceCents,
     },
     planSummary,
@@ -958,7 +965,9 @@ export function listMonthTimeline(
       incomeCents: snapshot.totals.incomeCents,
       variableExpenseCents: snapshot.totals.expenseCents,
       plannedFixedCostsCents: snapshot.totals.plannedFixedCostsCents,
-      availableCents: snapshot.totals.availableCents,
+      currentBudgetCents: snapshot.totals.currentBudgetCents,
+      projectedAfterFixedCostsCents:
+        snapshot.totals.projectedAfterFixedCostsCents,
     };
   });
 }

@@ -180,11 +180,17 @@ Fixkosten werden im MVP als monatlicher Planungsblock aus der Fixkostenliste gef
 
 Leitregel (FIN-024):
 
-- Die aktive Fixkostensumme wird direkt vom Monatsbudget abgezogen.
+- Der aktuelle Budgetstand zieht gebuchte Fixkosten-Kontrolltreffer ab; die
+  planbasierte Projektion zieht stattdessen den vollstaendigen Fixkostenplan
+  ab. Beide Monatswerte bleiben eindeutig getrennt.
 - `wirkt_fuer_monat` ist nicht Teil des Zielmodells.
-- Einzelne Transaktionen werden nicht mehr manuell als Fixkosten markiert.
+- Einzelne Transaktionen werden keiner Fixkosten-Planposition zugeordnet.
+  Manuelle Include-/Exclude-Korrekturen betreffen ausschliesslich die
+  getrennte Fixkosten-Kontrollsicht.
 - N26 ist kein eigenes Fachobjekt, sondern nur ein technischer Zahlungsweg fuer bereits bekannte Fixkosten.
 - Nur Treffer einer expliziten, aktiven Fixkosten-Kontrollregel werden beim Import dauerhaft als Kontrollsicht gespeichert und nicht als normale variable Monats-Transaktionen behandelt.
+- Persistierte Kontrolltreffer bleiben fuer den Ist-Stand historisch wirksam,
+  auch wenn die Regel spaeter geaendert oder deaktiviert wird.
 - Fixkosten-Stammdaten dienen ausschliesslich der Planung; Name, Abbuchungsinfo und Betrag loesen selbst keinen Kontrolltreffer aus.
 - Es gibt keine direkte N26-Bankanbindung; N26-Hinweise entstehen nur aus dem Sparkassen-Import.
 

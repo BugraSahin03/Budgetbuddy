@@ -49,3 +49,7 @@ Diese Punkte bleiben Folgearbeit, insbesondere FIN-071.
 - Monats-Readmodels muessen beim geplanten Fixkostenblock zuerst pruefen, ob ein Snapshot existiert.
 - Fixkostenpflege bleibt global und wirkt nur auf Monate ohne Snapshot.
 - Tests muessen sicherstellen, dass Betragserhoehung, Deaktivierung und Wiedereroeffnung nach Abschluss den historischen Planstand nicht veraendern.
+
+Die Verwendung dieses eingefrorenen Planstands fuer die getrennte
+Monatsprojektion ist in ADR 0016 beschrieben. Der aktuelle Ist-Budgetstand
+bleibt davon getrennt.

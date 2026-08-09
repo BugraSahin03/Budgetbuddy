@@ -219,6 +219,7 @@ describe("import workflow finalization", () => {
     ]);
     expect(month.totals.actualFixedCostsCents).toBe(6000);
     expect(month.totals.expenseCents).toBe(143000);
+    expect(month.totals.currentBudgetCents).toBe(-149000);
     expect(month.transactions.map((row) => row.description)).toEqual([
       "DAUERAUFTRAG | MIETE-MUSTER",
     ]);
@@ -247,6 +248,9 @@ describe("import workflow finalization", () => {
       }),
     ]);
     expect(historicalMonth.totals.expenseCents).toBe(143000);
+    expect(historicalMonth.totals.currentBudgetCents).toBe(
+      month.totals.currentBudgetCents,
+    );
   });
 
   it("expires cached preview files and asks for a fresh CSV without raw errors", async () => {

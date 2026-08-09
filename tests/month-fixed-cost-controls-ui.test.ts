@@ -32,4 +32,23 @@ describe("month fixed-cost control list UI", () => {
     expect(page).toContain("month.transactions.map((transaction)");
     expect(page).not.toContain("fixed_cost_transaction_links");
   });
+
+  it("separates plan, actual, variance and the planned projection", () => {
+    const page = readProjectFile("app/monate/[monthKey]/page.tsx");
+    const variance = readProjectFile("src/months/fixed-cost-variance.ts");
+
+    expect(page).toContain("Fixkosten (Plan)");
+    expect(page).toContain("Fixkosten (Ist)");
+    expect(page).toContain("getFixedCostVariance");
+    expect(variance).toContain("Noch nicht als Fixkosten gebucht");
+    expect(variance).toContain("Plan und Ist stimmen überein");
+    expect(variance).toContain("Fixkosten-Ist liegt über Plan");
+    expect(page).toContain("Voraussichtlich nach Fixkostenplan");
+    expect(page).toContain(
+      "Die Projektion setzt eine vollständige Fixkostenkontrolle voraus.",
+    );
+    expect(page).toContain(
+      "month.dashboard.totals.projectedAfterFixedCostsCents",
+    );
+  });
 });

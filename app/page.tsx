@@ -104,13 +104,13 @@ export default async function HomePage() {
 
           <div className="relative overflow-hidden rounded-[1.65rem] border border-white/95 bg-[linear-gradient(145deg,rgba(255,255,255,0.9),rgba(239,248,253,0.78))] p-4 text-center shadow-[0_20px_42px_rgba(7,27,70,0.09)] backdrop-blur md:min-w-[17rem] md:p-5">
             <div className="absolute -right-10 -top-10 h-24 w-24 rounded-full bg-cyan-200/28 blur-2xl" aria-hidden="true" />
-            <div className={`absolute inset-x-5 top-0 h-1 rounded-b-full ${currentStandAccent(snapshot.totals.availableCents)}`} aria-hidden="true" />
+            <div className={`absolute inset-x-5 top-0 h-1 rounded-b-full ${currentStandAccent(snapshot.totals.currentBudgetCents)}`} aria-hidden="true" />
             <div className="relative">
               <p className="text-xs font-black uppercase tracking-[0.18em] text-[color:var(--month-ink-muted)]">
                 Aktueller Stand
               </p>
-              <p className={`mt-3 text-[2.15rem] font-black leading-none tracking-[-0.065em] md:text-[2.85rem] ${amountTone(snapshot.totals.availableCents)}`}>
-                {formatEuro(snapshot.totals.availableCents)}
+              <p className={`mt-3 text-[2.15rem] font-black leading-none tracking-[-0.065em] md:text-[2.85rem] ${amountTone(snapshot.totals.currentBudgetCents)}`}>
+                {formatEuro(snapshot.totals.currentBudgetCents)}
               </p>
             </div>
           </div>
