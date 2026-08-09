@@ -1,0 +1,12 @@
+[Unit]
+Description=Send Alfred's weekly finance report on Sunday evening
+
+[Timer]
+OnCalendar=Sun *-*-* 19:00:00 Europe/Berlin
+RandomizedDelaySec=2m
+AccuracySec=1m
+Persistent=true
+Unit=alfred-weekly-finance-report.service
+
+[Install]
+WantedBy=timers.target

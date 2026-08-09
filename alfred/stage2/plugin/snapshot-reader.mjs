@@ -4,7 +4,7 @@ import { constants, closeSync, fstatSync, openSync, readFileSync } from "node:fs
 export const SNAPSHOT_CONTRACT_VERSION = "budgetbuddy.coach.snapshot.v2";
 export const DEFAULT_SNAPSHOT_PATH =
   "/var/lib/alfred-snapshots/budgetbuddy/latest.json";
-export const DEFAULT_MAX_AGE_MINUTES = 45;
+export const DEFAULT_MAX_AGE_MINUTES = 120;
 
 const MAX_SNAPSHOT_BYTES = 2_000_000;
 const MAX_FUTURE_SKEW_MS = 5 * 60 * 1000;

@@ -1,11 +1,11 @@
 [Unit]
-Description=Refresh Alfred's BudgetBuddy snapshot every 15 minutes
+Description=Refresh Alfred's BudgetBuddy snapshot hourly
 
 [Timer]
 OnBootSec=2m
-OnUnitActiveSec=15m
-RandomizedDelaySec=30s
-AccuracySec=30s
+OnUnitActiveSec=1h
+RandomizedDelaySec=2m
+AccuracySec=1m
 Persistent=true
 Unit=alfred-budgetbuddy-collector.service
 

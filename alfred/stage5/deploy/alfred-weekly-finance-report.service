@@ -1,0 +1,42 @@
+[Unit]
+Description=Alfred weekly private finance report
+Requires=alfred-openclaw.service alfred-budgetbuddy-collector.service alfred-getquin-collector.service
+After=alfred-openclaw.service alfred-budgetbuddy-collector.service alfred-getquin-collector.service
+
+[Service]
+Type=oneshot
+User=alfred
+Group=alfred
+SupplementaryGroups=alfred-snapshots
+WorkingDirectory=/var/lib/alfred/workspace
+Environment=HOME=/var/lib/alfred
+Environment=OPENCLAW_STATE_DIR=/var/lib/alfred/.openclaw
+EnvironmentFile=/var/lib/alfred/secrets/gateway.env
+EnvironmentFile=/etc/alfred-finance-coach.env
+ExecStart=/usr/local/lib/alfred-weekly-report/run-weekly-report.sh
+UMask=0077
+TimeoutStartSec=12m
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadOnlyPaths=/var/lib/alfred-snapshots
+ReadWritePaths=/var/lib/alfred
+TasksMax=128
+MemoryHigh=800M
+MemoryMax=1200M

@@ -1,0 +1,37 @@
+[Unit]
+Description=Alfred deterministic proactive finance monitor
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=alfred
+Group=alfred
+SupplementaryGroups=alfred-snapshots
+EnvironmentFile=/var/lib/alfred/secrets/telegram.env
+EnvironmentFile=/etc/alfred-finance-coach.env
+ExecStart=/usr/bin/node /usr/local/lib/alfred-proactive/monitor.mjs
+UMask=0077
+
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+LockPersonality=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+RestrictNamespaces=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+CapabilityBoundingSet=
+AmbientCapabilities=
+ReadOnlyPaths=/var/lib/alfred-snapshots
+ReadWritePaths=/var/lib/alfred/proactive
+TasksMax=64
+MemoryMax=128M
