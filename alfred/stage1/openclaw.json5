@@ -86,7 +86,7 @@
         },
         config: {
           snapshotPath: "/var/lib/alfred-snapshots/budgetbuddy/latest.json",
-          maxAgeMinutes: 45,
+          maxAgeMinutes: 120,
         },
       },
       "getquin-snapshot": {

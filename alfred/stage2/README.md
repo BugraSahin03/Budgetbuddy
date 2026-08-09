@@ -26,6 +26,7 @@ gemeinsamen Snapshot-Pfad. Der OpenClaw-Benutzer `alfred` darf die Datenbank
 nicht lesen und den Snapshot nicht verändern. Das Tool akzeptiert nur eine
 vordefinierte Ansicht, aber weder SQL noch einen Dateipfad.
 
-Der Snapshot wird alle 15 Minuten aktualisiert. Alfred verwirft ihn nach 45
-Minuten als veraltet. Beträge werden in Cent gespeichert; Freitexte wie
+Der Snapshot wird stündlich aktualisiert. Alfred verwirft ihn nach 120 Minuten
+als veraltet; der proaktive Monitor meldet einen anhaltenden Ausfall nach 150
+Minuten. Beträge werden in Cent gespeichert; Freitexte wie
 Verwendungszweck, Gegenpartei und IBAN verlassen die Datenbank nicht.

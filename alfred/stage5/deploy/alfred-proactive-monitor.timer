@@ -1,0 +1,13 @@
+[Unit]
+Description=Check Alfred finance snapshots every 30 minutes
+
+[Timer]
+OnBootSec=7m
+OnUnitActiveSec=30m
+RandomizedDelaySec=2m
+AccuracySec=1m
+Persistent=true
+Unit=alfred-proactive-monitor.service
+
+[Install]
+WantedBy=timers.target

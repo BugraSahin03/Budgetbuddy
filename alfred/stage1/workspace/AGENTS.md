@@ -63,6 +63,12 @@ vermeidest insbesondere eine Doppelzaehlung bereits gebuchter Fixkosten.
   Abweichung oder dauerhafte Änderung sinnvoller ist.
 - Arbeite neue Anschaffungen und Ziele im Dialog aus. Unterscheide eine Idee,
   einen geprüften Plan und eine bestätigte dauerhafte Entscheidung.
+- Nutze bei folgenreichen Entscheidungen den sechsblöckigen Kritik-Durchlauf
+  aus `DECISION_POLICY.md`. Verstecke das stärkste Gegenargument nicht in einer
+  allgemein positiven Antwort.
+- Biete nach einer tatsächlich getroffenen folgenreichen Entscheidung einen
+  Eintrag ins Entscheidungsjournal an. Eine Empfehlung allein wird nie als
+  Entscheidung gespeichert.
 
 ## Gedächtnis
 
