@@ -55,6 +55,44 @@ Umsetzung:
 - ...
 ```
 
+## 2026-08-08 - FIN-127 trennt aktuellen Budgetstand und Fixkostenplan-Projektion
+
+Quelle/Ticket: `FIN-127`
+
+Erkenntnis/Entscheidung:
+
+- Der aktuelle Budgetstand verwendet bereinigte Einnahmen, variable
+  Ist-Ausgaben und das tatsaechliche Fixkosten-Ist.
+- Die bisherige planbasierte Kennzahl bleibt getrennt als
+  `Voraussichtlich nach Fixkostenplan` in der Fixkostenkontrolle erhalten.
+- Das mehrdeutige Readmodel-Feld `availableCents` wird entfernt und durch
+  `currentBudgetCents` sowie `projectedAfterFixedCostsCents` ersetzt.
+- Manuelle Includes und Excludes verschieben denselben realen Betrag zwischen
+  variablen Ausgaben und Fixkosten-Ist; der aktuelle Budgetstand bleibt dabei
+  invariant.
+- Die Projektion veraendert sich bei dieser Umklassifizierung bewusst. Ein
+  Include korrigiert die vorherige Doppelberuecksichtigung einer bereits
+  gebuchten Fixkostenausgabe in variablen Ausgaben und Fixkostenplan; ein
+  Exclude macht sie wieder sichtbar.
+- Der Dialog weist darauf hin, dass die Projektion eine vollstaendig gepruefte
+  Fixkostenkontrolle voraussetzt.
+- Geschlossene und wieder geoeffnete Monate verwenden nur fuer die Projektion
+  weiterhin den eingefrorenen Fixkostenplan aus ADR 0007.
+
+Auswirkung:
+
+- Dashboard und Monats-Hero zeigen denselben Ist-basierten aktuellen Stand.
+- Plan, Ist, aggregierte Differenz und Projektion sind im Fixkostendialog klar
+  getrennt; eine Planueberschreitung wird sichtbar gewarnt.
+- Alfred bleibt unveraendert, weil sein Vertrag Plan, Kontroll-Ist,
+  Gesamtausgaben und variable Ausgaben bereits separat ausgibt und keinen
+  BudgetBuddy-Monatsstand fuehrt.
+
+Umsetzung:
+
+- Grundsatzentscheidung siehe
+  `docs/adr/0016-month-budget-actual-vs-plan.md`.
+
 ## 2026-08-04 - FIN-126 persistiert Fixkosten-Kontrolltreffer beim Import
 
 Quelle/Ticket: `FIN-126`

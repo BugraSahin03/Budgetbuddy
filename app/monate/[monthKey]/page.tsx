@@ -43,6 +43,7 @@ import {
   categoryUsageSurfaceStyle,
   getCategoryUsageState,
 } from "@/src/months/category-usage";
+import { getFixedCostVariance } from "@/src/months/fixed-cost-variance";
 import {
   listActiveAccountOptions,
   listActiveCategoryOptions,
@@ -565,6 +566,10 @@ export default async function MonthDetailPage({
   const isFixedCostControlDialogOpen =
     toSingleParam(resolvedSearchParams.fixedCostControl) === "1";
   const month = getMonthDetail(monthKey);
+  const fixedCostVariance = getFixedCostVariance(
+    month.dashboard.totals.plannedFixedCostsCents,
+    month.dashboard.totals.actualFixedCostsCents,
+  );
   const allCategories = listCategories();
   const categoryVisuals = categoryVisualById(allCategories);
   const activeCategoryIds = new Set(
@@ -674,9 +679,9 @@ export default async function MonthDetailPage({
               <div>
                 <p className="month-eyebrow">Aktueller Budgetstand</p>
                 <p
-                  className={`mt-3 text-[clamp(2.05rem,4.6vw,3.4rem)] font-black tracking-[-0.075em] ${budgetStandTone(month.dashboard.totals.availableCents)}`}
+                  className={`mt-3 text-[clamp(2.05rem,4.6vw,3.4rem)] font-black tracking-[-0.075em] ${budgetStandTone(month.dashboard.totals.currentBudgetCents)}`}
                 >
-                  {formatEuro(month.dashboard.totals.availableCents)}
+                  {formatEuro(month.dashboard.totals.currentBudgetCents)}
                 </p>
               </div>
               <div className="month-cash-inline">
@@ -779,18 +784,63 @@ export default async function MonthDetailPage({
                     {formatEuro(month.dashboard.totals.plannedFixedCostsCents)}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
-                    Stabiler Planblock für die Verfügbarkeit dieses Monats.
+                    {month.status.hasFixedCostSnapshot
+                      ? "Eingefrorener Planstand aus dem ersten Monatsabschluss."
+                      : "Aktueller Planstand aus der Fixkostenpflege."}
                   </p>
                 </div>
                 <div className="rounded-[1.4rem] bg-[#eef8fd] p-5">
-                  <p className="month-eyebrow">Ist-Kontrolle</p>
+                  <p className="month-eyebrow">Fixkosten (Ist)</p>
                   <p className="mt-3 text-3xl font-black tracking-[-0.055em] text-[color:var(--month-ink)]">
                     {formatEuro(month.dashboard.totals.actualFixedCostsCents)}
                   </p>
                   <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
                     {month.dashboard.totals.actualFixedCostsCents > 0
-                      ? "Importierte Fixkosten-Kontrolltreffer wurden erkannt."
-                      : "Aktuell kein importierter Fixkosten-Kontrollhinweis."}
+                      ? "Persistierte und manuell korrigierte Kontrolltreffer dieses Monats."
+                      : "Aktuell kein Fixkosten-Kontrolltreffer in diesem Monat."}
+                  </p>
+                </div>
+                <div
+                  className={`rounded-[1.4rem] border p-5 ${
+                    fixedCostVariance.state === "over-plan"
+                      ? "border-rose-200 bg-rose-50"
+                      : fixedCostVariance.state === "on-plan"
+                        ? "border-emerald-200 bg-emerald-50"
+                        : "border-sky-200 bg-sky-50"
+                  }`}
+                >
+                  <p className="month-eyebrow">Differenz</p>
+                  <p
+                    className={`mt-3 text-3xl font-black tracking-[-0.055em] ${
+                      fixedCostVariance.state === "over-plan"
+                        ? "text-rose-700"
+                        : fixedCostVariance.state === "on-plan"
+                          ? "text-emerald-700"
+                          : "text-sky-800"
+                    }`}
+                  >
+                    {formatEuro(fixedCostVariance.amountCents)}
+                  </p>
+                  <p className="mt-3 text-sm font-bold leading-6 text-[color:var(--month-ink-soft)]">
+                    {fixedCostVariance.label}
+                  </p>
+                </div>
+                <div className="rounded-[1.4rem] border border-[color:var(--month-line)] bg-white/80 p-5">
+                  <p className="month-eyebrow">
+                    Voraussichtlich nach Fixkostenplan
+                  </p>
+                  <p
+                    className={`mt-3 text-3xl font-black tracking-[-0.055em] ${budgetStandTone(month.dashboard.totals.projectedAfterFixedCostsCents)}`}
+                  >
+                    {formatEuro(
+                      month.dashboard.totals.projectedAfterFixedCostsCents,
+                    )}
+                  </p>
+                  <p className="mt-3 text-sm leading-6 text-[color:var(--month-ink-soft)]">
+                    Projektion mit dem vollständigen Fixkostenplan des Monats.
+                  </p>
+                  <p className="mt-2 text-xs font-semibold leading-5 text-[color:var(--month-ink-muted)]">
+                    Die Projektion setzt eine vollständige Fixkostenkontrolle voraus.
                   </p>
                 </div>
               </div>

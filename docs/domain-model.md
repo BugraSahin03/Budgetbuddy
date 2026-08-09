@@ -234,11 +234,15 @@ Wichtige Felder:
 
 Fixkosten werden fuer den Start nicht ueber ein eigenes N26-Fachmodell importiert.
 
-MVP-Regel (FIN-024):
+MVP-Regel (FIN-024, praezisiert durch FIN-127):
 
-- Die aktive Fixkostensumme reduziert den verfuegbaren Monatsbetrag direkt.
-- Einzeltransaktionen werden nicht mehr als geplante Fixkosten-Zuordnung
-  gepflegt.
+- Der aktuelle Budgetstand wird als bereinigte Einnahmen minus variable
+  Ist-Ausgaben minus Fixkosten-Ist berechnet.
+- Die getrennte Planprojektion wird als bereinigte Einnahmen minus variable
+  Ist-Ausgaben minus vollstaendiger Fixkostenplan berechnet.
+- Einzeltransaktionen werden keiner einzelnen Fixkosten-Planposition
+  zugeordnet. Manuelle Include-/Exclude-Korrekturen betreffen ausschliesslich
+  die getrennte Fixkosten-Kontrollsicht.
 - `wirkt_fuer_monat` ist nicht Teil des Zielmodells.
 - Treffer einer expliziten, aktiven Fixkosten-Kontrollregel sind
   Kontrollinformationen und keine normalen variablen Monatsausgaben.
@@ -427,21 +431,38 @@ Fachregeln:
 - Bargeldbestand wird nicht automatisch als Ausgabe, Sparen, Reserve oder
   Restverwertung gebucht.
 - Bargeldbestand wird in der Monatsansicht als Transparenzinformation gezeigt,
-  veraendert aber `Verfuegbar`/Monatsrest nicht automatisch.
+  veraendert aber aktuellen Budgetstand oder Planprojektion nicht automatisch.
 
-### Verfuegbar (FIN-027)
+### Aktueller Budgetstand und Fixkostenplan-Projektion (FIN-127)
 
-`Verfuegbar = Einkommen - aktive Fixkostensumme (Plan) - variable Ausgaben`
+`Aktueller Budgetstand = Einkommen - variable Ist-Ausgaben - Fixkosten-Ist`
+
+`Voraussichtlich nach Fixkostenplan = Einkommen - variable Ist-Ausgaben - Fixkostenplan`
 
 Dabei gilt:
 
-- aktive Fixkostensumme ist der monatliche Planungsblock aus `fixed_costs` (aktiv).
-- variable Ausgaben enthalten normale Monatsausgaben, aber keine als Fixkosten-Kontrolle erkannten
-  Importtreffer.
+- Der aktuelle Budgetstand beschreibt die bisher tatsaechlich gebuchte
+  Monatssituation. Noch nicht abgebuchte geplante Fixkosten wirken dort nicht.
+- Der Fixkostenplan ist fuer offene Monate ohne Snapshot der aktive
+  Planungsblock aus `fixed_costs`. Geschlossene und wieder geoeffnete Monate
+  mit Snapshot verwenden den eingefrorenen Planstand aus ADR 0007.
+- Variable Ist-Ausgaben enthalten normale Monatsausgaben, aber keine als
+  Fixkosten-Kontrolle erkannten Treffer.
 - persistierte Treffer expliziter Kontrollregeln und manuelle Includes werden
-  als separater Ist-Kontrollwert gefuehrt und nicht in die variable
-  Ausgabensumme eingerechnet; manuelle Excludes heben dies fuer die konkrete
-  Buchung auf.
+  als `Fixkosten-Ist` gefuehrt; manuelle Excludes verschieben die konkrete
+  Buchung zurueck in die variablen Ausgaben.
+- Include/Exclude ist eine reine Umklassifizierung desselben realen Betrags.
+  Im aktuellen Budgetstand wird er deshalb weiterhin genau einmal abgezogen.
+- Die Projektion darf sich dabei veraendern: Ein Include entfernt eine bereits
+  gebuchte Fixkostenausgabe aus den variablen Ausgaben und korrigiert so ihre
+  vorherige Doppelberuecksichtigung neben dem Fixkostenplan. Ein Exclude macht
+  diese vorlaeufige Doppelberuecksichtigung wieder sichtbar.
+- Die Projektion setzt eine vollstaendig gepruefte Fixkostenkontrolle voraus;
+  der Dialog macht diese Voraussetzung ausdruecklich sichtbar.
+- Die Projektion wird nur in der Fixkostenkontrolle gezeigt und nicht als
+  zusaetzliche Haupt-KPI dupliziert.
+
+Details: `docs/adr/0016-month-budget-actual-vs-plan.md`.
 
 ### Monatsdetailseite (FIN-033)
 
