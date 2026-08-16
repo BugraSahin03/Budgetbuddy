@@ -254,7 +254,7 @@ export function ImportForm({
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
             Import abgeschlossen
           </p>
-          <div className="mt-2 grid gap-2 text-sm text-emerald-900 md:grid-cols-3 xl:grid-cols-6">
+          <div className="mt-2 grid gap-2 text-sm text-emerald-900 md:grid-cols-4">
             <p>
               Importlauf-ID: <span className="font-semibold">{state.persisted.importRunId}</span>
             </p>
@@ -266,13 +266,6 @@ export function ImportForm({
             </p>
             <p>
               Duplikate: <span className="font-semibold">{state.persisted.duplicateRows}</span>
-            </p>
-            <p>
-              Vorgemerkt: <span className="font-semibold">{state.persisted.pendingRows}</span>
-            </p>
-            <p>
-              Unbekannter Status:{" "}
-              <span className="font-semibold">{state.persisted.unknownStatusRows}</span>
             </p>
           </div>
         </section>

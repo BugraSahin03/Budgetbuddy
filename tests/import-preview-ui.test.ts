@@ -29,8 +29,8 @@ describe("FIN-116 and FIN-129 import preview UI", () => {
     expect(importForm).toContain("Keine Duplikate oder Statusausschlüsse in dieser Vorschau.");
     expect(importForm).toContain('reason === "pending"');
     expect(importForm).toContain('reason === "unknown_status"');
-    expect(importForm).toContain("Vorgemerkt:");
-    expect(importForm).toContain("Unbekannter Status:");
+    expect(importForm).not.toContain("state.persisted.pendingRows");
+    expect(importForm).not.toContain("state.persisted.unknownStatusRows");
     expect(importForm).toContain('row.info || "Kein Info-Status"');
     expect(importForm).toContain("Diese Zeilen werden nicht importiert.");
     expect(importForm.indexOf("Herausgefiltert")).toBeLessThan(
