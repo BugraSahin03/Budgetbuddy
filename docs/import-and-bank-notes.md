@@ -114,6 +114,24 @@ Ein Import soll:
 - unzugeordnete Ausgaben sichtbar markieren
 - Importlauf protokollieren
 
+## Buchungsstatus vor dem Import (FIN-129)
+
+- Der Sparkassen-Status aus `Info` wird vor Regelmatching,
+  Duplikaterkennung und Persistenz ausgewertet. Gross-/Kleinschreibung sowie
+  fuehrende, nachlaufende und wiederholte Leerzeichen werden dabei
+  normalisiert.
+- Nur `Umsatz gebucht` ist importierbar.
+- `Umsatz vorgemerkt` bleibt in der Vorschau einzeln unter
+  `Wird nicht importiert` mit dem Grund `Vorgemerkt` sichtbar. Eine fehlende
+  Valuta bei solchen Zeilen ist zulaessig.
+- Ein unbekannter oder leerer `Info`-Status wird nicht stillschweigend
+  importiert, sondern sichtbar als `Unbekannter Status` ausgeschlossen.
+- Ausgeschlossene Statuszeilen erzeugen weder Regelvorschlaege noch
+  Dedupe-Fingerprints, Transaktionen oder Importmetadaten. Wird derselbe Umsatz
+  spaeter als `Umsatz gebucht` geliefert, kann er normal importiert werden.
+- Es gibt keinen eigenen Transaktionstyp und keine Datenmigration fuer
+  vorgemerkte Umsaetze. Der Ausschluss ist eine reine Importentscheidung.
+
 ## Einkommensabzuege (FIN-120)
 
 - Einkommensabzugsregeln sind ein eigener globaler Einstellungsbereich und

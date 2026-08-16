@@ -25,6 +25,8 @@ export type SparkassePreviewRow = {
   info: string;
 };
 
+export type SparkasseBookingStatus = "booked" | "pending" | "unknown";
+
 export type SparkasseParseResult = {
   rows: SparkasseCsvRow[];
   errors: string[];
@@ -96,6 +98,39 @@ function parseGermanDate(rawDate: string): string {
   return `${fullYear}-${month}-${day}`;
 }
 
+function parseSparkasseValueDate(
+  rawDate: string,
+  bookingStatus: SparkasseBookingStatus,
+): string {
+  if (rawDate.trim().length === 0 && bookingStatus !== "booked") {
+    return "";
+  }
+
+  return parseGermanDate(rawDate);
+}
+
+export function normalizeSparkasseInfoStatus(value: string): string {
+  return value
+    .normalize("NFC")
+    .trim()
+    .replace(/\s+/gu, " ")
+    .toLocaleUpperCase("de-DE");
+}
+
+export function classifySparkasseBookingStatus(info: string): SparkasseBookingStatus {
+  const normalized = normalizeSparkasseInfoStatus(info);
+
+  if (normalized === "UMSATZ GEBUCHT") {
+    return "booked";
+  }
+
+  if (normalized === "UMSATZ VORGEMERKT") {
+    return "pending";
+  }
+
+  return "unknown";
+}
+
 function parseAmountCents(rawAmount: string): number {
   const normalized = rawAmount.trim().replace(".", "").replace(",", ".");
 
@@ -155,7 +190,12 @@ export function parseSparkasseCsvToPreview(fileContent: string): SparkasseParseR
 
     try {
       const bookingDate = parseGermanDate(cells[headerIndex.get("Buchungstag") ?? -1] ?? "");
-      const valueDate = parseGermanDate(cells[headerIndex.get("Valutadatum") ?? -1] ?? "");
+      const info = cells[headerIndex.get("Info") ?? -1]?.trim() || "";
+      const bookingStatus = classifySparkasseBookingStatus(info);
+      const valueDate = parseSparkasseValueDate(
+        cells[headerIndex.get("Valutadatum") ?? -1] ?? "",
+        bookingStatus,
+      );
       const amountCents = parseAmountCents(cells[headerIndex.get("Betrag") ?? -1] ?? "");
       const accountIban = cells[headerIndex.get("Auftragskonto") ?? -1]?.trim() ?? "";
       const bookingText = cells[headerIndex.get("Buchungstext") ?? -1] ?? "";
@@ -166,7 +206,6 @@ export function parseSparkasseCsvToPreview(fileContent: string): SparkasseParseR
       const counterpartyIban = cells[headerIndex.get("Kontonummer/IBAN") ?? -1]?.trim() ?? "";
       const counterpartyBic = cells[headerIndex.get("BIC (SWIFT-Code)") ?? -1]?.trim() ?? "";
       const currencyCode = cells[headerIndex.get("Waehrung") ?? -1]?.trim() || "EUR";
-      const info = cells[headerIndex.get("Info") ?? -1]?.trim() || "";
       const endToEndReference =
         cells[headerIndex.get("Kundenreferenz (End-to-End)") ?? -1]?.trim() ?? "";
       const mandateReference = cells[headerIndex.get("Mandatsreferenz") ?? -1]?.trim() ?? "";

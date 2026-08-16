@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -11,12 +14,15 @@ vi.mock("@/src/db/client", () => ({
 }));
 
 const {
+  buildSparkasseImportRuleSuggestions,
   buildSparkasseImportPreviewPlan,
   detectDefaultImportMonthKey,
   persistSparkasseCsvImport,
 } = await import("@/src/import/persistence");
 const { parseSparkasseCsvToPreview } = await import("@/src/import/sparkasse-csv");
-const { createImportRule } = await import("@/src/import-rules/repository");
+const { createImportRule, listActiveImportRules } = await import(
+  "@/src/import-rules/repository"
+);
 
 const SAMPLE_CSV = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"
 "DE00111111110000000001";"24.04.26";"24.04.26";"DIG. KARTE (APPLE PAY)";"2026-04-23T20:21 Debitk.10 2029-12 ";"";"";"65134322015674230426202105";"";"";"";"SUPERMARKT A/STRASSE 1/STADT/DE";"DE00222222220000000002";"BANKDEFFXXX";"-3,58";"EUR";"Umsatz gebucht"
@@ -25,6 +31,11 @@ const SAMPLE_CSV = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"
 
 const CONFIGURED_CASH_TRANSFER_CSV = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"
 "DE00111111110000000001";"25.04.26";"25.04.26";"KARTENAUSZAHLUNG";"BANKTERMINAL INNENSTADT";"";"";"CASH-RULE-202604251030";"";"";"";"SPARKASSE FILIALE";"";"";"-40,00";"EUR";"Umsatz gebucht"`;
+
+const PENDING_MIX_CSV = readFileSync(
+  join(process.cwd(), "tests/fixtures/sparkasse-pending-anonymized.csv"),
+  "utf8",
+);
 
 describe("import persistence and dedupe", () => {
   beforeEach(() => {
@@ -302,6 +313,128 @@ describe("import persistence and dedupe", () => {
       "Duplikat",
       "Duplikat",
     ]);
+  });
+
+  it("filters the verified six-pending two-booked mix before rules and persistence", () => {
+    createImportRule({
+      name: "Vormerkung darf nicht matchen",
+      pattern: "ANONYMISIERTE VORMERKUNG",
+      matchField: "combined",
+      targetType: "transfer_cash",
+      rulePurpose: "cash_transfer",
+      categoryId: null,
+      specialBudgetId: null,
+      isActive: true,
+      priority: 1,
+    });
+    const parsed = parseSparkasseCsvToPreview(PENDING_MIX_CSV);
+    const suggestions = buildSparkasseImportRuleSuggestions({
+      rows: parsed.rows,
+      rules: listActiveImportRules(),
+    });
+    const preview = buildSparkasseImportPreviewPlan({ rows: parsed.rows, suggestions });
+
+    expect(suggestions.every((suggestion) => suggestion.rowIndex >= 6)).toBe(true);
+    expect(preview.importableRowIndexes).toEqual([6, 7]);
+    expect(preview.pendingRows).toBe(6);
+    expect(preview.unknownStatusRows).toBe(0);
+    expect(preview.duplicateRows).toBe(0);
+    expect(preview.filteredRows.map((row) => row.reasonLabel)).toEqual(
+      Array(6).fill("Vorgemerkt"),
+    );
+
+    const result = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse-pending-mix.csv",
+      fileContent: PENDING_MIX_CSV,
+      effectiveMonthKey: "2026-08",
+      previewPlan: preview,
+    });
+
+    expect(result).toMatchObject({
+      detectedRows: 8,
+      importedRows: 2,
+      duplicateRows: 0,
+      pendingRows: 6,
+      unknownStatusRows: 0,
+    });
+    expect(
+      (db.prepare("SELECT COUNT(*) AS count FROM transactions WHERE import_run_id = ?").get(
+        result.importRunId,
+      ) as { count: number }).count,
+    ).toBe(2);
+    expect(
+      (db.prepare("SELECT COUNT(*) AS count FROM imported_transactions WHERE import_run_id = ?").get(
+        result.importRunId,
+      ) as { count: number }).count,
+    ).toBe(2);
+  });
+
+  it("persists no rows or fingerprints for a pending-only file", () => {
+    const lines = PENDING_MIX_CSV.trim().split(/\r?\n/);
+    const pendingOnlyCsv = [lines[0], ...lines.slice(1, 7)].join("\n");
+    const parsed = parseSparkasseCsvToPreview(pendingOnlyCsv);
+    const preview = buildSparkasseImportPreviewPlan({ rows: parsed.rows });
+    const result = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse-pending-only.csv",
+      fileContent: pendingOnlyCsv,
+      effectiveMonthKey: "2026-08",
+      previewPlan: preview,
+    });
+
+    expect(preview.importableRowIndexes).toEqual([]);
+    expect(result.pendingRows).toBe(6);
+    expect(result.importedRows).toBe(0);
+    expect(
+      (db.prepare("SELECT COUNT(*) AS count FROM transactions").get() as { count: number }).count,
+    ).toBe(0);
+    expect(
+      (db.prepare("SELECT COUNT(*) AS count FROM imported_transactions").get() as { count: number })
+        .count,
+    ).toBe(0);
+  });
+
+  it("allows a pending payment to be imported after it becomes finally booked", () => {
+    const lines = PENDING_MIX_CSV.trim().split(/\r?\n/);
+    const pendingOnlyCsv = [lines[0], lines[1]].join("\n");
+    const pendingResult = persistSparkasseCsvImport({
+      sourceFilename: "pending-first.csv",
+      fileContent: pendingOnlyCsv,
+      effectiveMonthKey: "2026-08",
+    });
+    const bookedCsv = pendingOnlyCsv
+      .replace('"16.08.26";;"KARTENZAHLUNG"', '"16.08.26";"16.08.26";"KARTENZAHLUNG"')
+      .replace("Umsatz vorgemerkt", "Umsatz gebucht");
+    const bookedResult = persistSparkasseCsvImport({
+      sourceFilename: "booked-later.csv",
+      fileContent: bookedCsv,
+      effectiveMonthKey: "2026-08",
+    });
+
+    expect(pendingResult.pendingRows).toBe(1);
+    expect(pendingResult.importedRows).toBe(0);
+    expect(bookedResult.importedRows).toBe(1);
+    expect(bookedResult.duplicateRows).toBe(0);
+  });
+
+  it("keeps unknown Info values visible and blocks them conservatively", () => {
+    const csv = PENDING_MIX_CSV.replace("Umsatz vorgemerkt", "Status extern");
+    const parsed = parseSparkasseCsvToPreview(csv);
+    const preview = buildSparkasseImportPreviewPlan({ rows: parsed.rows });
+    const result = persistSparkasseCsvImport({
+      sourceFilename: "sparkasse-unknown-status.csv",
+      fileContent: csv,
+      effectiveMonthKey: "2026-08",
+      previewPlan: preview,
+    });
+
+    expect(preview.filteredRows[0]).toMatchObject({
+      reason: "unknown_status",
+      reasonLabel: "Unbekannter Status",
+    });
+    expect(preview.unknownStatusRows).toBe(1);
+    expect(result.unknownStatusRows).toBe(1);
+    expect(result.pendingRows).toBe(5);
+    expect(result.importedRows).toBe(2);
   });
 
   it("lets duplicate status dominate rule suggestions in the preview plan", () => {

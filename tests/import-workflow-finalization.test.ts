@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import Database from "better-sqlite3";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -21,6 +24,11 @@ const SAMPLE_CSV = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"
 "DE00111111110000000001";"24.04.26";"24.04.26";"DIG. KARTE (APPLE PAY)";"2026-04-23T20:21 Debitk.10 2029-12 ";"";"";"65134322015674230426202105";"";"";"";"SUPERMARKT A";"DE00222222220000000002";"BANKDEFFXXX";"-3,58";"EUR";"Umsatz gebucht"
 "DE00111111110000000001";"25.04.26";"25.04.26";"BARGELDAUSZAHLUNG";"GA NR 12345678 AUTOMAT STADT";"";"";"ATM-202604251030";"";"";"";"SPARKASSE GELDAUTOMAT";"";"";"-50,00";"EUR";"Umsatz gebucht"
 "DE00111111110000000001";"26.04.26";"26.04.26";"UEBERWEISUNG";"N26-Fix. Monatsblock";"";"";"N26-202604260900";"";"";"";"N26 BANK";"DE00333333330000000003";"NTSBDEB1XXX";"-40,00";"EUR";"Umsatz gebucht"`;
+
+const PENDING_MIX_CSV = readFileSync(
+  join(process.cwd(), "tests/fixtures/sparkasse-pending-anonymized.csv"),
+  "utf8",
+);
 
 describe("import workflow finalization", () => {
   beforeEach(() => {
@@ -112,6 +120,51 @@ describe("import workflow finalization", () => {
     expect(confirmedState.persisted?.importedRows).toBe(3);
     expect(confirmedState.persisted?.duplicateRows).toBe(0);
     expect(confirmedState.previewFileToken).toBeNull();
+  });
+
+  it("keeps pending status decisions identical from preview through confirmation", async () => {
+    const previewFormData = new FormData();
+    previewFormData.set("intent", "preview");
+    previewFormData.set("effectiveMonthKey", "2026-08");
+    previewFormData.set(
+      "sparkasseCsv",
+      new File([PENDING_MIX_CSV], "sparkasse-pending-anonymized.csv", {
+        type: "text/csv",
+      }),
+    );
+
+    const previewState = await parseSparkasseCsvAction(
+      importPreviewInitialState,
+      previewFormData,
+    );
+
+    expect(previewState.fatalError).toBeNull();
+    expect(previewState.previewPlan).toMatchObject({
+      importableRowIndexes: [6, 7],
+      duplicateRows: 0,
+      pendingRows: 6,
+      unknownStatusRows: 0,
+    });
+    expect(previewState.previewPlan?.filteredRows).toHaveLength(6);
+    expect(
+      previewState.previewPlan?.filteredRows.every((row) => row.reason === "pending"),
+    ).toBe(true);
+
+    const confirmFormData = new FormData();
+    confirmFormData.set("intent", "confirm");
+    confirmFormData.set("effectiveMonthKey", "2026-08");
+    const confirmedState = await parseSparkasseCsvAction(previewState, confirmFormData);
+
+    expect(confirmedState.fatalError).toBeNull();
+    expect(confirmedState.persisted).toMatchObject({
+      detectedRows: 8,
+      importedRows: 2,
+      duplicateRows: 0,
+      pendingRows: 6,
+      unknownStatusRows: 0,
+    });
+    expect(confirmedState.previewPlan?.filteredRows).toHaveLength(6);
+    expect(listImportedTransactions()).toHaveLength(2);
   });
 
   it("counts preview-confirm re-imports as duplicates without raw constraint error", async () => {

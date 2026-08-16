@@ -3,7 +3,11 @@ import "server-only";
 import { createHash } from "node:crypto";
 
 import { getDb } from "@/src/db/client";
-import { parseSparkasseCsvToPreview, type SparkasseCsvRow } from "@/src/import/sparkasse-csv";
+import {
+  classifySparkasseBookingStatus,
+  parseSparkasseCsvToPreview,
+  type SparkasseCsvRow,
+} from "@/src/import/sparkasse-csv";
 import {
   isCashTransferRule,
   isN26FixedCostControlRule,
@@ -12,6 +16,7 @@ import {
   hasIncomeDeductionForMonth,
   listActiveIncomeDeductionRules,
   matchIncomeDeductionRule,
+  type IncomeDeductionRule,
 } from "@/src/import-rules/income-deductions";
 import {
   buildImportRuleSuggestions,
@@ -25,10 +30,12 @@ export type ImportPersistenceResult = {
   detectedRows: number;
   importedRows: number;
   duplicateRows: number;
+  pendingRows: number;
+  unknownStatusRows: number;
   parseErrors: string[];
 };
 
-export type ImportPreviewFilteredReason = "duplicate";
+export type ImportPreviewFilteredReason = "duplicate" | "pending" | "unknown_status";
 
 export type ImportPreviewFilteredRow = {
   rowIndex: number;
@@ -43,6 +50,8 @@ export type ImportPreviewPlan = {
   incomeDeductionConflictRowIndexes: number[];
   filteredRows: ImportPreviewFilteredRow[];
   duplicateRows: number;
+  pendingRows: number;
+  unknownStatusRows: number;
 };
 
 const MONTH_KEY_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
@@ -99,6 +108,26 @@ function findExistingDuplicateByFingerprint(dedupeFingerprint: string): boolean 
   return Boolean(alreadyPersistedTransaction);
 }
 
+export function buildSparkasseImportRuleSuggestions(params: {
+  rows: SparkasseCsvRow[];
+  rules: ImportRule[];
+  incomeDeductionRules?: IncomeDeductionRule[];
+}): ImportRuleSuggestion[] {
+  const bookedRows = params.rows
+    .map((row, rowIndex) => ({ row, rowIndex }))
+    .filter(({ row }) => classifySparkasseBookingStatus(row.info) === "booked");
+  const suggestions = buildImportRuleSuggestions({
+    rows: bookedRows.map(({ row }) => row),
+    rules: params.rules,
+    incomeDeductionRules: params.incomeDeductionRules,
+  });
+
+  return suggestions.flatMap((suggestion) => {
+    const source = bookedRows[suggestion.rowIndex];
+    return source ? [{ ...suggestion, rowIndex: source.rowIndex }] : [];
+  });
+}
+
 export function buildSparkasseImportPreviewPlan(params: {
   rows: SparkasseCsvRow[];
   suggestions?: ImportRuleSuggestion[];
@@ -111,17 +140,38 @@ export function buildSparkasseImportPreviewPlan(params: {
   const importableRowIndexes: number[] = [];
   const incomeDeductionConflictRowIndexes: number[] = [];
   const filteredRows: ImportPreviewFilteredRow[] = [];
+  const bookedRows = params.rows
+    .map((row, rowIndex) => ({ row, rowIndex }))
+    .filter(({ row }) => classifySparkasseBookingStatus(row.info) === "booked");
+  const bookedRowIndexes = new Set(bookedRows.map(({ rowIndex }) => rowIndex));
   const hasIncomeDeductionSuggestions = (params.suggestions ?? []).some(
-    (suggestion) => suggestion.kind === "income_deduction",
+    (suggestion) =>
+      bookedRowIndexes.has(suggestion.rowIndex) && suggestion.kind === "income_deduction",
   );
   const monthKey = hasIncomeDeductionSuggestions
-    ? resolveImportEffectiveMonthKey(params.effectiveMonthKey, params.rows)
+    ? resolveImportEffectiveMonthKey(
+        params.effectiveMonthKey,
+        bookedRows.map(({ row }) => row),
+      )
     : null;
   let incomeDeductionReserved = monthKey
     ? hasIncomeDeductionForMonth(monthKey)
     : false;
 
   params.rows.forEach((row, rowIndex) => {
+    const bookingStatus = classifySparkasseBookingStatus(row.info);
+
+    if (bookingStatus !== "booked") {
+      filteredRows.push({
+        rowIndex,
+        reason: bookingStatus === "pending" ? "pending" : "unknown_status",
+        reasonLabel: bookingStatus === "pending" ? "Vorgemerkt" : "Unbekannter Status",
+        ruleName: null,
+        suggestionLabel: null,
+      });
+      return;
+    }
+
     const dedupeFingerprint = buildDedupeFingerprint(row);
     const isDuplicate =
       seenFingerprints.has(dedupeFingerprint) ||
@@ -159,6 +209,8 @@ export function buildSparkasseImportPreviewPlan(params: {
     incomeDeductionConflictRowIndexes,
     filteredRows,
     duplicateRows: filteredRows.filter((row) => row.reason === "duplicate").length,
+    pendingRows: filteredRows.filter((row) => row.reason === "pending").length,
+    unknownStatusRows: filteredRows.filter((row) => row.reason === "unknown_status").length,
   };
 }
 
@@ -358,7 +410,7 @@ export function persistSparkasseCsvImport(params: {
   const parseResult = parseSparkasseCsvToPreview(params.fileContent);
   const importEffectiveMonthKey = resolveImportEffectiveMonthKey(
     params.effectiveMonthKey,
-    parseResult.rows,
+    parseResult.rows.filter((row) => classifySparkasseBookingStatus(row.info) === "booked"),
   );
   assertMonthIsOpen(importEffectiveMonthKey);
 
@@ -382,6 +434,8 @@ export function persistSparkasseCsvImport(params: {
   const importRunId = Number(runInsert.lastInsertRowid);
   let importedRows = 0;
   let duplicateRows = 0;
+  let pendingRows = 0;
+  let unknownStatusRows = 0;
   const sparkasseAccountId = resolveSparkasseAccountId();
   const previewFilteredRowByIndex = new Map(
     (params.previewPlan?.filteredRows ?? []).map((row) => [row.rowIndex, row]),
@@ -391,7 +445,7 @@ export function persistSparkasseCsvImport(params: {
   );
   const activeImportRules = listActiveImportRules();
   const activeIncomeDeductionRules = listActiveIncomeDeductionRules();
-  const currentSuggestions = buildImportRuleSuggestions({
+  const currentSuggestions = buildSparkasseImportRuleSuggestions({
     rows: parseResult.rows,
     rules: activeImportRules,
     incomeDeductionRules: activeIncomeDeductionRules,
@@ -406,14 +460,23 @@ export function persistSparkasseCsvImport(params: {
 
   const persistTransaction = db.transaction(() => {
     for (const [sourceRowIndex, row] of parseResult.rows.entries()) {
+      const bookingStatus = classifySparkasseBookingStatus(row.info);
+
+      if (bookingStatus === "pending") {
+        pendingRows += 1;
+        continue;
+      }
+
+      if (bookingStatus === "unknown") {
+        unknownStatusRows += 1;
+        continue;
+      }
+
       const dedupeFingerprint = buildDedupeFingerprint(row);
       const previewFilteredRow = previewFilteredRowByIndex.get(sourceRowIndex);
 
-      if (previewFilteredRow) {
-        if (previewFilteredRow.reason === "duplicate") {
-          duplicateRows += 1;
-        }
-
+      if (previewFilteredRow?.reason === "duplicate") {
+        duplicateRows += 1;
         continue;
       }
 
@@ -588,6 +651,8 @@ export function persistSparkasseCsvImport(params: {
     detectedRows: parseResult.rows.length,
     importedRows,
     duplicateRows,
+    pendingRows,
+    unknownStatusRows,
     parseErrors: parseResult.errors,
   };
 }

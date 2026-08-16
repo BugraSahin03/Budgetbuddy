@@ -56,7 +56,21 @@ function filteredReasonTone(reason: string): string {
     return "border-amber-200 bg-amber-50 text-amber-800";
   }
 
+  if (reason === "pending") {
+    return "border-sky-200 bg-sky-50 text-sky-800";
+  }
+
+  if (reason === "unknown_status") {
+    return "border-red-200 bg-red-50 text-red-700";
+  }
+
   return "border-violet-200 bg-violet-50 text-violet-700";
+}
+
+function counterpartyLabel(counterparty: string): string {
+  return counterparty === "(ohne Gegenpartei)" || counterparty.length === 0
+    ? "Keine Gegenpartei"
+    : counterparty;
 }
 
 function renderSuggestionText(params: { label: string; ruleName: string }): string {
@@ -240,7 +254,7 @@ export function ImportForm({
           <p className="text-xs font-semibold uppercase tracking-[0.12em] text-emerald-700">
             Import abgeschlossen
           </p>
-          <div className="mt-2 grid gap-2 text-sm text-emerald-900 md:grid-cols-4">
+          <div className="mt-2 grid gap-2 text-sm text-emerald-900 md:grid-cols-3 xl:grid-cols-6">
             <p>
               Importlauf-ID: <span className="font-semibold">{state.persisted.importRunId}</span>
             </p>
@@ -252,6 +266,13 @@ export function ImportForm({
             </p>
             <p>
               Duplikate: <span className="font-semibold">{state.persisted.duplicateRows}</span>
+            </p>
+            <p>
+              Vorgemerkt: <span className="font-semibold">{state.persisted.pendingRows}</span>
+            </p>
+            <p>
+              Unbekannter Status:{" "}
+              <span className="font-semibold">{state.persisted.unknownStatusRows}</span>
             </p>
           </div>
         </section>
@@ -278,7 +299,7 @@ export function ImportForm({
                 Herausgefiltert
               </p>
               <h3 className="mt-1 text-lg font-black tracking-[-0.03em] text-violet-950">
-                Nicht in der normalen Importliste
+                Wird nicht importiert
               </h3>
             </div>
             <span className="rounded-full border border-violet-200 bg-white px-3 py-1 text-xs font-black text-violet-800">
@@ -286,7 +307,7 @@ export function ImportForm({
             </span>
           </div>
           <p className="mt-2 text-sm font-semibold leading-6 text-violet-900">
-            Diese Zeilen werden nicht erneut importiert. Der Grund steht direkt an der Zeile.
+            Diese Zeilen werden nicht importiert. Der Grund steht direkt an der Zeile.
           </p>
           {filteredRows.length > 0 ? (
             <ul className="mt-4 space-y-2 text-sm text-violet-950">
@@ -312,10 +333,11 @@ export function ImportForm({
                       {formatEuroFromCents(row.amountCents)}
                     </strong>
                   </div>
-                  <div className="mt-2 grid gap-1 text-sm text-slate-700 md:grid-cols-[0.8fr_1.4fr_1fr]">
+                  <div className="mt-2 grid gap-1 text-sm text-slate-700 md:grid-cols-[0.7fr_1.4fr_1fr_0.9fr]">
                     <span>{row.bookingDate}</span>
                     <span className="font-semibold text-slate-950">{row.description}</span>
-                    <span>{row.counterparty || "Keine Gegenpartei"}</span>
+                    <span>{counterpartyLabel(row.counterparty)}</span>
+                    <span>{row.info || "Kein Info-Status"}</span>
                   </div>
                   {decision.ruleName ? (
                     <p className="mt-2 text-xs font-semibold text-violet-700">
@@ -327,7 +349,7 @@ export function ImportForm({
             </ul>
           ) : (
             <p className="mt-4 rounded-xl border border-violet-100 bg-white px-4 py-3 text-sm font-semibold text-violet-900">
-              Keine Duplikate in dieser Vorschau.
+              Keine Duplikate oder Statusausschlüsse in dieser Vorschau.
             </p>
           )}
         </section>
