@@ -5,12 +5,15 @@ import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 
 import {
+  buildSparkasseImportRuleSuggestions,
   buildSparkasseImportPreviewPlan,
   detectDefaultImportMonthKey,
   persistSparkasseCsvImport,
 } from "@/src/import/persistence";
-import { parseSparkasseCsvToPreview } from "@/src/import/sparkasse-csv";
-import { buildImportRuleSuggestions } from "@/src/import-rules/matcher";
+import {
+  classifySparkasseBookingStatus,
+  parseSparkasseCsvToPreview,
+} from "@/src/import/sparkasse-csv";
 import { listActiveIncomeDeductionRules } from "@/src/import-rules/income-deductions";
 import { listActiveImportRules } from "@/src/import-rules/repository";
 
@@ -105,12 +108,15 @@ export async function parseSparkasseCsvAction(
 
   try {
     const parsed = parseSparkasseCsvToPreview(resolvedFile.fileContent);
-    const detectedMonthKey = detectDefaultImportMonthKey(parsed.rows);
+    const bookedRows = parsed.rows.filter(
+      (row) => classifySparkasseBookingStatus(row.info) === "booked",
+    );
+    const detectedMonthKey = detectDefaultImportMonthKey(bookedRows);
     const activeIncomeDeductionRules = listActiveIncomeDeductionRules();
 
     if (intent === "confirm") {
       const activeRules = listActiveImportRules();
-      const suggestions = buildImportRuleSuggestions({
+      const suggestions = buildSparkasseImportRuleSuggestions({
         rows: parsed.rows,
         rules: activeRules,
         incomeDeductionRules: activeIncomeDeductionRules,
@@ -151,7 +157,7 @@ export async function parseSparkasseCsvAction(
     }
 
     const activeRules = listActiveImportRules();
-    const suggestions = buildImportRuleSuggestions({
+    const suggestions = buildSparkasseImportRuleSuggestions({
       rows: parsed.rows,
       rules: activeRules,
       incomeDeductionRules: activeIncomeDeductionRules,

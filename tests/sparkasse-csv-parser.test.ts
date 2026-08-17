@@ -1,8 +1,15 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { describe, expect, it, vi } from "vitest";
 
 vi.mock("server-only", () => ({}), { virtual: true });
 
-const { parseSparkasseCsvToPreview } = await import("@/src/import/sparkasse-csv");
+const {
+  classifySparkasseBookingStatus,
+  normalizeSparkasseInfoStatus,
+  parseSparkasseCsvToPreview,
+} = await import("@/src/import/sparkasse-csv");
 
 const SAMPLE_CSV = `"Auftragskonto";"Buchungstag";"Valutadatum";"Buchungstext";"Verwendungszweck";"Glaeubiger ID";"Mandatsreferenz";"Kundenreferenz (End-to-End)";"Sammlerreferenz";"Lastschrift Ursprungsbetrag";"Auslagenersatz Ruecklastschrift";"Beguenstigter/Zahlungspflichtiger";"Kontonummer/IBAN";"BIC (SWIFT-Code)";"Betrag";"Waehrung";"Info"
 "DE00111111110000000001";"24.04.26";"24.04.26";"DIG. KARTE (APPLE PAY)";"2026-04-23T20:21 Debitk.10 2029-12 ";"";"";"651";"";"";"";"SUPERMARKT A";"DE002";"BANKDEFFXXX";"-3,58";"EUR";"Umsatz gebucht"`;
@@ -45,5 +52,33 @@ describe("sparkasse csv parser", () => {
     expect(result.rows).toHaveLength(0);
     expect(result.errors[0]).toContain("Zeile 2");
     expect(result.errors[0]).toContain("Ungültiges Datumsformat");
+  });
+
+  it("parses the anonymized verified mix with empty pending value dates", () => {
+    const csv = readFileSync(
+      join(process.cwd(), "tests/fixtures/sparkasse-pending-anonymized.csv"),
+      "utf8",
+    );
+    const result = parseSparkasseCsvToPreview(csv);
+
+    expect(result.errors).toEqual([]);
+    expect(result.rows).toHaveLength(8);
+    expect(
+      result.rows.filter((row) => classifySparkasseBookingStatus(row.info) === "pending"),
+    ).toHaveLength(6);
+    expect(
+      result.rows.filter((row) => classifySparkasseBookingStatus(row.info) === "booked"),
+    ).toHaveLength(2);
+    expect(result.rows.slice(0, 6).every((row) => row.valueDate === "")).toBe(true);
+    expect(result.rows.some((row) => row.counterparty === "(ohne Gegenpartei)")).toBe(true);
+  });
+
+  it("normalizes status casing and repeated whitespace defensively", () => {
+    expect(normalizeSparkasseInfoStatus("  umsatz   VORGEMERKT ")).toBe(
+      "UMSATZ VORGEMERKT",
+    );
+    expect(classifySparkasseBookingStatus("  umsatz   VORGEMERKT ")).toBe("pending");
+    expect(classifySparkasseBookingStatus("umsatz GEBUCHT")).toBe("booked");
+    expect(classifySparkasseBookingStatus("Noch nicht abgerechnet")).toBe("unknown");
   });
 });

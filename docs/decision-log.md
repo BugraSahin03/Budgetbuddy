@@ -93,6 +93,35 @@ Umsetzung:
 - Grundsatzentscheidung siehe
   `docs/adr/0016-month-budget-actual-vs-plan.md`.
 
+## 2026-08-16 - FIN-129 filtert vorgemerkte Sparkassen-Umsaetze vor dem Import
+
+Quelle/Ticket: `FIN-129`
+
+Erkenntnis/Entscheidung:
+
+- Nur Sparkassen-Zeilen mit normalisiertem `Info = Umsatz gebucht` gelangen in
+  Regelmatching, Duplikaterkennung und Persistenz.
+- `Umsatz vorgemerkt` wird in der Vorschau pro Zeile mit dem Grund
+  `Vorgemerkt` sichtbar ausgeschlossen. Ein leeres Valutadatum ist fuer diese
+  Zeilen kein Parsingfehler.
+- Unbekannte oder leere `Info`-Werte werden konservativ als
+  `Unbekannter Status` ausgeschlossen, statt unbemerkt als gebucht zu gelten.
+- Statusausschluesse erzeugen keine Transaktion, Importmetadaten oder
+  Dedupe-Fingerprints. Eine spaeter gebuchte Fassung desselben Umsatzes bleibt
+  deshalb regulaer importierbar.
+
+Auswirkung:
+
+- Vorschau und Bestaetigung verwenden dieselbe serverseitige Entscheidung.
+- Vorgemerkte Umsaetze beeinflussen weder Monatswerte noch Regeln oder
+  Duplikatzaehler; im Importergebnis werden sie separat gezaehlt.
+- Es wird kein neuer Transaktionstyp und keine Migration eingefuehrt.
+
+Folgeaktion:
+
+- Keine ADR erforderlich, weil keine neue dauerhafte Domaenenstruktur oder
+  bankuebergreifende Architekturentscheidung entsteht.
+
 ## 2026-08-04 - FIN-126 persistiert Fixkosten-Kontrolltreffer beim Import
 
 Quelle/Ticket: `FIN-126`
