@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { categoryDisplayIcon } from "@/app/components/category-visual";
 
@@ -243,6 +244,7 @@ export function DirectAssignmentSelect({
   categoryOptions,
   specialBudgetOptions,
 }: DirectAssignmentSelectProps) {
+  const router = useRouter();
   const [selectedAssignment, setSelectedAssignment] = useState(currentAssignment);
   const [savedAssignment, setSavedAssignment] = useState(currentAssignment);
   const [error, setError] = useState<string | null>(null);
@@ -299,6 +301,7 @@ export function DirectAssignmentSelect({
         );
       }
 
+      router.refresh();
     } catch (caughtError) {
       latestAssignmentRef.current = previousAssignment;
       updateLiveAssignmentOverview(assignment, previousAssignment, amountCents);

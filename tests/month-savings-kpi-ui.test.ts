@@ -25,6 +25,16 @@ describe("FIN-068 month savings KPI UI", () => {
     expect(page).not.toContain("incomeCents - expenseCents");
   });
 
+  it("refreshes all month KPIs after a direct savings reassignment", () => {
+    const assignmentSelect = readProjectFile(
+      "app/monate/[monthKey]/direct-assignment-select.tsx",
+    );
+
+    expect(assignmentSelect).toContain('import { useRouter } from "next/navigation"');
+    expect(assignmentSelect).toContain("const router = useRouter()");
+    expect(assignmentSelect).toContain("router.refresh()");
+  });
+
   it("keeps category marks neutral so savings is not singled out in category lists", () => {
     const overview = readProjectFile(
       "app/monate/[monthKey]/month-category-overview.tsx",
