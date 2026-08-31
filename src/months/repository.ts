@@ -506,7 +506,7 @@ function sumFixedCostControlMatches(
   return matches.reduce((sum, match) => sum + match.controlAmountCents, 0);
 }
 
-function getExpenseCents(
+function getBudgetEffectiveVariableExpenseCents(
   monthKey: string,
   fixedCostControlCents: number,
 ): number {
@@ -524,14 +524,41 @@ function getExpenseCents(
   return Math.max(0, row.total - fixedCostControlCents);
 }
 
-function getTotalExpenseCents(monthKey: string): number {
+function getVariableSavingsCents(
+  monthKey: string,
+  fixedCostControlTransactionIds: number[],
+): number {
+  const fixedCostExclusion =
+    fixedCostControlTransactionIds.length > 0
+      ? `AND t.id NOT IN (${fixedCostControlTransactionIds.map(() => "?").join(", ")})`
+      : "";
   const row = getDb()
     .prepare(
       `
-        SELECT COALESCE(SUM(-amount_cents), 0) AS total
-        FROM transactions
-        WHERE transaction_type = 'expense'
-          AND effective_month_key = ?
+        SELECT COALESCE(SUM(-t.amount_cents), 0) AS total
+        FROM transactions t
+        INNER JOIN categories c ON c.id = t.category_id
+        WHERE t.transaction_type = 'expense'
+          AND t.effective_month_key = ?
+          AND c.system_key = 'savings'
+          ${fixedCostExclusion}
+      `,
+    )
+    .get(monthKey, ...fixedCostControlTransactionIds) as { total: number };
+
+  return row.total;
+}
+
+function getNonSavingsExpenseCents(monthKey: string): number {
+  const row = getDb()
+    .prepare(
+      `
+        SELECT COALESCE(SUM(-t.amount_cents), 0) AS total
+        FROM transactions t
+        LEFT JOIN categories c ON c.id = t.category_id
+        WHERE t.transaction_type = 'expense'
+          AND t.effective_month_key = ?
+          AND (c.system_key IS NULL OR c.system_key <> 'savings')
       `,
     )
     .get(monthKey) as { total: number };
@@ -857,20 +884,29 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
   const grossIncomeCents = getGrossIncomeCents(normalizedMonthKey);
   const incomeDeductionCents = getIncomeDeductionCents(normalizedMonthKey);
   const incomeCents = grossIncomeCents - incomeDeductionCents;
-  const expenseCents = getExpenseCents(
-    normalizedMonthKey,
-    actualFixedCostsCents,
-  );
+  const budgetEffectiveVariableExpenseCents =
+    getBudgetEffectiveVariableExpenseCents(
+      normalizedMonthKey,
+      actualFixedCostsCents,
+    );
   const savingsCents = getSavingsActualCents(normalizedMonthKey);
-  const plannedFixedCostsCents = getPlannedFixedCostsCents(normalizedMonthKey);
-  const currentBudgetCents =
-    incomeCents - expenseCents - actualFixedCostsCents;
-  const projectedAfterFixedCostsCents =
-    incomeCents - expenseCents - plannedFixedCostsCents;
-  const cashBalanceCents = getCashAccountSnapshot().currentBalanceCents;
   const fixedCostControlTransactionIds = fixedCostControlMatches.map(
     (match) => match.transactionId,
   );
+  const variableSavingsCents = getVariableSavingsCents(
+    normalizedMonthKey,
+    fixedCostControlTransactionIds,
+  );
+  const expenseCents = Math.max(
+    0,
+    budgetEffectiveVariableExpenseCents - variableSavingsCents,
+  );
+  const plannedFixedCostsCents = getPlannedFixedCostsCents(normalizedMonthKey);
+  const currentBudgetCents =
+    incomeCents - budgetEffectiveVariableExpenseCents - actualFixedCostsCents;
+  const projectedAfterFixedCostsCents =
+    incomeCents - budgetEffectiveVariableExpenseCents - plannedFixedCostsCents;
+  const cashBalanceCents = getCashAccountSnapshot().currentBalanceCents;
   const categoryRows = listMonthlyBudgetCategories(
     normalizedMonthKey,
     fixedCostControlTransactionIds,
@@ -991,7 +1027,7 @@ export function listMonthComparison(
         label: formatMonthLabel(monthKey),
         detailHref: buildMonthDetailHref(monthKey),
         incomeCents: getIncomeCents(monthKey),
-        expenseCents: getTotalExpenseCents(monthKey),
+        expenseCents: getNonSavingsExpenseCents(monthKey),
         savingsCents: getSavingsActualCents(monthKey),
       };
     },

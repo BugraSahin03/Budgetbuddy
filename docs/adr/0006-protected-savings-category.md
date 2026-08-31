@@ -23,7 +23,7 @@ Ein reiner Name wie `Sparen` reicht als technische Erkennung nicht aus, weil Nam
 
 ## Begruendung
 
-Dieses Modell erfuellt die fachliche Trennung, ohne eine neue Buchungsart oder Transferlogik einzufuehren. Sparen bleibt eine echte Ausgabe und wirkt dadurch weiterhin auf Monatsbudget und Kontostand.
+Dieses Modell erfuellt die fachliche Trennung, ohne eine neue Buchungsart oder Transferlogik einzufuehren. Sparen bleibt technisch eine echte `expense`-Buchung und wirkt dadurch weiterhin auf Monatsbudget und Kontostand. Seit ADR 0017 wird der Betrag in den sichtbaren Ausgaben-KPIs von Monatsansicht, Dashboard und Monatsvergleich getrennt ausgewiesen, ohne seine Budgetwirkung zu veraendern.
 
 Der Systemschluessel macht spaetere Auswertungen robust. FIN-068 kann dadurch Sparwerte separat anzeigen, ohne sich auf einen frei veraenderbaren Anzeigenamen verlassen zu muessen.
 

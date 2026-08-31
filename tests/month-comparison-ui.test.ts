@@ -20,6 +20,7 @@ describe("FIN-075 month comparison UI", () => {
     expect(page).toContain("Einnahmen");
     expect(page).toContain("Ausgaben");
     expect(page).toContain("Gespart");
+    expect(page).toContain("Ausgaben inklusive Fixkosten");
     expect(page).not.toContain("savedLabel");
     expect(page).not.toContain("savedTone");
     expect(page).not.toContain("Überschuss");
