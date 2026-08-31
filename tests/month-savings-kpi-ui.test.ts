@@ -16,6 +16,9 @@ describe("FIN-068 month savings KPI UI", () => {
     expect(page).toContain('label="Gespart"');
     expect(page).toContain("month.dashboard.totals.savingsCents");
     expect(page).toContain("Echte Buchungen der Kategorie Sparen.");
+    expect(page).toContain(
+      "Variable Ausgaben ohne Sparen und separaten Fixkosten-Kontrollblock.",
+    );
     expect(page).toContain('tone="savings"');
     expect(page).toContain('marker: { backgroundColor: "#d9f7b5", color: "#365f08" }');
     expect(page).toContain('value: { color: "#4f7d12" }');

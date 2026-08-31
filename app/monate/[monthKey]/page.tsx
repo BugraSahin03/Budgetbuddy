@@ -764,7 +764,7 @@ export default async function MonthDetailPage({
         <ReferenceMetricCard
           label="Ausgaben"
           value={formatEuro(month.dashboard.totals.expenseCents)}
-          copy="Variable Ausgaben ohne separaten Fixkosten-Kontrollblock."
+          copy="Variable Ausgaben ohne Sparen und separaten Fixkosten-Kontrollblock."
           tone="expense"
           marker="↗"
           actionClassName="month-reference-card-action absolute right-6 top-6"

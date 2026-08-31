@@ -27,18 +27,26 @@ Das zentrale Monats-Readmodel fuehrt zwei explizite Werte und entfernt
 ```
 currentBudgetCents
 = bereinigte Einnahmen
-- variable Ist-Ausgaben
+- variable Nicht-Spar-Ist-Ausgaben
+- Gespart
 - Fixkosten-Ist
 
 projectedAfterFixedCostsCents
 = bereinigte Einnahmen
-- variable Ist-Ausgaben
+- variable Nicht-Spar-Ist-Ausgaben
+- Gespart
 - Fixkostenplan
 ```
 
 `currentBudgetCents` ist der verbindliche Wert fuer `Aktueller Budgetstand`
 in Monatsansicht und Dashboard. Noch nicht gebuchte geplante Fixkosten werden
 dort nicht vorweggenommen.
+
+ADR 0017 praezisiert die sichtbare Aggregation: Sparbuchungen bleiben Teil der
+budgetwirksamen Abgaenge, werden aber nicht mehr zugleich im Ausgaben-KPI
+gezeigt. Die interne Berechnung behaelt die vor FIN-130 verwendete
+budgetwirksame variable Summe bei, sodass beide Werte fuer identische
+Buchungsdaten unveraendert bleiben.
 
 `projectedAfterFixedCostsCents` wird ausschliesslich in der
 Fixkostenkontrolle mit dem verbindlichen Wording
@@ -96,8 +104,9 @@ nachvollziehbar.
   Zuordnungslogik einzufuehren.
 - Nur der aktuelle Budgetstand bleibt bei Include/Exclude invariant; die
   Projektion wird durch die korrigierte Klassifizierung bewusst aktualisiert.
-- Bargeld, Kategorien, Sonderkategorien, Sparen, Monatsabschluss und
-  bestehende Transaktionen bleiben unveraendert.
+- Bargeld, Kategorien, Sonderkategorien, Monatsabschluss und bestehende
+  Transaktionen bleiben unveraendert. Sparen wird gemaess ADR 0017 sichtbar
+  getrennt, bleibt aber budgetwirksam.
 - Alfreds Snapshotvertrag bleibt unveraendert: Er liefert Plan,
   Kontroll-Ist, alle Ausgaben und variable Ausgaben bereits als getrennte
   Fakten nach ADR 0015 und exportiert keinen BudgetBuddy-Monatsstand.

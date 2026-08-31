@@ -167,7 +167,7 @@ export default function MonthComparisonPage() {
       <MonthHero
         eyebrow="Monatsvergleich"
         title="Monate ruhig vergleichen."
-        description="Einnahmen, Ausgaben und echte Sparbuchungen pro Monat."
+        description="Einnahmen, Ausgaben inklusive Fixkosten und echte Sparbuchungen pro Monat."
       />
 
       <MonthTrendChart summaries={trendSummaries} />

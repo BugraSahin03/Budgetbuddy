@@ -105,7 +105,10 @@ Seit FIN-072 gibt es zusaetzlich die geschuetzte Systemkategorie `Sparen`:
 - `Sparen` kann nicht deaktiviert, archiviert, geloescht oder umbenannt werden.
 - `Sparen` bekommt im MVP keinen Planwert und keinen eigenen Sparzielbetrag.
 - Der Ist-Wert von `Sparen` entsteht ausschliesslich aus echten Ausgaben, die dieser Kategorie zugeordnet sind.
-- Sparbuchungen bleiben budgetwirksame Ausgaben, koennen aber ueber den Systemschluessel `savings` separat von normalen Konsumausgaben erkannt werden.
+- Sparbuchungen bleiben technisch `expense`-Buchungen und voll
+  budgetwirksam. Seit FIN-130 werden sie in sichtbaren Ausgaben-KPIs von
+  Monatsansicht, Dashboard und Monatsvergleich ueber den Systemschluessel
+  `savings` von normalen Konsum- und Kostenausgaben getrennt.
 
 FIN-124 trennt die globale Kategoriepflege von monatsbezogenen Schreibpfaden:
 
@@ -414,7 +417,11 @@ Summe aller Ausgaben, die diesem konkreten Monatsanteil der Sonderkategorie zuge
 
 ### Gesamt-Ausgaben
 
-Summe aller echten Ausgaben im Monat, ohne Transfers.
+In Monatsansicht und Dashboard: Summe der variablen echten Ausgaben ohne
+Sparbuchungen und ohne den getrennten Fixkosten-Kontrollblock.
+
+Im Monatsvergleich: Summe aller echten Nicht-Spar-Ausgaben im Monat inklusive
+gebuchter Fixkosten. Transfers bleiben ausgeschlossen.
 
 Bargeldabhebungen sind Transfers und zaehlen nicht als Ausgabe. Die spaeteren manuellen Barzahlungen zaehlen als Ausgabe.
 
@@ -435,9 +442,9 @@ Fachregeln:
 
 ### Aktueller Budgetstand und Fixkostenplan-Projektion (FIN-127)
 
-`Aktueller Budgetstand = Einkommen - variable Ist-Ausgaben - Fixkosten-Ist`
+`Aktueller Budgetstand = Einkommen - variable Nicht-Spar-Ist-Ausgaben - Gespart - Fixkosten-Ist`
 
-`Voraussichtlich nach Fixkostenplan = Einkommen - variable Ist-Ausgaben - Fixkostenplan`
+`Voraussichtlich nach Fixkostenplan = Einkommen - variable Nicht-Spar-Ist-Ausgaben - Gespart - Fixkostenplan`
 
 Dabei gilt:
 
@@ -446,8 +453,11 @@ Dabei gilt:
 - Der Fixkostenplan ist fuer offene Monate ohne Snapshot der aktive
   Planungsblock aus `fixed_costs`. Geschlossene und wieder geoeffnete Monate
   mit Snapshot verwenden den eingefrorenen Planstand aus ADR 0007.
-- Variable Ist-Ausgaben enthalten normale Monatsausgaben, aber keine als
-  Fixkosten-Kontrolle erkannten Treffer.
+- Variable Nicht-Spar-Ist-Ausgaben enthalten normale Monatsausgaben, aber
+  weder Sparbuchungen noch als Fixkosten-Kontrolle erkannte Treffer.
+- Sparbuchungen werden separat als `Gespart` ausgewiesen und bleiben in
+  beiden Formeln voll budgetwirksam. Die Trennung veraendert weder aktuellen
+  Budgetstand noch Planprojektion.
 - persistierte Treffer expliziter Kontrollregeln und manuelle Includes werden
   als `Fixkosten-Ist` gefuehrt; manuelle Excludes verschieben die konkrete
   Buchung zurueck in die variablen Ausgaben.
@@ -463,6 +473,8 @@ Dabei gilt:
   zusaetzliche Haupt-KPI dupliziert.
 
 Details: `docs/adr/0016-month-budget-actual-vs-plan.md`.
+Die Trennung der Sparbuchungen aus den sichtbaren Ausgaben-KPIs ist in
+`docs/adr/0017-savings-separated-from-expense-kpis.md` festgehalten.
 
 ### Monatsdetailseite (FIN-033)
 
