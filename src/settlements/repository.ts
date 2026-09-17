@@ -22,6 +22,7 @@ export type SettlementGroupRow = {
   specialBudgetName: string | null;
   specialBudgetIconName: string | null;
   memberCount: number;
+  memberTransactionIds: number[];
 };
 
 function normalizeName(value: string): string {
@@ -214,9 +215,28 @@ export function dissolveSettlement(groupId: number, monthKey: string): void {
   if (result.changes !== 1) throw new Error("Verrechnung wurde nicht gefunden.");
 }
 
+export function renameSettlement(
+  groupId: number,
+  monthKey: string,
+  name: string,
+): void {
+  const normalizedMonthKey = normalizeMonthKey(monthKey);
+  const normalizedName = normalizeName(name);
+  assertMonthIsOpen(normalizedMonthKey);
+
+  const result = getDb()
+    .prepare(
+      `UPDATE transaction_settlement_groups
+       SET name = ?, updated_at = CURRENT_TIMESTAMP
+       WHERE id = ? AND month_key = ?`,
+    )
+    .run(normalizedName, groupId, normalizedMonthKey);
+  if (result.changes !== 1) throw new Error("Verrechnung wurde nicht gefunden.");
+}
+
 export function listSettlementGroups(monthKey: string): SettlementGroupRow[] {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
-  return getDb()
+  const rows = getDb()
     .prepare(
       `
         SELECT
@@ -235,7 +255,8 @@ export function listSettlementGroups(monthKey: string): SettlementGroupRow[] {
             THEN special_snapshot.name_snapshot ELSE sb.name END AS specialBudgetName,
           CASE WHEN status.budget_snapshot_created_at IS NOT NULL
             THEN special_snapshot.icon_name_snapshot ELSE sbp.icon_name END AS specialBudgetIconName,
-          COUNT(*) AS memberCount
+          COUNT(*) AS memberCount,
+          GROUP_CONCAT(t.id) AS memberTransactionIdsCsv
         FROM transaction_settlement_groups g
         INNER JOIN transaction_settlement_members member
           ON member.settlement_group_id = g.id
@@ -255,5 +276,16 @@ export function listSettlementGroups(monthKey: string): SettlementGroupRow[] {
         ORDER BY bookingDate DESC, g.id DESC
       `,
     )
-    .all(normalizedMonthKey) as SettlementGroupRow[];
+    .all(normalizedMonthKey) as Array<
+      Omit<SettlementGroupRow, "memberTransactionIds"> & {
+        memberTransactionIdsCsv: string;
+      }
+    >;
+
+  return rows.map(({ memberTransactionIdsCsv, ...row }) => ({
+    ...row,
+    memberTransactionIds: memberTransactionIdsCsv
+      .split(",")
+      .map((value) => Number.parseInt(value, 10)),
+  }));
 }

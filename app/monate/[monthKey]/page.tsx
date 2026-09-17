@@ -8,6 +8,7 @@ import {
   deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
   reopenMonthAction,
+  renameMonthlySettlementAction,
   reclassifyMonthlyIncomeDeductionAction,
   setMonthlyBudgetOverrideAction,
   updateMonthlyManualTransactionAction,
@@ -26,6 +27,7 @@ import {
 import { MonthCategoryOverview } from "@/app/monate/[monthKey]/month-category-overview";
 import { MonthTodoDialog } from "@/app/monate/[monthKey]/month-todo-dialog";
 import { SettlementDialog } from "@/app/monate/[monthKey]/settlement-dialog";
+import { SettlementHistoryHighlighter } from "@/app/monate/[monthKey]/settlement-history-highlighter";
 import { MonthActionOverlay } from "@/app/monate/month-action-overlay";
 import { MonthDialog } from "@/app/monate/month-dialog";
 import { MonthChip, MonthPageShell } from "@/app/monate/months-ui";
@@ -1343,6 +1345,7 @@ export default async function MonthDetailPage({
           </span>
         </summary>
 
+        <SettlementHistoryHighlighter>
         <div className="mt-6 space-y-2.5">
           {month.transactions.length === 0 ? (
             <EmptyReferenceCard>
@@ -1379,14 +1382,20 @@ export default async function MonthDetailPage({
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200 bg-white text-sm font-black text-sky-800">
                         ⇄
                       </div>
-                      <div className="min-w-0">
+                      <button
+                        type="button"
+                        data-settlement-focus-trigger={String(group.id)}
+                        aria-pressed="false"
+                        className="month-settlement-focus-trigger min-w-0 rounded-xl px-2 py-1 text-left transition"
+                        title="Zugehörige Buchungen hervorheben"
+                      >
                         <h3 className="truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg">
                           {group.name}
                         </h3>
                         <p className="mt-0.5 text-xs font-bold text-sky-800">
-                          Verrechnungsergebnis · {group.memberCount} Buchungen
+                          Verrechnungsergebnis · {group.memberCount} Buchungen · Anklicken zum Hervorheben
                         </p>
-                      </div>
+                      </button>
                       <p className="month-booking-date text-sm font-extrabold text-[color:var(--month-ink-soft)]">
                         {group.bookingDate}
                       </p>
@@ -1414,6 +1423,24 @@ export default async function MonthDetailPage({
 
                     {canEditBookings ? (
                       <div className="mt-4 grid gap-4 rounded-[1.2rem] border border-sky-200 bg-white/80 p-4">
+                        <form action={renameMonthlySettlementAction} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                          <input type="hidden" name="monthKey" value={month.monthKey} />
+                          <input type="hidden" name="settlementId" value={group.id} />
+                          <label className="grid gap-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
+                            Name der Verrechnung
+                            <input
+                              name="name"
+                              defaultValue={group.name}
+                              minLength={2}
+                              maxLength={80}
+                              required
+                              className="rounded-xl border border-[color:var(--month-line)] bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-[color:var(--month-ink)]"
+                            />
+                          </label>
+                          <button type="submit" className="w-fit rounded-xl bg-sky-800 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white">
+                            Namen speichern
+                          </button>
+                        </form>
                         {group.amountCents < 0 ? (
                           <form action={updateMonthlySettlementAssignmentAction} className="grid gap-3">
                             <input type="hidden" name="monthKey" value={month.monthKey} />
@@ -1482,6 +1509,9 @@ export default async function MonthDetailPage({
                   data-booking-filter-tokens={transactionFilterToken(
                     transaction,
                   )}
+                  data-settlement-group-id={
+                    transaction.settlementGroupId ?? undefined
+                  }
                   className={`min-w-0 overflow-hidden rounded-[1rem] border border-[color:var(--month-line)] px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.025)] sm:px-4 ${isSettled ? "bg-slate-50/75 opacity-60" : "bg-white/82"}`}
                 >
                   <div className="month-booking-row-grid">
@@ -1885,6 +1915,7 @@ export default async function MonthDetailPage({
             </>
           )}
         </div>
+        </SettlementHistoryHighlighter>
       </details>
     </MonthPageShell>
   );

@@ -15,6 +15,7 @@ const { getMonthSnapshot } = await import("@/src/months/repository");
 const {
   createSettlement,
   dissolveSettlement,
+  renameSettlement,
   updateSettlementAssignment,
 } = await import("@/src/settlements/repository");
 
@@ -77,9 +78,22 @@ describe("month-scoped transaction settlements", () => {
     expect(after.totals.currentBudgetCents).toBe(before.totals.currentBudgetCents);
     expect(accountMovementAfter).toBe(accountMovementBefore);
     expect(after.settlementGroups).toEqual([
-      expect.objectContaining({ id: groupId, amountCents: -1000, memberCount: 2 }),
+      expect.objectContaining({
+        id: groupId,
+        amountCents: -1000,
+        memberCount: 2,
+        memberTransactionIds: expect.arrayContaining([
+          seeded.expenseId,
+          seeded.incomeId,
+        ]),
+      }),
     ]);
     expect(after.transactions.every((row) => row.settlementGroupId === groupId)).toBe(true);
+
+    renameSettlement(groupId, "2031-04", "Teamessen final");
+    expect(getMonthSnapshot("2031-04").settlementGroups[0].name).toBe(
+      "Teamessen final",
+    );
 
     updateSettlementAssignment(groupId, "2031-04", {
       categoryId: seeded.categoryId,

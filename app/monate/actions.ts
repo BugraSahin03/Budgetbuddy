@@ -14,6 +14,7 @@ import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
   createSettlement,
   dissolveSettlement,
+  renameSettlement,
   updateSettlementAssignment,
 } from "@/src/settlements/repository";
 import {
@@ -449,6 +450,33 @@ export async function updateMonthlySettlementAssignmentAction(
     });
   } catch (error) {
     redirectTarget = monthBookingHref(monthKey, {
+      error: toErrorMessage(error),
+    });
+  }
+
+  redirect(redirectTarget);
+}
+
+export async function renameMonthlySettlementAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    renameSettlement(
+      parseSettlementId(formData.get("settlementId")),
+      monthKey,
+      toSingleString(formData.get("name")),
+    );
+    revalidateMonthContext(monthKey);
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      notice: "Name der Verrechnung gespeichert.",
+    });
+  } catch (error) {
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
       error: toErrorMessage(error),
     });
   }
