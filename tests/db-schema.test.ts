@@ -232,7 +232,18 @@ describe("schema migrations", () => {
     expect(sql).toContain("rule_match_field_snapshot TEXT NOT NULL");
   });
 
+  it("contains migration for auditable month-scoped settlements", () => {
+    const sql = migrations.find((migration) => migration.id === "0021_fin_131")?.sql ?? "";
+
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS transaction_settlement_groups");
+    expect(sql).toContain("CREATE TABLE IF NOT EXISTS transaction_settlement_members");
+    expect(sql).toContain("transaction_id INTEGER NOT NULL UNIQUE");
+    expect(sql).toContain("CREATE VIEW IF NOT EXISTS budget_effective_entries");
+    expect(sql).toContain("protect_settled_transaction_update");
+    expect(sql).toContain("protect_settled_transaction_delete");
+  });
+
   it("exposes latest schema version", () => {
-    expect(getLatestSchemaVersion()).toBe("0020_fin_126");
+    expect(getLatestSchemaVersion()).toBe("0021_fin_131");
   });
 });

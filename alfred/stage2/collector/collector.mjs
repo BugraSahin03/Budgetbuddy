@@ -20,8 +20,11 @@ import { pathToFileURL } from "node:url";
 import Database from "better-sqlite3";
 
 export const SNAPSHOT_CONTRACT_VERSION = "budgetbuddy.coach.snapshot.v2";
-export const QUERY_CATALOG_VERSION = "2026-08-04.1";
-export const SUPPORTED_SCHEMA_VERSIONS = new Set(["0020_fin_126"]);
+export const QUERY_CATALOG_VERSION = "2026-09-17.1";
+export const SUPPORTED_SCHEMA_VERSIONS = new Set([
+  "0020_fin_126",
+  "0021_fin_131",
+]);
 
 const DEFAULT_DATABASE_PATH = "/var/lib/budgetbuddy/budgetbuddy.db";
 const DEFAULT_OUTPUT_DIRECTORY = "/var/lib/alfred-snapshots/budgetbuddy";
@@ -146,7 +149,51 @@ function readSchemaVersion(db) {
   return schemaVersion;
 }
 
+function hasBudgetEffectiveEntries(db) {
+  return Boolean(
+    db.prepare(
+      "SELECT 1 FROM sqlite_master WHERE type = 'view' AND name = 'budget_effective_entries'",
+    ).get(),
+  );
+}
+
 function readTransactionRows(db, fromMonthKey, toMonthKey) {
+  if (hasBudgetEffectiveEntries(db)) {
+    return db
+      .prepare(
+        `
+          SELECT
+            CASE WHEN entry.entry_kind = 'transaction'
+              THEN entry.entry_id ELSE -entry.entry_id END AS id,
+            COALESCE(
+              t.booking_date,
+              (
+                SELECT MAX(member_transaction.booking_date)
+                FROM transaction_settlement_members member
+                INNER JOIN transactions member_transaction
+                  ON member_transaction.id = member.transaction_id
+                WHERE member.settlement_group_id = entry.entry_id
+              )
+            ) AS bookingDate,
+            entry.month_key AS monthKey,
+            entry.transaction_type AS transactionType,
+            entry.amount_cents AS amountCents,
+            COALESCE(t.currency_code, 'EUR') AS currencyCode,
+            entry.category_id AS categoryId,
+            entry.special_budget_id AS specialBudgetId,
+            c.name AS categoryName,
+            c.system_key AS categorySystemKey
+          FROM budget_effective_entries entry
+          LEFT JOIN transactions t
+            ON entry.entry_kind = 'transaction' AND t.id = entry.entry_id
+          LEFT JOIN categories c ON c.id = entry.category_id
+          WHERE entry.month_key BETWEEN ? AND ?
+          ORDER BY bookingDate ASC, id ASC
+        `,
+      )
+      .all(fromMonthKey, toMonthKey);
+  }
+
   return db
     .prepare(
       `
@@ -195,6 +242,7 @@ function addTransactionToTotals(totals, row) {
       }
       break;
     case "transfer":
+    case "settlement_zero":
       break;
     default:
       throw new Error(`Unsupported transaction type: ${row.transactionType}`);
@@ -421,6 +469,9 @@ function readCategoryBudgets(db, monthKey) {
 }
 
 function readSpecialBudgets(db, monthKey) {
+  const actualSource = hasBudgetEffectiveEntries(db)
+    ? "budget_effective_entries"
+    : "transactions";
   const rows = db
     .prepare(
       `
@@ -433,7 +484,7 @@ function readSpecialBudgets(db, monthKey) {
           END), 0) AS actualCents
         FROM special_budgets sb
         LEFT JOIN special_budget_projects project ON project.id = sb.project_id
-        LEFT JOIN transactions t ON t.special_budget_id = sb.id
+        LEFT JOIN ${actualSource} t ON t.special_budget_id = sb.id
         WHERE sb.month_key = ?
           AND sb.is_active = 1
           AND COALESCE(project.status, 'active') = 'active'

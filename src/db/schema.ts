@@ -1210,6 +1210,112 @@ CREATE INDEX IF NOT EXISTS idx_transaction_fixed_cost_control_matches_rule
 ON transaction_fixed_cost_control_matches(import_rule_id);
 `;
 
+const fin131MigrationSql = `
+CREATE TABLE IF NOT EXISTS transaction_settlement_groups (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  month_key TEXT NOT NULL CHECK (
+    length(month_key) = 7 AND substr(month_key, 5, 1) = '-'
+  ),
+  name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 2 AND 80),
+  category_id INTEGER REFERENCES categories(id) ON DELETE RESTRICT,
+  special_budget_id INTEGER REFERENCES special_budgets(id) ON DELETE RESTRICT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CHECK (category_id IS NULL OR special_budget_id IS NULL)
+);
+
+CREATE TABLE IF NOT EXISTS transaction_settlement_members (
+  settlement_group_id INTEGER NOT NULL
+    REFERENCES transaction_settlement_groups(id) ON DELETE CASCADE,
+  transaction_id INTEGER NOT NULL UNIQUE
+    REFERENCES transactions(id) ON DELETE RESTRICT,
+  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (settlement_group_id, transaction_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_transaction_settlement_groups_month
+ON transaction_settlement_groups(month_key);
+
+CREATE INDEX IF NOT EXISTS idx_transaction_settlement_members_group
+ON transaction_settlement_members(settlement_group_id);
+
+CREATE TRIGGER IF NOT EXISTS validate_transaction_settlement_member
+BEFORE INSERT ON transaction_settlement_members
+BEGIN
+  SELECT CASE
+    WHEN NOT EXISTS (
+      SELECT 1
+      FROM transactions t
+      INNER JOIN transaction_settlement_groups g
+        ON g.id = NEW.settlement_group_id
+      LEFT JOIN categories c ON c.id = t.category_id
+      LEFT JOIN transaction_fixed_cost_control_matches control
+        ON control.transaction_id = t.id
+      LEFT JOIN transaction_fixed_cost_control_overrides override
+        ON override.transaction_id = t.id AND override.mode = 'include'
+      WHERE t.id = NEW.transaction_id
+        AND t.effective_month_key = g.month_key
+        AND t.transaction_type IN ('expense', 'income', 'refund')
+        AND COALESCE(c.system_key, '') <> 'savings'
+        AND control.transaction_id IS NULL
+        AND override.transaction_id IS NULL
+    ) THEN RAISE(ABORT, 'Buchung ist für diese Verrechnung nicht zulässig.')
+  END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS protect_settled_transaction_update
+BEFORE UPDATE ON transactions
+WHEN EXISTS (
+  SELECT 1 FROM transaction_settlement_members member
+  WHERE member.transaction_id = OLD.id
+)
+BEGIN
+  SELECT RAISE(ABORT, 'Verrechnete Buchungen können nicht geändert werden.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS protect_settled_transaction_delete
+BEFORE DELETE ON transactions
+WHEN EXISTS (
+  SELECT 1 FROM transaction_settlement_members member
+  WHERE member.transaction_id = OLD.id
+)
+BEGIN
+  SELECT RAISE(ABORT, 'Verrechnete Buchungen können nicht gelöscht werden.');
+END;
+
+CREATE VIEW IF NOT EXISTS budget_effective_entries AS
+SELECT
+  'transaction' AS entry_kind,
+  t.id AS entry_id,
+  t.effective_month_key AS month_key,
+  t.transaction_type,
+  t.amount_cents,
+  t.category_id,
+  t.special_budget_id
+FROM transactions t
+LEFT JOIN transaction_settlement_members member
+  ON member.transaction_id = t.id
+WHERE member.transaction_id IS NULL
+UNION ALL
+SELECT
+  'settlement' AS entry_kind,
+  g.id AS entry_id,
+  g.month_key,
+  CASE
+    WHEN SUM(t.amount_cents) < 0 THEN 'expense'
+    WHEN SUM(t.amount_cents) > 0 THEN 'refund'
+    ELSE 'settlement_zero'
+  END AS transaction_type,
+  SUM(t.amount_cents) AS amount_cents,
+  CASE WHEN SUM(t.amount_cents) < 0 THEN g.category_id ELSE NULL END AS category_id,
+  CASE WHEN SUM(t.amount_cents) < 0 THEN g.special_budget_id ELSE NULL END AS special_budget_id
+FROM transaction_settlement_groups g
+INNER JOIN transaction_settlement_members member
+  ON member.settlement_group_id = g.id
+INNER JOIN transactions t ON t.id = member.transaction_id
+GROUP BY g.id, g.month_key, g.category_id, g.special_budget_id;
+`;
+
 export const migrations: readonly Migration[] = [
   {
     id: "0001_fin_002",
@@ -1311,6 +1417,11 @@ export const migrations: readonly Migration[] = [
     name: "FIN-126 persist explicit fixed-cost control rule matches",
     sql: fin126MigrationSql,
   },
+  {
+    id: "0021_fin_131",
+    name: "FIN-131 add month-scoped transaction settlements",
+    sql: fin131MigrationSql,
+  },
 ];
 
 type MigrationRow = {
@@ -1345,6 +1456,18 @@ function tableExists(db: Database.Database, tableName: string): boolean {
       )
       .get(tableName),
   );
+}
+
+function suspendSettlementRuntimeObjectsForTransactionRebuild(
+  db: Database.Database,
+): void {
+  if (!tableExists(db, "transaction_settlement_groups")) return;
+  db.exec(`
+    DROP VIEW IF EXISTS budget_effective_entries;
+    DROP TRIGGER IF EXISTS validate_transaction_settlement_member;
+    DROP TRIGGER IF EXISTS protect_settled_transaction_update;
+    DROP TRIGGER IF EXISTS protect_settled_transaction_delete;
+  `);
 }
 
 function normalizeLegacyImportRuleText(value: string | null): string {
@@ -1505,6 +1628,14 @@ export function applyMigrations(db: Database.Database): void {
       }
 
       if (
+        ["0003_fin_011b", "0005_fin_030", "0008_fin_040", "0018_fin_120"].includes(
+          pendingMigration.id,
+        )
+      ) {
+        suspendSettlementRuntimeObjectsForTransactionRebuild(db);
+      }
+
+      if (
         pendingMigration.id === "0018_fin_120" &&
         !tableColumnExists(db, "transactions", "display_name_override")
       ) {
@@ -1545,6 +1676,10 @@ export function applyMigrations(db: Database.Database): void {
     });
 
     transaction.immediate(migration);
+  }
+
+  if (tableExists(db, "transaction_settlement_groups")) {
+    db.exec(fin131MigrationSql);
   }
 
   upsertSchemaVersion(db, getLatestSchemaVersion());
