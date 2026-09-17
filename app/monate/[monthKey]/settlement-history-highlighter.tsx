@@ -25,23 +25,35 @@ export function SettlementHistoryHighlighter({
       );
     }
 
-    for (const trigger of container.querySelectorAll<HTMLButtonElement>(
+    for (const trigger of container.querySelectorAll<HTMLElement>(
       "[data-settlement-focus-trigger]",
     )) {
       const isActive =
         activeGroupId !== null &&
         trigger.dataset.settlementFocusTrigger === activeGroupId;
       trigger.classList.toggle("month-settlement-focus-active", isActive);
-      trigger.setAttribute("aria-pressed", String(isActive));
+      if (trigger instanceof HTMLButtonElement) {
+        trigger.setAttribute("aria-pressed", String(isActive));
+      }
     }
   }, [activeGroupId]);
 
   function handleClick(event: MouseEvent<HTMLDivElement>) {
     const target = event.target as HTMLElement;
-    const trigger = target.closest<HTMLButtonElement>(
+    const trigger = target.closest<HTMLElement>(
       "[data-settlement-focus-trigger]",
     );
     if (!trigger || !containerRef.current?.contains(trigger)) return;
+
+    const interactiveTarget = target.closest<HTMLElement>(
+      "form, input, select, textarea, a, button, label",
+    );
+    if (
+      interactiveTarget &&
+      !interactiveTarget.hasAttribute("data-settlement-focus-trigger")
+    ) {
+      return;
+    }
 
     const groupId = trigger.dataset.settlementFocusTrigger;
     if (!groupId) return;

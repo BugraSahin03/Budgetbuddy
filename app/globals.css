@@ -22,6 +22,17 @@
   outline: none;
 }
 
+.month-settlement-entry:hover {
+  border-color: rgb(125 211 252);
+  box-shadow: 0 12px 28px rgb(7 27 70 / 0.08);
+}
+
+.month-settlement-entry.month-settlement-focus-active {
+  background: rgb(240 249 255 / 0.96);
+  border-color: rgb(56 189 248);
+  box-shadow: 0 0 0 3px rgb(186 230 253 / 0.8);
+}
+
 .month-settlement-member-highlight {
   background: rgb(255 251 235 / 0.98) !important;
   border-color: rgb(251 191 36) !important;

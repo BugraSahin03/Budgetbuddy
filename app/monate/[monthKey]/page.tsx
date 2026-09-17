@@ -1367,6 +1367,7 @@ export default async function MonthDetailPage({
                   <article
                     key={`settlement-${group.id}`}
                     data-month-booking-row
+                    data-settlement-focus-trigger={String(group.id)}
                     data-booking-filter-tokens={
                       group.categoryId
                         ? `category:${group.categoryId}`
@@ -1376,7 +1377,7 @@ export default async function MonthDetailPage({
                             ? "open"
                             : ""
                     }
-                    className="min-w-0 overflow-hidden rounded-[1rem] border border-sky-200 bg-sky-50/80 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.04)] sm:px-4"
+                    className="month-settlement-entry min-w-0 cursor-pointer overflow-hidden rounded-[1rem] border border-sky-200 bg-sky-50/80 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.04)] transition sm:px-4"
                   >
                     <div className="month-booking-row-grid">
                       <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200 bg-white text-sm font-black text-sky-800">
