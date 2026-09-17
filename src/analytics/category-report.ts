@@ -78,8 +78,8 @@ export function listCategoryReportAvailableMonths(): string[] {
         FROM (
           SELECT month_key AS monthKey FROM monthly_category_budgets
           UNION
-          SELECT effective_month_key AS monthKey
-          FROM transactions
+          SELECT month_key AS monthKey
+          FROM budget_effective_entries
           WHERE transaction_type = 'expense'
             AND category_id IS NOT NULL
         )
@@ -122,8 +122,8 @@ export function getCategoryReport(monthFromInput: string, monthToInput: string):
           UNION
           SELECT mr.monthKey, t.category_id AS categoryId
           FROM month_range mr
-          INNER JOIN transactions t
-            ON t.effective_month_key = mr.monthKey
+          INNER JOIN budget_effective_entries t
+            ON t.month_key = mr.monthKey
           WHERE t.transaction_type = 'expense'
             AND t.category_id IS NOT NULL
         )
@@ -135,10 +135,10 @@ export function getCategoryReport(monthFromInput: string, monthToInput: string):
           COALESCE(
             (
               SELECT SUM(-t.amount_cents)
-              FROM transactions t
+              FROM budget_effective_entries t
               WHERE t.transaction_type = 'expense'
                 AND t.category_id = c.id
-                AND t.effective_month_key = mcs.monthKey
+                AND t.month_key = mcs.monthKey
             ),
             0
           ) AS spentAmountCents

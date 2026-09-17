@@ -22,6 +22,7 @@ export type DashboardMonthSnapshot = {
 
 function needsAssignment(transaction: MonthDetailTransactionRow): boolean {
   return (
+    transaction.settlementGroupId === null &&
     transaction.transactionType === "expense" &&
     transaction.categoryId === null &&
     transaction.specialBudgetId === null
@@ -35,7 +36,14 @@ export function getDashboardMonthSnapshot(monthKey: string): DashboardMonthSnaps
     totals: snapshot.totals,
     categoryRows: snapshot.categoryRows,
     specialBudgetRows: snapshot.specialBudgetRows,
-    openAssignmentCount: snapshot.transactions.filter(needsAssignment).length,
+    openAssignmentCount:
+      snapshot.transactions.filter(needsAssignment).length +
+      snapshot.settlementGroups.filter(
+        (group) =>
+          group.amountCents < 0 &&
+          group.categoryId === null &&
+          group.specialBudgetId === null,
+      ).length,
     recentTransactions: snapshot.transactions.slice(0, 5),
   };
 }

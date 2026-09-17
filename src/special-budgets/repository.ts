@@ -391,7 +391,7 @@ export function listSpecialBudgets(): SpecialBudgetListItem[] {
           ) AS projectPlannedAmountCents,
           (
             SELECT COALESCE(SUM(-t.amount_cents), 0)
-            FROM transactions t
+            FROM budget_effective_entries t
             INNER JOIN special_budgets grouped_sb ON grouped_sb.id = t.special_budget_id
             WHERE grouped_sb.project_id = sb.project_id
               AND t.transaction_type = 'expense'
@@ -404,7 +404,7 @@ export function listSpecialBudgets(): SpecialBudgetListItem[] {
           COALESCE(
             (
               SELECT ABS(SUM(t.amount_cents))
-              FROM transactions t
+              FROM budget_effective_entries t
               WHERE t.special_budget_id = sb.id
                 AND t.transaction_type = 'expense'
             ),
@@ -466,7 +466,7 @@ export function listArchivedSpecialBudgetProjects(): SpecialBudgetArchiveItem[] 
             SUM(
               (
                 SELECT COALESCE(SUM(-t.amount_cents), 0)
-                FROM transactions t
+                FROM budget_effective_entries t
                 WHERE t.special_budget_id = sb.id
                   AND t.transaction_type = 'expense'
               )
@@ -494,7 +494,7 @@ export function listArchivedSpecialBudgetProjects(): SpecialBudgetArchiveItem[] 
             COALESCE(
               (
                 SELECT SUM(-t.amount_cents)
-                FROM transactions t
+                FROM budget_effective_entries t
                 WHERE t.special_budget_id = sb.id
                   AND t.transaction_type = 'expense'
               ),
@@ -543,7 +543,7 @@ export function listActiveSpecialBudgetProjects(): SpecialBudgetProjectListItem[
             SUM(
               (
                 SELECT COALESCE(SUM(-t.amount_cents), 0)
-                FROM transactions t
+                FROM budget_effective_entries t
                 WHERE t.special_budget_id = sb.id
                   AND t.transaction_type = 'expense'
               )
@@ -572,7 +572,7 @@ export function listActiveSpecialBudgetProjects(): SpecialBudgetProjectListItem[
             COALESCE(
               (
                 SELECT SUM(-t.amount_cents)
-                FROM transactions t
+                FROM budget_effective_entries t
                 WHERE t.special_budget_id = sb.id
                   AND t.transaction_type = 'expense'
               ),

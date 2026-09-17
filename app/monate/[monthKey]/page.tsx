@@ -4,14 +4,17 @@ import Link from "next/link";
 import { CategoryVisualMark } from "@/app/components/category-visual";
 import {
   closeMonthAction,
+  dissolveMonthlySettlementAction,
   deleteMonthlyImportedTransactionAction,
   deleteMonthlyManualTransactionAction,
   reopenMonthAction,
+  renameMonthlySettlementAction,
   reclassifyMonthlyIncomeDeductionAction,
   setMonthlyBudgetOverrideAction,
   updateMonthlyManualTransactionAction,
   updateMonthlySpecialBudgetAction,
   updateMonthlySpecialBudgetStateAction,
+  updateMonthlySettlementAssignmentAction,
   updateMonthlyFixedCostControlOverrideAction,
   updateMonthlyTransactionAssignmentAction,
 } from "@/app/monate/actions";
@@ -23,6 +26,8 @@ import {
 } from "@/app/monate/[monthKey]/month-booking-filter";
 import { MonthCategoryOverview } from "@/app/monate/[monthKey]/month-category-overview";
 import { MonthTodoDialog } from "@/app/monate/[monthKey]/month-todo-dialog";
+import { SettlementDialog } from "@/app/monate/[monthKey]/settlement-dialog";
+import { SettlementHistoryHighlighter } from "@/app/monate/[monthKey]/settlement-history-highlighter";
 import { MonthActionOverlay } from "@/app/monate/month-action-overlay";
 import { MonthDialog } from "@/app/monate/month-dialog";
 import { MonthChip, MonthPageShell } from "@/app/monate/months-ui";
@@ -585,6 +590,16 @@ export default async function MonthDetailPage({
       iconName: category.iconName,
       colorHex: category.colorHex,
     }));
+  const settlementCategoryOptions = allCategories
+    .filter(
+      (category) =>
+        category.isActive && category.systemKey !== "savings",
+    )
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      iconName: category.iconName,
+    }));
   const accountOptions = listActiveAccountOptions();
   const categoryOptions = listActiveCategoryOptions();
   const specialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(
@@ -596,7 +611,11 @@ export default async function MonthDetailPage({
     null;
   const warningCount = countOverBudgetWarnings(month.dashboard);
   const recentExpenses = month.transactions
-    .filter((transaction) => transaction.transactionType === "expense")
+    .filter(
+      (transaction) =>
+        transaction.transactionType === "expense" &&
+        transaction.settlementGroupId === null,
+    )
     .slice(0, 5);
   const bookingFilterOptions = buildBookingFilterOptions({
     categories: categoryOptions,
@@ -614,10 +633,25 @@ export default async function MonthDetailPage({
   const canEditBookings = isBookingEditMode && canEditMonth;
   const openAssignmentCount = month.transactions.filter(
     (transaction) =>
+      transaction.settlementGroupId === null &&
       transaction.transactionType === "expense" &&
       transaction.categoryId === null &&
       transaction.specialBudgetId === null,
+  ).length + month.dashboard.settlementGroups.filter(
+    (group) =>
+      group.amountCents < 0 &&
+      group.categoryId === null &&
+      group.specialBudgetId === null,
   ).length;
+  const settlementEligibleBookings = month.transactions
+    .filter((transaction) => transaction.isSettlementEligible)
+    .map((transaction) => ({
+      id: transaction.id,
+      bookingDate: transaction.bookingDate,
+      displayName: transaction.displayName,
+      amountCents: transaction.amountCents,
+      accountName: transaction.accountName,
+    }));
 
   return (
     <MonthPageShell>
@@ -635,6 +669,13 @@ export default async function MonthDetailPage({
             ) : null}
             {isReopenedHistoricalMonth ? (
               <MonthChip tone="accent">Wieder geöffnet</MonthChip>
+            ) : null}
+            {canEditMonth ? (
+              <SettlementDialog
+                monthKey={month.monthKey}
+                monthLabel={month.label}
+                bookings={settlementEligibleBookings}
+              />
             ) : null}
             <MonthCloseControl
               monthKey={month.monthKey}
@@ -1288,7 +1329,7 @@ export default async function MonthDetailPage({
           </span>
           <span className="flex flex-wrap items-center gap-3">
             <MonthChip tone="neutral">
-              {month.transactions.length} Einträge
+              {month.transactions.length + month.dashboard.settlementGroups.length} Einträge
             </MonthChip>
             {canEditMonth ? (
               <Link
@@ -1314,6 +1355,7 @@ export default async function MonthDetailPage({
           </span>
         </summary>
 
+        <SettlementHistoryHighlighter>
         <div className="mt-6 space-y-2.5">
           {month.transactions.length === 0 ? (
             <EmptyReferenceCard>
@@ -1323,8 +1365,140 @@ export default async function MonthDetailPage({
             <>
               <MonthBookingFilter
                 options={bookingFilterOptions}
-                totalCount={month.transactions.length}
+                totalCount={month.transactions.length + month.dashboard.settlementGroups.length}
               />
+              {month.dashboard.settlementGroups.map((group) => {
+                const currentAssignment = group.categoryId
+                  ? `category:${group.categoryId}`
+                  : group.specialBudgetId
+                    ? `specialBudget:${group.specialBudgetId}`
+                    : "";
+                return (
+                  <article
+                    key={`settlement-${group.id}`}
+                    data-month-booking-row
+                    data-settlement-focus-trigger={String(group.id)}
+                    data-booking-filter-tokens={
+                      group.categoryId
+                        ? `category:${group.categoryId}`
+                        : group.specialBudgetId
+                          ? `specialBudget:${group.specialBudgetId}`
+                          : group.amountCents < 0
+                            ? "open"
+                            : ""
+                    }
+                    className="month-settlement-entry min-w-0 cursor-pointer overflow-hidden rounded-[1rem] border border-sky-200 bg-sky-50/80 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.04)] transition sm:px-4"
+                  >
+                    <div className="month-booking-row-grid">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-sky-200 bg-white text-sm font-black text-sky-800">
+                        ⇄
+                      </div>
+                      <button
+                        type="button"
+                        data-settlement-focus-trigger={String(group.id)}
+                        aria-pressed="false"
+                        className="month-settlement-focus-trigger min-w-0 rounded-xl px-2 py-1 text-left transition"
+                        title="Zugehörige Buchungen hervorheben"
+                      >
+                        <h3 className="truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg">
+                          {group.name}
+                        </h3>
+                        <p className="mt-0.5 text-xs font-bold text-sky-800">
+                          Verrechnungsergebnis · {group.memberCount} Buchungen · Anklicken zum Hervorheben
+                        </p>
+                      </button>
+                      <p className="month-booking-date text-sm font-extrabold text-[color:var(--month-ink-soft)]">
+                        {group.bookingDate}
+                      </p>
+                      <span className={`month-booking-assignment inline-flex max-w-full rounded-full border px-2.5 py-1 text-xs font-black ${
+                        group.amountCents < 0
+                          ? group.specialBudgetId !== null
+                            ? "border-amber-200 bg-amber-50 text-amber-800"
+                            : group.categoryId !== null
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                              : "border-red-200 bg-red-50 text-red-700"
+                          : "border-sky-200 bg-white text-sky-800"
+                      }`}>
+                        {group.amountCents < 0
+                          ? group.specialBudgetName
+                            ? `${group.specialBudgetName} · Sonderkategorie`
+                            : group.categoryName ?? "Zuordnen"
+                          : group.amountCents > 0
+                            ? "Einnahme"
+                            : "Neutral"}
+                      </span>
+                      <p className={`month-booking-amount text-lg font-black tracking-[-0.045em] sm:text-right ${amountTone(group.amountCents)}`}>
+                        {formatEuro(group.amountCents)}
+                      </p>
+                    </div>
+
+                    {canEditBookings ? (
+                      <div className="mt-4 grid gap-4 rounded-[1.2rem] border border-sky-200 bg-white/80 p-4">
+                        <form action={renameMonthlySettlementAction} className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+                          <input type="hidden" name="monthKey" value={month.monthKey} />
+                          <input type="hidden" name="settlementId" value={group.id} />
+                          <label className="grid gap-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
+                            Name der Verrechnung
+                            <input
+                              name="name"
+                              defaultValue={group.name}
+                              minLength={2}
+                              maxLength={80}
+                              required
+                              className="rounded-xl border border-[color:var(--month-line)] bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-[color:var(--month-ink)]"
+                            />
+                          </label>
+                          <button type="submit" className="w-fit rounded-xl bg-sky-800 px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white">
+                            Namen speichern
+                          </button>
+                        </form>
+                        {group.amountCents < 0 ? (
+                          <form action={updateMonthlySettlementAssignmentAction} className="grid gap-3">
+                            <input type="hidden" name="monthKey" value={month.monthKey} />
+                            <input type="hidden" name="settlementId" value={group.id} />
+                            <label className="grid gap-1 text-xs font-black uppercase tracking-[0.14em] text-[color:var(--month-ink-muted)]">
+                              Ergebnis zuordnen
+                              <select name="assignment" defaultValue={currentAssignment} className="rounded-xl border border-[color:var(--month-line)] bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-[color:var(--month-ink)]">
+                                <option value="">Ohne Zuordnung</option>
+                                <optgroup label="Kategorien">
+                                  {settlementCategoryOptions.map((category) => (
+                                    <option key={category.id} value={`category:${category.id}`}>
+                                      {category.iconName ? `${category.iconName} ` : ""}{category.name}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                                {specialBudgetOptions.length > 0 ? (
+                                  <optgroup label="Sonderkategorien">
+                                    {specialBudgetOptions.map((budget) => (
+                                      <option key={budget.id} value={`specialBudget:${budget.id}`}>
+                                        {budget.iconName ? `${budget.iconName} ` : ""}Sonderkategorie · {budget.name}
+                                      </option>
+                                    ))}
+                                  </optgroup>
+                                ) : null}
+                              </select>
+                            </label>
+                            <button type="submit" className="w-fit rounded-xl bg-[color:var(--month-ink)] px-4 py-2 text-xs font-black uppercase tracking-[0.14em] text-white">
+                              Zuordnung speichern
+                            </button>
+                          </form>
+                        ) : null}
+                        <form action={dissolveMonthlySettlementAction} className="flex flex-wrap items-center gap-3 border-t border-sky-100 pt-3">
+                          <input type="hidden" name="monthKey" value={month.monthKey} />
+                          <input type="hidden" name="settlementId" value={group.id} />
+                          <label className="flex items-center gap-2 text-xs font-semibold text-red-800">
+                            <input type="checkbox" name="confirmDissolve" className="h-4 w-4" />
+                            Auflösen bestätigen
+                          </label>
+                          <button type="submit" className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs font-black uppercase tracking-[0.14em] text-red-700">
+                            Verrechnung auflösen
+                          </button>
+                        </form>
+                      </div>
+                    ) : null}
+                  </article>
+                );
+              })}
               {month.transactions.map((transaction) => {
               const currentAssignment = transaction.categoryId
                 ? `category:${transaction.categoryId}`
@@ -1332,8 +1506,9 @@ export default async function MonthDetailPage({
                   ? `specialBudget:${transaction.specialBudgetId}`
                   : "";
               const isManual = transaction.sourceType === "manual";
+              const isSettled = transaction.settlementGroupId !== null;
               const canEditAssignment =
-                transaction.transactionType === "expense";
+                transaction.transactionType === "expense" && !isSettled;
               const canDirectlyEditAssignment =
                 canEditMonth && canEditAssignment && !canEditBookings;
               const hasAssignment = currentAssignment.length > 0;
@@ -1345,7 +1520,10 @@ export default async function MonthDetailPage({
                   data-booking-filter-tokens={transactionFilterToken(
                     transaction,
                   )}
-                  className="min-w-0 overflow-hidden rounded-[1rem] border border-[color:var(--month-line)] bg-white/82 px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.025)] sm:px-4"
+                  data-settlement-group-id={
+                    transaction.settlementGroupId ?? undefined
+                  }
+                  className={`min-w-0 overflow-hidden rounded-[1rem] border border-[color:var(--month-line)] px-3.5 py-3 shadow-[0_8px_18px_rgba(7,27,70,0.025)] sm:px-4 ${isSettled ? "bg-slate-50/75 opacity-60" : "bg-white/82"}`}
                 >
                   <div className="month-booking-row-grid">
                     <div
@@ -1357,7 +1535,7 @@ export default async function MonthDetailPage({
                         categoryVisuals={categoryVisuals}
                       />
                     </div>
-                    {canEditBookings ? (
+                    {canEditBookings && !isSettled ? (
                       <InlineDisplayNameEditor
                         monthKey={month.monthKey}
                         transactionId={transaction.id}
@@ -1371,6 +1549,7 @@ export default async function MonthDetailPage({
                         }
                       />
                     ) : (
+                      <div className="min-w-0">
                       <h3
                         className="month-booking-title min-w-0 truncate text-base font-black tracking-[-0.035em] text-[color:var(--month-ink)] sm:text-lg"
                         title={
@@ -1381,6 +1560,12 @@ export default async function MonthDetailPage({
                       >
                         {transaction.displayName}
                       </h3>
+                      {isSettled ? (
+                        <p className="mt-0.5 truncate text-xs font-black text-slate-600">
+                          Verrechnet · {transaction.settlementName}
+                        </p>
+                      ) : null}
+                      </div>
                     )}
                     <p className="month-booking-date text-sm font-extrabold tracking-[-0.015em] text-[color:var(--month-ink-soft)] sm:text-left">
                       {transaction.bookingDate}
@@ -1417,7 +1602,7 @@ export default async function MonthDetailPage({
                     </p>
                   </div>
 
-                  {canEditBookings ? (
+                  {canEditBookings && !isSettled ? (
                     <div className="mt-5 grid gap-4 rounded-[1.2rem] border border-[color:var(--month-line)] bg-[#f7fbfe] p-4">
                       <div className="flex flex-wrap gap-2">
                         <span className="inline-flex rounded-full border border-[color:var(--month-line)] bg-white px-2.5 py-1 text-xs font-semibold text-[color:var(--month-ink-soft)]">
@@ -1741,6 +1926,7 @@ export default async function MonthDetailPage({
             </>
           )}
         </div>
+        </SettlementHistoryHighlighter>
       </details>
     </MonthPageShell>
   );

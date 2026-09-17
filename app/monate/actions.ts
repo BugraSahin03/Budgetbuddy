@@ -12,6 +12,12 @@ import {
 } from "@/src/months/repository";
 import { parsePlannedAmountCents } from "@/src/special-budgets/amounts";
 import {
+  createSettlement,
+  dissolveSettlement,
+  renameSettlement,
+  updateSettlementAssignment,
+} from "@/src/settlements/repository";
+import {
   setSpecialBudgetActiveForMonth,
   updateSpecialBudgetPlannedAmountForMonth,
 } from "@/src/special-budgets/repository";
@@ -63,6 +69,14 @@ function parseTransactionId(rawValue: FormDataEntryValue | null): number {
   }
 
   return transactionId;
+}
+
+function parseSettlementId(rawValue: FormDataEntryValue | null): number {
+  const value = Number.parseInt(toSingleString(rawValue).trim(), 10);
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error("Verrechnung ist ungültig.");
+  }
+  return value;
 }
 
 function parseOptionalPositiveInt(
@@ -383,6 +397,113 @@ export async function updateMonthlyTransactionAssignmentAction(
   } catch (error) {
     redirectTarget = monthBookingHref(monthKey, {
       ...(keepBookingEdit ? { bookingEdit: "1" } : {}),
+      error: toErrorMessage(error),
+    });
+  }
+
+  redirect(redirectTarget);
+}
+
+export async function createMonthlySettlementAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    const transactionIds = formData
+      .getAll("transactionId")
+      .map((value) => parseTransactionId(value));
+    createSettlement(
+      monthKey,
+      toSingleString(formData.get("name")),
+      transactionIds,
+    );
+    revalidateMonthContext(monthKey);
+    redirectTarget = monthBookingHref(monthKey, {
+      notice: "Buchungen wurden verrechnet.",
+    });
+  } catch (error) {
+    redirectTarget = monthBookingHref(monthKey, {
+      error: toErrorMessage(error),
+    });
+  }
+
+  redirect(redirectTarget);
+}
+
+export async function updateMonthlySettlementAssignmentAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    updateSettlementAssignment(
+      parseSettlementId(formData.get("settlementId")),
+      monthKey,
+      parseBudgetAssignment(formData.get("assignment")),
+    );
+    revalidateMonthContext(monthKey);
+    redirectTarget = monthBookingHref(monthKey, {
+      notice: "Verrechnungsergebnis zugeordnet.",
+    });
+  } catch (error) {
+    redirectTarget = monthBookingHref(monthKey, {
+      error: toErrorMessage(error),
+    });
+  }
+
+  redirect(redirectTarget);
+}
+
+export async function renameMonthlySettlementAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    renameSettlement(
+      parseSettlementId(formData.get("settlementId")),
+      monthKey,
+      toSingleString(formData.get("name")),
+    );
+    revalidateMonthContext(monthKey);
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      notice: "Name der Verrechnung gespeichert.",
+    });
+  } catch (error) {
+    redirectTarget = monthBookingHref(monthKey, {
+      bookingEdit: "1",
+      error: toErrorMessage(error),
+    });
+  }
+
+  redirect(redirectTarget);
+}
+
+export async function dissolveMonthlySettlementAction(
+  formData: FormData,
+): Promise<never> {
+  const monthKey = toSingleString(formData.get("monthKey")).trim();
+  let redirectTarget: string;
+
+  try {
+    if (toSingleString(formData.get("confirmDissolve")) !== "on") {
+      throw new Error("Auflösen muss bewusst bestätigt werden.");
+    }
+    dissolveSettlement(
+      parseSettlementId(formData.get("settlementId")),
+      monthKey,
+    );
+    revalidateMonthContext(monthKey);
+    redirectTarget = monthBookingHref(monthKey, {
+      notice: "Verrechnung wurde aufgelöst.",
+    });
+  } catch (error) {
+    redirectTarget = monthBookingHref(monthKey, {
       error: toErrorMessage(error),
     });
   }

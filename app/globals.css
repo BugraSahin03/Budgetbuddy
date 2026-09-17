@@ -14,6 +14,36 @@
   --month-accent-soft: rgba(125, 211, 252, 0.18);
 }
 
+.month-settlement-focus-trigger:hover,
+.month-settlement-focus-trigger:focus-visible,
+.month-settlement-focus-active {
+  background: rgb(255 255 255 / 0.9);
+  box-shadow: 0 0 0 2px rgb(56 189 248 / 0.38);
+  outline: none;
+}
+
+.month-settlement-entry:hover {
+  border-color: rgb(125 211 252);
+  box-shadow: 0 12px 28px rgb(7 27 70 / 0.08);
+}
+
+.month-settlement-entry.month-settlement-focus-active {
+  background: rgb(240 249 255 / 0.96);
+  border-color: rgb(56 189 248);
+  box-shadow: 0 0 0 3px rgb(186 230 253 / 0.8);
+}
+
+.month-settlement-member-highlight {
+  background: rgb(255 251 235 / 0.98) !important;
+  border-color: rgb(251 191 36) !important;
+  box-shadow:
+    0 0 0 3px rgb(253 230 138 / 0.82),
+    0 14px 32px rgb(180 83 9 / 0.12) !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 1;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

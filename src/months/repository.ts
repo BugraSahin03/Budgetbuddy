@@ -12,6 +12,10 @@ import { listImportDisplayAliases } from "@/src/settings/import-display-aliases/
 import { getCashAccountSnapshot } from "@/src/transactions/repository";
 import type { TransactionType } from "@/src/transactions/repository";
 import {
+  listSettlementGroups,
+  type SettlementGroupRow,
+} from "@/src/settlements/repository";
+import {
   buildMonthPlanSummary,
   type MonthPlanSummary,
 } from "@/src/months/plan-summary";
@@ -82,6 +86,9 @@ export type MonthDetailTransactionRow = {
   specialBudgetIconName: string | null;
   importRunId: number | null;
   isFixedCostControlCandidate: boolean;
+  settlementGroupId: number | null;
+  settlementName: string | null;
+  isSettlementEligible: boolean;
 };
 
 export type MonthFixedCostControlMatchRow = {
@@ -130,6 +137,7 @@ export type MonthSnapshot = {
   fixedCostControlMatches: MonthFixedCostControlMatchRow[];
   categoryRows: MonthlyBudgetCategoryRow[];
   specialBudgetRows: MonthSpecialBudgetRow[];
+  settlementGroups: SettlementGroupRow[];
   transactions: MonthDetailTransactionRow[];
 };
 
@@ -216,9 +224,9 @@ function getGrossIncomeCents(monthKey: string): number {
     .prepare(
       `
         SELECT COALESCE(SUM(amount_cents), 0) AS total
-        FROM transactions
+        FROM budget_effective_entries
         WHERE transaction_type IN ('income', 'refund')
-          AND effective_month_key = ?
+          AND month_key = ?
       `,
     )
     .get(monthKey) as { total: number };
@@ -231,9 +239,9 @@ function getIncomeDeductionCents(monthKey: string): number {
     .prepare(
       `
         SELECT COALESCE(SUM(-amount_cents), 0) AS total
-        FROM transactions
+        FROM budget_effective_entries
         WHERE transaction_type = 'income_deduction'
-          AND effective_month_key = ?
+          AND month_key = ?
       `,
     )
     .get(monthKey) as { total: number };
@@ -440,14 +448,18 @@ function assertExpenseTransactionInMonth(
   const row = getDb()
     .prepare(
       `
-        SELECT transaction_type AS transactionType
-        FROM transactions
-        WHERE id = ?
-          AND effective_month_key = ?
+        SELECT
+          t.transaction_type AS transactionType,
+          member.transaction_id AS settledTransactionId
+        FROM transactions t
+        LEFT JOIN transaction_settlement_members member
+          ON member.transaction_id = t.id
+        WHERE t.id = ?
+          AND t.effective_month_key = ?
       `,
     )
     .get(transactionId, monthKey) as
-    | { transactionType: TransactionType }
+    | { transactionType: TransactionType; settledTransactionId: number | null }
     | undefined;
 
   if (!row) {
@@ -456,6 +468,12 @@ function assertExpenseTransactionInMonth(
 
   if (row.transactionType !== "expense") {
     throw new Error("Nur Ausgaben können als Fixkosten-Kontrolle markiert werden.");
+  }
+
+  if (row.settledTransactionId !== null) {
+    throw new Error(
+      "Verrechnete Buchungen können nicht als Fixkosten-Kontrolle geändert werden.",
+    );
   }
 }
 
@@ -514,9 +532,9 @@ function getBudgetEffectiveVariableExpenseCents(
     .prepare(
       `
         SELECT COALESCE(SUM(-amount_cents), 0) AS total
-        FROM transactions
+        FROM budget_effective_entries
         WHERE transaction_type = 'expense'
-          AND effective_month_key = ?
+          AND month_key = ?
       `,
     )
     .get(monthKey) as { total: number };
@@ -530,16 +548,16 @@ function getVariableSavingsCents(
 ): number {
   const fixedCostExclusion =
     fixedCostControlTransactionIds.length > 0
-      ? `AND t.id NOT IN (${fixedCostControlTransactionIds.map(() => "?").join(", ")})`
+      ? `AND NOT (t.entry_kind = 'transaction' AND t.entry_id IN (${fixedCostControlTransactionIds.map(() => "?").join(", ")}))`
       : "";
   const row = getDb()
     .prepare(
       `
         SELECT COALESCE(SUM(-t.amount_cents), 0) AS total
-        FROM transactions t
+        FROM budget_effective_entries t
         INNER JOIN categories c ON c.id = t.category_id
         WHERE t.transaction_type = 'expense'
-          AND t.effective_month_key = ?
+          AND t.month_key = ?
           AND c.system_key = 'savings'
           ${fixedCostExclusion}
       `,
@@ -554,10 +572,10 @@ function getNonSavingsExpenseCents(monthKey: string): number {
     .prepare(
       `
         SELECT COALESCE(SUM(-t.amount_cents), 0) AS total
-        FROM transactions t
+        FROM budget_effective_entries t
         LEFT JOIN categories c ON c.id = t.category_id
         WHERE t.transaction_type = 'expense'
-          AND t.effective_month_key = ?
+          AND t.month_key = ?
           AND (c.system_key IS NULL OR c.system_key <> 'savings')
       `,
     )
@@ -609,7 +627,7 @@ function listSpecialBudgetRows(
 ): MonthSpecialBudgetRow[] {
   const excludedTransactionFilter =
     excludedTransactionIds.length > 0
-      ? `AND t.id NOT IN (${excludedTransactionIds.map(() => "?").join(", ")})`
+      ? `AND NOT (t.entry_kind = 'transaction' AND t.entry_id IN (${excludedTransactionIds.map(() => "?").join(", ")}))`
       : "";
 
   if (hasBudgetSnapshot(monthKey)) {
@@ -626,10 +644,10 @@ function listSpecialBudgetRows(
             COALESCE(
               (
                 SELECT SUM(-t.amount_cents)
-                FROM transactions t
+                FROM budget_effective_entries t
                 WHERE t.transaction_type = 'expense'
                   AND t.special_budget_id = snapshot.special_budget_id
-                  AND t.effective_month_key = snapshot.month_key
+                  AND t.month_key = snapshot.month_key
                   ${excludedTransactionFilter}
               ),
               0
@@ -681,7 +699,7 @@ function listSpecialBudgetRows(
           COALESCE(
             (
               SELECT SUM(-t.amount_cents)
-              FROM transactions t
+              FROM budget_effective_entries t
               WHERE t.transaction_type = 'expense'
                 AND t.special_budget_id = sb.id
                 ${excludedTransactionFilter}
@@ -807,6 +825,16 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
             ELSE sbp.icon_name
           END AS specialBudgetIconName,
           t.import_run_id AS importRunId
+          ,member.settlement_group_id AS settlementGroupId
+          ,settlement.name AS settlementName
+          ,CASE
+            WHEN member.transaction_id IS NULL
+              AND t.transaction_type IN ('expense', 'income', 'refund')
+              AND COALESCE(c.system_key, '') <> 'savings'
+              AND control.transaction_id IS NULL
+              AND override.transaction_id IS NULL
+            THEN 1 ELSE 0
+          END AS isSettlementEligible
         FROM transactions t
         INNER JOIN accounts source ON source.id = t.account_id
         LEFT JOIN imported_transactions it ON it.transaction_id = t.id
@@ -821,6 +849,14 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
         LEFT JOIN monthly_special_budget_snapshots special_snapshot
           ON special_snapshot.month_key = t.effective_month_key
          AND special_snapshot.special_budget_id = t.special_budget_id
+        LEFT JOIN transaction_settlement_members member
+          ON member.transaction_id = t.id
+        LEFT JOIN transaction_settlement_groups settlement
+          ON settlement.id = member.settlement_group_id
+        LEFT JOIN transaction_fixed_cost_control_matches control
+          ON control.transaction_id = t.id
+        LEFT JOIN transaction_fixed_cost_control_overrides override
+          ON override.transaction_id = t.id AND override.mode = 'include'
         WHERE t.effective_month_key = ?
         ORDER BY
           t.booking_date DESC,
@@ -843,11 +879,17 @@ function listMonthTransactions(monthKey: string): MonthDetailTransactionRow[] {
           t.id DESC
       `,
     )
-    .all(normalizedMonthKey) as Array<Omit<MonthDetailTransactionRow, "displayName">>;
+    .all(normalizedMonthKey) as Array<
+      Omit<MonthDetailTransactionRow, "displayName" | "isSettlementEligible"> & {
+        isSettlementEligible: number;
+      }
+    >;
 
   return rows.map((row) => ({
     ...row,
-    isFixedCostControlCandidate: row.transactionType === "expense",
+    isFixedCostControlCandidate:
+      row.transactionType === "expense" && row.settlementGroupId === null,
+    isSettlementEligible: mapSqliteBoolean(row.isSettlementEligible),
     displayName: resolveImportDisplayName({
       sourceType: row.sourceType,
       description: row.description,
@@ -939,6 +981,7 @@ export function getMonthSnapshot(monthKey: string): MonthSnapshot {
     fixedCostControlMatches,
     categoryRows,
     specialBudgetRows,
+    settlementGroups: listSettlementGroups(normalizedMonthKey),
     transactions: excludeFixedCostControlTransactions(
       listMonthTransactions(normalizedMonthKey),
       fixedCostControlMatches,
@@ -1062,6 +1105,7 @@ export function getMonthDetail(
       fixedCostControlMatches: snapshot.fixedCostControlMatches,
       categoryRows: snapshot.categoryRows,
       specialBudgetRows: snapshot.specialBudgetRows,
+      settlementGroups: snapshot.settlementGroups,
     },
     transactions: snapshot.transactions,
   };
