@@ -181,6 +181,58 @@ function createFixture(schemaVersion = "0020_fin_126") {
     );
   `);
 
+  if (schemaVersion === "0021_fin_131") {
+    db.exec(`
+      CREATE TABLE transaction_settlement_groups (
+        id INTEGER PRIMARY KEY,
+        month_key TEXT NOT NULL,
+        name TEXT NOT NULL,
+        category_id INTEGER,
+        special_budget_id INTEGER,
+        is_finalized INTEGER NOT NULL
+      );
+      CREATE TABLE transaction_settlement_members (
+        settlement_group_id INTEGER NOT NULL,
+        transaction_id INTEGER NOT NULL UNIQUE
+      );
+      CREATE VIEW budget_effective_entries AS
+      SELECT
+        'transaction' AS entry_kind,
+        t.id AS entry_id,
+        t.effective_month_key AS month_key,
+        t.transaction_type,
+        t.amount_cents,
+        t.category_id,
+        t.special_budget_id
+      FROM transactions t
+      LEFT JOIN transaction_settlement_members member
+        ON member.transaction_id = t.id
+      WHERE member.transaction_id IS NULL
+      UNION ALL
+      SELECT
+        'settlement',
+        g.id,
+        g.month_key,
+        CASE WHEN SUM(t.amount_cents) < 0 THEN 'expense'
+             WHEN SUM(t.amount_cents) > 0 THEN 'refund'
+             ELSE 'settlement_zero' END,
+        SUM(t.amount_cents),
+        CASE WHEN SUM(t.amount_cents) < 0 THEN g.category_id ELSE NULL END,
+        CASE WHEN SUM(t.amount_cents) < 0 THEN g.special_budget_id ELSE NULL END
+      FROM transaction_settlement_groups g
+      INNER JOIN transaction_settlement_members member
+        ON member.settlement_group_id = g.id
+      INNER JOIN transactions t ON t.id = member.transaction_id
+      WHERE g.is_finalized = 1
+      GROUP BY g.id, g.month_key, g.category_id, g.special_budget_id;
+
+      INSERT INTO transaction_settlement_groups VALUES (
+        1, '2026-07', 'Merchant refund settlement', 1, NULL, 1
+      );
+      INSERT INTO transaction_settlement_members VALUES (1, 3), (1, 5);
+    `);
+  }
+
   db.close();
   return { databasePath, outputDirectory };
 }
@@ -310,6 +362,33 @@ describe("Alfred BudgetBuddy collector", () => {
     ]) {
       expect(serialized).not.toContain(forbidden);
     }
+  });
+
+  it("uses settlement results for coaching KPIs but keeps real account balances", () => {
+    const { databasePath } = createFixture("0021_fin_131");
+    const db = openReadOnlyDatabase(databasePath);
+    const snapshot = buildSnapshot(db, {
+      now: new Date("2026-07-15T12:00:00.000Z"),
+      monthCount: 13,
+      weekCount: 2,
+    });
+    db.close();
+
+    const july = snapshot.months.find((month: { monthKey: string }) =>
+      month.monthKey === "2026-07"
+    );
+    expect(july).toMatchObject({
+      grossIncomeCents: 300000,
+      refundCents: 0,
+      totalExpenseCents: 188000,
+      expenseCents: 178000,
+      consumerExpenseCents: 138000,
+      netCashflowCents: 92000,
+    });
+    expect(snapshot.accounts).toEqual([
+      expect.objectContaining({ name: "Bank", currentBalanceCents: 432000 }),
+      expect.objectContaining({ name: "Cash", currentBalanceCents: 15000 }),
+    ]);
   });
 
   it("writes latest atomically and only versions changed financial data", () => {

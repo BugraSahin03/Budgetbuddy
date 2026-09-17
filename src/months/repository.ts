@@ -448,14 +448,18 @@ function assertExpenseTransactionInMonth(
   const row = getDb()
     .prepare(
       `
-        SELECT transaction_type AS transactionType
-        FROM transactions
-        WHERE id = ?
-          AND effective_month_key = ?
+        SELECT
+          t.transaction_type AS transactionType,
+          member.transaction_id AS settledTransactionId
+        FROM transactions t
+        LEFT JOIN transaction_settlement_members member
+          ON member.transaction_id = t.id
+        WHERE t.id = ?
+          AND t.effective_month_key = ?
       `,
     )
     .get(transactionId, monthKey) as
-    | { transactionType: TransactionType }
+    | { transactionType: TransactionType; settledTransactionId: number | null }
     | undefined;
 
   if (!row) {
@@ -464,6 +468,12 @@ function assertExpenseTransactionInMonth(
 
   if (row.transactionType !== "expense") {
     throw new Error("Nur Ausgaben können als Fixkosten-Kontrolle markiert werden.");
+  }
+
+  if (row.settledTransactionId !== null) {
+    throw new Error(
+      "Verrechnete Buchungen können nicht als Fixkosten-Kontrolle geändert werden.",
+    );
   }
 }
 

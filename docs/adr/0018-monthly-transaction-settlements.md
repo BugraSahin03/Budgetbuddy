@@ -27,6 +27,12 @@ Sparbuchungen, Einkommensabzüge und Fixkosten-Kontrollbuchungen sind in der
 ersten Version ausgeschlossen. Verrechnete Ursprungsbuchungen sind bis zur
 Auflösung gegen Änderung und Löschung geschützt.
 
+Eine Verrechnung wird innerhalb einer Datenbanktransaktion zunächst vollständig
+aufgebaut und erst danach als fertig markiert. Nur fertige Verrechnungen sind
+budgetwirksam. Datenbankregeln schützen ihre Mitglieder, Monatszuordnung und
+Kategoriezuordnung zusätzlich gegen unvollständige oder widersprüchliche
+Änderungen außerhalb der Anwendungslogik.
+
 ## Folgen
 
 - Der aktuelle Budgetstand bleibt vor und nach einer Verrechnung gleich.

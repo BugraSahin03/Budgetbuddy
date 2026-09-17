@@ -1219,6 +1219,7 @@ CREATE TABLE IF NOT EXISTS transaction_settlement_groups (
   name TEXT NOT NULL CHECK (length(trim(name)) BETWEEN 2 AND 80),
   category_id INTEGER REFERENCES categories(id) ON DELETE RESTRICT,
   special_budget_id INTEGER REFERENCES special_budgets(id) ON DELETE RESTRICT,
+  is_finalized INTEGER NOT NULL DEFAULT 0 CHECK (is_finalized IN (0, 1)),
   created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
   CHECK (category_id IS NULL OR special_budget_id IS NULL)
@@ -1263,6 +1264,81 @@ BEGIN
   END;
 END;
 
+CREATE TRIGGER IF NOT EXISTS protect_finalized_settlement_member_insert
+BEFORE INSERT ON transaction_settlement_members
+WHEN EXISTS (
+  SELECT 1 FROM transaction_settlement_groups g
+  WHERE g.id = NEW.settlement_group_id AND g.is_finalized = 1
+)
+BEGIN
+  SELECT RAISE(ABORT, 'Eine fertige Verrechnung kann nicht erweitert werden.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS protect_finalized_settlement_member_delete
+BEFORE DELETE ON transaction_settlement_members
+WHEN EXISTS (
+  SELECT 1 FROM transaction_settlement_groups g
+  WHERE g.id = OLD.settlement_group_id AND g.is_finalized = 1
+)
+BEGIN
+  SELECT RAISE(ABORT, 'Einzelne Buchungen können nicht aus einer Verrechnung entfernt werden.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS protect_finalized_settlement_month
+BEFORE UPDATE OF month_key ON transaction_settlement_groups
+WHEN OLD.is_finalized = 1 AND NEW.month_key <> OLD.month_key
+BEGIN
+  SELECT RAISE(ABORT, 'Der Monat einer fertigen Verrechnung ist unveränderlich.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS validate_settlement_finalize
+BEFORE UPDATE OF is_finalized ON transaction_settlement_groups
+WHEN OLD.is_finalized = 0 AND NEW.is_finalized = 1
+BEGIN
+  SELECT CASE WHEN (
+    SELECT COUNT(*)
+    FROM transaction_settlement_members member
+    WHERE member.settlement_group_id = NEW.id
+  ) < 2 THEN RAISE(ABORT, 'Eine Verrechnung benötigt mindestens zwei Buchungen.') END;
+  SELECT CASE WHEN NOT EXISTS (
+    SELECT 1
+    FROM transaction_settlement_members member
+    INNER JOIN transactions t ON t.id = member.transaction_id
+    WHERE member.settlement_group_id = NEW.id AND t.amount_cents < 0
+  ) OR NOT EXISTS (
+    SELECT 1
+    FROM transaction_settlement_members member
+    INNER JOIN transactions t ON t.id = member.transaction_id
+    WHERE member.settlement_group_id = NEW.id AND t.amount_cents > 0
+  ) THEN RAISE(ABORT, 'Eine Verrechnung benötigt Ausgaben und Einnahmen.') END;
+  SELECT CASE WHEN (NEW.category_id IS NOT NULL OR NEW.special_budget_id IS NOT NULL) AND (
+    SELECT COALESCE(SUM(t.amount_cents), 0)
+    FROM transaction_settlement_members member
+    INNER JOIN transactions t ON t.id = member.transaction_id
+    WHERE member.settlement_group_id = NEW.id
+  ) >= 0 THEN RAISE(ABORT, 'Nur negative Verrechnungsergebnisse können zugeordnet werden.') END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS validate_settlement_assignment
+BEFORE UPDATE OF category_id, special_budget_id ON transaction_settlement_groups
+WHEN NEW.category_id IS NOT NULL OR NEW.special_budget_id IS NOT NULL
+BEGIN
+  SELECT CASE WHEN (
+    SELECT COALESCE(SUM(t.amount_cents), 0)
+    FROM transaction_settlement_members member
+    INNER JOIN transactions t ON t.id = member.transaction_id
+    WHERE member.settlement_group_id = NEW.id
+  ) >= 0 THEN RAISE(ABORT, 'Nur negative Verrechnungsergebnisse können zugeordnet werden.') END;
+  SELECT CASE WHEN NEW.category_id IS NOT NULL AND EXISTS (
+    SELECT 1 FROM categories c
+    WHERE c.id = NEW.category_id AND c.system_key = 'savings'
+  ) THEN RAISE(ABORT, 'Sparen ist für Verrechnungsergebnisse nicht zulässig.') END;
+  SELECT CASE WHEN NEW.special_budget_id IS NOT NULL AND NOT EXISTS (
+    SELECT 1 FROM special_budgets sb
+    WHERE sb.id = NEW.special_budget_id AND sb.month_key = NEW.month_key
+  ) THEN RAISE(ABORT, 'Sonderkategorie gehört nicht zum Monat der Verrechnung.') END;
+END;
+
 CREATE TRIGGER IF NOT EXISTS protect_settled_transaction_update
 BEFORE UPDATE ON transactions
 WHEN EXISTS (
@@ -1283,6 +1359,36 @@ BEGIN
   SELECT RAISE(ABORT, 'Verrechnete Buchungen können nicht gelöscht werden.');
 END;
 
+CREATE TRIGGER IF NOT EXISTS protect_settled_fixed_cost_override
+BEFORE INSERT ON transaction_fixed_cost_control_overrides
+WHEN NEW.mode = 'include' AND EXISTS (
+  SELECT 1 FROM transaction_settlement_members member
+  WHERE member.transaction_id = NEW.transaction_id
+)
+BEGIN
+  SELECT RAISE(ABORT, 'Verrechnete Buchungen können keine Fixkosten-Kontrolle werden.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS protect_settled_fixed_cost_override_update
+BEFORE UPDATE ON transaction_fixed_cost_control_overrides
+WHEN NEW.mode = 'include' AND EXISTS (
+  SELECT 1 FROM transaction_settlement_members member
+  WHERE member.transaction_id = NEW.transaction_id
+)
+BEGIN
+  SELECT RAISE(ABORT, 'Verrechnete Buchungen können keine Fixkosten-Kontrolle werden.');
+END;
+
+CREATE TRIGGER IF NOT EXISTS protect_settled_fixed_cost_match
+BEFORE INSERT ON transaction_fixed_cost_control_matches
+WHEN EXISTS (
+  SELECT 1 FROM transaction_settlement_members member
+  WHERE member.transaction_id = NEW.transaction_id
+)
+BEGIN
+  SELECT RAISE(ABORT, 'Verrechnete Buchungen können keine Fixkosten-Kontrolle werden.');
+END;
+
 CREATE VIEW IF NOT EXISTS budget_effective_entries AS
 SELECT
   'transaction' AS entry_kind,
@@ -1295,7 +1401,10 @@ SELECT
 FROM transactions t
 LEFT JOIN transaction_settlement_members member
   ON member.transaction_id = t.id
-WHERE member.transaction_id IS NULL
+LEFT JOIN transaction_settlement_groups member_group
+  ON member_group.id = member.settlement_group_id
+ AND member_group.is_finalized = 1
+WHERE member_group.id IS NULL
 UNION ALL
 SELECT
   'settlement' AS entry_kind,
@@ -1313,6 +1422,7 @@ FROM transaction_settlement_groups g
 INNER JOIN transaction_settlement_members member
   ON member.settlement_group_id = g.id
 INNER JOIN transactions t ON t.id = member.transaction_id
+WHERE g.is_finalized = 1
 GROUP BY g.id, g.month_key, g.category_id, g.special_budget_id;
 `;
 
@@ -1465,8 +1575,16 @@ function suspendSettlementRuntimeObjectsForTransactionRebuild(
   db.exec(`
     DROP VIEW IF EXISTS budget_effective_entries;
     DROP TRIGGER IF EXISTS validate_transaction_settlement_member;
+    DROP TRIGGER IF EXISTS protect_finalized_settlement_member_insert;
+    DROP TRIGGER IF EXISTS protect_finalized_settlement_member_delete;
+    DROP TRIGGER IF EXISTS protect_finalized_settlement_month;
+    DROP TRIGGER IF EXISTS validate_settlement_finalize;
+    DROP TRIGGER IF EXISTS validate_settlement_assignment;
     DROP TRIGGER IF EXISTS protect_settled_transaction_update;
     DROP TRIGGER IF EXISTS protect_settled_transaction_delete;
+    DROP TRIGGER IF EXISTS protect_settled_fixed_cost_override;
+    DROP TRIGGER IF EXISTS protect_settled_fixed_cost_override_update;
+    DROP TRIGGER IF EXISTS protect_settled_fixed_cost_match;
   `);
 }
 
@@ -1678,7 +1796,31 @@ export function applyMigrations(db: Database.Database): void {
     transaction.immediate(migration);
   }
 
+  if (
+    tableExists(db, "transaction_settlement_groups") &&
+    !tableColumnExists(db, "transaction_settlement_groups", "is_finalized")
+  ) {
+    db.exec(`
+      ALTER TABLE transaction_settlement_groups
+      ADD COLUMN is_finalized INTEGER NOT NULL DEFAULT 0
+      CHECK (is_finalized IN (0, 1));
+      UPDATE transaction_settlement_groups SET is_finalized = 1;
+    `);
+  }
+
   if (tableExists(db, "transaction_settlement_groups")) {
+    const effectiveView = db
+      .prepare(
+        `SELECT sql FROM sqlite_master
+         WHERE type = 'view' AND name = 'budget_effective_entries'`,
+      )
+      .get() as { sql: string | null } | undefined;
+    if (
+      !effectiveView?.sql?.includes("g.is_finalized = 1") ||
+      !effectiveView.sql.includes("member_group.is_finalized = 1")
+    ) {
+      db.exec("DROP VIEW IF EXISTS budget_effective_entries;");
+    }
     db.exec(fin131MigrationSql);
   }
 

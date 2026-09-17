@@ -117,8 +117,8 @@ export function createSettlement(
   const save = db.transaction(() => {
     const result = db
       .prepare(
-        `INSERT INTO transaction_settlement_groups (month_key, name)
-         VALUES (?, ?)`,
+        `INSERT INTO transaction_settlement_groups (month_key, name, is_finalized)
+         VALUES (?, ?, 0)`,
       )
       .run(normalizedMonthKey, normalizedName);
     const groupId = Number(result.lastInsertRowid);
@@ -127,6 +127,16 @@ export function createSettlement(
        (settlement_group_id, transaction_id) VALUES (?, ?)`,
     );
     for (const id of ids) insertMember.run(groupId, id);
+    const finalized = db
+      .prepare(
+        `UPDATE transaction_settlement_groups
+         SET is_finalized = 1, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND is_finalized = 0`,
+      )
+      .run(groupId);
+    if (finalized.changes !== 1) {
+      throw new Error("Verrechnung konnte nicht abgeschlossen werden.");
+    }
     return groupId;
   });
 
@@ -142,7 +152,7 @@ function getSettlementAmount(groupId: number, monthKey: string): number {
         INNER JOIN transaction_settlement_members member
           ON member.settlement_group_id = g.id
         INNER JOIN transactions t ON t.id = member.transaction_id
-        WHERE g.id = ? AND g.month_key = ?
+        WHERE g.id = ? AND g.month_key = ? AND g.is_finalized = 1
       `,
     )
     .get(groupId, monthKey) as { amountCents: number | null } | undefined;
@@ -192,7 +202,7 @@ export function updateSettlementAssignment(
     .prepare(
       `UPDATE transaction_settlement_groups
        SET category_id = ?, special_budget_id = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND month_key = ?`,
+       WHERE id = ? AND month_key = ? AND is_finalized = 1`,
     )
     .run(assignment.categoryId, assignment.specialBudgetId, groupId, normalizedMonthKey);
   if (changed.changes !== 1) throw new Error("Verrechnung wurde nicht gefunden.");
@@ -209,10 +219,29 @@ export function updateSettlementAssignment(
 export function dissolveSettlement(groupId: number, monthKey: string): void {
   const normalizedMonthKey = normalizeMonthKey(monthKey);
   assertMonthIsOpen(normalizedMonthKey);
-  const result = getDb()
-    .prepare("DELETE FROM transaction_settlement_groups WHERE id = ? AND month_key = ?")
-    .run(groupId, normalizedMonthKey);
-  if (result.changes !== 1) throw new Error("Verrechnung wurde nicht gefunden.");
+  const db = getDb();
+  const dissolve = db.transaction(() => {
+    const unlocked = db
+      .prepare(
+        `UPDATE transaction_settlement_groups
+         SET is_finalized = 0, updated_at = CURRENT_TIMESTAMP
+         WHERE id = ? AND month_key = ? AND is_finalized = 1`,
+      )
+      .run(groupId, normalizedMonthKey);
+    if (unlocked.changes !== 1) {
+      throw new Error("Verrechnung wurde nicht gefunden.");
+    }
+
+    const deleted = db
+      .prepare(
+        "DELETE FROM transaction_settlement_groups WHERE id = ? AND month_key = ? AND is_finalized = 0",
+      )
+      .run(groupId, normalizedMonthKey);
+    if (deleted.changes !== 1) {
+      throw new Error("Verrechnung konnte nicht aufgelöst werden.");
+    }
+  });
+  dissolve.immediate();
 }
 
 export function renameSettlement(
@@ -228,7 +257,7 @@ export function renameSettlement(
     .prepare(
       `UPDATE transaction_settlement_groups
        SET name = ?, updated_at = CURRENT_TIMESTAMP
-       WHERE id = ? AND month_key = ?`,
+       WHERE id = ? AND month_key = ? AND is_finalized = 1`,
     )
     .run(normalizedName, groupId, normalizedMonthKey);
   if (result.changes !== 1) throw new Error("Verrechnung wurde nicht gefunden.");
@@ -271,7 +300,7 @@ export function listSettlementGroups(monthKey: string): SettlementGroupRow[] {
         LEFT JOIN monthly_special_budget_snapshots special_snapshot
           ON special_snapshot.month_key = g.month_key
          AND special_snapshot.special_budget_id = g.special_budget_id
-        WHERE g.month_key = ?
+        WHERE g.month_key = ? AND g.is_finalized = 1
         GROUP BY g.id
         ORDER BY bookingDate DESC, g.id DESC
       `,

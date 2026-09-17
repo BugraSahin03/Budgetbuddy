@@ -238,9 +238,13 @@ describe("schema migrations", () => {
     expect(sql).toContain("CREATE TABLE IF NOT EXISTS transaction_settlement_groups");
     expect(sql).toContain("CREATE TABLE IF NOT EXISTS transaction_settlement_members");
     expect(sql).toContain("transaction_id INTEGER NOT NULL UNIQUE");
+    expect(sql).toContain("is_finalized INTEGER NOT NULL DEFAULT 0");
     expect(sql).toContain("CREATE VIEW IF NOT EXISTS budget_effective_entries");
     expect(sql).toContain("protect_settled_transaction_update");
     expect(sql).toContain("protect_settled_transaction_delete");
+    expect(sql).toContain("protect_finalized_settlement_member_insert");
+    expect(sql).toContain("protect_finalized_settlement_member_delete");
+    expect(sql).toContain("protect_settled_fixed_cost_match");
   });
 
   it("exposes latest schema version", () => {

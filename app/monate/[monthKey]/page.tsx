@@ -590,6 +590,16 @@ export default async function MonthDetailPage({
       iconName: category.iconName,
       colorHex: category.colorHex,
     }));
+  const settlementCategoryOptions = allCategories
+    .filter(
+      (category) =>
+        category.isActive && category.systemKey !== "savings",
+    )
+    .map((category) => ({
+      id: category.id,
+      name: category.name,
+      iconName: category.iconName,
+    }));
   const accountOptions = listActiveAccountOptions();
   const categoryOptions = listActiveCategoryOptions();
   const specialBudgetOptions = listActiveSpecialBudgetOptionsForMonth(
@@ -1451,7 +1461,7 @@ export default async function MonthDetailPage({
                               <select name="assignment" defaultValue={currentAssignment} className="rounded-xl border border-[color:var(--month-line)] bg-white px-3 py-2 text-sm font-semibold normal-case tracking-normal text-[color:var(--month-ink)]">
                                 <option value="">Ohne Zuordnung</option>
                                 <optgroup label="Kategorien">
-                                  {categoryOptions.filter((category) => category.name !== "Sparen").map((category) => (
+                                  {settlementCategoryOptions.map((category) => (
                                     <option key={category.id} value={`category:${category.id}`}>
                                       {category.iconName ? `${category.iconName} ` : ""}{category.name}
                                     </option>
