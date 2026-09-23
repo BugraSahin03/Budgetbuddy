@@ -49,6 +49,7 @@ import {
   getCategoryUsageState,
 } from "@/src/months/category-usage";
 import { getFixedCostVariance } from "@/src/months/fixed-cost-variance";
+import { buildMonthBookingHistory } from "@/src/months/booking-history";
 import {
   listActiveAccountOptions,
   listActiveCategoryOptions,
@@ -622,6 +623,10 @@ export default async function MonthDetailPage({
     specialBudgets: specialBudgetOptions,
     transactions: month.transactions,
   });
+  const monthBookingHistory = buildMonthBookingHistory(
+    month.transactions,
+    month.dashboard.settlementGroups,
+  );
   const activeSpecialBudgetRows = month.dashboard.specialBudgetRows.filter(
     (row) => row.isActive,
   );
@@ -1367,13 +1372,15 @@ export default async function MonthDetailPage({
                 options={bookingFilterOptions}
                 totalCount={month.transactions.length + month.dashboard.settlementGroups.length}
               />
-              {month.dashboard.settlementGroups.map((group) => {
-                const currentAssignment = group.categoryId
-                  ? `category:${group.categoryId}`
-                  : group.specialBudgetId
-                    ? `specialBudget:${group.specialBudgetId}`
-                    : "";
-                return (
+              {monthBookingHistory.map((entry) => {
+                if (entry.kind === "settlement") {
+                  const group = entry.group;
+                  const currentAssignment = group.categoryId
+                    ? `category:${group.categoryId}`
+                    : group.specialBudgetId
+                      ? `specialBudget:${group.specialBudgetId}`
+                      : "";
+                  return (
                   <article
                     key={`settlement-${group.id}`}
                     data-month-booking-row
@@ -1497,14 +1504,14 @@ export default async function MonthDetailPage({
                       </div>
                     ) : null}
                   </article>
-                );
-              })}
-              {month.transactions.map((transaction) => {
-              const currentAssignment = transaction.categoryId
-                ? `category:${transaction.categoryId}`
-                : transaction.specialBudgetId
-                  ? `specialBudget:${transaction.specialBudgetId}`
-                  : "";
+                  );
+                }
+                const transaction = entry.transaction;
+                const currentAssignment = transaction.categoryId
+                  ? `category:${transaction.categoryId}`
+                  : transaction.specialBudgetId
+                    ? `specialBudget:${transaction.specialBudgetId}`
+                    : "";
               const isManual = transaction.sourceType === "manual";
               const isSettled = transaction.settlementGroupId !== null;
               const canEditAssignment =

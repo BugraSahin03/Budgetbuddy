@@ -29,7 +29,7 @@ describe("month fixed-cost control list UI", () => {
     expect(page).toContain("initialOpen={isFixedCostControlDialogOpen}");
     expect(page).toContain("Markierung entfernen");
     expect(page).toContain("Als Fixkosten markieren");
-    expect(page).toContain("month.transactions.map((transaction)");
+    expect(page).toContain("monthBookingHistory.map((entry)");
     expect(page).not.toContain("fixed_cost_transaction_links");
   });
 
