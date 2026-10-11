@@ -214,6 +214,18 @@ describe("Alfred Getquin collector", () => {
     expect(extractNextData(result.html).runtimeConfig.APP_VERSION).toBe("2.247.0");
   });
 
+  it("accepts the validated public portfolio when Getquin omits release metadata", () => {
+    const nextData = createNextData();
+    delete nextData.runtimeConfig;
+    const snapshot = buildSnapshotFromNextData(nextData, {
+      dashboardUuid: DASHBOARD_UUID,
+      now: new Date("2026-07-19T08:00:00.000Z"),
+    });
+
+    expect(snapshot.source.pageAppVersion).toBeNull();
+    expect(snapshot.portfolio.currentPositionCount).toBe(2);
+  });
+
   it("builds portfolio aggregates without share or profile identifiers", () => {
     const snapshot = buildSnapshotFromNextData(createNextData(), {
       dashboardUuid: DASHBOARD_UUID,

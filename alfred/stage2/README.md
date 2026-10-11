@@ -20,11 +20,14 @@ Produktionsdateien:
 - OpenClaw-Tool: `/opt/alfred-budgetbuddy-tool/`
 
 Die Trennung ist absichtlich: `alfred-collector` darf über die Gruppe
-`budgetbuddy-readers` die Datenbank lesen und den Snapshot schreiben. Die
-separate Gruppe `alfred-snapshots` erlaubt beiden Prozessen ausschließlich den
-gemeinsamen Snapshot-Pfad. Der OpenClaw-Benutzer `alfred` darf die Datenbank
-nicht lesen und den Snapshot nicht verändern. Das Tool akzeptiert nur eine
-vordefinierte Ansicht, aber weder SQL noch einen Dateipfad.
+`budgetbuddy-readers` den Datenbankordner nur betreten und die Datenbank lesen,
+aber den Ordner nicht auflisten oder verändern. Das Deploy-Skript setzt dafür
+den Datenbankordner auf Gruppe `budgetbuddy-readers`, Modus `2710`; die
+Datenbankdatei bleibt lesbar für diese Gruppe und unveränderbar durch sie.
+Die separate Gruppe `alfred-snapshots` erlaubt beiden Prozessen ausschließlich
+den gemeinsamen Snapshot-Pfad. Der OpenClaw-Benutzer `alfred` darf die
+Datenbank nicht lesen und den Snapshot nicht verändern. Das Tool akzeptiert nur
+eine vordefinierte Ansicht, aber weder SQL noch einen Dateipfad.
 
 Der Snapshot wird stündlich aktualisiert. Alfred verwirft ihn nach 120 Minuten
 als veraltet; der proaktive Monitor meldet einen anhaltenden Ausfall nach 150

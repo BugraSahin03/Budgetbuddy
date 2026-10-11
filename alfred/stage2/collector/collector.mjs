@@ -198,6 +198,7 @@ function readTransactionRows(db, fromMonthKey, toMonthKey) {
     .prepare(
       `
         SELECT
+          'transaction' AS entryKind,
           t.id,
           t.booking_date AS bookingDate,
           t.effective_month_key AS monthKey,
@@ -507,7 +508,7 @@ function buildCategoryBreakdown(rows, fixedCostControlIds = new Set()) {
     if (
       row.transactionType !== "expense" ||
       row.categoryId === null ||
-      fixedCostControlIds.has(Number(row.id))
+      (row.entryKind !== "settlement" && fixedCostControlIds.has(Number(row.id)))
     ) {
       continue;
     }
