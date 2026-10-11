@@ -278,9 +278,12 @@ function findDashboard(nextData, expectedDashboardUuid) {
     throw new Error("Getquin page identity no longer matches the expected portfolio share.");
   }
   const appVersion = nextData.runtimeConfig?.APP_VERSION;
-  if (typeof appVersion !== "string" || !/^\d+\.\d+\.\d+$/.test(appVersion)) {
-    throw new Error("Getquin application version is missing or invalid.");
-  }
+  // APP_VERSION is release metadata, not part of the portfolio data contract.
+  // Getquin has stopped exposing runtimeConfig on some valid public-share pages.
+  const reportedAppVersion =
+    typeof appVersion === "string" && /^\d+\.\d+\.\d+$/.test(appVersion)
+      ? appVersion
+      : null;
 
   const cache = nextData.props?.queryClientCache;
   const rootQuery = cache?.ROOT_QUERY;
@@ -318,7 +321,7 @@ function findDashboard(nextData, expectedDashboardUuid) {
   ) {
     throw new Error("Getquin dashboard data is invalid.");
   }
-  return { cache, dashboard, appVersion };
+  return { cache, dashboard, appVersion: reportedAppVersion };
 }
 
 function normalizeAssetClass(category, instrumentType) {

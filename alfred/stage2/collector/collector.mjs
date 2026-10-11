@@ -20,8 +20,11 @@ import { pathToFileURL } from "node:url";
 import Database from "better-sqlite3";
 
 export const SNAPSHOT_CONTRACT_VERSION = "budgetbuddy.coach.snapshot.v2";
-export const QUERY_CATALOG_VERSION = "2026-08-04.1";
-export const SUPPORTED_SCHEMA_VERSIONS = new Set(["0020_fin_126"]);
+export const QUERY_CATALOG_VERSION = "2026-10-11.1";
+export const SUPPORTED_SCHEMA_VERSIONS = new Set([
+  "0020_fin_126",
+  "0021_fin_131",
+]);
 
 const DEFAULT_DATABASE_PATH = "/var/lib/budgetbuddy/budgetbuddy.db";
 const DEFAULT_OUTPUT_DIRECTORY = "/var/lib/alfred-snapshots/budgetbuddy";
@@ -151,6 +154,7 @@ function readTransactionRows(db, fromMonthKey, toMonthKey) {
     .prepare(
       `
         SELECT
+          'transaction' AS entryKind,
           t.id,
           t.booking_date AS bookingDate,
           t.effective_month_key AS monthKey,
@@ -168,6 +172,30 @@ function readTransactionRows(db, fromMonthKey, toMonthKey) {
       `,
     )
     .all(fromMonthKey, toMonthKey);
+}
+
+function readEffectiveBudgetRows(db, fromMonthKey, toMonthKey) {
+  return db
+    .prepare(
+      `
+        SELECT
+          entry_kind AS entryKind,
+          entry_id AS id,
+          month_key AS monthKey,
+          transaction_type AS transactionType,
+          amount_cents AS amountCents,
+          category_id AS categoryId,
+          special_budget_id AS specialBudgetId,
+          c.name AS categoryName,
+          c.system_key AS categorySystemKey
+        FROM budget_effective_entries entry
+        LEFT JOIN categories c ON c.id = entry.category_id
+        WHERE entry.month_key BETWEEN ? AND ?
+        ORDER BY entry.month_key ASC, entry.entry_kind ASC, entry.entry_id ASC
+      `,
+    )
+    .all(fromMonthKey, toMonthKey)
+    .map((row) => ({ ...row, currencyCode: "EUR" }));
 }
 
 function addTransactionToTotals(totals, row) {
@@ -195,6 +223,7 @@ function addTransactionToTotals(totals, row) {
       }
       break;
     case "transfer":
+    case "settlement_zero":
       break;
     default:
       throw new Error(`Unsupported transaction type: ${row.transactionType}`);
@@ -420,7 +449,10 @@ function readCategoryBudgets(db, monthKey) {
   }));
 }
 
-function readSpecialBudgets(db, monthKey) {
+function readSpecialBudgets(db, monthKey, useEffectiveBudgetEntries = false) {
+  const entryTable = useEffectiveBudgetEntries
+    ? "budget_effective_entries"
+    : "transactions";
   const rows = db
     .prepare(
       `
@@ -428,12 +460,12 @@ function readSpecialBudgets(db, monthKey) {
           sb.name,
           sb.planned_amount_cents AS plannedCents,
           COALESCE(SUM(CASE
-            WHEN t.transaction_type = 'expense' THEN -t.amount_cents
+          WHEN t.transaction_type = 'expense' THEN -t.amount_cents
             ELSE 0
           END), 0) AS actualCents
         FROM special_budgets sb
         LEFT JOIN special_budget_projects project ON project.id = sb.project_id
-        LEFT JOIN transactions t ON t.special_budget_id = sb.id
+        LEFT JOIN ${entryTable} t ON t.special_budget_id = sb.id
         WHERE sb.month_key = ?
           AND sb.is_active = 1
           AND COALESCE(project.status, 'active') = 'active'
@@ -456,7 +488,7 @@ function buildCategoryBreakdown(rows, fixedCostControlIds = new Set()) {
     if (
       row.transactionType !== "expense" ||
       row.categoryId === null ||
-      fixedCostControlIds.has(Number(row.id))
+      (row.entryKind !== "settlement" && fixedCostControlIds.has(Number(row.id)))
     ) {
       continue;
     }
@@ -481,6 +513,8 @@ function buildMonths(
   db,
   monthKeys,
   transactionRows,
+  effectiveBudgetRows,
+  useEffectiveBudgetEntries,
   activeFixedCosts,
   fixedCostSnapshotPlans,
   fixedCostControlMatches,
@@ -489,7 +523,8 @@ function buildMonths(
   const activeFixedCostPlan = summarizeFixedCostPlan(activeFixedCosts, "active_fixed_costs");
 
   return monthKeys.map((monthKey) => {
-    const rows = transactionRows.filter((row) => row.monthKey === monthKey);
+    const rows = effectiveBudgetRows.filter((row) => row.monthKey === monthKey);
+    const sourceTransactions = transactionRows.filter((row) => row.monthKey === monthKey);
     const monthControlMatches = new Map(
       [...fixedCostControlMatches].filter(([, match]) => match.monthKey === monthKey),
     );
@@ -499,8 +534,10 @@ function buildMonths(
     for (const row of rows) {
       addTransactionToTotals(totals, row);
     }
+    totals.transactionCount = sourceTransactions.length;
     const controlledUnassignedRows = rows.filter(
       (row) =>
+        row.entryKind !== "settlement" &&
         fixedCostControlIds.has(Number(row.id)) &&
         row.categoryId === null &&
         row.specialBudgetId === null,
@@ -517,7 +554,11 @@ function buildMonths(
     finalizeTransactionTotals(totals, fixedCostControl.actualCents);
 
     const categoryBudgets = readCategoryBudgets(db, monthKey);
-    const specialBudgets = readSpecialBudgets(db, monthKey);
+    const specialBudgets = readSpecialBudgets(
+      db,
+      monthKey,
+      useEffectiveBudgetEntries,
+    );
     const monthStatus = monthStatuses.get(monthKey) ?? {
       status: "open",
       hasFixedCostSnapshot: false,
@@ -632,14 +673,19 @@ function readAccounts(db) {
     }));
 }
 
-function buildQualityFacts(transactionRows, currentDateKey, fixedCostControlMatches) {
+function buildQualityFacts(
+  transactionRows,
+  effectiveBudgetRows,
+  currentDateKey,
+  fixedCostControlMatches,
+) {
   const fixedCostControlIds = new Set(fixedCostControlMatches.keys());
-  const unassignedExpenseRows = transactionRows.filter(
+  const unassignedExpenseRows = effectiveBudgetRows.filter(
     (row) =>
       row.transactionType === "expense" &&
       row.categoryId === null &&
       row.specialBudgetId === null &&
-      !fixedCostControlIds.has(Number(row.id)),
+      (row.entryKind === "settlement" || !fixedCostControlIds.has(Number(row.id))),
   );
   const bookingDates = transactionRows.map((row) => row.bookingDate).sort();
   const unsupportedCurrencyCount = transactionRows.filter(
@@ -719,6 +765,10 @@ export function buildSnapshot(db, options = {}) {
       : [];
     const monthKeys = relevantMonthKeys.length > 0 ? relevantMonthKeys : [currentMonthKey];
     const transactionRows = readTransactionRows(db, monthKeys[0], monthKeys.at(-1));
+    const useEffectiveBudgetEntries = schemaVersion === "0021_fin_131";
+    const effectiveBudgetRows = useEffectiveBudgetEntries
+      ? readEffectiveBudgetRows(db, monthKeys[0], monthKeys.at(-1))
+      : transactionRows;
     const activeFixedCosts = readActiveFixedCosts(db);
     const fixedCostSnapshotPlans = readFixedCostSnapshotPlans(
       db,
@@ -744,6 +794,8 @@ export function buildSnapshot(db, options = {}) {
       db,
       monthKeys,
       transactionRows,
+      effectiveBudgetRows,
+      useEffectiveBudgetEntries,
       activeFixedCosts,
       fixedCostSnapshotPlans,
       fixedCostControlMatches,
@@ -752,6 +804,7 @@ export function buildSnapshot(db, options = {}) {
     const accounts = readAccounts(db);
     const dataQuality = buildQualityFacts(
       transactionRows,
+      effectiveBudgetRows,
       currentDateKey,
       fixedCostControlMatches,
     );

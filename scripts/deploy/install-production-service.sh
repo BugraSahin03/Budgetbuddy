@@ -6,6 +6,8 @@ SERVICE_USER="${SERVICE_USER:-budgetbuddy}"
 SERVICE_GROUP="${SERVICE_GROUP:-budgetbuddy}"
 SERVICE_NAME="${SERVICE_NAME:-budgetbuddy.service}"
 DB_PATH="${BUDGETBUDDY_DB_PATH:-/var/lib/budgetbuddy/budgetbuddy.db}"
+DB_DIRECTORY_GROUP="$SERVICE_GROUP"
+DB_DIRECTORY_MODE=0750
 BACKUP_DIR="${BUDGETBUDDY_BACKUP_DIR:-/var/backups/budgetbuddy}"
 SERVICE_SOURCE="${SERVICE_SOURCE:-$APP_DIR/scripts/deploy/budgetbuddy.service}"
 HEALTH_URL="${HEALTH_URL:-http://127.0.0.1:3000/api/health}"
@@ -22,7 +24,13 @@ if [ ! -f "$SERVICE_SOURCE" ]; then
 fi
 
 install -d -m 0755 -o "$SERVICE_USER" -g "$SERVICE_GROUP" "$APP_DIR"
-install -d -m 0750 -o "$SERVICE_USER" -g "$SERVICE_GROUP" "$(dirname "$DB_PATH")"
+if [ "$DB_PATH" = "/var/lib/budgetbuddy/budgetbuddy.db" ] && getent group budgetbuddy-readers >/dev/null; then
+  # Let the dedicated read-only collector traverse this directory without
+  # granting it directory listing access or write permission.
+  DB_DIRECTORY_GROUP=budgetbuddy-readers
+  DB_DIRECTORY_MODE=2710
+fi
+install -d -m "$DB_DIRECTORY_MODE" -o "$SERVICE_USER" -g "$DB_DIRECTORY_GROUP" "$(dirname "$DB_PATH")"
 install -d -m 0750 -o "$SERVICE_USER" -g "$SERVICE_GROUP" "$BACKUP_DIR"
 
 chown -R "$SERVICE_USER:$SERVICE_GROUP" "$APP_DIR"
