@@ -2536,3 +2536,33 @@ Auswirkung:
 - Der Kategorienplan-Freeze, Monatsstatus und alle Sperrregeln aus FIN-071
   bleiben erhalten. ADR 0008 ist nur in seiner Snapshot-Abgrenzung
   fortgeschrieben; ADR 0007 und der Fixkosten-Snapshot bleiben unveraendert.
+
+## 2026-08-31 - FIN-130 trennt Sparbuchungen aus sichtbaren Ausgaben-KPIs
+
+Quelle/Ticket: `FIN-130`
+
+Erkenntnis/Entscheidung:
+
+- Die bisherige Budgetrechnung war korrekt: Sparbuchungen reduzierten den
+  aktuellen Budgetstand und die Fixkostenplan-Projektion genau einmal.
+- Die sichtbare Ausgabenkennzahl war jedoch missverstaendlich, weil derselbe
+  Betrag zugleich unter `Ausgaben` und `Gespart` erschien.
+- Monatsansicht und Dashboard zeigen deshalb unter `Ausgaben` nur noch
+  variable Nicht-Spar-Ausgaben ohne den separaten Fixkosten-Kontrollblock.
+- Der Monatsvergleich zeigt alle Nicht-Spar-Ausgaben inklusive gebuchter
+  Fixkosten; Transfers bleiben ausgeschlossen.
+- `Gespart` bleibt die Summe echter Buchungen der geschuetzten
+  `savings`-Kategorie und weiterhin voll budgetwirksam.
+- Aktueller Budgetstand und Fixkostenplan-Projektion bleiben fuer identische
+  Buchungsdaten betragsgleich. Es gibt keine Datenmigration und keine
+  Aenderung bestehender Transaktionen.
+
+Auswirkung:
+
+- Ausgaben und Sparen sind in den betroffenen Monats-KPIs nicht mehr doppelt
+  ausgewiesen.
+- Die neue Formel lautet sichtbar
+  `Einnahmen - variable Nicht-Spar-Ausgaben - Gespart - Fixkosten-Ist`;
+  fuer die Projektion wird `Fixkosten-Ist` durch den `Fixkostenplan` ersetzt.
+- Die grundlegende Entscheidung ist in ADR 0017 dokumentiert; ADR 0006 und
+  ADR 0016 wurden entsprechend praezisiert.

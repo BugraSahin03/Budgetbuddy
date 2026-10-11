@@ -398,11 +398,11 @@ export function getSavingsActualCents(monthKey: string): number {
     .prepare(
       `
         SELECT COALESCE(SUM(-t.amount_cents), 0) AS actualCents
-        FROM transactions t
+        FROM budget_effective_entries t
         INNER JOIN categories c ON c.id = t.category_id
         WHERE c.system_key = ?
           AND t.transaction_type = 'expense'
-          AND t.effective_month_key = ?
+          AND t.month_key = ?
       `,
     )
     .get(SAVINGS_CATEGORY_SYSTEM_KEY, monthKey) as { actualCents: number } | undefined;

@@ -170,7 +170,7 @@ describe("months repository", () => {
     ).toBeLessThanOrEqual(0);
   });
 
-  it("builds simple month comparison values and excludes transfers from expenses", () => {
+  it("builds simple month comparison values and excludes transfers and savings from expenses", () => {
     const sparkasseId = (
       db.prepare("SELECT id FROM accounts WHERE name = 'Sparkasse'").get() as { id: number }
     ).id;
@@ -201,6 +201,7 @@ describe("months repository", () => {
           (?, NULL, 'refund', '2032-01-06', '2032-01', 2000, 'EUR', 'Comparison Refund', 'manual', NULL, NULL),
           (?, NULL, 'expense', '2032-01-10', '2032-01', -8500, 'EUR', 'Comparison Grocery', 'manual', ?, NULL),
           (?, NULL, 'expense', '2032-01-11', '2032-01', -15000, 'EUR', 'Comparison Savings', 'manual', ?, NULL),
+          (?, NULL, 'expense', '2032-01-12', '2032-01', -6000, 'EUR', 'Comparison Fixed Cost', 'import', NULL, NULL),
           (?, ?, 'transfer', '2032-01-12', '2032-01', -50000, 'EUR', 'Comparison Cash Transfer', 'manual', NULL, NULL),
           (?, NULL, 'expense', '2032-03-03', '2032-03', -12000, 'EUR', 'Comparison March Expense', 'manual', ?, NULL)
       `,
@@ -212,10 +213,25 @@ describe("months repository", () => {
       sparkasseId,
       savingsId,
       sparkasseId,
+      sparkasseId,
       bargeldId,
       sparkasseId,
       einkaufId,
     );
+
+    const fixedCostTransaction = db
+      .prepare(
+        "SELECT id FROM transactions WHERE description = 'Comparison Fixed Cost'",
+      )
+      .get() as { id: number };
+    db.prepare(
+      `
+        INSERT INTO transaction_fixed_cost_control_matches (
+          transaction_id, import_rule_id, rule_name_snapshot,
+          rule_pattern_snapshot, rule_match_field_snapshot
+        ) VALUES (?, NULL, 'Comparison Fixed Cost Rule', 'Comparison Fixed', 'description')
+      `,
+    ).run(fixedCostTransaction.id);
 
     const comparison = listMonthComparison("2032-03");
 
@@ -229,7 +245,7 @@ describe("months repository", () => {
     const january = comparison.find((month) => month.monthKey === "2032-01");
     expect(january).toMatchObject({
       incomeCents: 302000,
-      expenseCents: 23500,
+      expenseCents: 14500,
       savingsCents: 15000,
       detailHref: "/monate/2032-01",
     });
@@ -400,8 +416,12 @@ describe("months repository", () => {
 
     expect(snapshot.totals.monthKey).toBe("2031-05");
     expect(snapshot.totals.incomeCents).toBe(250000);
-    expect(snapshot.totals.expenseCents).toBe(12250);
+    expect(snapshot.totals.expenseCents).toBe(6000);
     expect(snapshot.totals.savingsCents).toBe(6250);
+    expect(snapshot.totals.currentBudgetCents).toBe(250000 - 6000 - 6250);
+    expect(snapshot.totals.projectedAfterFixedCostsCents).toBe(
+      250000 - 6000 - 6250 - snapshot.totals.plannedFixedCostsCents,
+    );
     expect(snapshot.categoryRows.find((row) => row.categoryName === "Einkauf")?.spentAmountCents).toBe(
       4200,
     );
@@ -429,6 +449,9 @@ describe("months repository", () => {
     ).id;
     const einkaufId = (
       db.prepare("SELECT id FROM categories WHERE name = 'Einkauf'").get() as { id: number }
+    ).id;
+    const savingsId = (
+      db.prepare("SELECT id FROM categories WHERE system_key = 'savings'").get() as { id: number }
     ).id;
     const baselinePlannedFixedCostsCents = (
       db
@@ -461,6 +484,7 @@ describe("months repository", () => {
           (?, NULL, 'expense', '2031-08-05', '2031-08', -4000, 'EUR', 'TEST-FIN-063 N26-Fix. Monatsblock', 'N26 BANK', 'import', NULL, NULL),
           (?, NULL, 'expense', '2031-08-06', '2031-08', -3490, 'EUR', 'TEST-FIN-063 Lastschrift Fitness', 'FITNESS STUDIO', 'import', NULL, NULL),
           (?, NULL, 'expense', '2031-08-07', '2031-08', -1700, 'EUR', 'TEST-FIN-063 Nicht erkannte Fixkostenbuchung', 'UNKNOWN PROVIDER', 'import', NULL, NULL),
+          (?, NULL, 'expense', '2031-08-08', '2031-08', -5300, 'EUR', 'TEST-FIN-130 Sparrate', NULL, 'manual', ?, NULL),
           (?, NULL, 'expense', '2031-09-01', '2031-09', -4000, 'EUR', 'TEST-FIN-063 N26-Fix. Folgemonat', 'N26 BANK', 'import', NULL, NULL)
       `,
     ).run(
@@ -472,6 +496,8 @@ describe("months repository", () => {
       sparkasseId,
       sparkasseId,
       sparkasseId,
+      sparkasseId,
+      savingsId,
       sparkasseId,
     );
 
@@ -521,6 +547,7 @@ describe("months repository", () => {
       "Test-fin-063 N26-Fix. Monatsblock",
     ]);
     expect(snapshot.transactions.map((transaction) => transaction.description)).toEqual([
+      "TEST-FIN-130 Sparrate",
       "TEST-FIN-063 Nicht erkannte Fixkostenbuchung",
       "TEST-FIN-063 Lastschrift Fitness",
       "TEST-FIN-063 Cash Transfer",
@@ -528,12 +555,13 @@ describe("months repository", () => {
       "TEST-FIN-063 Salary",
     ]);
     expect(snapshot.totals.expenseCents).toBe(15190);
+    expect(snapshot.totals.savingsCents).toBe(5300);
     expect(snapshot.totals.plannedFixedCostsCents).toBe(plannedFixedCostsCents);
     expect(snapshot.totals.currentBudgetCents).toBe(
-      200000 - 15190 - 4000,
+      200000 - 15190 - 5300 - 4000,
     );
     expect(snapshot.totals.projectedAfterFixedCostsCents).toBe(
-      200000 - 15190 - plannedFixedCostsCents,
+      200000 - 15190 - 5300 - plannedFixedCostsCents,
     );
   });
 

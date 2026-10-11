@@ -179,7 +179,7 @@ export function listMonthlyBudgetCategories(
   const normalizedMonthKey = normalizeMonthKey(monthKey);
   const excludedTransactionFilter =
     excludedTransactionIds.length > 0
-      ? `AND t.id NOT IN (${excludedTransactionIds.map(() => "?").join(", ")})`
+      ? `AND NOT (t.entry_kind = 'transaction' AND t.entry_id IN (${excludedTransactionIds.map(() => "?").join(", ")}))`
       : "";
 
   if (hasBudgetSnapshot(normalizedMonthKey)) {
@@ -197,10 +197,10 @@ export function listMonthlyBudgetCategories(
             snapshot.budget_amount_cents_snapshot AS budgetAmountCents,
             COALESCE((
               SELECT SUM(-t.amount_cents)
-              FROM transactions t
+              FROM budget_effective_entries t
               WHERE t.transaction_type = 'expense'
                 AND t.category_id = snapshot.category_id
-                AND t.effective_month_key = ?
+                AND t.month_key = ?
                 ${excludedTransactionFilter}
             ), 0) AS spentAmountCents
           FROM monthly_category_snapshots snapshot
@@ -268,10 +268,10 @@ export function listMonthlyBudgetCategories(
           END AS budgetAmountCents,
           COALESCE((
             SELECT SUM(-t.amount_cents)
-            FROM transactions t
+            FROM budget_effective_entries t
             WHERE t.transaction_type = 'expense'
               AND t.category_id = c.id
-              AND t.effective_month_key = ?
+              AND t.month_key = ?
               ${excludedTransactionFilter}
           ), 0) AS spentAmountCents
         FROM categories c

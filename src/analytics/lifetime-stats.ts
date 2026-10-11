@@ -34,7 +34,7 @@ export function listLifetimeStats(currentMonthKey = getCurrentMonthKey()): Lifet
     .prepare(
       `
         SELECT
-          substr(t.effective_month_key, 1, 4) AS year,
+          substr(t.month_key, 1, 4) AS year,
           COALESCE(
             SUM(
               CASE
@@ -65,10 +65,10 @@ export function listLifetimeStats(currentMonthKey = getCurrentMonthKey()): Lifet
             ),
             0
           ) AS savingsCents
-        FROM transactions t
+        FROM budget_effective_entries t
         LEFT JOIN categories c ON c.id = t.category_id
         WHERE t.transaction_type IN ('income', 'refund', 'expense', 'income_deduction')
-          AND t.effective_month_key <= ?
+          AND t.month_key <= ?
         GROUP BY year
         ORDER BY year DESC
       `,
