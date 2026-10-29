@@ -78,6 +78,26 @@ afterEach(() => {
 });
 
 describe("Alfred personal context memory", () => {
+  it("persists owner context immediately and recalls revisions after reopening", () => {
+    const { root, store, context } = createHarness();
+    const saved = store.remember({ operation: "create", candidate: candidate(), reason: "Owner discussed a possible meal-prep purchase." }, context);
+    expect(saved.status).toBe("saved");
+    expect(store.snapshot("pending").data).toHaveLength(0);
+    const reopened = new PersonalContextStore({ root });
+    expect(reopened.snapshot("purchases").data[0].summary).toContain("Moegliche Anschaffung");
+    reopened.remember({ operation: "replace", targetItemId: saved.resultItemId, candidate: candidate({ summary: "Idee offen; erst den Platz im Keller prüfen." }), reason: "Owner clarified that the purchase is still undecided." }, context);
+    expect(reopened.snapshot("purchases").data).toHaveLength(1);
+    expect(reopened.snapshot("purchases").data[0].summary).toContain("Idee offen");
+  });
+
+  it("rejects automatic writes from unknown or non-owner senders", () => {
+    const { store, context } = createHarness();
+    for (const senderIsOwner of [false, undefined]) {
+      expect(() => store.remember({ operation: "create", candidate: candidate(), reason: "Not authorized." }, { ...context, senderIsOwner })).toThrow("paired owner");
+    }
+    expect(store.snapshot("purchases").data).toHaveLength(0);
+  });
+
   it("keeps proposals pending until a separate explicit confirmation", () => {
     const { store, context } = createHarness();
     const proposal = store.propose(

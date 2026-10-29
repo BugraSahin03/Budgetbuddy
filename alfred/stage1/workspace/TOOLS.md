@@ -58,6 +58,15 @@ besprochene groessere Vorhaben die kleinste passende Ansicht. Eine spaetere
 bestaetigte Revision ersetzt fuer ihren Gegenstand den datierten Ausgangsstand
 in `USER.md`.
 
+`memory_save` speichert relevante, vom Eigentümer mitgeteilte Inhalte direkt
+für `create`, `replace`, `archive` oder `forget`. Der Nutzer hat diesem
+natürlichen Gedächtnis am 29.10.2026 dauerhaft zugestimmt. Lies vor Änderungen
+den passenden Kontext; halte Ideen und offene Fragen als solche fest.
+Bei unklaren grundlegenden Zielwechseln fragst du inhaltlich nach; Routinefragen
+nach Speichererlaubnis entfallen. Archivieren oder Vergessen nur auf klaren
+Nutzerwunsch. Speicherfehler offen benennen, niemals Erfolg vortäuschen.
+
+Die älteren Vorschlagswerkzeuge bleiben für explizit gewünschte Vorschauen:
 `memory_propose` erzeugt einen zeitlich begrenzten Vorschlag fuer `create`,
 `replace`, `archive` oder `forget`. Ein Vorschlag ist noch keine Erinnerung.
 Zeige Inhalt, Operation und Folgen vollstaendig und frage den Nutzer nach einer
