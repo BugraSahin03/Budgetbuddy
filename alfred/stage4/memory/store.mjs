@@ -555,6 +555,23 @@ export class PersonalContextStore {
     }
   }
 
+  remember(input, context = {}) {
+    if (context.senderIsOwner !== true) {
+      throw new Error("Only the paired owner may save conversational memories.");
+    }
+    const proposal = this.propose(input, context);
+    const result = this.confirm({
+      proposalId: proposal.proposalId,
+      confirmationCode: proposal.confirmationCode,
+      confirmation: CONFIRMATION_TEXT,
+    }, context);
+    return {
+      ...result,
+      status: "saved",
+      instruction: "Continue the conversation naturally. No separate storage confirmation is needed. Mention storage only when useful or requested.",
+    };
+  }
+
   propose(input, context = {}) {
     this.initialize();
     this.pruneExpiredProposals();

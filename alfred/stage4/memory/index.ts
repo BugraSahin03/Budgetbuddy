@@ -77,7 +77,7 @@ function errorResult(error: unknown) {
 export default definePluginEntry({
   id: "personal-context-memory",
   name: "Alfred Personal Context Memory",
-  description: "Controlled, confirmed and versioned long-term personal context",
+  description: "Versioned conversational memory with owner-authorized automatic saving",
   register(api) {
     api.registerTool(
       (toolContext) => {
@@ -93,7 +93,7 @@ export default definePluginEntry({
           senderIsOwner: toolContext.senderIsOwner,
         };
 
-        return [
+        const tools = [
           {
             name: "personal_context_snapshot",
             label: "Bestaetigter persoenlicher Kontext",
@@ -265,6 +265,25 @@ export default definePluginEntry({
             },
           },
         ];
+        return [...tools, {
+          ...tools[1],
+          name: "memory_save",
+          label: "Gesprächskontext merken",
+          description:
+            "Save relevant owner-stated context immediately under the owner's standing consent. " +
+            "Read existing context first to avoid duplicates and use replace for updates. " +
+            "Remember ideas as ideas, open questions as open, and actual decisions as decisions. " +
+            "Include the source statement and date in reason. Do not invent facts or store credentials or snapshot values. " +
+            "Ask a natural clarification only when a fundamental goal change conflicts with prior priorities or intent is ambiguous. " +
+            "Archive or forget only on the owner's clear request. No routine permission-to-remember question is needed.",
+          async execute(_toolCallId: string, params: ProposalParams) {
+            try {
+              return jsonResult(store.remember(params, context));
+            } catch (error) {
+              return errorResult(error);
+            }
+          },
+        }];
       },
       {
         names: [
@@ -272,6 +291,7 @@ export default definePluginEntry({
           "memory_propose",
           "memory_confirm",
           "memory_cancel",
+          "memory_save",
         ],
       },
     );

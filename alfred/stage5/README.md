@@ -1,5 +1,12 @@
 # Alfred Stufe 5a – proaktives Finanzcoaching
 
+Test ab 29.10.2026: Der lange Sonntagsbericht wird pausiert. Ein nativer
+OpenClaw-Heartbeat prüft tagsüber alle sechs Stunden, ob ein hilfreicher
+Gesprächsanlass besteht. Der deterministische Monitor läuft mit
+`--technical-only`. Aktueller Ablauf und Deployment:
+`docs/alfred-conversational-coach-trial.md`. Die folgende Beschreibung
+dokumentiert den bisherigen Betrieb.
+
 Stufe 5a ergänzt Alfred um zwei getrennte, sparsame Wege:
 
 - Ein deterministischer Monitor prüft alle 30 Minuten vorhandene Read-only-

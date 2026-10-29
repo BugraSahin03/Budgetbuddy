@@ -10,7 +10,7 @@ Group=alfred
 SupplementaryGroups=alfred-snapshots
 EnvironmentFile=/var/lib/alfred/secrets/telegram.env
 EnvironmentFile=/etc/alfred-finance-coach.env
-ExecStart=/usr/bin/node /usr/local/lib/alfred-proactive/monitor.mjs
+ExecStart=/usr/bin/node /usr/local/lib/alfred-proactive/monitor.mjs --technical-only
 UMask=0077
 
 NoNewPrivileges=true

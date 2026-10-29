@@ -5,7 +5,8 @@
       "personal_context_snapshot",
       "memory_propose",
       "memory_confirm",
-      "memory_cancel"
+      "memory_cancel",
+      "memory_save"
     ]
   },
   "configSchema": {

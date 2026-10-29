@@ -162,7 +162,8 @@ async function main() {
   try { budgetbuddy = readJsonNoFollow(DEFAULT_PATHS.budgetbuddy); } catch {}
   try { getquin = readJsonNoFollow(DEFAULT_PATHS.getquin); } catch {}
   const state = readJsonNoFollow(DEFAULT_PATHS.state, true);
-  const current = evaluateSignals({ budgetbuddy, getquin, now });
+  const current = evaluateSignals({ budgetbuddy, getquin, now })
+    .filter((item) => !process.argv.includes("--technical-only") || item.kind === "technical");
   const changes = compareSignalState(state?.activeSignals ?? [], current);
 
   if (dryRun) {

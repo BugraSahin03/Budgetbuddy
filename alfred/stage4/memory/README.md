@@ -1,5 +1,12 @@
 # Alfred Personal Context Memory
 
+Seit 29.10.2026: `memory_save(...)` speichert relevante Gesprächsinhalte
+direkt unter dauerhafter Zustimmung des Eigentümers. Bestehende Validierung,
+Eigentümerprüfung, Versionierung und Markdown-Ausgabe bleiben erhalten.
+Ideen werden als offen gespeichert; grundlegende unklare Zielkonflikte werden
+im Gespräch geklärt. Details: `docs/alfred-conversational-coach-trial.md`.
+Der unten beschriebene Vorschlagsmodus bleibt optional verfügbar.
+
 OpenClaw-Plugin fuer bestaetigte, versionierte Langzeiterinnerungen.
 
 ## Werkzeuge
