@@ -2,7 +2,8 @@
   "id": "budgetbuddy-snapshot",
   "contracts": {
     "tools": [
-      "budgetbuddy_snapshot"
+      "budgetbuddy_snapshot",
+      "budgetbuddy_query"
     ]
   },
   "configSchema": {

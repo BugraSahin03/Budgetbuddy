@@ -135,7 +135,7 @@ export function openReadOnlyDatabase(databasePath) {
   return db;
 }
 
-function readSchemaVersion(db) {
+export function readSchemaVersion(db) {
   const row = db
     .prepare("SELECT value FROM app_meta WHERE key = 'schema_version' LIMIT 1")
     .get();
@@ -149,7 +149,7 @@ function readSchemaVersion(db) {
   return schemaVersion;
 }
 
-function hasBudgetEffectiveEntries(db) {
+export function hasBudgetEffectiveEntries(db) {
   return Boolean(
     db.prepare(
       "SELECT 1 FROM sqlite_master WHERE type = 'view' AND name = 'budget_effective_entries'",
@@ -157,12 +157,13 @@ function hasBudgetEffectiveEntries(db) {
   );
 }
 
-function readTransactionRows(db, fromMonthKey, toMonthKey) {
+export function readTransactionRows(db, fromMonthKey, toMonthKey) {
   if (hasBudgetEffectiveEntries(db)) {
     return db
       .prepare(
         `
           SELECT
+            entry.entry_kind AS entryKind,
             CASE WHEN entry.entry_kind = 'transaction'
               THEN entry.entry_id ELSE -entry.entry_id END AS id,
             COALESCE(
@@ -198,6 +199,7 @@ function readTransactionRows(db, fromMonthKey, toMonthKey) {
     .prepare(
       `
         SELECT
+          'transaction' AS entryKind,
           t.id,
           t.booking_date AS bookingDate,
           t.effective_month_key AS monthKey,
@@ -325,7 +327,7 @@ function readFixedCostSnapshotPlans(db, fromMonthKey, toMonthKey) {
   return result;
 }
 
-function readPersistedFixedCostControlMatches(db, fromMonthKey, toMonthKey) {
+export function readPersistedFixedCostControlMatches(db, fromMonthKey, toMonthKey) {
   return new Map(
     db
       .prepare(
@@ -353,7 +355,7 @@ function readPersistedFixedCostControlMatches(db, fromMonthKey, toMonthKey) {
   );
 }
 
-function readFixedCostControlOverrides(db, fromMonthKey, toMonthKey) {
+export function readFixedCostControlOverrides(db, fromMonthKey, toMonthKey) {
   return new Map(
     db
       .prepare(
@@ -369,7 +371,7 @@ function readFixedCostControlOverrides(db, fromMonthKey, toMonthKey) {
   );
 }
 
-function buildFixedCostControlMatches(
+export function buildFixedCostControlMatches(
   transactionRows,
   persistedMatches,
   overrides,
@@ -507,7 +509,7 @@ function buildCategoryBreakdown(rows, fixedCostControlIds = new Set()) {
     if (
       row.transactionType !== "expense" ||
       row.categoryId === null ||
-      fixedCostControlIds.has(Number(row.id))
+      (row.entryKind !== "settlement" && fixedCostControlIds.has(Number(row.id)))
     ) {
       continue;
     }

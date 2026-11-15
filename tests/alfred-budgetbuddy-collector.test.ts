@@ -13,6 +13,8 @@ import {
   collectSnapshot,
   openReadOnlyDatabase,
 } from "../alfred/stage2/collector/collector.mjs";
+// @ts-expect-error The deployment module intentionally has no TypeScript declarations.
+import { queryBudgetBuddy } from "../alfred/stage2/collector/live-query.mjs";
 
 const temporaryDirectories: string[] = [];
 
@@ -109,6 +111,7 @@ function createFixture(schemaVersion = "0020_fin_126") {
       amount_cents INTEGER NOT NULL,
       currency_code TEXT NOT NULL,
       description TEXT NOT NULL,
+      display_name_override TEXT,
       counterparty_name TEXT,
       counterparty_iban TEXT,
       import_fingerprint TEXT,
@@ -244,6 +247,43 @@ afterEach(() => {
 });
 
 describe("Alfred BudgetBuddy collector", () => {
+  it("uses an inclusive booking cutoff and agrees with full-month snapshot totals", () => {
+    const { databasePath } = createFixture("0021_fin_131");
+    const db = openReadOnlyDatabase(databasePath);
+    try {
+      const now = new Date("2026-08-16T10:00:00Z");
+      const q = { view: "summary", fromMonth: "2026-07", toMonth: "2026-07" };
+      const full = queryBudgetBuddy(db, q, now).data[0].amountsByCurrency[0];
+      const snapshot = buildSnapshot(db, { now }).months.find((m: { monthKey: string }) => m.monthKey === "2026-07");
+      expect(full.totalExpenseCents).toBe(snapshot.totalExpenseCents);
+      expect(full.fixedCostControlCents).toBe(snapshot.fixedCostControlCents);
+      const before = queryBudgetBuddy(db, { ...q, throughDay: 4 }, now).data[0].amountsByCurrency[0];
+      const inclusive = queryBudgetBuddy(db, { ...q, throughDay: 5 }, now).data[0].amountsByCurrency[0];
+      expect(before.totalExpenseCents).toBe(130000);
+      expect(inclusive.totalExpenseCents).toBe(175000);
+      expect(() => db.exec("DELETE FROM transactions")).toThrow(/readonly/i);
+    } finally {
+      db.close();
+    }
+  });
+
+  it("paginates original bookings without raw bank identifiers and rejects free SQL", () => {
+    const { databasePath } = createFixture("0021_fin_131");
+    const db = openReadOnlyDatabase(databasePath);
+    try {
+      const q = { view: "transactions", fromMonth: "2026-07", toMonth: "2026-07", type: "expense", limit: 2 };
+      const page = queryBudgetBuddy(db, q);
+      expect(page.rows).toHaveLength(2);
+      expect(page.nextOffset).toBe(2);
+      const next = queryBudgetBuddy(db, { ...q, offset: 2 });
+      expect(next.rows[0].id).not.toBe(page.rows[0].id);
+      expect(JSON.stringify(next)).not.toMatch(/iban|fingerprint|DE456/i);
+      expect(queryBudgetBuddy(db, { view: "settlements", fromMonth: "2026-07", toMonth: "2026-07" }).rows.length).toBeGreaterThan(0);
+      expect(() => queryBudgetBuddy(db, { ...q, sql: "DELETE FROM transactions" })).toThrow(/invalid/i);
+    } finally {
+      db.close();
+    }
+  });
   it("opens SQLite read-only with query_only enforced", () => {
     const { databasePath } = createFixture();
     const db = openReadOnlyDatabase(databasePath);

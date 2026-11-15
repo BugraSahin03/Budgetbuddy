@@ -1,0 +1,28 @@
+[Unit]
+Description=Alfred live read-only BudgetBuddy queries
+After=budgetbuddy.service
+
+[Service]
+User=alfred-collector
+Group=alfred
+SupplementaryGroups=budgetbuddy-readers
+RuntimeDirectory=alfred-budgetbuddy-query
+RuntimeDirectoryMode=0750
+UMask=0027
+ExecStart=/usr/bin/node /opt/alfred-budgetbuddy-reader/live-server.mjs
+Restart=on-failure
+RestartSec=3s
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectSystem=strict
+ProtectHome=true
+ReadOnlyPaths=/var/lib/budgetbuddy
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=true
+CapabilityBoundingSet=
+MemoryMax=256M
+TasksMax=32
+
+[Install]
+WantedBy=multi-user.target
