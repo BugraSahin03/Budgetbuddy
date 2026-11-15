@@ -1,4 +1,5 @@
 import { definePluginEntry } from "openclaw/plugin-sdk/plugin-entry";
+import { liveTool } from "./live-tool.js";
 
 import {
   DEFAULT_MAX_AGE_MINUTES,
@@ -21,6 +22,9 @@ export default definePluginEntry({
   name: "BudgetBuddy Snapshot",
   description: "Verified, read-only BudgetBuddy aggregates for Alfred",
   register(api) {
+    api.registerTool((context) =>
+      context.agentId === "main" && context.senderIsOwner === true ? liveTool : null,
+    { names: ["budgetbuddy_query"] });
     const pluginConfig = (api.pluginConfig ?? {}) as PluginConfig;
     const snapshotPath = pluginConfig.snapshotPath ?? DEFAULT_SNAPSHOT_PATH;
     const maxAgeMinutes = pluginConfig.maxAgeMinutes ?? DEFAULT_MAX_AGE_MINUTES;
